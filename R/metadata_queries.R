@@ -43,6 +43,7 @@ list_available_datasets <- function() {
 get_database_metadata <- function() {
   # Initialize the datasource if it hasn't been initialized
   ds <- initialize_datasource()
+  ds$get()  # Fetch the dataset properties
 
   # Retrieve metadata properties
   version <- ds$properties$version$tag
