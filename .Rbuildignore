@@ -2,3 +2,8 @@
 ^\.Rproj\.user$
 ^LICENSE\.md$
 ^vignettes/*_files$
+^\.github$
+^README\.Rmd$
+^README\.qmd$
+^cran-comments\.m
+^data-raw$
