@@ -1,0 +1,104 @@
+## Project Overview
+
+### Project Type
+
+-   [x] New package proposal **(extension of an existing R package)**
+-   [ ] Implementation of suggested topic: \[Topic name if applicable\]
+
+### Description
+
+We will be working on adding extensions to an existing R package for The Item Response Warehouse (IRW). It is an open-source package that provides a large collection of standardized item response datasets. Our aim is to make the IRW package more versatile and user-friendly for querying, analyzing and processing its datasets. The original IRW repository can be found here: <https://github.com/ben-domingue/irw>.
+
+Potential project additions (TBD):
+
+1.  Metadata curation or creation to enable better functionality
+2.  We also are considering building of a prototype for working with datasets whose licensing is unclear and can’t be stored in the redivis database (the functionality would differ for each external dataset brought in, so we won’t be describing it very much in the current proposal)
+
+### Dependencies
+
+1.  `tidyverse`
+    -   What it does: omnibus functionality for tidy-style data
+    -   What functionality will you use: various, for manipulation and preparation of more flexible
+2.  `haven`
+    -   What it does: SPSS, Stata, and SAS data
+    -   What functionality will you use: reading files
+3.  `redivis`
+    -   What it does: interface for redivis databases where IRW datasets are stored
+    -   What functionality will you use: various, calling and querying from IRW stuff
+
+### Similar Packages
+
+Describe any similar existing packages and how your package differs or extends their functionality:
+
+1.  `irw`
+    -   Current capabilities: very basic functionality for interfacing with IRW datasets.
+    -   How your package differs: This is the package we are extending.
+2.  `datasets`
+    -   Current capabilities: provisions datasets
+    -   How your package differs: ours will pull datasets and format them for use in psychometric applications (which is often non-trivial)
+
+## Project Planning
+
+### Team Member Responsibilities
+
+#### Student 1 (hansol)
+
+Responsibilities:
+
+1.  Write, test, document functions related to **querying** the IRW database
+2.  Create vignettes that showcase usage of the new functionality.
+
+#### Student 2 (hardym)
+
+Responsibilities:
+
+1.  Write, test, document functions related to **processing** the IRW datasets
+2.  Explore additional features:
+    1.  Metadata curation / creation 
+    2.  Develop prototypes to support alternative data sources
+
+### Timeline
+
+```{mermaid}
+%%{init: {
+  'gantt': {
+    'axisFormat': '%-m/%-d',
+    'tickInterval': '1week'
+  }
+}}%%
+gantt
+    title Project Timeline
+    dateFormat  2024-10-31
+    
+    section Student 1 (hansol)
+    Core Functions (Querying)   :a1, 2024-11-05, 10d
+    Testing      :a2, after a1, 7d
+    Documentation          :a3, after a2, 7d
+    Vignettes       :a4, after a3, 7d
+    
+    section Student 2 (hardym)
+    Core Functions (Formatting)     :b1, 2024-11-05, 10d
+    Testing    :b2, after b1, 7d
+    Documentation   :b3, after b2, 7d
+    Additional Features           :b4, after b3, 7d
+```
+
+## Additional Considerations
+
+### Scope and Limitations
+
+-   \[What's in scope for this project\]
+    -   R functions within the irw package
+-   \[What's explicitly out of scope\]
+    -   database administration, reformatting of previously stored datasets, full metadata and documentation overhaul (we are only doing documentation associated with the scope of the project.
+-   \[Known limitations or constraints\]
+    -   current metadata and documentation within the irw ecosystem will limit some of our functionality, so our functions will need to be made in close collaboration with package owners so they can easily be updated with improved data
+
+### Future Extensions
+
+-   \[Potential future features\]
+    -   The future extensions are far greater than the current project. They include: an overhaul of existing metadata, cleaning and reformatting of existing data to match researcher needs, dataset augmentation, additions of new data, robust documentation, better functionality for more complex psychometric models, etc.
+-   \[Areas for expansion\]
+    -   Expansion could also include external dataset expansions (depending on the scalability of the prototype mentioned above).
+
+        \
