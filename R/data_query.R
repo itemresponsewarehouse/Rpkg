@@ -46,11 +46,7 @@ fetch_data <- function(name) {
 #' @export
 filter_tables <- function(n_rows = 0, required_columns = NULL) {
   # Load the precomputed metadata summary
-  metadata_path <- "data/metadata_summary.RData"
-  if (!file.exists(metadata_path)) {
-    stop("Metadata summary file not found. Run generate_metadata_summary() first.")
-  }
-  load(metadata_path)
+  data(metadata_summary, package="irwpkg")
 
   # Initialize a vector to store matching table names
   matching_tables <- character(0)
