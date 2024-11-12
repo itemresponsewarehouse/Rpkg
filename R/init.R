@@ -13,6 +13,7 @@ initialize_datasource <- function() {
   # Check if 'datasource' exists in the global environment and is non-NULL
   if (!exists("datasource", envir = .GlobalEnv) || is.null(datasource)) {
     datasource <<- redivis::user("datapages")$dataset("item_response_warehouse")
+    datasource$get()
   }
   return(datasource)
 }
@@ -33,5 +34,7 @@ fetch_table <- function(name) {
 
   # Access the specified table
   table_data <- ds$table(name)
+  table_data$get()
   return(table_data)
 }
+

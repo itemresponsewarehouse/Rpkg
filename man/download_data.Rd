@@ -7,13 +7,14 @@
 download_data(table, path = NULL, overwrite = FALSE)
 }
 \arguments{
-\item{table}{A table object from which data should be downloaded.}
+\item{table}{A Redivis table object from which data should be downloaded.
+Ensure that this is a valid Redivis table with download capabilities.}
 
 \item{path}{A string specifying the file path where the data should be saved.
-If NULL, the default file name will be used in the current working directory.}
+If \code{NULL}, the dataset will be saved in the current working directory with the table's name as the file name.}
 
 \item{overwrite}{A logical indicating whether to overwrite an existing file at the specified path.
-Default is FALSE.}
+Default is \code{FALSE}.}
 }
 \value{
 A message confirming the file download location.
