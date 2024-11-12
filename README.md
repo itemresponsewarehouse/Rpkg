@@ -14,8 +14,6 @@ You can install the development version of `irwpkg` from
 ``` r
 # install.packages("remotes")
 remotes::install_github("hansorlee/irwpkg")
-## Skipping install of 'irwpkg' from a github remote, the SHA1 (f4611de3) has not changed since last install.
-##   Use `force = TRUE` to force installation
 ```
 
 ## Usage
