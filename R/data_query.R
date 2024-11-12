@@ -1,23 +1,4 @@
-# Core functions for data querying from Redivis
-
-#' Fetch Table Data (Internal Helper)
-#'
-#' An internal helper function to initialize the datasource and retrieve a specific table by name.
-#'
-#' This function is used by \code{fetch_data} to access the specified table from
-#' the datasource after ensuring that the datasource connection is initialized.
-#'
-#' @param name A character string specifying the name of the table to retrieve.
-#' @return A Redivis table object for the specified table.
-#' @keywords internal
-fetch_table <- function(name) {
-  # Initialize datasource if not already set
-  ds <- initialize_datasource()
-
-  # Access the specified table
-  table_data <- ds$table(name)
-  return(table_data)
-}
+# Functions for querying and manipulating data tables from the IRW database.
 
 #' Fetch Data from a Specified Table
 #'
@@ -50,6 +31,7 @@ fetch_data <- function(name) {
 
   return(df)
 }
+
 
 
 

@@ -14,6 +14,7 @@ A data frame containing the data from the specified table.
 }
 \description{
 Retrieves a specified table's data from the datasource, converting it to a data frame.
+If the conversion to a data frame fails, it stops and returns an informative error message.
 }
 \details{
 This function initializes the connection to the datasource (if not already initialized),

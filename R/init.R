@@ -1,3 +1,6 @@
+# init.R: Initialize the Redivis data source connection and provide helper functions for accessing tables within the IRW database.
+
+
 # Declare global variable to suppress check note
 utils::globalVariables(c("datasource"))
 
@@ -12,4 +15,23 @@ initialize_datasource <- function() {
     datasource <<- redivis::user("datapages")$dataset("item_response_warehouse")
   }
   return(datasource)
+}
+
+
+
+#' Fetch Table Data
+#'
+#' This function initializes the datasource (if not already initialized) and retrieves a specified table by name.
+#' It is primarily used by other functions to access a table from the datasource.
+#'
+#' @param name A character string specifying the name of the table to retrieve.
+#' @return A Redivis table object for the specified table.
+#' @export
+fetch_table <- function(name) {
+  # Initialize datasource if not already set
+  ds <- initialize_datasource()
+
+  # Access the specified table
+  table_data <- ds$table(name)
+  return(table_data)
 }

@@ -1,4 +1,5 @@
-# Functions to retrieve and explore metadata
+# Functions to manage, retrieve, and manipulate metadata,
+# such as details about tables, columns, variables, and the dataset’s properties in Redivis.
 
 #' List Available Datasets
 #'
@@ -30,3 +31,6 @@ list_available_datasets <- function() {
 
   return(datasets_info)
 }
+
+
+
