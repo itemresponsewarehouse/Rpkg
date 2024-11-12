@@ -64,3 +64,10 @@ db_info = get_database_metadata()
 
 table_info = get_table_metadata("abortion")
 ```
+
+### filter tables by criteria
+
+```{r}
+# get tables with at least 10000 rows and a column named "rater"
+filter_tables(n_rows = 10000, required_columns="rater")
+```
