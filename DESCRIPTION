@@ -1,4 +1,4 @@
-Package: irw
+Package: irwpkg
 Type: Package
 Title: Package for working with data from the IRW
 Version: 0.1.0
