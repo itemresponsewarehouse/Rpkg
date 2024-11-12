@@ -18,16 +18,16 @@
 #' }
 #' @export
 fetch_data <- function(name) {
-  table <- fetch_table(name)
 
   # Try to convert the table to a data frame, catching errors if the conversion fails
   df <- tryCatch(
-    table$to_data_frame(),
+    table <- fetch_table(name),
     error = function(e) {
       stop(paste("Unable to fetch the dataset", shQuote(name),
                  "from the IRW database. Please check the dataset name."))
     }
   )
+  table$to_data_frame()
 
   return(df)
 }
