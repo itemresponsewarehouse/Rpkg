@@ -12,8 +12,8 @@ utils::globalVariables(c("metadata_summary", "datasource"))
 initialize_datasource <- function() {
   # Check if 'datasource' exists in the global environment and is non-NULL
   if (!exists("datasource", envir = .GlobalEnv) || is.null(datasource)) {
-    datasource <<- redivis::user("datapages")$dataset("item_response_warehouse")
-    datasource$get()
+    datasource <<- redivis::user("datapages")$dataset("item_response_warehouse") # init a reference to IRW
+    datasource$get() # performing an API request with the initialized reference
   }
   return(datasource)
 }
@@ -34,7 +34,7 @@ fetch_table <- function(name) {
 
   # Access the specified table
   table_data <- ds$table(name)
-  table_data$get()
+  table_data$get() # performing an API request to fetch the table data
   return(table_data)
 }
 
