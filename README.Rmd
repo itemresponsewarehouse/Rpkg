@@ -49,6 +49,13 @@ Once you have identified a dataset you want, you can use `fetch_data()` to load 
 df <- fetch_data(name="abortion")
 dim(df)
 head(df)
+
+table <- fetch_table()
 ```
 
-
+### Download data
+```{r}
+#| eval: false
+table = fetch_table("abortion")
+download_data(table, path = "abortion_data.csv")
+```

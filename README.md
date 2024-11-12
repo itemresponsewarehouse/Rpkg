@@ -46,4 +46,13 @@ dataset, you can use:
 df <- fetch_data(name="abortion")
 dim(df)
 head(df)
+
+table <- fetch_table()
+```
+
+### Download data
+
+``` r
+table = fetch_table("abortion")
+download_data(table, path = "abortion_data.csv")
 ```
