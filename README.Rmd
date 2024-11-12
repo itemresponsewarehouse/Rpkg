@@ -29,25 +29,25 @@ To use `irwpkg`, load the package using:
 library(irwpkg)
 ```
 
-With the package now loaded, we can download a dataset using the `fetch_irw()` function or use the `list_available_datasets()` function to view a list of available datasets.
-
-### Download data
-
-For example, to download the `pisa` dataset, we can use:
-
-```{r}
-#| eval: false
-# Fetch a dataset by name
-pisa_df <- fetch_irw(name = "pisa")
-names(pisa_df)
-```
+With the package now loaded, we can use the `list_available_datasets()` function to view a list of available datasets. We can then use the `fetch_data(example_data)` function to fetch a dataset named `example_data` from the IRW database into a dataframe.
 
 ### View list of datasets
-
-We can also view a list of data sets available for download using the `list_available_datasets()` function:
+We can also view a list of data sets available for fetching from the IRW using the `list_available_datasets()` function:
 
 ```{r}
 #| eval: false
 # List available datasets
 list_available_datasets()
 ```
+
+### Fetch data
+For example, to fetch the `abortion` dataset, we can use:
+
+```{r}
+#| eval: false
+# Fetch a dataset by name
+df <- fetch_data("abortion")
+dim(df)
+head(df)
+```
+
