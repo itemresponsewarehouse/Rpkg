@@ -11,7 +11,9 @@ Description: Functions to manage data from the Item Response Warehouse.
 Depends: R (>= 4.3.0)
 Suggests: 
     dplyr,
-    quarto
+    knitr,
+    quarto,
+    rmarkdown
 VignetteBuilder: quarto
 License: MIT + file LICENSE
 Encoding: UTF-8

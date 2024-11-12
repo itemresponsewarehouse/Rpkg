@@ -2,4 +2,3 @@
 ^\.Rproj\.user$
 ^LICENSE\.md$
 ^vignettes/*_files$
-^vignettes/.*\.qmd$
