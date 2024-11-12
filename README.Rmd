@@ -11,9 +11,10 @@ knitr::opts_chunk$set(
 
 # irwpkg
 
-`irwpkg` is an R package designed to facilitate easy access to datasets from the Item Response Warehouse ([IRW](https://datapages.github.io/irw/)), offering functions to download, explore, and analyze these datasets. 
+`irwpkg` is an R package designed to facilitate easy access to datasets from the Item Response Warehouse ([IRW](https://datapages.github.io/irw/)), offering functions to download, explore, and analyze these datasets.
 
 ## Installation
+
 You can install the development version of `irwpkg` from [GitHub](https://github.com/) with:
 
 ```{r}
@@ -30,8 +31,8 @@ To use `irwpkg`, load the package using:
 library(irwpkg)
 ```
 
-
 ### View list of datasets
+
 The list_available_datasets() function provides a list of datasets in the IRW database, showing key metadata (dataset name, row count, and variable count).
 
 ```{r}
@@ -41,6 +42,7 @@ list_available_datasets()
 ```
 
 ### Fetch data
+
 Once you have identified a dataset you want, you can use `fetch_data()` to load it as a data frame in R. For example, to fetch the `abortion` dataset, you can use:
 
 ```{r}
@@ -52,6 +54,7 @@ head(df)
 ```
 
 ### Download data
+
 ```{r}
 #| eval: false
 table = fetch_table("abortion")
@@ -59,6 +62,7 @@ download_data(table, path = "abortion_data.csv")
 ```
 
 ### view DB/table metadata
+
 ```{r}
 db_info = get_database_metadata()
 

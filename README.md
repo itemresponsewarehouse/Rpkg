@@ -66,7 +66,7 @@ db_info = get_database_metadata()
 ## Created At:                2023-09-25 19:19:15 
 ## Last Updated At:           2024-11-12 04:30:41 
 ## Total Data Size (GB):      145.09 GB
-## Active Data Size (GB):     144.95 GB
+## Active Data Size (GB):     145.01 GB
 ## DOI:                       https://doi.org/10.57761/k50h-t692 
 ## Dataset URL:               https://redivis.com/datasets/as2e-cv7jb41fd?v=11.18 
 ## Documentation:             https://datapages.github.io/irw/ 
@@ -76,12 +76,13 @@ db_info = get_database_metadata()
 ## 
 ##  
 ## --------------------------------------------------
+
 table_info = get_table_metadata("abortion")
 ## Table Metadata for: abortion 
 ## --------------------------------------------------
 ## Name:                      abortion 
 ## Created At:                2024-11-12 04:25:18 
-## Last Updated At:           2024-11-12 11:29:32 
+## Last Updated At:           2024-11-12 15:31:48 
 ## Number of Rows:            1516 
 ## Data Size (KB):            35.11 KB
 ## Variable Count:            3 
@@ -90,4 +91,14 @@ table_info = get_table_metadata("abortion")
 ## Table URL:                 https://redivis.com/datasets/as2e-cv7jb41fd/tables/c27h-dq63215j5?v=11.18 
 ## Container URL:             https://redivis.com/datasets/as2e-cv7jb41fd?v=11.18 
 ## --------------------------------------------------
+```
+
+### filter tables by criteria
+
+``` r
+# get tables with at least 10000 rows and a column named "rater"
+filter_tables(n_rows = 10000, required_columns="rater")
+## [1] "dumas_Organisciak_2022"         "fractals_rating"               
+## [3] "mpsycho_lakes"                  "ptam1_immer"                   
+## [5] "spelling2pronounce_edwards2023" "famous_melodies"
 ```
