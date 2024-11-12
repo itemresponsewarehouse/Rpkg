@@ -36,29 +36,10 @@ library(irwpkg)
 The list_available_datasets() function provides a list of datasets in the IRW database, showing key metadata (dataset name, row count, and variable count).
 
 ```{r}
-#| eval: false
 # List available datasets
-list_available_datasets()
-```
-
-### Fetch data
-
-Once you have identified a dataset you want, you can use `fetch_data()` to load it as a data frame in R. For example, to fetch the `abortion` dataset, you can use:
-
-```{r}
-#| eval: false
-# Fetch a dataset by name
-df <- fetch_data(name="abortion")
-dim(df)
-head(df)
-```
-
-### Download data
-
-```{r}
-#| eval: false
-table = fetch_table("abortion")
-download_data(table, path = "abortion_data.csv")
+list_datasets = list_available_datasets()
+dim(list_datasets)
+head(list_datasets)
 ```
 
 ### view DB/table metadata
@@ -66,12 +47,36 @@ download_data(table, path = "abortion_data.csv")
 ```{r}
 db_info = get_database_metadata()
 
-table_info = get_table_metadata("abortion")
+table_info = get_table_metadata("lessR_Mach4")
 ```
+
+
 
 ### filter tables by criteria
 
 ```{r}
+# get tables with a column named "rater"
+filter_tables(required_columns="rater")
+
 # get tables with at least 10000 rows and a column named "rater"
 filter_tables(n_rows = 10000, required_columns="rater")
+```
+
+### Fetch data
+
+Once you have identified a dataset you want, you can use `fetch_data()` to load it as a data frame in R. For example, to fetch the `swmd_mokken` dataset, you can use:
+
+```{r}
+# Fetch a dataset by name
+swmd_mokken <- fetch_data(name="swmd_mokken")
+dim(swmd_mokken)
+head(swmd_mokken)
+```
+
+### Download data
+
+```{r}
+#| eval: false
+table = fetch_table("swmd_mokken")
+download_data(table, path = "swmd_mokken.csv")
 ```

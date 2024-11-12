@@ -32,27 +32,17 @@ variable count).
 
 ``` r
 # List available datasets
-list_available_datasets()
-```
-
-### Fetch data
-
-Once you have identified a dataset you want, you can use `fetch_data()`
-to load it as a data frame in R. For example, to fetch the `abortion`
-dataset, you can use:
-
-``` r
-# Fetch a dataset by name
-df <- fetch_data(name="abortion")
-dim(df)
-head(df)
-```
-
-### Download data
-
-``` r
-table = fetch_table("abortion")
-download_data(table, path = "abortion_data.csv")
+list_datasets = list_available_datasets()
+dim(list_datasets)
+## [1] 548   3
+head(list_datasets)
+##                                 name numRows variableCount
+## 1                        lessR_Mach4    7020             3
+## 2                  movac_pakpour2022   72096             3
+## 3 SABFI2_Gallardo_Pujol_2018_IntHapp    3771             3
+## 4                        science_ltm    2744             4
+## 5                    gilbert_meta_17 1840581            11
+## 6                    pks_probability   12096             4
 ```
 
 ### view DB/table metadata
@@ -77,18 +67,18 @@ db_info = get_database_metadata()
 ##  
 ## --------------------------------------------------
 
-table_info = get_table_metadata("abortion")
-## Table Metadata for: abortion 
+table_info = get_table_metadata("lessR_Mach4")
+## Table Metadata for: lessR_Mach4 
 ## --------------------------------------------------
-## Name:                      abortion 
+## Name:                      lessR_Mach4 
 ## Created At:                2024-11-12 04:25:18 
-## Last Updated At:           2024-11-12 15:31:48 
-## Number of Rows:            1516 
-## Data Size (KB):            35.11 KB
+## Last Updated At:           2024-11-12 15:37:02 
+## Number of Rows:            7020 
+## Data Size (KB):            141.86 KB
 ## Variable Count:            3 
 ## Is Sample:                 No 
 ## DOI:                       https://doi.org/10.57761/k50h-t692 
-## Table URL:                 https://redivis.com/datasets/as2e-cv7jb41fd/tables/c27h-dq63215j5?v=11.18 
+## Table URL:                 https://redivis.com/datasets/as2e-cv7jb41fd/tables/018s-3qybpe981?v=11.18 
 ## Container URL:             https://redivis.com/datasets/as2e-cv7jb41fd?v=11.18 
 ## --------------------------------------------------
 ```
@@ -96,9 +86,45 @@ table_info = get_table_metadata("abortion")
 ### filter tables by criteria
 
 ``` r
+# get tables with a column named "rater"
+filter_tables(required_columns="rater")
+##  [1] "swmd_mokken"                    "dumas_Organisciak_2022"        
+##  [3] "fractals_rating"                "mpsycho_lakes"                 
+##  [5] "ptam1_immer"                    "autonomysupport_mokken"        
+##  [7] "wine_luckett2021"               "spelling2pronounce_edwards2023"
+##  [9] "immer12_immer"                  "famous_melodies"
+
 # get tables with at least 10000 rows and a column named "rater"
 filter_tables(n_rows = 10000, required_columns="rater")
 ## [1] "dumas_Organisciak_2022"         "fractals_rating"               
 ## [3] "mpsycho_lakes"                  "ptam1_immer"                   
 ## [5] "spelling2pronounce_edwards2023" "famous_melodies"
+```
+
+### Fetch data
+
+Once you have identified a dataset you want, you can use `fetch_data()`
+to load it as a data frame in R. For example, to fetch the `swmd_mokken`
+dataset, you can use:
+
+``` r
+# Fetch a dataset by name
+swmd_mokken <- fetch_data(name="swmd_mokken")
+dim(swmd_mokken)
+## [1] 4557    4
+head(swmd_mokken)
+##   resp  item rater      id
+## 1    1 Item2    12 1000303
+## 2    1 Item1    13 1000303
+## 3    1 Item3    17 1001302
+## 4    1 Item1    22 1001302
+## 5    1 Item2    25 1001302
+## 6    1 Item3    25 1001302
+```
+
+### Download data
+
+``` r
+table = fetch_table("swmd_mokken")
+download_data(table, path = "swmd_mokken.csv")
 ```
