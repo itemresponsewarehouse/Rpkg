@@ -6,6 +6,10 @@
 \usage{
 initialize_datasource()
 }
+\value{
+The initialized datasource connection.
+}
 \description{
 This function initializes the Redivis datasource connection if it is not already set.
+If the global variable \code{datasource} doesn't exist or is NULL, it sets up a new connection.
 }

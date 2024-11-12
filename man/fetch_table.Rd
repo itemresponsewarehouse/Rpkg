@@ -4,10 +4,10 @@
 \alias{fetch_table}
 \title{Fetch Table Data (Internal Helper)}
 \usage{
-fetch_table(table_name)
+fetch_table(name)
 }
 \arguments{
-\item{table_name}{A character string specifying the name of the table to retrieve.}
+\item{name}{A character string specifying the name of the table to retrieve.}
 }
 \value{
 A Redivis table object for the specified table.

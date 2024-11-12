@@ -24,15 +24,11 @@ To use `irwpkg`, load the package using:
 library(irwpkg)
 ```
 
-With the package now loaded, we can use the `list_available_datasets()`
-function to view a list of available datasets. We can then use the
-`fetch_data(example_data)` function to fetch a dataset named
-`example_data` from the IRW database into a dataframe.
-
 ### View list of datasets
 
-We can also view a list of data sets available for fetching from the IRW
-using the `list_available_datasets()` function:
+The list_available_datasets() function provides a list of datasets in
+the IRW database, showing key metadata (dataset name, row count, and
+variable count).
 
 ``` r
 # List available datasets
@@ -41,11 +37,13 @@ list_available_datasets()
 
 ### Fetch data
 
-For example, to fetch the `abortion` dataset, we can use:
+Once you have identified a dataset you want, you can use `fetch_data()`
+to load it as a data frame in R. For example, to fetch the `abortion`
+dataset, you can use:
 
 ``` r
 # Fetch a dataset by name
-df <- fetch_data("abortion")
+df <- fetch_data(name="abortion")
 dim(df)
 head(df)
 ```

@@ -7,15 +7,15 @@
 #' This function is used by \code{fetch_data} to access the specified table from
 #' the datasource after ensuring that the datasource connection is initialized.
 #'
-#' @param table_name A character string specifying the name of the table to retrieve.
+#' @param name A character string specifying the name of the table to retrieve.
 #' @return A Redivis table object for the specified table.
 #' @keywords internal
-fetch_table <- function(table_name) {
+fetch_table <- function(name) {
   # Initialize datasource if not already set
   ds <- initialize_datasource()
 
   # Access the specified table
-  table_data <- ds$table(table_name)
+  table_data <- ds$table(name)
   return(table_data)
 }
 
@@ -27,7 +27,7 @@ fetch_table <- function(table_name) {
 #' retrieves the specified table, and converts it to a data frame. The function requires
 #' the user to have authenticated with Redivis and initialized the datasource.
 #'
-#' @param table_name A character string specifying the name of the table to fetch.
+#' @param name A character string specifying the name of the table to fetch.
 #' @return A data frame containing the data from the specified table.
 #' @examples
 #' \dontrun{
@@ -35,8 +35,8 @@ fetch_table <- function(table_name) {
 #'   head(df)
 #' }
 #' @export
-fetch_data <- function(table_name) {
-  table <- fetch_table(table_name)
+fetch_data <- function(name) {
+  table <- fetch_table(name)
   df <- table$to_data_frame()
   return(df)
 }

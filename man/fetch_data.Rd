@@ -4,10 +4,10 @@
 \alias{fetch_data}
 \title{Fetch Data from a Specified Table}
 \usage{
-fetch_data(table_name)
+fetch_data(name)
 }
 \arguments{
-\item{table_name}{A character string specifying the name of the table to fetch.}
+\item{name}{A character string specifying the name of the table to fetch.}
 }
 \value{
 A data frame containing the data from the specified table.
