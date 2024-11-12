@@ -9,6 +9,10 @@ Authors@R: c(
 Maintainer: Hansol Lee <hansol@stanford.edu>
 Description: Functions to manage data from the Item Response Warehouse. 
 Depends: R (>= 4.3.0)
+Imports:
+    redivis
+Remotes:
+    redivis/redivis-r
 Suggests: 
     dplyr,
     knitr,
