@@ -6,10 +6,6 @@
 \usage{
 initialize_datasource()
 }
-\value{
-The initialized Redivis datasource connection.
-}
 \description{
 This function initializes the Redivis datasource connection if it is not already set.
 }
-\keyword{internal}
