@@ -1,0 +1,16 @@
+---
+title: "Report"
+format: html
+vignette: >
+  %\VignetteIndexEntry{Report}
+  %\VignetteEngine{quarto::html}
+  %\VignetteEncoding{UTF-8}
+---
+
+
+```{r setup}
+library(irw)
+```
+
+# Quarto Vignette
+This is a Quarto vignette. 
