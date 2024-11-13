@@ -1,0 +1,96 @@
+::: callout-note
+Please remove content in `[]` brackets and replace with your project-specific information.
+:::
+
+# Project Overview
+
+## Package Name and Purpose
+
+\[Provide the name of your R package and a brief (2-3 sentences) description of its purpose and main functionality.\]
+
+# Progress Summary
+
+## Completed Work
+
+### Student 1 Name (SUNetID 1)
+
+-   \[List major tasks completed\]
+-   \[Include specific functions/features implemented\]
+-   \[Note any documentation written\]
+-   \[Mention tests developed\]
+
+### Student 2 Name (SUNetID 2)
+
+\[Follow same format as above\]
+
+## Remaining Work
+
+### Student 1 Name (SUNetID 1)
+
+-   \[List tasks still to be completed\]
+-   \[Include estimated completion dates\]
+-   \[Note any dependencies on other team members' work\]
+
+### Student 2 Name (SUNetID 2)
+
+\[Follow same format as above\]
+
+# Issues and Solutions
+
+## Technical Challenges
+
+\[Describe any technical challenges encountered during development\]
+
+### Issue 1
+
+-   **Problem**: \[Brief description of the issue\]
+-   **Solution**: \[How the issue was resolved or plan for resolution\]
+-   **Impact**: \[Effect on project timeline or scope\]
+
+### Issue 2
+
+\[Follow same format as above\]
+
+## Collaboration Challenges
+
+\[Describe any team coordination or communication challenges\]
+
+-   **Challenge**: \[Description\]
+-   **Resolution**: \[Steps taken to address\]
+-   **Preventive Measures**: \[Steps to prevent similar issues\]
+
+# Changes to Project Plan
+
+## Scope Modifications
+
+\[List any changes to the original project scope\]
+
+### Original Plan
+
+\[Description\]
+
+### Modified Plan
+
+\[Description\]
+
+### Reason for Change
+
+\[Explanation\]
+
+### Impact on Timeline
+
+\[Effect on project schedule\]
+
+## Timeline Adjustments
+
+\[Document any changes to project milestones or deadlines\]
+
+### Updated Timeline
+
+-   \[Milestone 1\]: \[New Date\]
+-   \[Milestone 2\]: \[New Date\]
+-   \[Final Delivery\]: \[New Date\]
+
+# Additional Notes
+
+\[Any other relevant information, concerns, or suggestions for improvement\]
