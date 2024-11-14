@@ -4,11 +4,12 @@
 \alias{download_data}
 \title{Download a Dataset}
 \usage{
-download_data(table, path = NULL, overwrite = FALSE)
+download_data(table_name, path = NULL, overwrite = FALSE)
 }
 \arguments{
-\item{table}{A Redivis table object from which data should be downloaded.
-Ensure that this is a valid Redivis table with download capabilities.}
+\item{table_name}{A character string specifying the name of the Redivis table
+from which data should be downloaded. This should be the exact name
+of the table as listed in the IRW Redivis database.}
 
 \item{path}{A string specifying the file path where the data should be saved.
 If \code{NULL}, the dataset will be saved in the current working directory with the table's name as the file name.}

@@ -94,8 +94,7 @@ head(swmd_mokken)
 
 ```{r}
 #| eval: false
-table = fetch_table("swmd_mokken")
-download_data(table, path = "swmd_mokken.csv")
+download_data("swmd_mokken", path = "mydata.csv")
 ```
 
 

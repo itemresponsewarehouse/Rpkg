@@ -27,7 +27,6 @@ initialize_datasource <- function() {
 #'
 #' @param name A character string specifying the name of the table to retrieve.
 #' @return A Redivis table object for the specified table.
-#' @export
 fetch_table <- function(name) {
   # Initialize datasource if not already set
   ds <- initialize_datasource()
