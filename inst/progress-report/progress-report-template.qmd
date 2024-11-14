@@ -76,9 +76,19 @@ Please remove content in `[]` brackets and replace with your project-specific in
 
 ### Issue 2
 
--   problem:
+-   problem: designing init functions –\> defining global variables
 
 -   solution:
+
+-   impact:
+
+### Issue 3
+
+-   problem: metadata compute is too slow
+
+-   solution:
+
+-   impact:
 
 ## Collaboration Challenges
 
