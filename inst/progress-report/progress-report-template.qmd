@@ -8,6 +8,8 @@ Please remove content in `[]` brackets and replace with your project-specific in
 
 \[Provide the name of your R package and a brief (2-3 sentences) description of its purpose and main functionality.\]
 
+`irwpkg` is an R package extending the functionality of the existing [Item Response Warehouse (IRW)](https://datapages.github.io/irw/) package hosted [here](https://github.com/ben-domingue/irw). This project enhances the package’s versatility and usability, adding functions for efficient querying and processing of large-scale item response data directly in R, thereby streamlining workflows for researchers and analysts working with IRW datasets.
+
 # Progress Summary
 
 ## Completed Work
@@ -19,9 +21,25 @@ Please remove content in `[]` brackets and replace with your project-specific in
 -   \[Note any documentation written\]
 -   \[Mention tests developed\]
 
-### Student 2 Name (SUNetID 2)
+### Hansol Lee (hansol)
 
-\[Follow same format as above\]
+-   redesigned code architecture
+
+-   implemented functions related to accessing and querying the IRW database stored in Redivis
+
+    -   `list_available_datasets()`
+
+    -   `get_database_metadata()` and `get_table_metadata()`
+
+    -   `filter_tables()`
+
+    -   `fetch_data()` and `fetch_table()`
+
+    -   `download_data()`
+
+-   wrote README to include guide for authentication with Redivis, package installation and usage examples
+
+-   added unit tests for `list_available_datasets()`
 
 ## Remaining Work
 
@@ -31,9 +49,18 @@ Please remove content in `[]` brackets and replace with your project-specific in
 -   \[Include estimated completion dates\]
 -   \[Note any dependencies on other team members' work\]
 
-### Student 2 Name (SUNetID 2)
+### Hansol Lee (hansol)
 
-\[Follow same format as above\]
+-   Week 9 (Nov 18 - 24)
+    -   extend `filter_table()` to include more criteria
+        -   pre-compute metadata table for querying IRW database
+            -   implement version control for different versions of IRW
+    -   add error handling for Redivis API communication
+-   Thanksgiving Week (Nov 25 - Dev 1)
+    -   add unit tests
+-   Week 10 (Dec 2 - 8)
+    -   create vignettes for demos
+    -   finish unit testing & final R CMD checks
 
 # Issues and Solutions
 
@@ -49,15 +76,23 @@ Please remove content in `[]` brackets and replace with your project-specific in
 
 ### Issue 2
 
-\[Follow same format as above\]
+-   problem:
+
+-   solution:
 
 ## Collaboration Challenges
 
 \[Describe any team coordination or communication challenges\]
 
--   **Challenge**: \[Description\]
--   **Resolution**: \[Steps taken to address\]
--   **Preventive Measures**: \[Steps to prevent similar issues\]
+-   **Challenge**: dealing with git merge conflict disaster with the upstream continuously being updated with stuff unrelated to package development and us being git newbies :(
+-   **Resolution**:
+    -   define a clear collaboration workflow upfront
+    -   create a dedicated, clean repository for R package development (`irwpkg)`. Retain the original irw repo solely for preprocessing raw datasets for Redivis export.
+-   **Preventive Measures**:
+    -   to prevent merge conflicts,
+        -   keep the main branch clean, work on feature branches for individual tasks and merge into the main branch only after a collaborative code review.
+
+        -   assign distinct functionalities to each team member to prevent editing the same files
 
 # Changes to Project Plan
 
