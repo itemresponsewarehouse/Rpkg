@@ -315,7 +315,7 @@ reformat = function(data,
         names_from = item,
         values_from = resp,
         names_prefix = item_prefix
-      )
+      ) |> column_to_rownames(var = "id")
   } else if (package == "lavaan" || package == "sem") {
     # lavaan/sem typically uses long format
     formatted_data = data
