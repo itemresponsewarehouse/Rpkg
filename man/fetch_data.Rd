@@ -2,28 +2,27 @@
 % Please edit documentation in R/data_query.R
 \name{fetch_data}
 \alias{fetch_data}
-\title{Fetch Data from a Specified Table}
+\title{Fetch Data from the IRW Database}
 \usage{
 fetch_data(name)
 }
 \arguments{
-\item{name}{A character string specifying the name of the table to fetch.}
+\item{name}{A character vector specifying one or more dataset names to fetch.}
 }
 \value{
-A data frame containing the data from the specified table.
+A named list of data frames, where each element is a dataset with its name as the list element's name.
 }
 \description{
-Retrieves a specified table's data from the datasource, converting it to a data frame.
-If the conversion to a data frame fails, it stops and returns an informative error message.
-}
-\details{
-This function initializes the connection to the datasource (if not already initialized),
-retrieves the specified table, and converts it to a data frame. The function requires
-the user to have authenticated with Redivis and initialized the datasource.
+Retrieves one or more datasets from the Item Response Warehouse (IRW) database by their names.
 }
 \examples{
 \dontrun{
-  df <- fetch_data("abortion")
-  head(df)
+  # Fetch a single dataset
+  datasets <- fetch_data("dataset_name")
+  print(names(datasets))  # Displays "dataset_name"
+
+  # Fetch multiple datasets
+  datasets <- fetch_data(c("dataset1", "dataset2"))
+  print(names(datasets))  # Displays "dataset1" and "dataset2"
 }
 }
