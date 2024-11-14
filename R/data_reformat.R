@@ -11,16 +11,16 @@
 #' The function can handle a variety of data formats including wide and long formats,
 #' as well as data with covariates, groups, item groups, raters, and more. The function
 #' will automatically identify and convert factor columns to dummy variables if needed.
-#' 
-#' 
-#' 
-#' 
-#' 
-#' 
+#'
+#'
+#'
+#'
+#'
+#'
 #' Supported packages:
 #' mirt, lavaan, sem, psych, ltm, mokken, lme4
 #' Note: not all functions within each package are supported. See details.
-#' 
+#'
 #' Manuals ---------------------------------------------------------------------
 #'  mirt: https://cran.r-project.org/web/packages/mirt/mirt.pdf
 #'  lavaan: https://cran.r-project.org/web/packages/lavaan/lavaan.pdf
@@ -48,7 +48,7 @@
 #' mirt
 #'  - mirt::mirt
 #'  - mirt::mirt.model
-#'  
+#'
 
 ##
 ## Arguments -------------------------------------------------------------------
@@ -73,11 +73,11 @@
 # item_prefix = "item_",
 
 
-#' @importFrom dplyr as_tibble mutate select across pivot_longer left_join uncount everything pivot_wider 
-#' @importFrom tidyr pivot_wider pivot_longer 
-#' @importFrom stats model.matrix 
-#' @importFrom tidyselect all_of matches 
-#' @export 
+#' @importFrom dplyr as_tibble mutate select across pivot_longer left_join uncount everything pivot_wider
+#' @importFrom tidyr pivot_wider pivot_longer
+#' @importFrom stats model.matrix
+#' @importFrom tidyselect all_of matches
+#' @export
 
 reformat = function(data,
                     package = "mirt",
@@ -95,6 +95,7 @@ reformat = function(data,
                     return_obj = "tibble",
                     return_options = NULL) {
   data = as_tibble(data)
+  
   # Define supported packages
   package_options = c("mirt", "lavaan", "sem", "psych", "ltm", "mokken", "lme4")
   return_obj_options = c("tibble",
@@ -112,9 +113,7 @@ reformat = function(data,
   }
   
   if (!return_obj %in% return_obj_options) {
-    warning(
-      "Return object not supported. Returning as tibble."
-    )
+    warning("Return object not supported. Returning as tibble.")
     return_obj = "tibble"
   }
   
@@ -145,22 +144,9 @@ reformat = function(data,
   ## convert id to factor
   data = data |> mutate(id = as.factor(id))
   
-  ## check if any of the parameters are not NULL and have character values, if so, convert to lower case and check to make sure they are in the data
-  check_col_presence = function(x, cols_list = colnames(data)) {
-    if (!is.null(x) & is.character(x)) {
-      x = tolower(x)
-      if (!all(x %in% cols_list)) {
-        missing = setdiff(x, cols_list)
-        warning(
-          "Columns specified must be in the data. The following are missing and will be dropped: ",
-          paste(missing, collapse = ", ")
-        )
-        
-      }
-      
-      
-    }
-  }
+  ref_cols = colnames(data)
+  
+
   
   user_cols = c(
     covariates,
@@ -174,7 +160,7 @@ reformat = function(data,
     longitudinal
   )
   
-  missing_cols = check_col_presence(user_cols)
+  missing_cols = check_col_presence(user_cols, ref_cols)
   available_cols = available_cols[-which(available_cols %in% missing_cols)]
   
   
@@ -354,10 +340,26 @@ reformat = function(data,
   } else if (return_obj == "matrix") {
     return(as.matrix(formatted_data))
   } else if (return_obj == "model.matrix") {
-    return(model.matrix( ~ . - 1, data = formatted_data))
+    return(model.matrix(~ . - 1, data = formatted_data))
   } else {
     stop(
       "Invalid return_obj specified. Choose from 'tibble', 'data.frame', 'matrix', or 'model.matrix'."
     )
+  }
+}
+
+
+
+## check if any of the parameters are not NULL and have character values, if so, convert to lower case and check to make sure they are in the data
+check_col_presence = function(x, ref_cols) {
+  if (!is.null(x) & is.character(x)) {
+    x = tolower(x)
+    if (!all(x %in% ref_cols)) {
+      missing = setdiff(x, ref_cols)
+      warning(
+        "Columns specified must be in the data. The following are missing and will be dropped: ",
+        paste(missing, collapse = ", ")
+      )
+    }
   }
 }
