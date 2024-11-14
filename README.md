@@ -119,18 +119,20 @@ filter_tables(required_columns="rater")
 ##  [7] "wine_luckett2021"               "spelling2pronounce_edwards2023"
 ##  [9] "immer12_immer"                  "famous_melodies"
 
-# get tables with columns "rater" and "rt"
-filter_tables(required_columns=c("rater", "rt"))
-## [1] "famous_melodies"
-
 # get tables with at least 10000 rows and a column named "rater"
 filter_tables(n_rows = 10000, required_columns="rater")
 ## [1] "dumas_Organisciak_2022"         "fractals_rating"               
 ## [3] "mpsycho_lakes"                  "ptam1_immer"                   
 ## [5] "spelling2pronounce_edwards2023" "famous_melodies"
+
+# get tables with columns "rater" and "rt"
+filter_tables(required_columns=c("rater", "rt"))
+## [1] "famous_melodies"
 ```
 
 ### Fetch data
+
+#### Fetch a single dataset
 
 Once you have identified a dataset you want, you can use `fetch_data()`
 to load it as a data frame in R. For example, to fetch the `swmd_mokken`
@@ -149,6 +151,39 @@ head(swmd_mokken)
 ## 4    1 Item1    22 1001302
 ## 5    1 Item2    25 1001302
 ## 6    1 Item3    25 1001302
+```
+
+#### Fetch multiple datasets
+
+You can also fetch multiple datasets at once.
+
+``` r
+matching_tables <- filter_tables(n_rows = 50000, required_columns = c("rater"))
+print(matching_tables)
+## [1] "fractals_rating"                "spelling2pronounce_edwards2023"
+
+datasets <- fetch_data(c("fractals_rating", "spelling2pronounce_edwards2023"))
+print(names(datasets)) # datasets is a named list
+## [1] "fractals_rating"                "spelling2pronounce_edwards2023"
+```
+
+You can also use the output of `filter_tables()` directly to
+`fetch_data()`.
+
+``` r
+datasets <- fetch_data(matching_tables)
+print(names(datasets))
+## [1] "fractals_rating"                "spelling2pronounce_edwards2023"
+
+fractals_rating <- datasets[["fractals_rating"]]
+head(fractals_rating)
+##            id            item rater resp
+## 1 Fractal_001      liveliness  1012    1
+## 2 Fractal_001 verbalizability  1019    1
+## 3 Fractal_001  favourableness  1007    1
+## 4 Fractal_001     familiarity  1009    1
+## 5 Fractal_001     familiarity  1019    1
+## 6 Fractal_001 verbalizability  1007    1
 ```
 
 ### Download data

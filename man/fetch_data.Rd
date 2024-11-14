@@ -7,16 +7,22 @@
 fetch_data(name)
 }
 \arguments{
-\item{name}{A character string specifying the name of the dataset to fetch.}
+\item{name}{A character vector specifying one or more dataset names to fetch.}
 }
 \value{
-A data frame containing the dataset.
+A named list of data frames, where each element is a dataset with its name as the list element's name.
 }
 \description{
-Retrieves a dataset from the Item Response Warehouse (IRW) database by its name.
+Retrieves one or more datasets from the Item Response Warehouse (IRW) database by their names.
 }
 \examples{
 \dontrun{
-  df <- fetch_data("dataset_name")
+  # Fetch a single dataset
+  datasets <- fetch_data("dataset_name")
+  print(names(datasets))  # Displays "dataset_name"
+
+  # Fetch multiple datasets
+  datasets <- fetch_data(c("dataset1", "dataset2"))
+  print(names(datasets))  # Displays "dataset1" and "dataset2"
 }
 }

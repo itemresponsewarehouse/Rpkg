@@ -75,15 +75,16 @@ table_info = get_table_metadata("lessR_Mach4")
 # get tables with a column named "rater"
 filter_tables(required_columns="rater")
 
-# get tables with columns "rater" and "rt"
-filter_tables(required_columns=c("rater", "rt"))
-
 # get tables with at least 10000 rows and a column named "rater"
 filter_tables(n_rows = 10000, required_columns="rater")
+
+# get tables with columns "rater" and "rt"
+filter_tables(required_columns=c("rater", "rt"))
 ```
 
 ### Fetch data
 
+#### Fetch a single dataset
 Once you have identified a dataset you want, you can use `fetch_data()` to load it as a data frame in R. For example, to fetch the `swmd_mokken` dataset, you can use:
 
 ```{r}
@@ -91,6 +92,26 @@ Once you have identified a dataset you want, you can use `fetch_data()` to load 
 swmd_mokken <- fetch_data(name="swmd_mokken")
 dim(swmd_mokken)
 head(swmd_mokken)
+```
+
+#### Fetch multiple datasets
+You can also fetch multiple datasets at once. 
+
+```{r}
+matching_tables <- filter_tables(n_rows = 50000, required_columns = c("rater"))
+print(matching_tables)
+
+datasets <- fetch_data(c("fractals_rating", "spelling2pronounce_edwards2023"))
+print(names(datasets)) # datasets is a named list
+```
+
+You can also use the output of `filter_tables()` directly to `fetch_data()`.
+```{r}
+datasets <- fetch_data(matching_tables)
+print(names(datasets))
+
+fractals_rating <- datasets[["fractals_rating"]]
+head(fractals_rating)
 ```
 
 ### Download data
