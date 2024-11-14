@@ -40,6 +40,7 @@ fetch_data <- function(name) {
 #' @param n_rows An integer specifying the minimum number of rows required in a table.
 #' @param required_columns A character vector specifying the names of required columns.
 #' @return A character vector of table names that meet the criteria.
+#' @importFrom utils data
 #' @export
 filter_tables <- function(n_rows = 0, required_columns = NULL) {
   # Load the precomputed metadata summary
