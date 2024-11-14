@@ -58,9 +58,6 @@ variable count).
 ``` r
 # List available datasets
 list_datasets = list_available_datasets()
-## Please visit the URL below to authenticate with your Redivis account:
-## https://redivis.com/oauth/authorize?user_code=772cac139c9d207aad1f425d8faf5464 
-## Authentication was successful!
 dim(list_datasets)
 ## [1] 558   3
 head(list_datasets)
@@ -121,6 +118,10 @@ filter_tables(required_columns="rater")
 ##  [5] "ptam1_immer"                    "autonomysupport_mokken"        
 ##  [7] "wine_luckett2021"               "spelling2pronounce_edwards2023"
 ##  [9] "immer12_immer"                  "famous_melodies"
+
+# get tables with columns "rater" and "rt"
+filter_tables(required_columns=c("rater", "rt"))
+## [1] "famous_melodies"
 
 # get tables with at least 10000 rows and a column named "rater"
 filter_tables(n_rows = 10000, required_columns="rater")

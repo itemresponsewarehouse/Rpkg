@@ -75,6 +75,9 @@ table_info = get_table_metadata("lessR_Mach4")
 # get tables with a column named "rater"
 filter_tables(required_columns="rater")
 
+# get tables with columns "rater" and "rt"
+filter_tables(required_columns=c("rater", "rt"))
+
 # get tables with at least 10000 rows and a column named "rater"
 filter_tables(n_rows = 10000, required_columns="rater")
 ```
