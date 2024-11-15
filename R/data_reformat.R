@@ -146,8 +146,6 @@ reformat = function(data,
   
   ref_cols = colnames(data)
   
-
-  
   user_cols = c(
     covariates,
     groups,
@@ -162,7 +160,6 @@ reformat = function(data,
   
   missing_cols = check_col_presence(user_cols, ref_cols)
   available_cols = available_cols[-which(available_cols %in% missing_cols)]
-  
   
   # Convert 'resp' to numeric if not already
   data = data |> mutate(resp = as.numeric(resp))
