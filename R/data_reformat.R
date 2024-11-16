@@ -173,11 +173,8 @@ reformat = function(data,
   
   # Automatically identify group column if groups = TRUE
   if (!is.null(groups) & is.character(groups)) {
-    groups = groups
+    # groups = groups
     group_col = grep(groups, available_cols, value = TRUE)
-    
-    
-    
     used_columns = c(used_columns, group_col)
     
     # if (length(group_col) > 0) {

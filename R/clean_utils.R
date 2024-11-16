@@ -92,6 +92,31 @@ irw_name_fix <- function(string,
   new_names
 }
 
+#' ## function to apply irw_name_fix to a vector of arbitrary length
+#' #' @param x a vector of names to clean
+#' #' @noRd
+#' #' @export
+#' 
+#' irw_name_fix_all <- function(x, ...) {
+#'   if (is.data.frame(x)) {
+#'     stop("`x` must not be a data.frame, use clean_names()")
+#'   }
+#'   vapply(x, irw_name_fix, character(1), ...)
+#' }
+
+## function to apply irw_name_fix to an object with names 
+#' @param x an object with names to clean
+#' @noRd
+#' @export
+#' 
+irw_rename = function(x, ...) {
+  x = x |> dplyr::rename_with(function(.name) {
+    irw_name_fix(.name)
+  })
+}
+
+
+
 #' @param df returns the data frame with cleaned column names,
 #' @noRd
 irw_col_clean = function(df,...) {
