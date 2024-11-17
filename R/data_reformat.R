@@ -60,17 +60,7 @@
 ## ltm: wide format with each item as a column
 ## mokken: wide format with each item as a column
 ## lme4: long format with each item as a row
-# covariates = ,
-# groups = ,
-# group_covariates = ,
-# item_groups = ,
-# rt = ,
-# raters = ,
-# qmatrix = ,
-# rater_covariates = ,
-# timedate = ,
-# facts2dummies = ,
-# item_prefix = "item_",
+
 
 ## TODO: add check for zero variation in item columns
 ## TODO: add cluster variable type info
@@ -81,6 +71,7 @@
 #' @importFrom tidyselect all_of matches
 #' @export
 
+## The suported funcs list will be used to create data templates for more complex requests in future iterations
 supported_funcs = list(
   mirt = list(
     mirt = list(
@@ -396,7 +387,6 @@ variable_roles = list(
 )
 
 
-
 ## TODO: potential solutions for identifying and reorganizing irw data with conflicting names or bad datatypes
 # df |> pivot_wider(id_cols = person_id, names_from = c(item,wave),values_from = resp, names_prefix = "i",names_sep = "_")
 # df |> pivot_wider(id_cols = person_id, names_from = item, values_from = resp, names_prefix = "i",id_expand = T)
@@ -598,107 +588,7 @@ reformat = function(data,
     data = data |> mutate(item = as_factor(item))
   }
   
-  # # Automatically identify group column if groups = TRUE
-  # if (!is.null(groups) & is.character(groups)) {
-  #   # groups = groups
-  #   group_col = grep(groups, available_cols, value = TRUE)
-  #   used_columns = c(used_columns, group_col)
-  #   
-  #   # if (length(group_col) > 0) {
-  #   #   data = data |> mutate(group = data[[group_col[1]]])
-  #   #   used_columns = c(used_columns, group_col[1])
-  #   # }
-  # } else if (isTRUE(groups)) {
-  #   group_cols = data |> dplyr::select(matches("group|cluster|country|study|wave|treat")) |> names()
-  #   used_columns = c(used_columns, group_cols)
-  #   ## convert to factor
-  #   # data = data |> mutate(group = as.factor(data[[group_col]]))
-  #   
-  #   
-  #   # if (length(group_col) > 0) {
-  #   #   data = data |> mutate(group = data[[group_col[1]]])
-  #   #   used_columns = c(used_columns, group_col[1])
-  #   # }
-  # }
-  # 
-  # 
-  # 
-  # 
-  # # Automatically identify covariate columns if covariates = TRUE
-  # if (!is.null(covariates) & is.character(covariates)) {
-  #   used_columns = c(used_columns, covariates)
-  # } else if (isTRUE(covariates)) {
-  #   covariate_cols = grep("cov_|age|gender|income|education",
-  #                         colnames(data),
-  #                         value = TRUE)
-  #   if (length(covariate_cols) > 0) {
-  #     used_columns = c(used_columns, covariate_cols)
-  #   } else {
-  #     warning("No covariate columns found.")
-  #   }
-  # }
-  # 
-  # 
-  # 
-  # # Automatically identify response time (rt) column if rt = TRUE or find the columns specified returning an error if columns specified are not in data
-  # if (isTRUE(rt)) {
-  #   rt_col = grep("rt|response_time|process", colnames(data), value = TRUE)
-  #   if (length(rt_col) > 0) {
-  #     data = data |> mutate(rt = data[[rt_col[1]]])
-  #     used_columns = c(used_columns, rt_col[1])
-  #   }
-  # }
-  # 
-  # # Automatically identify rater column if raters = TRUE
-  # if (isTRUE(raters) | (!is.null(raters))) {
-  #   rater_col = grep("rater|judge|evaluator", colnames(data), value = TRUE)
-  #   if (length(rater_col) > 0) {
-  #     data = data |> mutate(rater = data[[rater_col[1]]])
-  #     used_columns = c(used_columns, rater_col[1])
-  #   }
-  # }
-  # 
-  # # Automatically identify timedate column if timedate = TRUE
-  # if (isTRUE(timedate) | !is.null(timedate)) {
-  #   timedate_col = grep("time|wave|session|visit|date", colnames(data), value = TRUE)
-  #   if (length(timedate_col) > 0) {
-  #     data = data |> mutate(time = data[[timedate_col[1]]])
-  #     used_columns = c(used_columns, timedate_col[1])
-  #   }
-  # }
-  # 
-  # # Automatically identify qmatrix columns if qmatrix = TRUE
-  # if (isTRUE(qmatrix) | !is.null(qmatrix)) {
-  #   qmatrix_cols = grep("qmatrix|q_matrix|skill|trait", colnames(data), value = TRUE)
-  #   if (length(qmatrix_cols) > 0) {
-  #     data = data |> mutate(qmatrix = data[[qmatrix_cols[1]]])
-  #     used_columns = c(used_columns, qmatrix_cols[1])
-  #   }
-  # }
-  # 
-  # # Automatically identify item group columns if item_groups = TRUE
-  # if (isTRUE(item_groups) | !is.null(item_groups)) {
-  #   item_group_cols = grep("item_group|item_grouping|item_group_id",
-  #                          colnames(data),
-  #                          value = TRUE)
-  #   if (length(item_group_cols) > 0) {
-  #     data = data |> mutate(item_group = data[[item_group_cols[1]]])
-  #     used_columns = c(used_columns, item_group_cols[1])
-  #   }
-  # }
-  # 
-  # # Automatically identify group covariate columns if group_covariates = TRUE
-  # if (isTRUE(group_covariates) | !is.null(group_covariates)) {
-  #   group_cov_cols = grep("group_cov|group_covariate|group_covariate_id",
-  #                         colnames(data),
-  #                         value = TRUE)
-  #   if (length(group_cov_cols) > 0) {
-  #     data = data |> mutate(group_covariate = data[[group_cov_cols[1]]])
-  #     used_columns = c(used_columns, group_cov_cols[1])
-  #   }
-  # }
-  # 
-  
+
   data = data |> dplyr::select(dplyr::all_of(used_columns))
   
   
