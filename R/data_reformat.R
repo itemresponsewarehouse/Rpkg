@@ -62,19 +62,6 @@
 ## lme4: long format with each item as a row
 
 
-## TODO: add check for zero variation in item columns
-one_value_check = function(x) {
-  x = x[!is.na(x)]
-  length(unique(x)) < 2
-}
-
-one_value_check_grp <- function(x, f) {
-  x_split = split(x, f)
-  any(vapply(x_split, one_value_check, logical(1)))
-}
-
-
-
 #' @importFrom dplyr as_tibble mutate select across pivot_longer left_join uncount everything pivot_wider
 #' @importFrom tidyr pivot_wider pivot_longer
 #' @importFrom stats model.matrix
