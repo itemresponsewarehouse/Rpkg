@@ -168,6 +168,15 @@ dtypes <- function(x) {
   tibble(variable = names(res), type = unname(res))
 }
 
+one_value_check = function(x) {
+  x = x[!is.na(x)]
+  length(unique(x)) < 2
+}
+
+one_value_check_grp = function(x, f) {
+  x_split = split(x, f)
+  any(vapply(x_split, one_value_check, logical(1)))
+}
 
 #' Rename variables by name using dplyr
 #'
