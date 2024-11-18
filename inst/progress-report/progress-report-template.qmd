@@ -14,12 +14,23 @@ Please remove content in `[]` brackets and replace with your project-specific in
 
 ## Completed Work
 
-### Student 1 Name (SUNetID 1)
+### Mike Hardy (hardym)
 
--   \[List major tasks completed\]
--   \[Include specific functions/features implemented\]
--   \[Note any documentation written\]
--   \[Mention tests developed\]
+-   reorganized rules for data governance (outside of scope of this project, but necessary for future development)
+-   implemented functions related to cleaning and formatting data
+
+    -   `irw_rename()`
+
+    -   `irw_name_fix()`
+
+    -   `reformat()`
+    
+    -   reformat is partially documented and while change as progress continues
+    
+-   Researched and documented various expected input formats from the following packages: `mirt`, `ltm`, `psych`, `sem`, `lavaan`, `mokken`, and `lme4.`
+    -   variable `supported_funcs` contains the current list of this information
+    -  variable `variable_roles` contains potential variable types to be used when constructing output dataframes formatting
+-   wrote unit tests for `irw_rename()` and `irw_name_fix()`
 
 ### Hansol Lee (hansol)
 
@@ -43,11 +54,20 @@ Please remove content in `[]` brackets and replace with your project-specific in
 
 ## Remaining Work
 
-### Student 1 Name (SUNetID 1)
+### Student 1 Name (hardym)
+-   Week 9-10 (Nov 18 - 30)
+-   finish coding and documenting `reformat()`
+-   write more robust unit tests for `reformat()`
+-   Full functionality of `reformat()` is dependent on consistent inputs from the database and the `irw` package. This will require collaboration with Ben beyond the scope of this project to ensure that the package can handle all irw data formats. Additionally,  `reformat()` will need to be updated as the project progresses in order to output increasingly more diverse package and function input types.
 
--   \[List tasks still to be completed\]
--   \[Include estimated completion dates\]
--   \[Note any dependencies on other team members' work\]
+-   Thanksgiving Week (Nov 25 - Dev 1)
+    -   add package specific unit tests
+    -   add final documentation for functions
+-   Week 10 (Dec 2 - 8)
+    -   create vignettes for demos
+    -   finish unit testing & final R CMD checks
+
+
 
 ### Hansol Lee (hansol)
 
@@ -70,9 +90,12 @@ Please remove content in `[]` brackets and replace with your project-specific in
 
 ### Issue 1
 
--   **Problem**: \[Brief description of the issue\]
--   **Solution**: \[How the issue was resolved or plan for resolution\]
--   **Impact**: \[Effect on project timeline or scope\]
+-   **Problem**: Many instances of conflicting data types, poor data governance, and inconsistent naming conventions in the original IRW database make it difficult to implement functions that can handle a wide range of input data formats. This issue is exacerbated by the lack of consistency of the expected input formats for the functions in the `irw` package. 
+-   **Solution**: 
+    -   `irw_rename()` and `irw_name_fix()` functions can support the new standardization of variable names and formats across different datasets. 
+    -   [outside of scope of this project] Reorganizing the rules for data governance and creating a plan for backcoding and correcting currently extant datasets for the expected input formats for the functions in the `irw` package. This will help ensure that the package can handle a wide range of input data formats.
+-   **Impact**: 
+    -   The new functions will help ensure that the package can handle a wide range of input data formats. This will make the package more versatile and user-friendly, but the larger project (outside of scope) of reorganizing the rules for data governance will be necessary for the package to be fully functional. That task will not likely be done in time for this project.
 
 ### Issue 2
 
