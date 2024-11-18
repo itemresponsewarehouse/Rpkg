@@ -131,7 +131,7 @@ Please remove content in `[]` brackets and replace with your project-specific in
 
 ## Scope Modifications
 
-\[List any changes to the original project scope\]
+Only modifications are the removal of the "potential/possible" features. The project is now focused on the core functionality of the package, as the challenges with the current state of the IRW database have made it difficult to move quickly to more advanced features.
 
 ### Original Plan
 
