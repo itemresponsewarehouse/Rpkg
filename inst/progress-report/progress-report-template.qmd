@@ -14,10 +14,22 @@ Please remove content in `[]` brackets and replace with your project-specific in
 
 ## Completed Work
 
-### Student 1 Name (SUNetID 1)
+### Mike Hardy (hardym)
 
--   \[List major tasks completed\]
--   \[Include specific functions/features implemented\]
+-   reorganized rules for data governance (outside of scope of this project, but necessary for future development)
+-   implemented functions related to cleaning and formatting data
+
+    -   `irw_rename()`
+
+    -   `irw_name_fix()`
+
+    -   `reformat()`
+    
+    -   reformat is partially documented and while change as progress continues
+    
+-   Researched and documented various expected input formats from the following packages: `mirt`, `ltm`, `psych`, `sem`, `lavaan`, `mokken`, and `lme4.`
+    -   variable `supported_funcs` contains the current list of this information
+    -  variable `variable_roles` contains potential variable types to be used when constructing output dataframes formatting
 -   \[Note any documentation written\]
 -   \[Mention tests developed\]
 
