@@ -41,7 +41,7 @@ test_that("downloaded data reformat for base mirt", {
   expect_s3_class(result, "data.frame")
   
   # Check that essential columns are present
-  expect_true(all(c("name", "numRows", "variableCount") %in% names(result)))
+  expect_true(all(c("item", "resp", "id") %in% names(result)))
   
   # Check that there is at least one dataset available
   expect_true(nrow(result) > 0)
