@@ -340,7 +340,7 @@ variable_roles = list(
   covariates = list(
     desc = "covariates for the individual/subject",
     expected = "cov",
-    grep = "cov_|age|gender|income|education"
+    grep = "cov_|age|gender|sex|income|education"
   ),
   levels = list(
     desc = "level of the grouping variable for hierarchical models",
@@ -350,7 +350,7 @@ variable_roles = list(
   group_covariates = list(
     desc = "covariates for the group",
     expected = "group_cov",
-    grep = "group_cov|group_age|group_gender|group_income|group_education"
+    grep = "group_cov|group|gender|sex|group_education"
   ),
   item_groups = list(
     desc = "grouping variable for items",
