@@ -328,56 +328,83 @@ supported_funcs = list(
   )
 
 variable_roles = list(
+  id = list(
+    dtype = factor,
+    desc = "subject identifier",
+    expected = "id",
+    grep = "id|subj|person"),
+  item = list(
+    dtype = factor,
+    desc = "item identifier",
+    expected = "item",
+    grep = "item|quest|task"
+    ),
+  resp = list(
+    dtype = numeric,
+    desc = "response variable",
+    expected = "resp",
+    grep = "resp"
+    ),
   groups = list(
+    dtype = factor,
     desc = "grouping variable for subject",
     expected = "group",
     grep = "group|cluster|country|study|wave|treat|sch"
 
   ),
   covariates = list(
+    dtype = \(x) ifelse(is.character(x), factor(x), numeric(x)),
     desc = "covariates for the individual/subject",
     expected = "cov",
     grep = "cov_|age|gender|income|education"
   ),
   levels = list(
+    dtype = factor,
     desc = "level of the grouping variable for hierarchical models",
     expected = "level",
     grep = "level|sublevel|region|country|state|city|school|class|group"
   ),
   group_covariates = list(
+    dtype = numeric,
     desc = "covariates for the group",
     expected = "group_cov",
     grep = "group_cov|group_age|group_gender|group_income|group_education"
   ),
   item_groups = list(
+    dtype = factor,
     desc = "grouping variable for items",
     expected = "item_group",
     grep = "subtest|pretest|wave|item_group|test|form|block|section|part|group|cluster|factor|trait|skill|domain|category|dimension"
   ),
   rt = list(
+    dtype = numeric,
     desc = "response time variable",
     expected = "rt",
-    grep = "rt|response_time|process"
+    grep = "rt|response_time|process|time|duration|latency|speed|reaction"
   ),
   raters = list(
+    dtype = factor,
     desc = "rater variable",
     expected = "rater",
-    grep = "rater|judge"
+    grep = "rater|judge|evaluator|coder|observer|teacher|scorer|reader"
   ),
   rater_covariates = list(
+    dtype = numeric,
     desc = "covariates for the rater",
     expected = "rater_cov",
     grep = "rater_cov|rater_"
   ),
   qmatrix = list(
+    dtype = factor,
     desc = "Q-matrix for item response theory models",
     expected = "qmatrix",
-    grep = "qmatrix|q_matrix|skill|trait"
+    grep = "qmatrix|q_matrix|skill|trait|factor|domain|category|dimension|latent|construct|ability|knowledge|competence"
   ),
   timedate = list(
+    dtype = \(x) factor(x, ordered = T),
     desc = "longitudinal or date variable",
     expected = "date",
-    grep = "wave|session|visit|date"
+    grep = "wave|session|visit|date|time|year|month|day|hour"
   )
   
 
@@ -394,6 +421,9 @@ not_supported_cols = c("person_id","rater")
 
 reformat = function(data,
                     package = "mirt",
+                    id = "id",
+                    item = "item",
+                    resp = "resp",
                     groups = NULL,
                     covariates = NULL,
                     levels = NULL,
@@ -405,6 +435,7 @@ reformat = function(data,
                     qmatrix = NULL,
                     timedate = NULL,
                     facts2dummies = NULL,
+                    as_args_list = F,
                     item_prefix = "item_",
                     return_obj = "tibble",
                     return_options = NULL) {
@@ -422,7 +453,7 @@ reformat = function(data,
                          "matrix"
                          # "model.matrix"
                          )
-  required_cols = c("id", "item", "resp")
+  required_cols = c(id, item, resp)
   
   ## save user old columns for error messages
   old_cols = colnames(data)
