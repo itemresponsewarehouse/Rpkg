@@ -338,8 +338,18 @@ pkg_wide_long = list(
   lme4 = "long"
 )
 
+pkg_wide = list(
+  mirt = T,
+  lavaan = F,
+  sem = F,
+  psych = T,
+  ltm = T,
+  mokken = T,
+  lme4 = F
+)
 
-variable_roles = list(
+
+var_roles = list(
   id = list(
     dtype = factor,
     desc = "subject identifier",
@@ -530,7 +540,7 @@ reformat = function(data,
 
   ## drop any of the user vars that are null or empty
   user_vars = user_vars[sapply(user_vars, function(x) any(!is.null(x$old_cols) & x$old_cols != "" & x$old_cols != F)) |> unlist()]
-  print(user_vars)
+  # print(user_vars)
   
   user_cols = c()
   user_cols_old = c()
@@ -578,7 +588,7 @@ reformat = function(data,
       used_columns = c(used_columns, user_vars[[i]]$avail_cols)
     } else if (isTRUE(user_vars[[i]]$cols)){
       pat = variable_roles[[i]][["grep"]]
-      print(pat)
+      # print(pat)
       user_vars[[i]]$avail_cols = grep(pat, available_cols, value = TRUE)
       used_columns = c(used_columns, user_vars[[i]]$avail_cols)
     }
@@ -591,7 +601,7 @@ reformat = function(data,
   #   }
   # }
   
-  print(used_columns)
+  # print(used_columns)
   # vars = prepend(list())
   
   
@@ -652,31 +662,40 @@ reformat = function(data,
   
   # Pivot data based on the package requirements
   if (package == "mirt") {
+    print(data)
     # For mirt, wide format with each item as a column
     formatted_data = data |>
-      dplyr::select(id, item, resp) |>
-      pivot_wider(
-        names_from = item,
-        values_from = resp,
+      # dplyr::select(id, item, resp) |>
+      pivot_wider_irw(
+        # names_from = item,
+        # values_from = resp,
         names_prefix = item_prefix
-      ) |> 
-      column_to_rownames(var = "id")
+      ) 
+    # |> 
+    #   column_to_rownames(var = "id")
   } else if (package == "lavaan" || package == "sem") {
     # lavaan/sem typically uses long format
     formatted_data = data
   } else if (package %in% c("psych", "ltm")) {
     # psych and ltm often use wide format
     formatted_data = data |>
-      pivot_wider(
+      pivot_wider_irw(      
+      # pivot_wider(
         names_from = item,
         values_from = resp,
         names_prefix = item_prefix
-      ) |> dplyr::select(id, everything())
+      ) 
+    # |> dplyr::select(id, everything())
   } else if (package == "mokken") {
     # mokken uses wide format without prefixes
     formatted_data = data |>
-      pivot_wider(names_from = item, values_from = resp) |>
-      dplyr::select(id, everything())
+      pivot_wider_irw(
+        names_from = item,
+        values_from = resp,
+        names_prefix = item_prefix
+        )
+      # pivot_wider(names_from = item, values_from = resp) |>
+      # dplyr::select(id, everything())
   } else if (package == "lme4") {
     # lme4 expects long format for mixed models
     formatted_data = data

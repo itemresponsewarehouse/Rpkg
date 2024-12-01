@@ -1,15 +1,22 @@
 library(dplyr)
 library(tidyr)
 
+# Check if the dataframe is uniquely identified by the specified columns
+check_uniqueness <- function(data, cols) {
+  data %>%
+    group_by(across(all_of(cols))) %>%
+    summarise(n = n(), .groups = "drop") %>%
+    filter(n > 1) %>%
+    nrow() == 0
+}
+
 find_pivot_args <- function(data, id_cols = "id", names_from = "item", values_from = "resp") {
-  # Check if the dataframe is uniquely identified by the specified columns
-  check_uniqueness <- function(data, cols) {
-    data %>%
-      group_by(across(all_of(cols))) %>%
-      summarise(n = n(), .groups = "drop") %>%
-      filter(n > 1) %>%
-      nrow() == 0
+
+  # Return without any changes if the data only contains the id, item, and resp columns
+  if (all(c("id", "item", "resp") %in% names(data)) & length(names(data)) == 3) {
+    return(list(id_cols = "id", names_from = "item", values_from = "resp"))
   }
+
   
   # Initial check using provided id_cols and names_from
   if (check_uniqueness(data, c(id_cols, names_from))) {
@@ -71,6 +78,21 @@ notify_combined_columns <- function(args) {
     }
   }
 }
+
+needs_combined_columns <- function(args) {
+  # Check each argument for length > 1
+  for (arg_name in names(args)) {
+    arg_value <- args[[arg_name]]
+    
+    if (length(arg_value) > 1) {
+      return(TRUE)
+    }
+  }
+  
+  return(FALSE)
+}
+
+
 
 pivot_wider_irw  = function(data, names_from = "item", values_from = "resp", 
                             id_cols = "id", names_sep = "_",...) {
