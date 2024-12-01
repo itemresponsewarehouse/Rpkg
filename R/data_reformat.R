@@ -254,19 +254,22 @@ supported_funcs = list(
         other_outputs = list(), 
         func_support = F,
         other_output_support = F
-      ),
-      mlr = list(
-        call = "psych::mlr",
-        expect_format = "long",
-        supported_var_types = c("any"),
-        desc = " first four columns in the long output are id, time, values, and item names, the remaining columns are the extra values. These could be something such as a trait measure for each subject, or the situation in which the items are given",
-        id_as_row_names = F,
-        resp_as_int = F,
-        other_outputs = list(), 
-        func_support = F,
-        other_output_support = F
+
       )
-      
+      # ,
+      # mlr = list(
+      #   call = "psych::mlr",
+      #   expect_format = "long",
+      #   supported_var_types = c("any"),
+      #   desc = " first four columns in the long output are id, time, values, and item names, the remaining columns are the extra values. These could be something such as a trait measure for each subject, or the situation in which the items are given",
+      #   id_as_row_names = F,
+      #   resp_as_int = F,
+      #   other_outputs = list(), 
+      #   func_support = F,
+      #   other_output_support = F
+      # )
+      # 
+
       
     ),
     lavaan = list(
@@ -328,59 +331,113 @@ supported_funcs = list(
       
       
     )
-  )
 
-variable_roles = list(
+)
+
+pkg_wide_long = list(
+  mirt = "wide",
+  lavaan = "long",
+  sem = "long",
+  psych = "wide",
+  ltm = "wide",
+  mokken = "wide",
+  lme4 = "long"
+)
+
+pkg_wide = list(
+  mirt = T,
+  lavaan = F,
+  sem = F,
+  psych = T,
+  ltm = T,
+  mokken = T,
+  lme4 = F
+)
+
+
+var_roles = list(
+  id = list(
+    dtype = factor,
+    desc = "subject identifier",
+    expected = "id",
+    grep = "id"),
+  item = list(
+    dtype = factor,
+    desc = "item identifier",
+    expected = "item",
+    grep = "item"
+    ),
+  resp = list(
+    dtype = numeric,
+    desc = "response variable",
+    expected = "resp",
+    grep = "resp"
+    ),
   groups = list(
+    dtype = factor,
     desc = "grouping variable for subject",
     expected = "group",
-    grep = "group|cluster|country|study|wave|treat|sch"
-
+    grep = "group|cluster|country|study|block|treat|sch"
+  ),
+  timedate = list(
+    dtype = \(x) factor(x, ordered = T),
+    desc = "longitudinal or date variable",
+    expected = "date",
+    grep = "wave|session|visit|date|time|year|month|day|hour"
   ),
   covariates = list(
+    dtype = \(x) ifelse(is.character(x), factor(x), numeric(x)),
     desc = "covariates for the individual/subject",
     expected = "cov",
-    grep = "cov_|age|gender|sex|income|education"
+    grep = "cov_|age|gender|income|education"
   ),
   levels = list(
+    dtype = factor,
     desc = "level of the grouping variable for hierarchical models",
     expected = "level",
     grep = "level|sublevel|region|country|state|city|school|class|group"
   ),
-  group_covariates = list(
-    desc = "covariates for the group",
-    expected = "group_cov",
-    grep = "group_cov|group|gender|sex|group_education"
-  ),
-  item_groups = list(
-    desc = "grouping variable for items",
-    expected = "item_group",
-    grep = "subtest|pretest|wave|item_group|test|form|block|section|part|group|cluster|factor|trait|skill|domain|category|dimension"
-  ),
   rt = list(
+    dtype = numeric,
     desc = "response time variable",
     expected = "rt",
-    grep = "rt|response_time|process"
+    grep = "rt|response_time|process|time|duration|latency|speed|reaction"
+  ),
+  qmatrix = list(
+    dtype = factor,
+    desc = "Q-matrix for item response theory models",
+    expected = "qmatrix",
+    grep = "qmatrix|q_matrix|skill|trait|factor|domain|category|dimension|latent|construct|ability|knowledge|competence"
+  ),
+  item_groups = list(
+    dtype = factor,
+    desc = "grouping variable for items",
+    expected = "item_group",
+    grep = "subtest|pretest|block|item_group|test|form|block|section|part|group|cluster|factor|trait|skill|domain|category|dimension"
+  ),
+  group_covariates = list(
+    dtype = numeric,
+    desc = "covariates for the group",
+    expected = "group_cov",
+    grep = "group_cov|group|block|cluster|country|study|wave|treat|sch"
   ),
   raters = list(
+    dtype = factor,
     desc = "rater variable",
     expected = "rater",
-    grep = "rater|judge"
+    grep = "rater|judge|evaluator|coder|observer|teacher|scorer|reader"
   ),
   rater_covariates = list(
+    dtype = numeric,
     desc = "covariates for the rater",
     expected = "rater_cov",
     grep = "rater_cov|rater_"
   ),
-  qmatrix = list(
-    desc = "Q-matrix for item response theory models",
-    expected = "qmatrix",
-    grep = "qmatrix|q_matrix|skill|trait"
-  ),
-  timedate = list(
-    desc = "longitudinal or date variable",
-    expected = "date",
-    grep = "wave|session|visit|date"
+  other = list(
+    dtype = \(x) x,
+    desc = "other variables",
+    expected = NULL, # and any char returned for grep
+    grep = ".*"
   )
   
 
@@ -397,6 +454,9 @@ not_supported_cols = c("person_id","rater")
 
 reformat = function(data,
                     package = "mirt",
+                    id = "id",
+                    item = "item",
+                    resp = "resp",
                     groups = NULL,
                     covariates = NULL,
                     levels = NULL,
@@ -408,6 +468,7 @@ reformat = function(data,
                     qmatrix = NULL,
                     timedate = NULL,
                     facts2dummies = NULL,
+                    as_args_list = F,
                     item_prefix = "item_",
                     return_obj = "tibble",
                     return_options = NULL) {
@@ -425,7 +486,9 @@ reformat = function(data,
                          "matrix"
                          # "model.matrix"
                          )
-  required_cols = c("id", "item", "resp")
+
+  # required_cols = c("id", "item", "resp")
+  required_cols = c(id, item, resp)
   
   ## save user old columns for error messages
   old_cols = colnames(data)
@@ -484,7 +547,9 @@ reformat = function(data,
 
   ## drop any of the user vars that are null or empty
   user_vars = user_vars[sapply(user_vars, function(x) any(!is.null(x$old_cols) & x$old_cols != "" & x$old_cols != F)) |> unlist()]
-  print(user_vars)
+
+  # print(user_vars)
+
   
   user_cols = c()
   user_cols_old = c()
@@ -532,7 +597,7 @@ reformat = function(data,
       used_columns = c(used_columns, user_vars[[i]]$avail_cols)
     } else if (isTRUE(user_vars[[i]]$cols)){
       pat = variable_roles[[i]][["grep"]]
-      print(pat)
+
       user_vars[[i]]$avail_cols = grep(pat, available_cols, value = TRUE)
       used_columns = c(used_columns, user_vars[[i]]$avail_cols)
     }
@@ -545,7 +610,7 @@ reformat = function(data,
   #   }
   # }
   
-  print(used_columns)
+
   # vars = prepend(list())
   
   
@@ -606,31 +671,40 @@ reformat = function(data,
   
   # Pivot data based on the package requirements
   if (package == "mirt") {
+    print(data)
     # For mirt, wide format with each item as a column
     formatted_data = data |>
-      select(id, item, resp) |>
-      pivot_wider(
-        names_from = item,
-        values_from = resp,
+      # dplyr::select(id, item, resp) |>
+      pivot_wider_irw(
+        # names_from = item,
+        # values_from = resp,
         names_prefix = item_prefix
-      ) |> 
-      column_to_rownames(var = "id")
+      ) 
+    # |> 
+    #   column_to_rownames(var = "id")
   } else if (package == "lavaan" || package == "sem") {
     # lavaan/sem typically uses long format
     formatted_data = data
   } else if (package %in% c("psych", "ltm")) {
     # psych and ltm often use wide format
     formatted_data = data |>
-      pivot_wider(
+      pivot_wider_irw(      
+      # pivot_wider(
         names_from = item,
         values_from = resp,
         names_prefix = item_prefix
-      ) |> select(id, everything())
+      ) 
+    # |> dplyr::select(id, everything())
   } else if (package == "mokken") {
     # mokken uses wide format without prefixes
     formatted_data = data |>
-      pivot_wider(names_from = item, values_from = resp) |>
-      select(id, everything())
+      pivot_wider_irw(
+        names_from = item,
+        values_from = resp,
+        names_prefix = item_prefix
+        )
+      # pivot_wider(names_from = item, values_from = resp) |>
+      # dplyr::select(id, everything())
   } else if (package == "lme4") {
     # lme4 expects long format for mixed models
     formatted_data = data
