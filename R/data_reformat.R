@@ -62,6 +62,9 @@
 ## lme4: long format with each item as a row
 
 
+## TODO: add check for zero variation in item columns
+## TODO: add cluster variable type info
+
 #' @importFrom dplyr as_tibble mutate select across pivot_longer left_join uncount everything pivot_wider
 #' @importFrom tidyr pivot_wider pivot_longer
 #' @importFrom stats model.matrix
@@ -251,6 +254,7 @@ supported_funcs = list(
         other_outputs = list(), 
         func_support = F,
         other_output_support = F
+
       )
       # ,
       # mlr = list(
@@ -265,6 +269,7 @@ supported_funcs = list(
       #   other_output_support = F
       # )
       # 
+
       
     ),
     lavaan = list(
@@ -326,6 +331,7 @@ supported_funcs = list(
       
       
     )
+
 )
 
 pkg_wide_long = list(
@@ -480,6 +486,7 @@ reformat = function(data,
                          "matrix"
                          # "model.matrix"
                          )
+
   # required_cols = c("id", "item", "resp")
   required_cols = c(id, item, resp)
   
@@ -540,7 +547,9 @@ reformat = function(data,
 
   ## drop any of the user vars that are null or empty
   user_vars = user_vars[sapply(user_vars, function(x) any(!is.null(x$old_cols) & x$old_cols != "" & x$old_cols != F)) |> unlist()]
+
   # print(user_vars)
+
   
   user_cols = c()
   user_cols_old = c()
@@ -588,7 +597,7 @@ reformat = function(data,
       used_columns = c(used_columns, user_vars[[i]]$avail_cols)
     } else if (isTRUE(user_vars[[i]]$cols)){
       pat = variable_roles[[i]][["grep"]]
-      # print(pat)
+
       user_vars[[i]]$avail_cols = grep(pat, available_cols, value = TRUE)
       used_columns = c(used_columns, user_vars[[i]]$avail_cols)
     }
@@ -601,7 +610,7 @@ reformat = function(data,
   #   }
   # }
   
-  # print(used_columns)
+
   # vars = prepend(list())
   
   
