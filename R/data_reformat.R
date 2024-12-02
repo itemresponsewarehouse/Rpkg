@@ -62,11 +62,15 @@
 ## lme4: long format with each item as a row
 
 
+## TODO: add check for zero variation in item columns
+## TODO: add cluster variable type info
+
 #' @importFrom dplyr as_tibble mutate select across pivot_longer left_join uncount everything pivot_wider
 #' @importFrom tidyr pivot_wider pivot_longer
 #' @importFrom stats model.matrix
 #' @importFrom tidyselect all_of matches
 #' @export
+
 
 # var_roles list is used to create a catalog object to keep track of and catalog all the variables in the tibble -------
 
@@ -561,7 +565,8 @@ reformat = function(data,
                          # "data.matrix",
                          "matrix"
                          # "model.matrix"
-  )
+                         )
+
   # required_cols = c("id", "item", "resp")
   required_cols = c(id, item, resp)
   
@@ -625,6 +630,7 @@ reformat = function(data,
     data
   }
   
+
   # add_to_catalog <- function(data, var_name, role, catalog=catalog) {
   #     catalog <- add_catalog(data, var_name, role, catalog)
   #     data <- transform_var(data, var_name)
@@ -632,6 +638,7 @@ reformat = function(data,
   # }
   catalog <- add_to_catalog(catalog, "id", "id")
   catalog <- add_to_catalog(catalog, "item", "item")
+
   
   
   
@@ -704,14 +711,17 @@ reformat = function(data,
       }
     }
   }
+
   ## if keep_all is true, add all columns not already in the catalog to the catalog
   if (keep_all) {
     remaining_cols <- setdiff(names(data), names(catalog))
     for (col in remaining_cols) {
       catalog <- add_to_catalog(catalog, col, "other")
       data <- data |> mutate(across(all_of(col), catalog[[col]]$dtype))
+
     }
   }
+
   
   # create copy of data with only the columns in the catalog
   data_cleaned <- data[, names(catalog)]
