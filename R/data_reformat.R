@@ -601,7 +601,7 @@ reformat = function(data,
   catalog_names$cleaned_names = names(data)
   # Check to ensure the identified columns “id”, “item”, and “resp” are present in the tibble (if not it will return an error)
   if (!all(c(id,item, resp) %in% names(data))) {
-    stop("The columns 'id', 'item', and 'resp' must be present in the data")
+    stop("The columns for 'id', 'item', and 'resp' must be present in the data")
   }
   
   # Function to add variables to the catalog and convert them to the appropriate data type
@@ -629,9 +629,9 @@ reformat = function(data,
   data = data |> mutate(id = catalog[["id"]]$dtype(id))
   data = data |> mutate(item = catalog[["item"]]$dtype(item))
   
-  
+  # Check if any other variables have been specified in the args and add them to the catalog
   if (keep_all) {
-    user_specified_char_columns_found_in_args = names(data)[!names(data) %in% c("id", "item", "resp")]
+    user_specified_char_columns_found_in_args = names(data)[!names(data) %in% c(id, item, resp)]
   } else {
     user_specified_char_columns_found_in_args = character(0)
     applicable_args = c(
