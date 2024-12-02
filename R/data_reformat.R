@@ -62,9 +62,6 @@
 ## lme4: long format with each item as a row
 
 
-## TODO: add check for zero variation in item columns
-## TODO: add cluster variable type info
-
 #' @importFrom dplyr as_tibble mutate select across pivot_longer left_join uncount everything pivot_wider
 #' @importFrom tidyr pivot_wider pivot_longer
 #' @importFrom stats model.matrix
@@ -208,7 +205,8 @@ var_roles = list(
   other = list(
     dtype = \(x) x,
     desc = "other variables",
-    expected = NULL, # and any char returned for grep
+    expected = NULL,
+    # and any char returned for grep
     grep = ".*",
     multiple_allowed = T,
     priority = 100,
@@ -224,12 +222,12 @@ supported_funcs = list(
     mirt = list(
       call = "mirt::mirt",
       expect_format = "wide",
-      var_roles = c("resp","id","item"),
+      var_roles = c("resp", "id", "item"),
       id_as_row_names = T,
       resp_as_int = T,
-      as_args_list = F, ## currently not supported
-      args_list_outputs = list(covdata = "a data.frame of data used for latent regression models", 
-                               itemdesign = "data.frame with rows equal to the number of items and columns containing any item-design effects. rownames must be defined and matched with colnames in the data input."), 
+      as_args_list = F,
+      ## currently not supported
+      args_list_outputs = list(covdata = "a data.frame of data used for latent regression models", itemdesign = "data.frame with rows equal to the number of items and columns containing any item-design effects. rownames must be defined and matched with colnames in the data input."),
       func_support = T,
       other_output_support = F
       
@@ -237,48 +235,52 @@ supported_funcs = list(
     mixedmirt = list(
       call = "mirt::mixedmirt",
       expect_format = "wide",
-      var_roles = c("resp","id","item"),
+      var_roles = c("resp", "id", "item"),
       id_as_row_names = T,
       resp_as_int = T,
-      as_args_list = F, ## currently not supported
-      args_list_outputs = list(covdata = "data.frame that consists of the nrow(data) by K ’person level’ fixed and random predictors", itemdesign = "data.frame object used to create a design matrix for the items, where each nrow(itemdesign) == nitems and the number of columns is equal to the number of fixed effect predictors (i.e., item intercepts)."), 
+      as_args_list = F,
+      ## currently not supported
+      args_list_outputs = list(covdata = "data.frame that consists of the nrow(data) by K ’person level’ fixed and random predictors", itemdesign = "data.frame object used to create a design matrix for the items, where each nrow(itemdesign) == nitems and the number of columns is equal to the number of fixed effect predictors (i.e., item intercepts)."),
       func_support = F,
       other_output_support = F
     ),
     bfactor = list(
       call = "mirt::bfactor",
       expect_format = "wide",
-      var_roles = c("resp","id","item"),
+      var_roles = c("resp", "id", "item"),
       id_as_row_names = T,
       resp_as_int = T,
-      as_args_list = F, ## currently not supported
-      args_list_outputs = list(group = "a factor variable indicating group membership used for multiple group analyses"), 
+      as_args_list = F,
+      ## currently not supported
+      args_list_outputs = list(group = "a factor variable indicating group membership used for multiple group analyses"),
       func_support = F,
       other_output_support = F
     ),
     multipleGroup = list(
       call = "mirt::multipleGroup",
       expect_format = "wide",
-      var_roles = c("resp","id","item"),
+      var_roles = c("resp", "id", "item"),
       id_as_row_names = T,
       resp_as_int = T,
-      as_args_list = F, ## currently not supported
-      args_list_outputs = list(group = "a factor variable indicating group membership used for multiple group analyses"), 
+      as_args_list = F,
+      ## currently not supported
+      args_list_outputs = list(group = "a factor variable indicating group membership used for multiple group analyses"),
       func_support = F,
       other_output_support = F
     ),
     mdirt = list(
       call = "mirt::mdirt",
       expect_format = "wide",
-      var_roles = c("resp","id","item"),
+      var_roles = c("resp", "id", "item"),
       id_as_row_names = T,
       resp_as_int = T,
-      as_args_list = F, ## currently not supported
+      as_args_list = F,
+      ## currently not supported
       args_list_outputs = list(
         covdata = "a data.frame of data used for latent regression models",
         item.Q = "a list of item-level Q-matrices indicating how the respective categories should be modeled by the underlying attributes. Each matrix must represent a Ki × A matrix, where Ki represents the number of categories for the ith item, and A is the number of attributes included in the Theta matrix; otherwise, a value ofNULL will default to a matrix consisting of 1’s for each Ki × A element except for the first row, which contains only 0’s for proper identification. Incidentally, the first row of each matrix must contain only 0’s so that the first category represents the reference category for identification",
         group = "a factor variable indicating group membership used for multiple group analyses"
-      ), 
+      ),
       func_support = F,
       other_output_support = F
     )
@@ -288,55 +290,60 @@ supported_funcs = list(
     rasch = list(
       call = "ltm::rasch",
       expect_format = "wide",
-      var_roles = c("resp","id","item"),
+      var_roles = c("resp", "id", "item"),
       id_as_row_names = T,
       resp_as_int = T,
-      as_args_list = F, ## currently not supported
-      args_list_outputs = list(), 
+      as_args_list = F,
+      ## currently not supported
+      args_list_outputs = list(),
       func_support = F,
       other_output_support = F
     ),
     gpcm = list(
       call = "ltm::gpcm",
       expect_format = "wide",
-      var_roles = c("resp","id","item"),
+      var_roles = c("resp", "id", "item"),
       id_as_row_names = T,
       resp_as_int = T,
-      as_args_list = F, ## currently not supported
-      args_list_outputs = list(), 
+      as_args_list = F,
+      ## currently not supported
+      args_list_outputs = list(),
       func_support = F,
       other_output_support = F
     ),
     grm = list(
       call = "ltm::grm",
       expect_format = "wide",
-      var_roles = c("resp","id","item"),
+      var_roles = c("resp", "id", "item"),
       id_as_row_names = T,
       resp_as_int = T,
-      as_args_list = F, ## currently not supported
-      args_list_outputs = list(), 
+      as_args_list = F,
+      ## currently not supported
+      args_list_outputs = list(),
       func_support = F,
       other_output_support = F
     ),
     rcor.test  = list(
       call = "ltm::rcor.test ",
       expect_format = "wide",
-      var_roles = c("resp","id","item"),
+      var_roles = c("resp", "id", "item"),
       id_as_row_names = T,
       resp_as_int = T,
-      as_args_list = F, ## currently not supported
-      args_list_outputs = list(), 
+      as_args_list = F,
+      ## currently not supported
+      args_list_outputs = list(),
       func_support = F,
       other_output_support = F
     ),
     tpm = list(
       call = "ltm::tpm",
       expect_format = "wide",
-      var_roles = c("resp","id","item"),
+      var_roles = c("resp", "id", "item"),
       id_as_row_names = T,
       resp_as_int = T,
-      as_args_list = F, ## currently not supported
-      args_list_outputs = list(), 
+      as_args_list = F,
+      ## currently not supported
+      args_list_outputs = list(),
       func_support = F,
       other_output_support = F
     )
@@ -345,11 +352,12 @@ supported_funcs = list(
     alpha = list(
       call = "psych::alpha",
       expect_format = "wide",
-      var_roles = c("resp","id","item"),
+      var_roles = c("resp", "id", "item"),
       id_as_row_names = T,
       resp_as_int = F,
-      as_args_list = F, ## currently not supported
-      args_list_outputs = list(), 
+      as_args_list = F,
+      ## currently not supported
+      args_list_outputs = list(),
       func_support = F,
       other_output_support = F
     ),
@@ -359,79 +367,90 @@ supported_funcs = list(
       var_roles = c("any"),
       id_as_row_names = T,
       resp_as_int = F,
-      as_args_list = F, ## currently not supported
-      args_list_outputs = list(), 
+      as_args_list = F,
+      ## currently not supported
+      args_list_outputs = list(),
       func_support = F,
       other_output_support = F
     ),
     fa = list(
       call = "psych::fa",
       expect_format = "wide",
-      var_roles = c("resp","id","item","covariates","groups","levels","group_covariates","timedate"),
+      var_roles = c(
+        "resp",
+        "id",
+        "item",
+        "covariates",
+        "groups",
+        "levels",
+        "group_covariates",
+        "timedate"
+      ),
       id_as_row_names = T,
       resp_as_int = F,
-      as_args_list = F, ## currently not supported
-      args_list_outputs = list(), 
+      as_args_list = F,
+      ## currently not supported
+      args_list_outputs = list(),
       func_support = F,
       other_output_support = F
     ),
     irt.fa = list(
       call = "psych::irt.fa",
       expect_format = "wide",
-      var_roles = c("resp","id","item","covariates","groups","levels","group_covariates","timedate"),
+      var_roles = c(
+        "resp",
+        "id",
+        "item",
+        "covariates",
+        "groups",
+        "levels",
+        "group_covariates",
+        "timedate"
+      ),
       id_as_row_names = T,
       resp_as_int = T,
-      as_args_list = F, ## currently not supported
-      args_list_outputs = list(), 
+      as_args_list = F,
+      ## currently not supported
+      args_list_outputs = list(),
       func_support = F,
       other_output_support = F
     ),
     omega = list(
       call = "psych::omega",
       expect_format = "wide",
-      var_roles = c("resp","id","item"),
+      var_roles = c("resp", "id", "item"),
       id_as_row_names = T,
       resp_as_int = T,
-      as_args_list = F, ## currently not supported
-      args_list_outputs = list(), 
+      as_args_list = F,
+      ## currently not supported
+      args_list_outputs = list(),
       func_support = F,
       other_output_support = F
     ),
     omegah = list(
       call = "psych::omegah",
       expect_format = "wide",
-      var_roles = c("resp","id","item"),
+      var_roles = c("resp", "id", "item"),
       id_as_row_names = T,
       resp_as_int = T,
-      as_args_list = F, ## currently not supported
-      args_list_outputs = list(), 
+      as_args_list = F,
+      ## currently not supported
+      args_list_outputs = list(),
       func_support = F,
       other_output_support = F
     ),
     omegaSem = list(
       call = "psych::omegaSem",
       expect_format = "wide",
-      var_roles = c("resp","id","item"),
+      var_roles = c("resp", "id", "item"),
       id_as_row_names = T,
       resp_as_int = T,
-      as_args_list = F, ## currently not supported
-      args_list_outputs = list(), 
+      as_args_list = F,
+      ## currently not supported
+      args_list_outputs = list(),
       func_support = F,
       other_output_support = F
     )
-    # ,
-    # mlr = list(
-    #   call = "psych::mlr",
-    #   expect_format = "long",
-    #   supported_var_types = c("any"),
-    #   desc = " first four columns in the long output are id, time, values, and item names, the remaining columns are the extra values. These could be something such as a trait measure for each subject, or the situation in which the items are given",
-    #   id_as_row_names = F,
-    #   resp_as_int = F, as_args_list = F, ## currently not supported
-    #   other_outputs = list(), 
-    #   func_support = F,
-    #   other_output_support = F
-    # )
-    # 
     
   ),
   lavaan = list(
@@ -441,8 +460,9 @@ supported_funcs = list(
       var_roles = c("any"),
       id_as_row_names = T,
       resp_as_int = F,
-      as_args_list = F, ## currently not supported
-      args_list_outputs = list(), 
+      as_args_list = F,
+      ## currently not supported
+      args_list_outputs = list(),
       func_support = F,
       other_output_support = F
     )
@@ -455,8 +475,9 @@ supported_funcs = list(
       #  the factor given as the group argument is used to split the data into groups
       id_as_row_names = T,
       resp_as_int = F,
-      as_args_list = F, ## currently not supported
-      args_list_outputs = list(), 
+      as_args_list = F,
+      ## currently not supported
+      args_list_outputs = list(),
       func_support = F,
       other_output_support = F
     )
@@ -468,8 +489,9 @@ supported_funcs = list(
       var_roles = c("any"),
       id_as_row_names = F,
       resp_as_int = F,
-      as_args_list = F, ## currently not supported
-      args_list_outputs = list(), 
+      as_args_list = F,
+      ## currently not supported
+      args_list_outputs = list(),
       func_support = F,
       other_output_support = F
     )
@@ -478,21 +500,23 @@ supported_funcs = list(
     check.monotonicity = list(
       call = "mokken::check.monotonicity",
       expect_format = "wide",
-      var_roles = c("resp","id","item"),
+      var_roles = c("resp", "id", "item"),
       ## can handle respondent clustering
       id_as_row_names = T,
       resp_as_int = T,
-      as_args_list = F, ## currently not supported
+      as_args_list = F,
+      ## currently not supported
       args_list_outputs = list(level.two.var = "vector of length nrow(X) or matrix with number of rows equal to nrow(X) that indicates the level two variable for nested data")
     ),
     aisp = list(
       call = "mokken::aisp",
       expect_format = "wide",
-      var_roles = c("resp","id","item"),
+      var_roles = c("resp", "id", "item"),
       ## can handle respondent clustering
       id_as_row_names = T,
       resp_as_int = T,
-      as_args_list = F, ## currently not supported
+      as_args_list = F,
+      ## currently not supported
       args_list_outputs = list(level.two.var = "vector of length nrow(X) or matrix with number of rows equal to nrow(X) that indicates the level two variable for nested data")
     )
     
@@ -519,11 +543,8 @@ cov_wide_supps = list(
   lme4 = T
 )
 
-## TODO: potential solutions for identifying and reorganizing irw data with conflicting names or bad datatypes
-# df |> pivot_wider(id_cols = person_id, names_from = c(item,wave),values_from = resp, names_prefix = "i",names_sep = "_")
-# df |> pivot_wider(id_cols = person_id, names_from = item, values_from = resp, names_prefix = "i",id_expand = T)
 
-not_supported_cols = c("rater","raters","rater_covariates","rt") ## currently not supported
+not_supported_cols = c("rater", "raters", "rater_covariates", "rt") ## currently not supported
 
 
 reformat = function(data,
@@ -543,7 +564,8 @@ reformat = function(data,
                     timedate = NULL,
                     keep_all = F,
                     facts2dummies = NULL,
-                    as_args_list = F, ## currently not supported
+                    as_args_list = F,
+                    ## currently not supported
                     drop_na_vals = F,
                     item_prefix = "item_",
                     sep = "_",
@@ -552,22 +574,23 @@ reformat = function(data,
   if (!is_tibble(data)) {
     data <- as_tibble(data)
   }
-  if(package == "lme4"){
+  if (package == "lme4") {
     keep_all = T
   }
   package_options = names(supported_funcs)
   if (!package %in% package_options) {
-    stop(paste0("The package '", package, "' is not currently supported. Supported packages are: ", paste(package_options, collapse = ", ")))
+    stop(
+      paste0(
+        "The package '",
+        package,
+        "' is not currently supported. Supported packages are: ",
+        paste(package_options, collapse = ", ")
+      )
+    )
   }
   
-  return_obj_options = c("tibble",
-                         "data.frame",
-                         # "data.matrix",
-                         "matrix"
-                         # "model.matrix"
-                         )
-
-  # required_cols = c("id", "item", "resp")
+  return_obj_options = c("tibble", "data.frame", "matrix")
+  
   required_cols = c(id, item, resp)
   
   # Create a catalog object to keep track of and catalog all the variables in the tibble
@@ -576,7 +599,7 @@ reformat = function(data,
   catalog_names$original_names <- names(data)
   data <- data |> irw_rename()
   catalog_names$cleaned_names <- names(data)
-  # b.	Check to ensure the identified columns “id”, “item”, and “resp” are present in the tibble (if not it will return an error)
+  # Check to ensure the identified columns “id”, “item”, and “resp” are present in the tibble (if not it will return an error)
   if (!all(c("id", "item", "resp") %in% names(data))) {
     stop("The columns 'id', 'item', and 'resp' must be present in the data")
   }
@@ -592,25 +615,6 @@ reformat = function(data,
   # Convert resp to numeric if necessary
   data <- data |> check_resp(resp, item)
   
-  # Add variables with id and item roles to catalog, converting their data types appropriately
-  # catalog$id <- list(
-  #     name = id,
-  #     role = "id",
-  #     dtype = var_roles$id$dtype,
-  #     priority = var_roles$id$priority
-  # )
-  
-  # catalog$item <- list(
-  #     name = item,
-  #     role = "item",
-  #     dtype = var_roles$item$dtype,
-  #     priority = var_roles$item$priority
-  # )
-  # Function to convert variables to appropriate data types
-  convert_to_dtype <- function(data, var_name, dtype) {
-    data[[var_name]] <- dtype(data[[var_name]])
-    data
-  }
   
   # Function to add variables to the catalog and convert them to the appropriate data type
   add_to_catalog <- function(catalog = catalog, var_name, role) {
@@ -623,42 +627,36 @@ reformat = function(data,
     catalog
   }
   
-  # Function to transform variables to the appropriate data type from the catalog
-  transform_var <- function(data, var_name, catalog=catalog) {
-    func = catalog[[var_name]]$dtype
-    data[[var_name]] <- sapply(data[[var_name]],FUN = func)
-    data
-  }
   
-
-  # add_to_catalog <- function(data, var_name, role, catalog=catalog) {
-  #     catalog <- add_catalog(data, var_name, role, catalog)
-  #     data <- transform_var(data, var_name)
-  #     list(data = data, catalog = catalog)
-  # }
   catalog <- add_to_catalog(catalog, "id", "id")
   catalog <- add_to_catalog(catalog, "item", "item")
-
-  
-  
-  
   
   # Add variables with id and item roles to catalog, converting their data types appropriately
   data <- data |> mutate(id = catalog[["id"]]$dtype(id))
   data <- data |> mutate(item = catalog[["item"]]$dtype(item))
   
-  # # Convert id and item to appropriate data types
-  # data <- data |> convert_to_dtype("id", catalog$id$dtype)
-  # data <- data |> convert_to_dtype("item", catalog$item$dtype)
+  
   if (keep_all) {
     user_specified_char_columns_found_in_args = names(data)[!names(data) %in% c("id", "item", "resp")]
   } else {
     user_specified_char_columns_found_in_args = character(0)
-    applicable_args = c(groups, covariates, levels, group_covariates, item_groups, rt, raters, rater_covariates, qmatrix, timedate)
+    applicable_args = c(
+      groups,
+      covariates,
+      levels,
+      group_covariates,
+      item_groups,
+      rt,
+      raters,
+      rater_covariates,
+      qmatrix,
+      timedate
+    )
     
     for (arg_value in applicable_args) {
       if (is.character(arg_value)) {
-        user_specified_char_columns_found_in_args <- c(user_specified_char_columns_found_in_args, arg_value)
+        user_specified_char_columns_found_in_args <- c(user_specified_char_columns_found_in_args,
+                                                       arg_value)
       }
     }
   }
@@ -668,7 +666,7 @@ reformat = function(data,
   # This loop iterates over the names of the elements in the 'var_roles' list.
   # 'var_roles' is assumed to be a predefined global variable containing role information.
   # Each iteration processes one role from 'var_roles', done in order of priority within var_roles (assuming resp, item, and id have already been added).
-  remaining_roles_in_order_of_priority <- names(var_roles)[!names(var_roles) %in% c("resp", "id", "item","other")]
+  remaining_roles_in_order_of_priority <- names(var_roles)[!names(var_roles) %in% c("resp", "id", "item", "other")]
   for (role in remaining_roles_in_order_of_priority) {
     # if corresponding argument is not NULL, add to catalog
     role_col <- eval(parse(text = role))
@@ -688,22 +686,31 @@ reformat = function(data,
         for (r in c(role_col)) {
           if (r %in% names(catalog)) {
             ## warning states if variable has already been used and if so which role it has been used for
-            warning(paste0("The column '", role_col, "' has already been used in the catalog for the role '", catalog[[role_col]]$role, "'"))
+            warning(
+              paste0(
+                "The column '",
+                role_col,
+                "' has already been used in the catalog for the role '",
+                catalog[[role_col]]$role,
+                "'"
+              )
+            )
           } else {
             catalog <- add_to_catalog(catalog, r, role)
             data <- data |> mutate(across(all_of(r), catalog[[r]]$dtype))
           }
         }
         # add the role to the catalog
-        # catalog <- add_to_catalog(catalog, role_col, role)
-        # data <- data |> mutate(across(all_of(role_col), catalog[[role_col]]$dtype))
-      } else if (isTRUE(role_col) | keep_all) { # if the role is boolean and true,
+      } else if (isTRUE(role_col) |
+                 keep_all) {
+        # if the role is boolean and true,
         pat = var_roles[[role]]$grep
         candidate_cols = names(data)[grepl(pat, names(data))]
         # remove any columns that have already been used in the catalog
         candidate_cols <- setdiff(candidate_cols, names(catalog))
         # remove any columns that have been specified in the args
-        candidate_cols <- setdiff(candidate_cols, user_specified_char_columns_found_in_args)
+        candidate_cols <- setdiff(candidate_cols,
+                                  user_specified_char_columns_found_in_args)
         for (col in candidate_cols) {
           catalog <- add_to_catalog(catalog, col, role)
           data <- data |> mutate(across(all_of(col), catalog[[col]]$dtype))
@@ -711,17 +718,17 @@ reformat = function(data,
       }
     }
   }
-
+  
   ## if keep_all is true, add all columns not already in the catalog to the catalog
   if (keep_all) {
     remaining_cols <- setdiff(names(data), names(catalog))
     for (col in remaining_cols) {
       catalog <- add_to_catalog(catalog, col, "other")
       data <- data |> mutate(across(all_of(col), catalog[[col]]$dtype))
-
+      
     }
   }
-
+  
   
   # create copy of data with only the columns in the catalog
   data_cleaned <- data[, names(catalog)]
@@ -738,23 +745,23 @@ reformat = function(data,
     if (piv_wide_pkg[[package]]) {
       # check if uni que identification is possible with id, item, and resp
       # get id_cols by finding all variables with id role in catalog
-      id_cols <- names(catalog)[sapply(catalog, function(x) x$role == "id")]
+      id_cols <- names(catalog)[sapply(catalog, function(x)
+        x$role == "id")]
       # get names_from by finding all variables with item role in catalog
-      names_from <- names(catalog)[sapply(catalog, function(x) x$role == "item")]
+      names_from <- names(catalog)[sapply(catalog, function(x)
+        x$role == "item")]
       
       
-      # if (!check_uniqueness(data_cleaned, c(id_cols, names_from))) {
       # find pivot arguments try first from data_cleaned and if not possible, try to find from data
       pivot_args <- NULL
-      try(
-        {
-          pivot_args <- find_pivot_args(data_cleaned, id_cols, names_from, resp, catalog = catalog)
-        },
-        silent = TRUE
-      )
+      try({
+        pivot_args <- find_pivot_args(data_cleaned, id_cols, names_from, resp, catalog = catalog)
+      }, silent = TRUE)
       if (is.null(pivot_args)) {
         pivot_args <- find_pivot_args(data, id_cols, names_from, resp, catalog = catalog)
-        data_cleaned <- data[, c(names(catalog), setdiff(as.character(unlist(pivot_args, use.names = F)), names(catalog)))]
+        data_cleaned <- data[, c(names(catalog), setdiff(as.character(unlist(
+          pivot_args, use.names = F
+        )), names(catalog)))]
       }
       
       ## print notification if pivot_args need to be combined
@@ -763,40 +770,41 @@ reformat = function(data,
       }
       
       # pivot data
-      data_formatted <- data_cleaned |> pivot_wider(names_from = pivot_args$names_from, values_from = pivot_args$values_from, id_cols = pivot_args$id_cols, names_prefix = item_prefix, names_sep = sep)
+      data_formatted <- data_cleaned |> pivot_wider(
+        names_from = pivot_args$names_from,
+        values_from = pivot_args$values_from,
+        id_cols = pivot_args$id_cols,
+        names_prefix = item_prefix,
+        names_sep = sep
+      )
       
       unused_vars <- setdiff(names(data_cleaned), as.character(unlist(pivot_args, use.names = F)))
       ## issue warning if cov_wide_supps[[package]] is false and there are other unused variables in the catalog and state which package does not support them and which variables will be ignored
       
       if ((length(unused_vars) > 0) & !cov_wide_supps[[package]]) {
-        warning(paste0("The package '", package, "' does not support the following variables: ", paste(unused_vars, collapse = ", ")))
+        warning(
+          paste0(
+            "The package '",
+            package,
+            "' does not support the following variables: ",
+            paste(unused_vars, collapse = ", ")
+          )
+        )
       }
       # if there are other unused variables in the catalog and if any of the supported methods for the package have var_roles of the unused variables, add them to the data by joining them back to the data_cleaned
       if ((length(unused_vars) > 0) & cov_wide_supps[[package]]) {
-        
-        tmpdata = data_cleaned[, c(unused_vars,pivot_args$id_cols)] |> distinct()
+        tmpdata = data_cleaned[, c(unused_vars, pivot_args$id_cols)] |> distinct()
         data_formatted <- data_formatted |> left_join(tmpdata, by = pivot_args$id_cols)
         
-        # }
-        #             # check if pivot_args need to be combined
-        # if (needs_combined_columns(pivot_args)) {
-        #     notify_combined_columns(pivot_args)
-        #     # pivot_args <- check_combination(data_cleaned, pivot_args$id_cols, pivot_args$names_from)
-        # }
       }
       ## combine any id_cols to create unique rownames and then drop them
       data_formatted <- data_formatted |>
-        unite("rowid", pivot_args$id_cols, sep = sep, remove = T) |>
+        unite("rowid",
+              pivot_args$id_cols,
+              sep = sep,
+              remove = T) |>
         column_to_rownames("rowid")
       
-      # } else {
-      #     data_formatted <- pivot_wider(data_cleaned, names_from = names_from, values_from = resp, id_cols = id_cols)
-      #     ## combine any id_cols to create unique rownames and then drop them
-      #     data_formatted <- data_formatted |>
-      #         mutate(rowid = paste0(across(all_of(id_cols)), sep = "_")) |>
-      #         column_to_rownames("rowid") |>
-      #         select(-all_of(id_cols))
-      # }
     } else {
       data_formatted <- data_cleaned |> as_tibble()
     }
@@ -806,13 +814,20 @@ reformat = function(data,
   ## check if any columns in dataformatted need to be dropped due to NAs and drop them with a warning message
   cols_to_drop <- colnames(data_formatted)[colSums(is.na(data_formatted)) == nrow(data_formatted)]
   if (length(cols_to_drop) > 0) {
-    warning(paste0("The following columns have been dropped due to all missing values: ", paste(cols_to_drop, collapse = ", ")))
+    warning(paste0(
+      "The following columns have been dropped due to all missing values: ",
+      paste(cols_to_drop, collapse = ", ")
+    ))
     data_formatted <- data_formatted |> select(-all_of(cols_to_drop))
   }
   
   rows_to_drop <- rownames(data_formatted)[rowSums(is.na(data_formatted)) == ncol(data_formatted)]
   if (length(rows_to_drop) > 0) {
-    warning(paste0("A total of ", length(rows_to_drop), " rows have been dropped due to all  missing values"))
+    warning(paste0(
+      "A total of ",
+      length(rows_to_drop),
+      " rows have been dropped due to all  missing values"
+    ))
     data_formatted <- data_formatted |>  filter(!rownames(data_formatted) %in% rows_to_drop)
   }
   
@@ -822,33 +837,22 @@ reformat = function(data,
     for (col in names(data_formatted)) {
       ## first check if the column has only one value and if so, drop it
       if (one_value_check(data_formatted[[col]])) {
-        data_formatted <- data_formatted[ , !(names(data_formatted) %in% col)]
+        data_formatted <- data_formatted[, !(names(data_formatted) %in% col)]
         
       } else if (class(data_formatted[[col]]) %in% c("factor", "ordered", "character", "logical")) {
         data_formatted <- check_resp(data_formatted, col)
         if (is.factor(data_formatted[[col]])) {
-          dummy_cols <- psych::dummy.code(data_formatted[[col]],na.rm = T)
+          dummy_cols <- psych::dummy.code(data_formatted[[col]], na.rm = T)
           data_formatted <- cbind(data_formatted, dummy_cols)
           # cbind(data_formatted, dummy_cols)
-          data_formatted <- data_formatted[ , !(names(data_formatted) %in% col)]
+          data_formatted <- data_formatted[, !(names(data_formatted) %in% col)]
         }
-        # if (is.ordered(data_formatted[[col]])|is.factor(data_formatted[[col]])|is.logical(data_formatted[[col]])) {
-        #   # data_formatted[[col]] <- as.numeric(data_formatted[[col]])
-        #   data_formatted <- check_resp(data_formatted, col)
-        # } 
-        # else {
-        #   dummy_cols <- psych::dummy.code(data_formatted[[col]])
-        #   print(data_formatted |> names())
-        #   data_formatted <- cbind(data_formatted, dummy_cols)
-        #   print(data_formatted |> names())
-        #   data_formatted <- data_formatted[ , !(names(data_formatted) %in% col)]
-        # }
       }
     }
   }
   
   ## drop na rows if drop_na_vals is true or if the package is mokken
-  if(drop_na_vals | package =="mokken") {
+  if (drop_na_vals | package == "mokken") {
     data_formatted <- data_formatted |> drop_na()
   }
   
@@ -871,19 +875,3 @@ reformat = function(data,
   
   
 }
-
-
-# ## check if any of the parameters are not NULL and have character values, if so, convert to lower case and check to make sure they are in the data
-# check_col_presence = function(x, ref_cols) {
-#   if (!is.null(x) & is.character(x)) {
-#     x = tolower(x)
-#     if (!all(x %in% ref_cols)) {
-#       missing = setdiff(x, ref_cols)
-#       warning(
-#         "Columns specified must be in the data. The following are missing and will be dropped: ",
-#         paste(missing, collapse = ", ")
-#       )
-#     }
-#   }
-# }
-

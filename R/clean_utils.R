@@ -1,13 +1,13 @@
 #' @title Cleans names for consistent IRW objects during transformations
 #'
-#' @description 
-#' Similar to but less flexible than `janitor::clean_names()`, resulting strings 
+#' @description
+#' Similar to but less flexible than `janitor::clean_names()`, resulting strings
 #' are unique and consist only of the `_` character, numbers, and lower case letters in lower case.
-#' character, numbers, and letters to put files in compliance 
+#' character, numbers, and letters to put files in compliance
 #'
 #' The order of operations is: make replacements,
 #' remove initial spaces and punctuation, apply `tolower()`, and add numeric suffixes
-#' to resolve any duplicated names. 
+#' to resolve any duplicated names.
 #'
 #' @param string A character vector of names to clean.
 #' @param replace A named character vector where the name is replaced by the
@@ -36,7 +36,7 @@ irw_name_fix <- function(string,
                              " " = "_",
                              "-" = "_",
                              "/" = "_",
-                             "__"= "_",
+                             "__" = "_",
                              "@" = "_at_"
                            ),
                          digit_first_ok = FALSE,
@@ -93,75 +93,21 @@ irw_name_fix <- function(string,
   new_names
 }
 
-## function to apply irw_name_fix to an object with names 
+## function to apply irw_name_fix to an object with names
 #' @param x an object with names to clean
 #' @noRd
 #' @export
-#' 
+#'
 irw_rename = function(x, ...) {
   if (is.data.frame(x)) {
     x |> dplyr::rename_with(function(.name) {
       irw_name_fix(.name)
     })
   } else if (is.character(x)) {
-    map_chr(c(x),irw_name_fix)
+    map_chr(c(x), irw_name_fix)
   } else {
     stop("x must be a data frame or character vector")
   }
-}
-
-#' ## function to apply irw_name_fix to a vector of arbitrary length
-#' #' @param x a vector of names to clean
-#' #' @noRd
-#' #' @export
-#' 
-#' irw_name_fix_all <- function(x, ...) {
-#'   if (is.data.frame(x)) {
-#'     stop("`x` must not be a data.frame, use clean_names()")
-#'   }
-#'   vapply(x, irw_name_fix, character(1), ...)
-#' }
-
-
-
-# irw_name_fixer = function(x, ...) {
-#   if (is.data.frame(x)) {
-#     irw_rename(x)
-#   } else if (is.character(x)) {
-#     map_chr(c(x),irw_name_fix)
-#   } else {
-#     stop("x must be a data frame or character vector")
-#   }
-# }
-
-
-
-#' @param df returns the data frame with cleaned column names,
-#' @noRd
-irw_col_clean = function(df,...) {
-  colnames(df) = irw_name_fix(colnames(df))
-  df
-}
-
-#' @param df returns the data frame with cleaned row names,
-#' @noRd
-irw_row_clean = function(df,...) {
-  rownames(df) = irw_name_fix(rownames(df), digit_first_ok = TRUE)
-  df
-}
-
-#' @param df returns the data frame with cleaned row names,
-#' @param dims columns 'c', rows 'r', or both 'b'
-#' @export
-irw_name_cleaner = function(df,dims = "c",...) {
-  if (dims == "c") {
-    irw_col_clean(df)
-  } else if (dims == "r") {
-    irw_row_clean(df)
-  } else {
-    irw_col_clean(irw_row_clean(df))
-  }
-  
 }
 
 
