@@ -572,7 +572,7 @@ reformat = function(data,
                     return_obj = "tibble",
                     return_options = NULL) {
   if (!is_tibble(data)) {
-    data <- as_tibble(data)
+    data = as_tibble(data)
   }
   if (package == "lme4") {
     keep_all = T
@@ -594,31 +594,19 @@ reformat = function(data,
   required_cols = c(id, item, resp)
   
   # Create a catalog object to keep track of and catalog all the variables in the tibble
-  catalog <- list()
-  catalog_names <- list()
-  catalog_names$original_names <- names(data)
-  data <- data |> irw_rename()
-  catalog_names$cleaned_names <- names(data)
+  catalog = list()
+  catalog_names = list()
+  catalog_names$original_names = names(data)
+  data = data |> irw_rename()
+  catalog_names$cleaned_names = names(data)
   # Check to ensure the identified columns “id”, “item”, and “resp” are present in the tibble (if not it will return an error)
-  if (!all(c("id", "item", "resp") %in% names(data))) {
+  if (!all(c(id,item, resp) %in% names(data))) {
     stop("The columns 'id', 'item', and 'resp' must be present in the data")
   }
   
-  # Add resp to catalog, with correct role and priority
-  catalog$resp <- list(
-    name = resp,
-    role = "resp",
-    dtype = var_roles$resp$dtype,
-    priority = var_roles$resp$priority
-  )
-  
-  # Convert resp to numeric if necessary
-  data <- data |> check_resp(resp, item)
-  
-  
   # Function to add variables to the catalog and convert them to the appropriate data type
-  add_to_catalog <- function(catalog = catalog, var_name, role) {
-    catalog[[var_name]] <- list(
+  add_to_catalog = function(catalog = catalog, var_name, role) {
+    catalog[[var_name]] = list(
       name = var_name,
       role = role,
       dtype = var_roles[[role]]$dtype,
@@ -628,12 +616,18 @@ reformat = function(data,
   }
   
   
-  catalog <- add_to_catalog(catalog, "id", "id")
-  catalog <- add_to_catalog(catalog, "item", "item")
+  # Convert resp to numeric if necessary
+  data = data |> check_resp(resp, item)
+  
+  
+  catalog = add_to_catalog(catalog, resp, "resp")
+  catalog = add_to_catalog(catalog, id, "id")
+  catalog = add_to_catalog(catalog, item, "item")
+  
   
   # Add variables with id and item roles to catalog, converting their data types appropriately
-  data <- data |> mutate(id = catalog[["id"]]$dtype(id))
-  data <- data |> mutate(item = catalog[["item"]]$dtype(item))
+  data = data |> mutate(id = catalog[["id"]]$dtype(id))
+  data = data |> mutate(item = catalog[["item"]]$dtype(item))
   
   
   if (keep_all) {
@@ -655,7 +649,7 @@ reformat = function(data,
     
     for (arg_value in applicable_args) {
       if (is.character(arg_value)) {
-        user_specified_char_columns_found_in_args <- c(user_specified_char_columns_found_in_args,
+        user_specified_char_columns_found_in_args = c(user_specified_char_columns_found_in_args,
                                                        arg_value)
       }
     }
@@ -666,10 +660,10 @@ reformat = function(data,
   # This loop iterates over the names of the elements in the 'var_roles' list.
   # 'var_roles' is assumed to be a predefined global variable containing role information.
   # Each iteration processes one role from 'var_roles', done in order of priority within var_roles (assuming resp, item, and id have already been added).
-  remaining_roles_in_order_of_priority <- names(var_roles)[!names(var_roles) %in% c("resp", "id", "item", "other")]
+  remaining_roles_in_order_of_priority = names(var_roles)[!names(var_roles) %in% c("resp", "id", "item", "other")]
   for (role in remaining_roles_in_order_of_priority) {
     # if corresponding argument is not NULL, add to catalog
-    role_col <- eval(parse(text = role))
+    role_col = eval(parse(text = role))
     if (!is.null(role_col)) {
       # if character is in not_supported_cols, return an error
       if (role %in% not_supported_cols) {
@@ -696,8 +690,8 @@ reformat = function(data,
               )
             )
           } else {
-            catalog <- add_to_catalog(catalog, r, role)
-            data <- data |> mutate(across(all_of(r), catalog[[r]]$dtype))
+            catalog = add_to_catalog(catalog, r, role)
+            data = data |> mutate(across(all_of(r), catalog[[r]]$dtype))
           }
         }
         # add the role to the catalog
@@ -707,13 +701,13 @@ reformat = function(data,
         pat = var_roles[[role]]$grep
         candidate_cols = names(data)[grepl(pat, names(data))]
         # remove any columns that have already been used in the catalog
-        candidate_cols <- setdiff(candidate_cols, names(catalog))
+        candidate_cols = setdiff(candidate_cols, names(catalog))
         # remove any columns that have been specified in the args
-        candidate_cols <- setdiff(candidate_cols,
+        candidate_cols = setdiff(candidate_cols,
                                   user_specified_char_columns_found_in_args)
         for (col in candidate_cols) {
-          catalog <- add_to_catalog(catalog, col, role)
-          data <- data |> mutate(across(all_of(col), catalog[[col]]$dtype))
+          catalog = add_to_catalog(catalog, col, role)
+          data = data |> mutate(across(all_of(col), catalog[[col]]$dtype))
         }
       }
     }
@@ -721,17 +715,17 @@ reformat = function(data,
   
   ## if keep_all is true, add all columns not already in the catalog to the catalog
   if (keep_all) {
-    remaining_cols <- setdiff(names(data), names(catalog))
+    remaining_cols = setdiff(names(data), names(catalog))
     for (col in remaining_cols) {
-      catalog <- add_to_catalog(catalog, col, "other")
-      data <- data |> mutate(across(all_of(col), catalog[[col]]$dtype))
+      catalog = add_to_catalog(catalog, col, "other")
+      data = data |> mutate(across(all_of(col), catalog[[col]]$dtype))
       
     }
   }
   
   
   # create copy of data with only the columns in the catalog
-  data_cleaned <- data[, names(catalog)]
+  data_cleaned = data[, names(catalog)]
   
   # Check whether 'item' needs the item_prefix added (whether items are already prefixed or numeric)
   if (all(grepl("^\\d+$", unique(data$item)))) {
@@ -745,21 +739,21 @@ reformat = function(data,
     if (piv_wide_pkg[[package]]) {
       # check if uni que identification is possible with id, item, and resp
       # get id_cols by finding all variables with id role in catalog
-      id_cols <- names(catalog)[sapply(catalog, function(x)
+      id_cols = names(catalog)[sapply(catalog, function(x)
         x$role == "id")]
       # get names_from by finding all variables with item role in catalog
-      names_from <- names(catalog)[sapply(catalog, function(x)
+      names_from = names(catalog)[sapply(catalog, function(x)
         x$role == "item")]
       
       
       # find pivot arguments try first from data_cleaned and if not possible, try to find from data
-      pivot_args <- NULL
+      pivot_args = NULL
       try({
-        pivot_args <- find_pivot_args(data_cleaned, id_cols, names_from, resp, catalog = catalog)
+        pivot_args = find_pivot_args(data_cleaned, id_cols, names_from, resp, catalog = catalog)
       }, silent = TRUE)
       if (is.null(pivot_args)) {
-        pivot_args <- find_pivot_args(data, id_cols, names_from, resp, catalog = catalog)
-        data_cleaned <- data[, c(names(catalog), setdiff(as.character(unlist(
+        pivot_args = find_pivot_args(data, id_cols, names_from, resp, catalog = catalog)
+        data_cleaned = data[, c(names(catalog), setdiff(as.character(unlist(
           pivot_args, use.names = F
         )), names(catalog)))]
       }
@@ -770,7 +764,7 @@ reformat = function(data,
       }
       
       # pivot data
-      data_formatted <- data_cleaned |> pivot_wider(
+      data_formatted = data_cleaned |> pivot_wider(
         names_from = pivot_args$names_from,
         values_from = pivot_args$values_from,
         id_cols = pivot_args$id_cols,
@@ -778,7 +772,7 @@ reformat = function(data,
         names_sep = sep
       )
       
-      unused_vars <- setdiff(names(data_cleaned), as.character(unlist(pivot_args, use.names = F)))
+      unused_vars = setdiff(names(data_cleaned), as.character(unlist(pivot_args, use.names = F)))
       ## issue warning if cov_wide_supps[[package]] is false and there are other unused variables in the catalog and state which package does not support them and which variables will be ignored
       
       if ((length(unused_vars) > 0) & !cov_wide_supps[[package]]) {
@@ -794,11 +788,11 @@ reformat = function(data,
       # if there are other unused variables in the catalog and if any of the supported methods for the package have var_roles of the unused variables, add them to the data by joining them back to the data_cleaned
       if ((length(unused_vars) > 0) & cov_wide_supps[[package]]) {
         tmpdata = data_cleaned[, c(unused_vars, pivot_args$id_cols)] |> distinct()
-        data_formatted <- data_formatted |> left_join(tmpdata, by = pivot_args$id_cols)
+        data_formatted = data_formatted |> left_join(tmpdata, by = pivot_args$id_cols)
         
       }
       ## combine any id_cols to create unique rownames and then drop them
-      data_formatted <- data_formatted |>
+      data_formatted = data_formatted |>
         unite("rowid",
               pivot_args$id_cols,
               sep = sep,
@@ -806,29 +800,29 @@ reformat = function(data,
         column_to_rownames("rowid")
       
     } else {
-      data_formatted <- data_cleaned |> as_tibble()
+      data_formatted = data_cleaned |> as_tibble()
     }
   } else {
     stop("The specified package is not supported")
   }
   ## check if any columns in dataformatted need to be dropped due to NAs and drop them with a warning message
-  cols_to_drop <- colnames(data_formatted)[colSums(is.na(data_formatted)) == nrow(data_formatted)]
+  cols_to_drop = colnames(data_formatted)[colSums(is.na(data_formatted)) == nrow(data_formatted)]
   if (length(cols_to_drop) > 0) {
     warning(paste0(
       "The following columns have been dropped due to all missing values: ",
       paste(cols_to_drop, collapse = ", ")
     ))
-    data_formatted <- data_formatted |> select(-all_of(cols_to_drop))
+    data_formatted = data_formatted |> select(-all_of(cols_to_drop))
   }
   
-  rows_to_drop <- rownames(data_formatted)[rowSums(is.na(data_formatted)) == ncol(data_formatted)]
+  rows_to_drop = rownames(data_formatted)[rowSums(is.na(data_formatted)) == ncol(data_formatted)]
   if (length(rows_to_drop) > 0) {
     warning(paste0(
       "A total of ",
       length(rows_to_drop),
       " rows have been dropped due to all  missing values"
     ))
-    data_formatted <- data_formatted |>  filter(!rownames(data_formatted) %in% rows_to_drop)
+    data_formatted = data_formatted |>  filter(!rownames(data_formatted) %in% rows_to_drop)
   }
   
   
@@ -837,15 +831,15 @@ reformat = function(data,
     for (col in names(data_formatted)) {
       ## first check if the column has only one value and if so, drop it
       if (one_value_check(data_formatted[[col]])) {
-        data_formatted <- data_formatted[, !(names(data_formatted) %in% col)]
+        data_formatted = data_formatted[, !(names(data_formatted) %in% col)]
         
       } else if (class(data_formatted[[col]]) %in% c("factor", "ordered", "character", "logical")) {
-        data_formatted <- check_resp(data_formatted, col)
+        data_formatted = check_resp(data_formatted, col)
         if (is.factor(data_formatted[[col]])) {
-          dummy_cols <- psych::dummy.code(data_formatted[[col]], na.rm = T)
-          data_formatted <- cbind(data_formatted, dummy_cols)
+          dummy_cols = psych::dummy.code(data_formatted[[col]], na.rm = T)
+          data_formatted = cbind(data_formatted, dummy_cols)
           # cbind(data_formatted, dummy_cols)
-          data_formatted <- data_formatted[, !(names(data_formatted) %in% col)]
+          data_formatted = data_formatted[, !(names(data_formatted) %in% col)]
         }
       }
     }
@@ -853,22 +847,22 @@ reformat = function(data,
   
   ## drop na rows if drop_na_vals is true or if the package is mokken
   if (drop_na_vals | package == "mokken") {
-    data_formatted <- data_formatted |> drop_na()
+    data_formatted = data_formatted |> drop_na()
   }
   
   # Return the formatted data
   if (return_obj == "tibble") {
-    data_formatted <- as_tibble(data_formatted)
+    data_formatted = as_tibble(data_formatted)
   } else if (return_obj == "data.frame") {
-    data_formatted <- as.data.frame(data_formatted)
+    data_formatted = as.data.frame(data_formatted)
   } else if (return_obj == "matrix") {
-    data_formatted <- as.matrix(data_formatted)
+    data_formatted = as.matrix(data_formatted)
   } else {
     stop("Unsupported return object type")
   }
   
   # Add class to the formatted data
-  class(data_formatted) <- c("irw_format", class(data_formatted))
+  class(data_formatted) = c("irw_format", class(data_formatted))
   
   return(data_formatted)
   
