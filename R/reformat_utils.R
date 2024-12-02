@@ -16,17 +16,21 @@ library(tidyr)
 #' check_resp(data, "resp", "item")
 #' @noRd
 
-check_resp <- function(data, resp, item=NULL) {
+check_resp <- function(data, resp, item = NULL) {
   if (!is.numeric(data[[resp]])) {
-    if (sum(is.na(as.numeric(data[[resp]]))) > 0.75 * nrow(data) & !is.null(item) & (resp == "resp")) {
-      
+    if (sum(is.na(as.numeric(data[[resp]]))) > 0.75 * nrow(data) &
+        !is.null(item) & (resp == "resp")) {
       if (length(unique(data[[resp]])) < length(unique(data[[item]]))) {
-        warning("The variable ",resp," is not numeric. Because the number  of unique values is less than the total number of unique items, it will be converted to a factor.")
+        warning(
+          "The variable ",
+          resp,
+          " is not numeric. Because the number  of unique values is less than the total number of unique items, it will be converted to a factor."
+        )
         data[[resp]] <- as.factor(data[[resp]])
       } else {
         stop("More than 75% of values would be NAs when converting resp to numeric")
       }
-    } else if (is.null(item) & (resp != "resp")) { 
+    } else if (is.null(item) & (resp != "resp")) {
       if (sum(is.na(as.numeric(data[[resp]]))) > 0.75 * nrow(data)) {
         data[[resp]] <- as.factor(data[[resp]])
       } else {
@@ -52,16 +56,18 @@ check_uniqueness <- function(data, cols) {
 }
 
 # Function to find the pivot arguments for pivot_wider
-find_pivot_args <- function(data, id_cols = "id", names_from = "item", values_from = "resp", catalog = catalog) {
-  # # Return without any changes if the data only contains the id, item, and resp columns
-  # if (all(c("id", "item", "resp") %in% names(data)) & length(names(data)) == 3) {
-  #     return(list(id_cols = "id", names_from = "item", values_from = "resp"))
-  # }
-  
-  
+find_pivot_args <- function(data,
+                            id_cols = "id",
+                            names_from = "item",
+                            values_from = "resp",
+                            catalog = catalog) {
   # Initial check using provided id_cols and names_from
   if (check_uniqueness(data, c(id_cols, names_from))) {
-    return(list(id_cols = id_cols, names_from = names_from, values_from = values_from))
+    return(list(
+      id_cols = id_cols,
+      names_from = names_from,
+      values_from = values_from
+    ))
   }
   
   # Identify additional columns
@@ -69,36 +75,47 @@ find_pivot_args <- function(data, id_cols = "id", names_from = "item", values_fr
   if (length(additional_cols) == 0) {
     stop("Could not find a combination of columns to ensure unique identification.")
   }
-  # # arrange additional columns by priority
-  # additional_cols <- additional_cols[order(sapply(additional_cols, function(x) {
-  #   catalog[[x]]$priority
-  # }))]
   
   
-  # Try adding columns to id_cols based on 
+  # Try adding columns to id_cols based on
   for (col in additional_cols) {
     if (check_uniqueness(data, c(id_cols, col, names_from))) {
-      return(list(id_cols = c(id_cols, col), names_from = names_from, values_from = values_from))
+      return(list(
+        id_cols = c(id_cols, col),
+        names_from = names_from,
+        values_from = values_from
+      ))
     }
   }
   
   # Try adding columns to names_from
   for (col in additional_cols) {
     if (check_uniqueness(data, c(id_cols, names_from, col))) {
-      return(list(id_cols = id_cols, names_from = c(names_from, col), values_from = values_from))
+      return(list(
+        id_cols = id_cols,
+        names_from = c(names_from, col),
+        values_from = values_from
+      ))
     }
   }
-  if(length(additional_cols) < 2) {
+  if (length(additional_cols) < 2) {
     stop("Could not find a combination of columns to ensure unique identification.")
   }
   
   # Try combinations of additional columns
   for (cols in combn(additional_cols, 2, simplify = FALSE)) {
     if (check_uniqueness(data, c(id_cols, names_from, cols))) {
-      return(list(id_cols = id_cols, names_from = c(names_from, cols), values_from = values_from))
+      return(list(
+        id_cols = id_cols,
+        names_from = c(names_from, cols),
+        values_from = values_from
+      ))
     }
     if (check_uniqueness(data, c(id_cols, cols, names_from))) {
-      return(list(id_cols = c(id_cols, cols), names_from = c(names_from)))
+      return(list(
+        id_cols = c(id_cols, cols),
+        names_from = c(names_from)
+      ))
     }
   }
   
@@ -135,44 +152,18 @@ notify_combined_columns <- function(args) {
   messages <- character(0)
   
   # Single pass through arguments
-  combined_info <- Filter(function(x) length(x) > 1, args)
+  combined_info <- Filter(function(x)
+    length(x) > 1, args)
   
   # Build all messages at once if needed
   if (length(combined_info) > 0) {
     messages <- sprintf(
       "The following columns are being combined for '%s': %s",
       names(combined_info),
-      vapply(combined_info, 
-             function(x) paste(x, collapse = ", "),
-             character(1))
+      vapply(combined_info, function(x)
+        paste(x, collapse = ", "), character(1))
     )
     # Single message call
     message(paste(messages, collapse = "\n"))
   }
-}
-
-pivot_wider_irw  = function(data, names_from = "item", values_from = "resp", 
-                            id_cols = "id", names_sep = "_",...) {
-  # Find the pivot arguments
-  piv_args <- find_pivot_args(data, id_cols, names_from, values_from)
-  
-  # Notify the user about combined columns
-  notify_combined_columns(piv_args)
-  
-  # Perform the pivot wider operation
-  newdf = inject(pivot_wider(data, !!!piv_args, ...))
-  
-  newdf = newdf |> unite("id", piv_args$id_cols, sep = names_sep, remove = T) |> column_to_rownames(var = "id")
-  
-  # If id_cols length > 1, then combine them into a single index column called 'id' with "_" separating the values
-  # if(length(piv_args$id_cols) > 1){
-  #   newdf <- newdf %>% mutate(id = do.call(paste, c(., sep = names_sep, list(select(., all_of(piv_args$id_cols)))))) %>% 
-  #     select(-all_of(setdiff(c("id"), piv_args$id_cols)))
-  # }
-  
-  # set id as rownames
-  # newdf = newdf |> column_to_rownames(var = "id")
-  
-  return(newdf |> as_tibble())
-
 }
