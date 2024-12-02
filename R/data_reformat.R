@@ -600,21 +600,9 @@ reformat = function(data,
   data <- data |> irw_rename()
   catalog_names$cleaned_names <- names(data)
   # Check to ensure the identified columns “id”, “item”, and “resp” are present in the tibble (if not it will return an error)
-  if (!all(c("id", "item", "resp") %in% names(data))) {
+  if (!all(c(id,item, resp) %in% names(data))) {
     stop("The columns 'id', 'item', and 'resp' must be present in the data")
   }
-  
-  # Add resp to catalog, with correct role and priority
-  catalog$resp <- list(
-    name = resp,
-    role = "resp",
-    dtype = var_roles$resp$dtype,
-    priority = var_roles$resp$priority
-  )
-  
-  # Convert resp to numeric if necessary
-  data <- data |> check_resp(resp, item)
-  
   
   # Function to add variables to the catalog and convert them to the appropriate data type
   add_to_catalog <- function(catalog = catalog, var_name, role) {
@@ -628,8 +616,14 @@ reformat = function(data,
   }
   
   
-  catalog <- add_to_catalog(catalog, "id", "id")
-  catalog <- add_to_catalog(catalog, "item", "item")
+  # Convert resp to numeric if necessary
+  data <- data |> check_resp(resp, item)
+  
+  
+  catalog <- add_to_catalog(catalog, resp, "resp")
+  catalog <- add_to_catalog(catalog, id, "id")
+  catalog <- add_to_catalog(catalog, item, "item")
+  
   
   # Add variables with id and item roles to catalog, converting their data types appropriately
   data <- data |> mutate(id = catalog[["id"]]$dtype(id))
