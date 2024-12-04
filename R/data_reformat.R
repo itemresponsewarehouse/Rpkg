@@ -544,7 +544,7 @@ cov_wide_supps = list(
 )
 
 
-not_supported_cols = c("rater", "raters", "rater_covariates", "rt") ## currently not supported
+not_supported_cols = c("rater", "raters", "rater_covariates") ## currently not supported
 
 
 reformat = function(data,
@@ -666,7 +666,7 @@ reformat = function(data,
     role_col = eval(parse(text = role))
     if (!is.null(role_col)) {
       # if character is in not_supported_cols, return an error
-      if (role %in% not_supported_cols) {
+      if ((role %in% not_supported_cols) & !cov_wide_supps[[package]]) {
         stop(paste0("Arguments for '", role, "' are not currently supported"))
       }
       # if the role is a character (or character vector) and not in the not_supported_cols list
