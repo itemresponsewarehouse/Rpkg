@@ -1,4 +1,4 @@
-# init.R: Initialize the Redivis data source connection and provide helper functions for accessing tables within the IRW database.
+# Initialize Redivis data source connection and fetch tables  
 
 
 # defining a package environment
