@@ -2,6 +2,8 @@
 # This function processes tables from the Redivis database, computes summary statistics for each table,
 # and saves the results incrementally to a CSV file. Logs any salvaging attempts or failed tables.
 
+library(irwpkg)
+
 compute_metadata <- function(output_file = "data/metadata.csv",
                              testing = FALSE) {
   # Initialize the datasource and fetch the list of tables
@@ -163,5 +165,5 @@ compute_metadata <- function(output_file = "data/metadata.csv",
   return(read.csv(output_file, stringsAsFactors = FALSE))
 }
 
-# Run the function
-results <- compute_metadata(testing = FALSE)
+# Run the function to compute metadata for all tables
+results <- compute_metadata()
