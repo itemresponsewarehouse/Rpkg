@@ -11,115 +11,91 @@ knitr::opts_chunk$set(
 
 # irwpkg
 
-`irwpkg` is an R package designed to facilitate easy access to datasets from the Item Response Warehouse ([IRW](https://datapages.github.io/irw/)), offering functions to download, explore, and analyze these datasets.
+`irwpkg` is an R package designed to simplify access to datasets from the Item Response Warehouse ([IRW](https://datapages.github.io/irw/)). It provides tools for exploring, filtering, retrieving, and reformatting datasets, making it easier to analyze item response data.
 
 ## Installation
 
-You can install the development version of `irwpkg` from [GitHub](https://github.com/) with:
+To install the development version of `irwpkg` from [GitHub](https://github.com/):
 
 ```{r}
 #| eval: false
+# Install the remotes package if needed
 # install.packages("remotes")
+
+# Install irwpkg from GitHub
 remotes::install_github("hansorlee/irwpkg")
 ```
 
+## Getting Started
 
-## Usage
+### Loading the Package
 
-To use `irwpkg`, load the package using:
+After installation, load the `irwpkg` package:
 
 ```{r}
 library(irwpkg)
 ```
 
+### Viewing the Vignette
+
+To help you get started, irwpkg includes a detailed vignette. The vignette demonstrates core functionality, such as:
+
+- Exploring available datasets.
+
+- Visualizing metadata distributions.
+
+- Filtering datasets using custom criteria.
+
+- Fetching datasets into R for analysis.
+
+
+You can access the vignette using the following commands:
+
+```{r}
+# List all available vignettes for irwpkg
+vignette(package = "irwpkg")
+
+# Open the main vignette titled "Report"
+vignette("Report", package = "irwpkg")
+```
+
+#### Troubleshooting
+
+If the vignette does not appear, ensure that the package was installed with vignettes enabled. You can do this by reinstalling the package:
+```{r}
+remotes::install_github("hansorlee/irwpkg", build_vignettes = TRUE)
+```
+
+
 ### Authentication
-The IRW datasets are hosted on [Redivis](https://redivis.com), so to access these datasets through `irwpkg`, you’ll need to authenticate with your Redivis account. This connection is managed through the Redivis R client.
+The IRW datasets are hosted on [Redivis](https://redivis.com), so you’ll need to authenticate with your Redivis account to access these datasets. The authentication process is managed through the Redivis R Client.
 
-**Redivis Authentication Setup**
+**Steps for Authentification**
+1. Trigger Authentication
 
-1. When you first use a function in `irwpkg` that connects to Redivis (e.g. see `list_available_datasets()` below), a browser window will pop up prompting you to sign into Redivis. 
+When you first use a function in irwpkg that connects to Redivis (e.g., `list_available_datasets()`), a browser window will open, prompting you to sign in to your Redivis account.
 
-2. After signing in, you’ll be prompted to allow access for the Redivis R Client. Click **Allow**.
+2. Grant Access
 
-3. Once you’ve granted access, close the browser window. You’ll see the message "Authentication was successful" in the R console, and you can then re-run your `irwpkg` function. 
+After signing in, allow access for the Redivis R Client by clicking **Allow**.
 
-- **Note:** Authentication typically only needs to be done once per session.
-- For more details, refer to [Redivis R Client documentation](https://apidocs.redivis.com/client-libraries/redivis-r/getting-started).
+3. Confirmation
 
-
-
-### View list of datasets
-
-The list_available_datasets() function provides a list of datasets in the IRW database, showing key metadata (dataset name, row count, and variable count).
-
-```{r}
-# List available datasets
-list_datasets = list_available_datasets()
-dim(list_datasets)
-head(list_datasets)
-```
-
-### view DB/table metadata
-
-```{r}
-db_info = get_database_metadata()
-
-table_info = get_table_metadata("lessR_Mach4")
-```
+Once authentication is successful, close the browser window. You will see the message “Authentication was successful” in the R console.
 
 
+- **Note:** You only need to authenticate once per session.
 
-### filter tables by criteria
+- For detailed instructions, refer to the [Redivis R Client documentation](https://apidocs.redivis.com/client-libraries/redivis-r/getting-started).
 
-```{r}
-# get tables with a column named "rater"
-filter_tables(required_columns="rater")
+## Key Features
 
-# get tables with at least 10000 rows and a column named "rater"
-filter_tables(n_rows = 10000, required_columns="rater")
+- Explore Datasets: Quickly browse metadata to understand the structure and range of available datasets.
 
-# get tables with columns "rater" and "rt"
-filter_tables(required_columns=c("rater", "rt"))
-```
+- Visualize Metadata: Create insightful visualizations to explore key attributes like ID counts, item counts, and sparsity.
 
-### Fetch data
+- Filter Datasets: Use intuitive criteria to filter datasets based on your research needs.
 
-#### Fetch a single dataset
-Once you have identified a dataset you want, you can use `fetch_data()` to load it as a data frame in R. For example, to fetch the `swmd_mokken` dataset, you can use:
+- Fetch Data: Retrieve individual or multiple datasets for analysis in R.
 
-```{r}
-# Fetch a dataset by name
-swmd_mokken <- fetch_data(name="swmd_mokken")
-dim(swmd_mokken)
-head(swmd_mokken)
-```
-
-#### Fetch multiple datasets
-You can also fetch multiple datasets at once. 
-
-```{r}
-matching_tables <- filter_tables(n_rows = 50000, required_columns = c("rater"))
-print(matching_tables)
-
-datasets <- fetch_data(c("fractals_rating", "spelling2pronounce_edwards2023"))
-print(names(datasets)) # datasets is a named list
-```
-
-You can also use the output of `filter_tables()` directly to `fetch_data()`.
-```{r}
-datasets <- fetch_data(matching_tables)
-print(names(datasets))
-
-fractals_rating <- datasets[["fractals_rating"]]
-head(fractals_rating)
-```
-
-### Download data
-
-```{r}
-#| eval: false
-download_data("swmd_mokken", path = "mydata.csv")
-```
-
-
-### More coming soon :)
+Please feel free to suggest additional features or report issues on the repository’s GitHub Issues page!
