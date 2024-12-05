@@ -18,15 +18,17 @@
 #' @examples
 #'
 #' # cleaning the names of a vector:
-#' x <- structure(1:3, names = c("name with space", "TwoWords", "total $ (2009)"))
+#' x = structure(1:3, names = c("name with space", "TwoWords", "total $ (2009)"))
 #' x
-#' names(x) <- irw_name_fix(names(x))
+#' names(x) = irw_name_fix(names(x))
 #' x # now has cleaned names
-
+#' @importFrom dplyr as_tibble mutate select across pivot_longer left_join uncount everything pivot_wider all_of setdiff distinct filter group_by summarise nrow
+#' @importFrom tidyr pivot_wider pivot_longer drop_na
+#' @importFrom purrr map_chr
 #' @importFrom stringr str_replace str_replace_all
 #' @noRd
 
-irw_name_fix <- function(string,
+irw_name_fix = function(string,
                          replace =
                            c(
                              "'" = "",
@@ -46,11 +48,11 @@ irw_name_fix <- function(string,
     stop("`string` must not be a data.frame, use clean_names()")
   }
   
-  replaced_names <-
+  replaced_names =
     stringr::str_replace_all(string = string, pattern = replace)
   
   # Remove starting spaces and punctuation
-  str_start <-
+  str_start =
     stringr::str_replace(string = replaced_names,
                          # Description of this regexp:
                          # \A: beginning of the string (rather than beginning of the line as ^ would indicate)
@@ -62,17 +64,17 @@ irw_name_fix <- function(string,
                          pattern = "\\A[\\h\\s\\p{P}\\p{S}\\p{Z}\\p{C}]*(.*)$",
                          replacement = "\\1")
   # Convert all interior spaces and punctuation to single dots
-  cleaned_names <-
+  cleaned_names =
     stringr::str_replace_all(string = str_start,
                              pattern = "[\\h\\s\\p{P}\\p{S}\\p{Z}\\p{C}]+",
                              replacement = "_")
   
-  new_names <- tolower(cleaned_names)
+  new_names = tolower(cleaned_names)
   
   ## correct any names beginning with a digit
   if (any(grepl("\\A\\d", new_names)) & !digit_first_ok) {
     ## add prefix to those staring w digit
-    new_names[grepl("\\A\\d", new_names)] <-
+    new_names[grepl("\\A\\d", new_names)] =
       paste0(digit_prefix, new_names[grepl("\\A\\d", new_names)])
     
   }
@@ -80,16 +82,15 @@ irw_name_fix <- function(string,
   
   # add counters to duplicated names
   while (any(duplicated(new_names))) {
-    dupes <-
+    dupes =
       vapply(seq_along(new_names), function(i) {
         sum(new_names[i] == new_names[1:i])
       }, 1L)
     
-    new_names[dupes > 1] <-
+    new_names[dupes > 1] =
       paste(new_names[dupes > 1], dupes[dupes > 1], sep = "_")
   }
-  # }
-  
+
   new_names
 }
 
@@ -97,19 +98,17 @@ irw_name_fix <- function(string,
 #' @param x an object with names to clean
 #' @noRd
 #' @export
-#'
 irw_rename = function(x, ...) {
   if (is.data.frame(x)) {
     x |> dplyr::rename_with(function(.name) {
       irw_name_fix(.name)
     })
   } else if (is.character(x)) {
-    map_chr(c(x), irw_name_fix)
+    purrr::map_chr(c(x), irw_name_fix)
   } else {
     stop("x must be a data frame or character vector")
   }
 }
-
 
 one_value_check = function(x) {
   x = x[!is.na(x)]
