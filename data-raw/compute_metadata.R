@@ -159,8 +159,8 @@ compute_metadata <- function(output_file = "data/metadata.csv",
     ))
   }
   
-  # Return the metadata and failed tables as a list
-  return(list(metadata = read.csv(output_file, stringsAsFactors = FALSE)))
+  # Return the metadata directly from the output file
+  return(read.csv(output_file, stringsAsFactors = FALSE))
 }
 
 # Run the function
