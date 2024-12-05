@@ -10,11 +10,16 @@ Maintainer: Hansol Lee <hansol@stanford.edu>
 Description: Functions to manage data from the Item Response Warehouse. 
 Depends: R (>= 3.5.0)
 Imports:
-    redivis
+    dplyr,
+    psych,
+    purrr,
+    redivis,
+    stringr,
+    tibble,
+    tidyr
 Remotes:
     redivis/redivis-r
 Suggests: 
-    dplyr,
     quarto, 
     knitr,
     rmarkdown,
