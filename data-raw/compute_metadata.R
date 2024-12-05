@@ -167,3 +167,8 @@ compute_metadata <- function(output_file = "data/metadata.csv",
 
 # Run the function to compute metadata for all tables
 results <- compute_metadata()
+
+
+metadata <- read.csv("data/metadata.csv", stringsAsFactors = FALSE)
+save(metadata, file = "data/metadata.rda")
+

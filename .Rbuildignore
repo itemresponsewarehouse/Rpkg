@@ -9,3 +9,5 @@
 ^data-raw$
 ^inst/progress-report$
 ^inst/progress-proposal$
+^doc$
+^Meta$

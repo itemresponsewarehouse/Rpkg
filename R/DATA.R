@@ -1,18 +1,18 @@
-#' Metadata Summary
+#' Metadata for Available Tables
 #'
-#' This dataset contains metadata about tables from the Redivis database.
-#' It provides precomputed information about table properties to be 
-#' used by internal package functions for filtering and querying.
+#' This dataset contains metadata about tables from the database, 
+#' automatically loaded into the package namespace when the package is attached.
 #'
-#' @details This dataset is generated during package development and stored 
-#' in the `data/` folder. It provides essential metadata for the package's 
-#' internal operations, enabling faster processing and filtering of tables 
-#' based on specific criteria.
+#' @details
+#' The `metadata` dataset is loaded dynamically when the package is attached, 
+#' and can be accessed internally using functions like `get_metadata()`. 
+#' This ensures that it remains scoped to the package namespace.
 #'
-#' @keywords datasets
-#' @name metadata
-#' @md
-NULL
+#' @examples
+#' # Access metadata programmatically
+#' metadata <- irwpkg::get_metadata()
+#' head(metadata)
+"metadata"
 
 #' Metadata Failures
 #'

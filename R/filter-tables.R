@@ -16,7 +16,6 @@
 #' @return A character vector of table names that match the criteria. If no tables match, it prints a message 
 #'         and returns an empty character vector.
 #' @examples
-#' \dontrun{
 #' # Example 1: Filter tables with ID count between 100 and 1000
 #' filter_tables(id_count = c(100, 1000))
 #'
@@ -28,21 +27,13 @@
 #'
 #' # Example 4: Combine numeric and column presence criteria
 #' filter_tables(id_count = c(100, 1000), has_date = TRUE)
-#' }
 #' 
 #' @importFrom utils read.csv
 #' @export
 filter_tables <- function(id_count = NULL, item_count = NULL, resp_count = NULL, sparsity = NULL,
                           has_date = NULL, has_rt = NULL, has_rater = NULL) {
-  metadata_file <- "data/metadata.csv"
   
-  # Check if the file exists
-  if (!file.exists(metadata_file)) {
-    stop("No metadata.csv file found in the data/ directory.")
-  }
-  
-  # Load the metadata file
-  metadata <- utils::read.csv(metadata_file, stringsAsFactors = FALSE)
+  metadata <- get_metadata()
   
   # Helper function to check if a value is within the specified range
   is_within_range <- function(value, range) {

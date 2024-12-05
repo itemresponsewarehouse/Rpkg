@@ -17,7 +17,7 @@ Attributes not included in \code{ranges} will use their full data range.
    - `"resp_count"`: Total number of responses (e.g., `ranges = list(resp_count = c(0, 100000))`).
    - `"sparsity"`: Sparsity measure, ranging between 0 and 1 (e.g., `ranges = list(sparsity = c(0.1, 0.9))`).
 
-   Users can specify ranges for one or more attributes, and attributes not included in `ranges` 
+   Users can specify ranges for one or more attributes, and attributes not included in `ranges`
    will automatically use their full range.
 }\if{html}{\out{</div>}}}
 }
@@ -25,7 +25,6 @@ Attributes not included in \code{ranges} will use their full data range.
 Visualizes the distributions of key numeric attributes in the metadata file as raw count histograms.
 }
 \examples{
-\dontrun{
 # Example 1: Visualize with default ranges for all attributes
 visualize_metadata_distributions()
 
@@ -43,6 +42,5 @@ visualize_metadata_distributions(
     sparsity = c(0, 3)
   )
 )
-}
 
 }

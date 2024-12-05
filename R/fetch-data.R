@@ -14,6 +14,7 @@
 #'   datasets <- fetch_data(c("dataset1", "dataset2"))
 #'   print(names(datasets))  # Displays "dataset1" and "dataset2"
 #' }
+#' @export
 fetch_data <- function(name) {
   # Helper function to fetch and convert a single dataset
   fetch_single_data <- function(dataset_name) {

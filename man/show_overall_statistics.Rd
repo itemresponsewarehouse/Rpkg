@@ -20,8 +20,6 @@ and computes:
 The function prints the statistics to the console without returning any value.
 }
 \examples{
-\dontrun{
   show_overall_statistics()
-}
 
 }

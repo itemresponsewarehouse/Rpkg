@@ -12,21 +12,11 @@
 #'
 #' @importFrom utils read.csv
 #' @examples
-#' \dontrun{
 #'   show_overall_statistics()
-#' }
-#' 
+#'
 #' @export
 show_overall_statistics <- function() {
-  metadata_file <- "data/metadata.csv"
-  
-  # Check if the file exists
-  if (!file.exists(metadata_file)) {
-    stop("No metadata.csv file found in the data/ directory.")
-  }
-  
-  # Load the metadata file
-  metadata <- utils::read.csv(metadata_file, stringsAsFactors = FALSE)
+  metadata <- get_metadata()
   
   # Helper function to compute range and mean
   compute_stats <- function(x) {
@@ -60,14 +50,38 @@ show_overall_statistics <- function() {
   cat(sprintf("Tables with Date (date): %d\n", num_date))
   cat("\n")
   
-  cat(sprintf("ID Count:\n  Min: %d, Max: %d, Mean: %.2f\n",
-              stats$id_count$min, stats$id_count$max, stats$id_count$mean))
-  cat(sprintf("Item Count:\n  Min: %d, Max: %d, Mean: %.2f\n",
-              stats$item_count$min, stats$item_count$max, stats$item_count$mean))
-  cat(sprintf("Response Count:\n  Min: %d, Max: %d, Mean: %.2f\n",
-              stats$resp_count$min, stats$resp_count$max, stats$resp_count$mean))
-  cat(sprintf("Sparsity:\n  Min: %.3f, Max: %.3f, Mean: %.3f\n",
-              stats$sparsity$min, stats$sparsity$max, stats$sparsity$mean))
+  cat(
+    sprintf(
+      "ID Count:\n  Min: %d, Max: %d, Mean: %.2f\n",
+      stats$id_count$min,
+      stats$id_count$max,
+      stats$id_count$mean
+    )
+  )
+  cat(
+    sprintf(
+      "Item Count:\n  Min: %d, Max: %d, Mean: %.2f\n",
+      stats$item_count$min,
+      stats$item_count$max,
+      stats$item_count$mean
+    )
+  )
+  cat(
+    sprintf(
+      "Response Count:\n  Min: %d, Max: %d, Mean: %.2f\n",
+      stats$resp_count$min,
+      stats$resp_count$max,
+      stats$resp_count$mean
+    )
+  )
+  cat(
+    sprintf(
+      "Sparsity:\n  Min: %.3f, Max: %.3f, Mean: %.3f\n",
+      stats$sparsity$min,
+      stats$sparsity$max,
+      stats$sparsity$mean
+    )
+  )
 }
 
 
@@ -75,7 +89,7 @@ show_overall_statistics <- function() {
 #'
 #' Visualizes the distributions of key numeric attributes in the metadata file as raw count histograms.
 #'
-#' @param ranges A named list where each attribute has a numeric vector of two values specifying 
+#' @param ranges A named list where each attribute has a numeric vector of two values specifying
 #'        the lower and upper range for the histogram (e.g., `list(id_count = c(0, 10000))`).
 #'        Attributes not included in `ranges` will use their full data range.
 #'
@@ -85,13 +99,12 @@ show_overall_statistics <- function() {
 #'        - `"resp_count"`: Total number of responses (e.g., `ranges = list(resp_count = c(0, 100000))`).
 #'        - `"sparsity"`: Sparsity measure, ranging between 0 and 1 (e.g., `ranges = list(sparsity = c(0.1, 0.9))`).
 #'
-#'        Users can specify ranges for one or more attributes, and attributes not included in `ranges` 
+#'        Users can specify ranges for one or more attributes, and attributes not included in `ranges`
 #'        will automatically use their full range.
 #'
-#' @importFrom utils read.csv
+#' @importFrom utils read.csv data
 #' @importFrom graphics par hist mtext axis
 #' @examples
-#' \dontrun{
 #' # Example 1: Visualize with default ranges for all attributes
 #' visualize_metadata_distributions()
 #'
@@ -109,19 +122,10 @@ show_overall_statistics <- function() {
 #'     sparsity = c(0, 3)
 #'   )
 #' )
-#' }
 #'
 #' @export
 visualize_metadata_distributions <- function(ranges = list()) {
-  metadata_file <- "data/metadata.csv"
-  
-  # Check if the file exists
-  if (!file.exists(metadata_file)) {
-    stop("No metadata.csv file found in the data/ directory.")
-  }
-  
-  # Load the metadata file
-  metadata <- utils::read.csv(metadata_file, stringsAsFactors = FALSE)
+  metadata <- get_metadata()
   
   # Attributes to visualize
   attributes <- c("id_count", "item_count", "resp_count", "sparsity")
@@ -173,19 +177,38 @@ visualize_metadata_distributions <- function(ranges = list()) {
     subtitle <- attribute
     
     # Raw histogram
-    hist_obj <- hist(data, breaks = 30, col = "lightgray", border = "black", 
-                     main = title, 
-                     xlab = "",  
-                     ylab = "", 
-                     xaxt = "n", yaxt = "n")
+    hist_obj <- hist(
+      data,
+      breaks = 30,
+      col = "lightgray",
+      border = "black",
+      main = title,
+      xlab = "",
+      ylab = "",
+      xaxt = "n",
+      yaxt = "n"
+    )
     
     # Subtitle with smaller font size
-    mtext(subtitle, side = 3, line = 0.5, cex = 0.8)
+    mtext(subtitle,
+          side = 3,
+          line = 0.5,
+          cex = 0.8)
     
     # Improved x-axis labels
-    axis(1, at = pretty(hist_obj$breaks), labels = sapply(pretty(hist_obj$breaks), format_axis), las = 1)
+    axis(
+      1,
+      at = pretty(hist_obj$breaks),
+      labels = sapply(pretty(hist_obj$breaks), format_axis),
+      las = 1
+    )
     # Improved y-axis labels
-    axis(2, at = pretty(hist_obj$counts), labels = sapply(pretty(hist_obj$counts), format_axis), las = 1)
+    axis(
+      2,
+      at = pretty(hist_obj$counts),
+      labels = sapply(pretty(hist_obj$counts), format_axis),
+      las = 1
+    )
   }
   
   # Reset plotting layout
@@ -215,9 +238,12 @@ list_available_datasets <- function() {
   
   # Extract metadata to create a data frame
   datasets_info <- data.frame(
-    name = sapply(datasets, function(dataset) dataset$name),
-    numRows = sapply(datasets, function(dataset) dataset$properties$numRows),
-    variableCount = sapply(datasets, function(dataset) dataset$properties$variableCount),
+    name = sapply(datasets, function(dataset)
+      dataset$name),
+    numRows = sapply(datasets, function(dataset)
+      dataset$properties$numRows),
+    variableCount = sapply(datasets, function(dataset)
+      dataset$properties$variableCount),
     stringsAsFactors = FALSE
   )
   

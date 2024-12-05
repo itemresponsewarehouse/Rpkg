@@ -18,6 +18,151 @@ knitr::opts_chunk$set(
 library(irwpkg)
 ```
 
-```{r}
+# Introduction
 
+This tutorial demonstrates how to use the irwpkg package to explore, filter, and retrieve data from a structured database of item response datasets. The package includes tools for:
+
+1.  Exploring available datasets and their metadata.
+
+2.  Visualizing distributions of key dataset attributes.
+
+3.  Filtering datasets based on user-defined criteria.
+
+4.  Fetching datasets into R for analysis.
+
+# Explore Available Datasets
+
+## List all available datasets
+
+To view all datasets in the database, use the `list_available_datasets()` function. This provides a summary of dataset names, row counts, and variable counts.
+
+```{r}
+list_datasets <- list_available_datasets()
+dim(list_datasets)  # Dimensions of the dataset
+head(list_datasets)  # Preview the first few datasets
 ```
+
+## Get Metadata for the Database or a Specific Table
+
+To get high-level metadata for the entire database:
+
+```{r}
+db_info <- get_database_metadata()
+```
+
+To retrieve detailed metadata for a specific table:
+
+```{r}
+table_info <- get_table_metadata("lessR_Mach4")
+```
+
+# Understand Metadata Distributions
+
+Before filtering or selecting datasets, it’s helpful to understand the distribution of key dataset attributes.
+
+## View Overall Statistics
+
+The `show_overall_statistics()` function computes key statistics (e.g., range, mean) for attributes such as `id_count`, `item_count`, `resp_count`, and `sparsity`.
+
+```{r}
+show_overall_statistics()
+```
+
+## Visualize Distributions
+
+Use the visualize_metadata_distributions() function to create histograms of dataset attributes. This helps you see the range and frequency of values for attributes like id_count, item_count, resp_count, and sparsity.
+
+```{r}
+visualize_metadata_distributions()
+```
+
+You can also focus on specific ranges for individual attributes by specifying ranges:
+
+```{r}
+visualize_metadata_distributions(
+  ranges = list(id_count = c(0, 50000), resp_count = c(0, 100000))
+)
+```
+
+# Filter datasets
+
+After exploring the distributions, you can filter datasets based on specific criteria using the filter_tables() function.
+
+## Filter by Numeric Ranges
+
+Retrieve datasets with attributes that fall within a specified range:
+
+```{r}
+matching_tables <- filter_tables(id_count = c(100, 1000), sparsity = c(0.1, 0.5))
+print(matching_tables)
+```
+
+## Filter by Presence of Specific Columns
+
+Filter datasets that include specific columns, such as date, rt, or rater:
+
+```{r}
+matching_tables <- filter_tables(has_date = TRUE)
+
+print(matching_tables)
+```
+
+## Combine Numeric and Column Presence Criteria
+
+You can combine multiple criteria to refine your search:
+
+```{r}
+matching_tables <- filter_tables(
+  id_count = c(100, 10000), 
+  has_rater = TRUE
+)
+print(matching_tables)
+```
+
+# Retrieve Datasets
+
+Once you have identified the datasets you need, use the fetch_data() function to load them into R.
+
+## Fetch a Single Dataset
+
+To retrieve a specific dataset:
+
+```{r}
+swmd_mokken <- fetch_data(name = "swmd_mokken")
+```
+
+## Fetch Multiple Datasets
+
+You can retrieve multiple datasets at once by providing their names as a character vector:
+
+```{r}
+datasets <- fetch_data(c("fractals_rating", "spelling2pronounce_edwards2023"))
+print(names(datasets))
+```
+
+Alternatively, you can use the output of filter_tables() directly:
+
+```{r}
+datasets <- fetch_data(matching_tables)
+print(names(datasets))
+```
+
+# Other utility functions
+
+## download datasets
+
+To save a dataset to a file:
+
+```{r}
+download_data("swmd_mokken", path = "mydata.csv", overwrite=TRUE)
+```
+
+# Summary
+
+This tutorial covered the key features of `irwpkg`: 1. Explore: Use list_available_datasets(), get_database_metadata(), and get_table_metadata() to explore the database.
+
+2.  Visualize: Use show_overall_statistics() and visualize_metadata_distributions() to understand dataset attributes.
+
+3.  Filter: Use filter_tables() to refine your selection based on numeric or column presence criteria.
+
+4.  Retrieve: Use fetch_data() to load datasets into R for analysis.
