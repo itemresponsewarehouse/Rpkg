@@ -10,13 +10,22 @@ library(tidyr)
 #' @param resp The name of the response variable
 #' @param item The name of the item variable
 #' @return Returns the data frame with the response variable converted to numeric
-#' @export
+#' 
+#' @importFrom dplyr as_tibble mutate select across pivot_longer left_join uncount everything pivot_wider all_of setdiff distinct filter group_by summarise nrow n
+#' @importFrom tidyr pivot_wider pivot_longer drop_na
+#' @importFrom tibble is_tibble
+#' @importFrom tidyselect all_of matches
+#' @importFrom forcats as_factor
+#' @importFrom purrr map_chr
+#' @importFrom stringr str_replace str_replace_all
+#' @importFrom utils combn
+
 #' @examples
-#' data <- data.frame(id = c(1, 2, 3), item = c(1, 2, 3), resp = c(1, 2, 3))
+#' data = data.frame(id = c(1, 2, 3), item = c(1, 2, 3), resp = c(1, 2, 3))
 #' check_resp(data, "resp", "item")
 #' @noRd
 
-check_numeric <- function(data, resp, item = NULL) {
+check_numeric = function(data, resp, item = NULL) {
   if (!is.numeric(data[[resp]])) {
     if (sum(is.na(as.numeric(data[[resp]]))) > 0.75 * nrow(data) &
         !is.null(item) & (resp == "resp")) {
@@ -26,37 +35,39 @@ check_numeric <- function(data, resp, item = NULL) {
           resp,
           " is not numeric. Because the number  of unique values is less than the total number of unique items, it will be converted to a factor."
         )
-        data[[resp]] <- as.factor(data[[resp]])
+        data[[resp]] = as.factor(data[[resp]])
       } else {
         stop("More than 75% of values would be NAs when converting resp to numeric")
       }
     } else if (is.null(item) & (resp != "resp")) {
       if (sum(is.na(as.numeric(data[[resp]]))) > 0.75 * nrow(data)) {
-        data[[resp]] <- as.factor(data[[resp]])
+        data[[resp]] = as.factor(data[[resp]])
       } else {
-        data[[resp]] <- as.numeric(data[[resp]])
+        data[[resp]] = as.numeric(data[[resp]])
       }
     }
     else {
-      data[[resp]] <- as.numeric(data[[resp]])
+      data[[resp]] = as.numeric(data[[resp]])
     }
   }
   data
 }
 
 
-
+#' @noRd
 # Check if the dataframe is uniquely identified by the specified columns
-check_uniqueness <- function(data, cols) {
-  data %>%
-    group_by(across(all_of(cols))) %>%
-    summarise(n = n(), .groups = "drop") %>%
-    filter(n > 1) %>%
+check_uniqueness = function(data, cols) {
+  data |> 
+    dplyr::group_by(dplyr::across(dplyr::all_of(cols)))  |> 
+    dplyr::summarise(n = dplyr::n(), .groups = "drop") |> 
+    dplyr::filter(n > 1) |> 
     nrow() == 0
 }
 
 # Function to find the pivot arguments for pivot_wider
-find_pivot_args <- function(data,
+
+
+find_pivot_args = function(data,
                             id_cols = "id",
                             names_from = "item",
                             values_from = "resp",
@@ -71,7 +82,7 @@ find_pivot_args <- function(data,
   }
   
   # Identify additional columns
-  additional_cols <- setdiff(names(data), c(id_cols, names_from, values_from))
+  additional_cols = setdiff(names(data), c(id_cols, names_from, values_from))
   if (length(additional_cols) == 0) {
     stop("Could not find a combination of columns to ensure unique identification.")
   }
@@ -103,7 +114,7 @@ find_pivot_args <- function(data,
   }
   
   # Try combinations of additional columns
-  for (cols in combn(additional_cols, 2, simplify = FALSE)) {
+  for (cols in utils::combn(additional_cols, 2, simplify = FALSE)) {
     if (check_uniqueness(data, c(id_cols, names_from, cols))) {
       return(list(
         id_cols = id_cols,
@@ -123,7 +134,7 @@ find_pivot_args <- function(data,
 }
 
 # Example usage:
-# df <- tibble::tibble(
+# df = tibble::tibble(
 #   id = c(1, 1, 2, 2),
 #   item = c("A", "B", "A", "B"),
 #   resp = c(10, 20, 10, 20),
@@ -131,13 +142,13 @@ find_pivot_args <- function(data,
 # )
 # piv_args = find_pivot_args(df, id_cols = "id", names_from = "item")
 # newdf = inject(pivot_wider(df,!!!piv_args))
-
 # list_of_all_piv_args
 
-needs_combined_columns <- function(args) {
+
+needs_combined_columns = function(args) {
   # Check each argument for length > 1
   for (arg_name in names(args)) {
-    arg_value <- args[[arg_name]]
+    arg_value = args[[arg_name]]
     
     if (length(arg_value) > 1) {
       return(TRUE)
@@ -147,17 +158,18 @@ needs_combined_columns <- function(args) {
   return(FALSE)
 }
 
-notify_combined_columns <- function(args) {
+
+notify_combined_columns = function(args) {
   # Pre-allocate messages vector
-  messages <- character(0)
+  messages = character(0)
   
   # Single pass through arguments
-  combined_info <- Filter(function(x)
+  combined_info = Filter(function(x)
     length(x) > 1, args)
   
   # Build all messages at once if needed
   if (length(combined_info) > 0) {
-    messages <- sprintf(
+    messages = sprintf(
       "The following columns are being combined for '%s': %s",
       names(combined_info),
       vapply(combined_info, function(x)
