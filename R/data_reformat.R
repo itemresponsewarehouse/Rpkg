@@ -308,7 +308,7 @@ supported_funcs = list(
       as_args_list = F,
       ## currently not supported
       args_list_outputs = list(),
-      func_support = F,
+      func_support = T,
       other_output_support = F
     ),
     grm = list(
@@ -454,9 +454,9 @@ supported_funcs = list(
     
   ),
   lavaan = list(
-    any = list(
-      call = "lavaan",
-      expect_format = "long",
+    efa = list(
+      call = "efa",
+      expect_format = "wide",
       var_roles = c("any"),
       id_as_row_names = T,
       resp_as_int = F,
@@ -467,21 +467,21 @@ supported_funcs = list(
       other_output_support = F
     )
   ),
-  sem = list(
-    sem = list(
-      call = "sem::sem",
-      expect_format = "long",
-      var_roles = c("any"),
-      #  the factor given as the group argument is used to split the data into groups
-      id_as_row_names = T,
-      resp_as_int = F,
-      as_args_list = F,
-      ## currently not supported
-      args_list_outputs = list(),
-      func_support = F,
-      other_output_support = F
-    )
-  ),
+  # sem = list(
+  #   rawMoments = list(
+  #     call = "sem::rawMoments",
+  #     expect_format = "long",
+  #     var_roles = c("any"),
+  #     #  the factor given as the group argument is used to split the data into groups
+  #     id_as_row_names = T,
+  #     resp_as_int = F,
+  #     as_args_list = F,
+  #     ## currently not supported
+  #     args_list_outputs = list(),
+  #     func_support = F,
+  #     other_output_support = F
+  #   )
+  # ),
   lme4 = list(
     lmer = list(
       call = "lme4::lmer",
@@ -525,7 +525,7 @@ supported_funcs = list(
 
 piv_wide_pkg = list(
   mirt = T,
-  lavaan = F,
+  lavaan = T,
   sem = F,
   psych = T,
   ltm = T,
@@ -544,7 +544,7 @@ cov_wide_supps = list(
 )
 
 
-not_supported_cols = c("rater", "raters", "rater_covariates") ## currently not supported
+not_supported_cols = c("rater", "raters", "rater_covariates", "rt") ## currently not supported
 
 
 reformat = function(data,
@@ -617,7 +617,7 @@ reformat = function(data,
   
   
   # Convert resp to numeric if necessary
-  data = data |> check_resp(resp, item)
+  data = data |> check_numeric(resp, item)
   
   
   catalog = add_to_catalog(catalog, resp, "resp")
@@ -666,7 +666,7 @@ reformat = function(data,
     role_col = eval(parse(text = role))
     if (!is.null(role_col)) {
       # if character is in not_supported_cols, return an error
-      if ((role %in% not_supported_cols) & !cov_wide_supps[[package]]) {
+      if ((role %in% not_supported_cols) & !cov_wide_supps[[package]] & piv_wide_pkg[[package]]) {
         stop(paste0("Arguments for '", role, "' are not currently supported"))
       }
       # if the role is a character (or character vector) and not in the not_supported_cols list
@@ -788,6 +788,20 @@ reformat = function(data,
       # if there are other unused variables in the catalog and if any of the supported methods for the package have var_roles of the unused variables, add them to the data by joining them back to the data_cleaned
       if ((length(unused_vars) > 0) & cov_wide_supps[[package]]) {
         tmpdata = data_cleaned[, c(unused_vars, pivot_args$id_cols)] |> distinct()
+        ## if the number of unique rows in tmpdata is greater than the number of rows in data_formatted, check if any individual columns have more unique values than the length of data_formatted and drop them
+        if (nrow(tmpdata) > nrow(data_formatted)) {
+          for (col in names(tmpdata)) {
+            if (length(unique(tmpdata[[col]])) > nrow(data_formatted)) {
+              warning(paste0(
+                "The column '",
+                col,
+                "' has been dropped due to having more unique values than the id values. To keep, set package to `lme4` and set keep_all to `TRUE`."
+              ))
+              tmpdata = tmpdata |> dplyr::select(-all_of(col)) |> distinct()
+            }
+          }
+        }
+        
         data_formatted = data_formatted |> left_join(tmpdata, by = pivot_args$id_cols)
         
       }
@@ -827,15 +841,15 @@ reformat = function(data,
   
   
   ## if psych package, convert factors to numeric if ordered, else convert to dummies
-  if (package == "psych") {
+  if (package %in% c("psych","lavaan")){
     for (col in names(data_formatted)) {
       ## first check if the column has only one value and if so, drop it
       if (one_value_check(data_formatted[[col]])) {
         data_formatted = data_formatted[, !(names(data_formatted) %in% col)]
         
       } else if (class(data_formatted[[col]]) %in% c("factor", "ordered", "character", "logical")) {
-        data_formatted = check_resp(data_formatted, col)
-        if (is.factor(data_formatted[[col]])) {
+        data_formatted = check_numeric(data_formatted, col)
+        if (is.factor(data_formatted[[col]]) & package %in% c("psych")) {
           dummy_cols = psych::dummy.code(data_formatted[[col]], na.rm = T)
           data_formatted = cbind(data_formatted, dummy_cols)
           # cbind(data_formatted, dummy_cols)
