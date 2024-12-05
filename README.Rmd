@@ -11,115 +11,106 @@ knitr::opts_chunk$set(
 
 # irwpkg
 
-`irwpkg` is an R package designed to facilitate easy access to datasets from the Item Response Warehouse ([IRW](https://datapages.github.io/irw/)), offering functions to download, explore, and analyze these datasets.
+`irwpkg` is an R package designed to simplify access to datasets from the Item Response Warehouse ([IRW](https://datapages.github.io/irw/)). It provides tools for exploring, filtering, retrieving, and reformatting datasets, making it easier to analyze item response data.
 
-## Installation
+<!-- ## Installation -->
 
-You can install the development version of `irwpkg` from [GitHub](https://github.com/) with:
+<!-- To install the development version of `irwpkg` from [GitHub](https://github.com/): -->
+
+<!-- ```{r} -->
+<!-- #| eval: false -->
+<!-- # Install the remotes package if needed -->
+<!-- # install.packages("remotes") -->
+
+<!-- # Install irwpkg from GitHub -->
+<!-- remotes::install_github("hansorlee/irwpkg") -->
+<!-- ``` -->
+
+## Getting Started
+
+### Loading the Package
+
+After installation, load the `irwpkg` package:
 
 ```{r}
 #| eval: false
-# install.packages("remotes")
-remotes::install_github("hansorlee/irwpkg")
-```
-
-
-## Usage
-
-To use `irwpkg`, load the package using:
-
-```{r}
 library(irwpkg)
 ```
 
-### Authentication
-The IRW datasets are hosted on [Redivis](https://redivis.com), so to access these datasets through `irwpkg`, you’ll need to authenticate with your Redivis account. This connection is managed through the Redivis R client.
+### Viewing the Vignette
 
-**Redivis Authentication Setup**
+To help you get started, irwpkg includes a detailed vignette. The vignette demonstrates core functionality, such as:
 
-1. When you first use a function in `irwpkg` that connects to Redivis (e.g. see `list_available_datasets()` below), a browser window will pop up prompting you to sign into Redivis. 
+- Exploring available datasets.
 
-2. After signing in, you’ll be prompted to allow access for the Redivis R Client. Click **Allow**.
+- Visualizing metadata distributions.
 
-3. Once you’ve granted access, close the browser window. You’ll see the message "Authentication was successful" in the R console, and you can then re-run your `irwpkg` function. 
+- Filtering datasets using custom criteria.
 
-- **Note:** Authentication typically only needs to be done once per session.
-- For more details, refer to [Redivis R Client documentation](https://apidocs.redivis.com/client-libraries/redivis-r/getting-started).
+- Fetching datasets into R for analysis.
 
 
-
-### View list of datasets
-
-The list_available_datasets() function provides a list of datasets in the IRW database, showing key metadata (dataset name, row count, and variable count).
-
-```{r}
-# List available datasets
-list_datasets = list_available_datasets()
-dim(list_datasets)
-head(list_datasets)
-```
-
-### view DB/table metadata
-
-```{r}
-db_info = get_database_metadata()
-
-table_info = get_table_metadata("lessR_Mach4")
-```
-
-
-
-### filter tables by criteria
-
-```{r}
-# get tables with a column named "rater"
-filter_tables(required_columns="rater")
-
-# get tables with at least 10000 rows and a column named "rater"
-filter_tables(n_rows = 10000, required_columns="rater")
-
-# get tables with columns "rater" and "rt"
-filter_tables(required_columns=c("rater", "rt"))
-```
-
-### Fetch data
-
-#### Fetch a single dataset
-Once you have identified a dataset you want, you can use `fetch_data()` to load it as a data frame in R. For example, to fetch the `swmd_mokken` dataset, you can use:
-
-```{r}
-# Fetch a dataset by name
-swmd_mokken <- fetch_data(name="swmd_mokken")
-dim(swmd_mokken)
-head(swmd_mokken)
-```
-
-#### Fetch multiple datasets
-You can also fetch multiple datasets at once. 
-
-```{r}
-matching_tables <- filter_tables(n_rows = 50000, required_columns = c("rater"))
-print(matching_tables)
-
-datasets <- fetch_data(c("fractals_rating", "spelling2pronounce_edwards2023"))
-print(names(datasets)) # datasets is a named list
-```
-
-You can also use the output of `filter_tables()` directly to `fetch_data()`.
-```{r}
-datasets <- fetch_data(matching_tables)
-print(names(datasets))
-
-fractals_rating <- datasets[["fractals_rating"]]
-head(fractals_rating)
-```
-
-### Download data
+You can access the vignette using the following commands:
 
 ```{r}
 #| eval: false
-download_data("swmd_mokken", path = "mydata.csv")
+# List all available vignettes for irwpkg
+vignette(package = "irwpkg")
+
+# Open the main vignette titled "Report"
+vignette("Report", package = "irwpkg")
+```
+
+<!-- #### Troubleshooting -->
+
+<!-- If the vignette does not appear, ensure that the package was installed with vignettes enabled. You can do this by reinstalling the package: -->
+<!-- ```{r} -->
+<!-- #| eval: false -->
+<!-- # remotes::install_github("hansorlee/irwpkg", build_vignettes = TRUE) -->
+<!-- ``` -->
+
+
+#### Troubleshooting
+
+##### Missing Vignette
+
+If the vignette does not appear when running `vignette(package = "irwpkg")`, ensure that the package was installed with vignettes enabled. Developers can reinstall the package with the following command:
+
+```{r}
+#| eval: false
+devtools::install(build_vignettes = TRUE)
 ```
 
 
-### More coming soon :)
+### Authentication
+The IRW datasets are hosted on [Redivis](https://redivis.com), so you’ll need to authenticate with your Redivis account to access these datasets. The authentication process is managed through the Redivis R Client.
+
+**Steps for Authentification**
+1. Trigger Authentication
+
+When you first use a function in irwpkg that connects to Redivis (e.g., `list_available_datasets()`), a browser window will open, prompting you to sign in to your Redivis account.
+
+2. Grant Access
+
+After signing in, allow access for the Redivis R Client by clicking **Allow**.
+
+3. Confirmation
+
+Once authentication is successful, close the browser window. You will see the message “Authentication was successful” in the R console.
+
+
+- **Note:** You only need to authenticate once per session.
+
+- For detailed instructions, refer to the [Redivis R Client documentation](https://apidocs.redivis.com/client-libraries/redivis-r/getting-started).
+
+## Key Features
+
+- Explore Datasets: Quickly browse metadata to understand the structure and range of available datasets.
+
+- Visualize Metadata: Create insightful visualizations to explore key attributes like ID counts, item counts, and sparsity.
+
+- Filter Datasets: Use intuitive criteria to filter datasets based on your research needs.
+
+- Fetch Data: Retrieve individual or multiple datasets for analysis in R.
+
+Please feel free to suggest additional features or report issues on the repository’s GitHub Issues page!

@@ -3,12 +3,12 @@ Type: Package
 Title: Package for working with data from the IRW
 Version: 0.1.0
 Authors@R: c(
-	person("Ben", "Domingue", email = "ben.domingue@gmail.com",role = c("aut")),
-	person("Hansol", "Lee", email = "hansol@stanford.edu",role = c("aut", "cre"))
+  person("Hansol", "Lee", email = "hansol@stanford.edu",role = c("aut", "cre")),
+	person("Michael", "Hardy", email = "hardym@stanford.edu",role = c("aut"))
 	)
 Maintainer: Hansol Lee <hansol@stanford.edu>
 Description: Functions to manage data from the Item Response Warehouse. 
-Depends: R (>= 3.0.0)
+Depends: R (>= 3.5.0)
 Imports:
     dplyr,
     psych,
@@ -20,10 +20,11 @@ Imports:
 Remotes:
     redivis/redivis-r
 Suggests: 
+    quarto, 
     knitr,
-    quarto,
     rmarkdown,
-    testthat (>= 3.0.0)
+    testthat (>= 3.0.0),
+    evaluate
 VignetteBuilder: quarto
 License: MIT + file LICENSE
 Encoding: UTF-8
