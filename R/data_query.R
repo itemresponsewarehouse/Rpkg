@@ -44,7 +44,8 @@ fetch_data <- function(name) {
     return(fetch_single_data(name))
   } else {
     # Return a named list of data frames if multiple datasets
-    dataset_list <- setNames(lapply(name, fetch_single_data), name)
+    dataset_list <- lapply(name, fetch_single_data)
+    names(dataset_list) <- name
     return(dataset_list)
   }
 }
