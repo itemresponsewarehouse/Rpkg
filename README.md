@@ -50,7 +50,6 @@ vignette(package = "irwpkg")
 
 # Open the main vignette titled "Report"
 vignette("Report", package = "irwpkg")
-## starting httpd help server ... done
 ```
 
 #### Troubleshooting
@@ -59,25 +58,7 @@ If the vignette does not appear, ensure that the package was installed
 with vignettes enabled. You can do this by reinstalling the package:
 
 ``` r
-remotes::install_github("hansorlee/irwpkg", build_vignettes = TRUE)
-## Downloading GitHub repo hansorlee/irwpkg@HEAD
-## 
-## ── R CMD build ─────────────────────────────────────────────────────────────────
-##      checking for file ‘/private/var/folders/2y/42rvvshx25925ssnn_4nj2h40000gn/T/Rtmp0FZ786/remotes151d01f254bef/hansorlee-irwpkg-4cf29d7/DESCRIPTION’ ...  ✔  checking for file ‘/private/var/folders/2y/42rvvshx25925ssnn_4nj2h40000gn/T/Rtmp0FZ786/remotes151d01f254bef/hansorlee-irwpkg-4cf29d7/DESCRIPTION’
-##   ─  preparing ‘irwpkg’:
-##      checking DESCRIPTION meta-information ...  ✔  checking DESCRIPTION meta-information
-##   ─  installing the package to build vignettes
-##      creating vignettes ...  ✔  creating vignettes (2.2s)
-##   ─  checking for LF line-endings in source and make files and shell scripts (798ms)
-##   ─  checking for empty or unneeded directories
-##        NB: this package now depends on R (>= 3.5.0)
-##        WARNING: Added dependency on R >= 3.5.0 because serialized objects in
-##      serialize/load version 3 cannot be read in older versions of R.
-##      File(s) containing such objects:
-##        ‘irwpkg/data/metadata_summary.RData’
-## ─  building ‘irwpkg_0.1.0.tar.gz’
-##      
-## 
+# remotes::install_github("hansorlee/irwpkg", build_vignettes = TRUE)
 ```
 
 ### Authentication

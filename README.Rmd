@@ -33,6 +33,7 @@ remotes::install_github("hansorlee/irwpkg")
 After installation, load the `irwpkg` package:
 
 ```{r}
+#| eval: false
 library(irwpkg)
 ```
 
@@ -52,6 +53,7 @@ To help you get started, irwpkg includes a detailed vignette. The vignette demon
 You can access the vignette using the following commands:
 
 ```{r}
+#| eval: false
 # List all available vignettes for irwpkg
 vignette(package = "irwpkg")
 
@@ -63,7 +65,8 @@ vignette("Report", package = "irwpkg")
 
 If the vignette does not appear, ensure that the package was installed with vignettes enabled. You can do this by reinstalling the package:
 ```{r}
-remotes::install_github("hansorlee/irwpkg", build_vignettes = TRUE)
+#| eval: false
+# remotes::install_github("hansorlee/irwpkg", build_vignettes = TRUE)
 ```
 
 
