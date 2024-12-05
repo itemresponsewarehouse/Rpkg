@@ -63,8 +63,12 @@ fetch_data <- function(name) {
 #' @importFrom utils data
 #' @export
 filter_tables <- function(n_rows = 0, required_columns = NULL) {
-  # Load the precomputed metadata summary
-  data(metadata_summary, package="irwpkg")
+  # Load precomputed metadata
+  if (file.exists("data/course-data.csv")) {
+    metadata_summary <- utils::read.csv("data/metadata.csv")
+  } else {
+    stop("No metadata found.")
+  }
 
   # Initialize a vector to store matching table names
   matching_tables <- character(0)
