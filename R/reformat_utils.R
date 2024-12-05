@@ -16,7 +16,7 @@ library(tidyr)
 #' check_resp(data, "resp", "item")
 #' @noRd
 
-check_resp <- function(data, resp, item = NULL) {
+check_numeric <- function(data, resp, item = NULL) {
   if (!is.numeric(data[[resp]])) {
     if (sum(is.na(as.numeric(data[[resp]]))) > 0.75 * nrow(data) &
         !is.null(item) & (resp == "resp")) {
