@@ -1,8 +1,8 @@
 # init.R: Initialize the Redivis data source connection and provide helper functions for accessing tables within the IRW database.
 
 
-# Declare global variable to suppress check note
-utils::globalVariables(c("metadata_summary", "datasource"))
+# defining a package environment
+.irw_env <- new.env(parent = emptyenv())
 
 #' Initialize Datasource
 #'
@@ -10,12 +10,13 @@ utils::globalVariables(c("metadata_summary", "datasource"))
 #' If the global variable `datasource` doesn't exist or is NULL, it sets up a new connection.
 #' @return The initialized datasource connection.
 initialize_datasource <- function() {
-  # Check if 'datasource' exists in the global environment and is non-NULL
-  if (!exists("datasource", envir = .GlobalEnv) || is.null(datasource)) {
-    datasource <<- redivis::user("datapages")$dataset("item_response_warehouse") # init a reference to IRW
-    datasource$get() # performing an API request with the initialized reference
+  if (!exists("datasource", envir = .irw_env) ||
+      is.null(.irw_env$datasource)) {
+    datasource <- redivis::user("datapages")$dataset("item_response_warehouse")
+    datasource$get() # Perform an API request with the initialized reference
+    .irw_env$datasource <- datasource
   }
-  return(datasource)
+  return(.irw_env$datasource)
 }
 
 
@@ -30,10 +31,9 @@ initialize_datasource <- function() {
 fetch_table <- function(name) {
   # Initialize datasource if not already set
   ds <- initialize_datasource()
-
+  
   # Access the specified table
   table_data <- ds$table(name)
   table_data$get() # performing an API request to fetch the table data
   return(table_data)
 }
-
