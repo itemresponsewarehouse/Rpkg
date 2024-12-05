@@ -6,18 +6,15 @@ the Item Response Warehouse ([IRW](https://datapages.github.io/irw/)).
 It provides tools for exploring, filtering, retrieving, and reformatting
 datasets, making it easier to analyze item response data.
 
-## Installation
-
-To install the development version of `irwpkg` from
-[GitHub](https://github.com/):
-
-``` r
-# Install the remotes package if needed
-# install.packages("remotes")
-
-# Install irwpkg from GitHub
-remotes::install_github("hansorlee/irwpkg")
-```
+<!-- ## Installation -->
+<!-- To install the development version of `irwpkg` from [GitHub](https://github.com/): -->
+<!-- ```{r} -->
+<!-- #| eval: false -->
+<!-- # Install the remotes package if needed -->
+<!-- # install.packages("remotes") -->
+<!-- # Install irwpkg from GitHub -->
+<!-- remotes::install_github("hansorlee/irwpkg") -->
+<!-- ``` -->
 
 ## Getting Started
 
@@ -52,13 +49,24 @@ vignette(package = "irwpkg")
 vignette("Report", package = "irwpkg")
 ```
 
+<!-- #### Troubleshooting -->
+<!-- If the vignette does not appear, ensure that the package was installed with vignettes enabled. You can do this by reinstalling the package: -->
+<!-- ```{r} -->
+<!-- #| eval: false -->
+<!-- # remotes::install_github("hansorlee/irwpkg", build_vignettes = TRUE) -->
+<!-- ``` -->
+
 #### Troubleshooting
 
-If the vignette does not appear, ensure that the package was installed
-with vignettes enabled. You can do this by reinstalling the package:
+##### Missing Vignette
+
+If the vignette does not appear when running
+`vignette(package = "irwpkg")`, ensure that the package was installed
+with vignettes enabled. Developers can reinstall the package with the
+following command:
 
 ``` r
-# remotes::install_github("hansorlee/irwpkg", build_vignettes = TRUE)
+devtools::install(build_vignettes = TRUE)
 ```
 
 ### Authentication
