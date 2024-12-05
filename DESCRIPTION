@@ -10,15 +10,16 @@ Maintainer: Hansol Lee <hansol@stanford.edu>
 Description: Functions to manage data from the Item Response Warehouse. 
 Depends: R (>= 3.5.0)
 Imports:
-    redivis
+    redivis,
+    quarto
 Remotes:
     redivis/redivis-r
 Suggests: 
-    quarto,
     dplyr,
     knitr,
     rmarkdown,
-    testthat (>= 3.0.0)
+    testthat (>= 3.0.0),
+    evaluate
 VignetteBuilder: quarto
 License: MIT + file LICENSE
 Encoding: UTF-8

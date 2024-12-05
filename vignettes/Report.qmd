@@ -37,6 +37,7 @@ This tutorial demonstrates how to use the irwpkg package to explore, filter, and
 To view all datasets in the database, use the `list_available_datasets()` function. This provides a summary of dataset names, row counts, and variable counts.
 
 ```{r}
+#| eval: false
 list_datasets <- list_available_datasets()
 dim(list_datasets)  # Dimensions of the dataset
 head(list_datasets)  # Preview the first few datasets
@@ -47,12 +48,14 @@ head(list_datasets)  # Preview the first few datasets
 To get high-level metadata for the entire database:
 
 ```{r}
+#| eval: false
 db_info <- get_database_metadata()
 ```
 
 To retrieve detailed metadata for a specific table:
 
 ```{r}
+#| eval: false
 table_info <- get_table_metadata("lessR_Mach4")
 ```
 
@@ -64,7 +67,14 @@ Before filtering or selecting datasets, it’s helpful to understand the distrib
 
 The `show_overall_statistics()` function computes key statistics (e.g., range, mean) for attributes such as `id_count`, `item_count`, `resp_count`, and `sparsity`.
 
+NOTE: `sparsity` is calculated using the formula:
+
+$$
+\text{sparsity} = \left( \frac{\sqrt{\text{resp_count}}}{\text{id_count}} \right) \times \left( \frac{\sqrt{\text{resp_count}}}{\text{item_count}} \right)
+$$
+
 ```{r}
+#| eval: false
 show_overall_statistics()
 ```
 
@@ -73,12 +83,14 @@ show_overall_statistics()
 Use the visualize_metadata_distributions() function to create histograms of dataset attributes. This helps you see the range and frequency of values for attributes like id_count, item_count, resp_count, and sparsity.
 
 ```{r}
+#| eval: false
 visualize_metadata_distributions()
 ```
 
 You can also focus on specific ranges for individual attributes by specifying ranges:
 
 ```{r}
+#| eval: false
 visualize_metadata_distributions(
   ranges = list(id_count = c(0, 50000), resp_count = c(0, 100000))
 )
@@ -93,6 +105,7 @@ After exploring the distributions, you can filter datasets based on specific cri
 Retrieve datasets with attributes that fall within a specified range:
 
 ```{r}
+#| eval: false
 matching_tables <- filter_tables(id_count = c(100, 1000), sparsity = c(0.1, 0.5))
 print(matching_tables)
 ```
@@ -102,6 +115,7 @@ print(matching_tables)
 Filter datasets that include specific columns, such as date, rt, or rater:
 
 ```{r}
+#| eval: false
 matching_tables <- filter_tables(has_date = TRUE)
 
 print(matching_tables)
@@ -112,6 +126,7 @@ print(matching_tables)
 You can combine multiple criteria to refine your search:
 
 ```{r}
+#| eval: false
 matching_tables <- filter_tables(
   id_count = c(100, 10000), 
   has_rater = TRUE
@@ -128,6 +143,7 @@ Once you have identified the datasets you need, use the fetch_data() function to
 To retrieve a specific dataset:
 
 ```{r}
+#| eval: false
 swmd_mokken <- fetch_data(name = "swmd_mokken")
 ```
 
@@ -136,6 +152,7 @@ swmd_mokken <- fetch_data(name = "swmd_mokken")
 You can retrieve multiple datasets at once by providing their names as a character vector:
 
 ```{r}
+#| eval: false
 datasets <- fetch_data(c("fractals_rating", "spelling2pronounce_edwards2023"))
 print(names(datasets))
 ```
@@ -143,6 +160,7 @@ print(names(datasets))
 Alternatively, you can use the output of filter_tables() directly:
 
 ```{r}
+#| eval: false
 datasets <- fetch_data(matching_tables)
 print(names(datasets))
 ```
@@ -154,6 +172,7 @@ print(names(datasets))
 To save a dataset to a file:
 
 ```{r}
+#| eval: false
 download_data("swmd_mokken", path = "mydata.csv", overwrite=TRUE)
 ```
 
