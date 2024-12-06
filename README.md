@@ -1,7 +1,6 @@
 
 # irwpkg
-
-`irwpkg` is an R package designed to simplify access to datasets from
+`irwpkg`is an R package designed to simplify access to datasets from
 the Item Response Warehouse ([IRW](https://datapages.github.io/irw/)).
 It provides tools for exploring, filtering, retrieving, and reformatting
 datasets, making it easier to analyze item response data.
