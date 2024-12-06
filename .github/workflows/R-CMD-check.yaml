@@ -42,19 +42,25 @@ jobs:
           http-user-agent: ${{ matrix.config.http-user-agent }}
           use-public-rspm: true
 
-      # Step 4: Install Non-CRAN Dependencies
+      # Step 4: Install devtools
+      # Install the `devtools` package if it's not available
+      - name: Install devtools
+        run: |
+          Rscript -e 'if (!requireNamespace("devtools", quietly = TRUE)) install.packages("devtools")'
+
+      # Step 5: Install Non-CRAN Dependencies
       # Install the `redivis` package manually using devtools
       - name: Install Non-CRAN Dependencies
         run: |
           Rscript -e 'devtools::install_github("redivis/redivis-r", ref = "main")'
 
-      # Step 5: Install R package dependencies
+      # Step 6: Install R package dependencies
       - uses: r-lib/actions/setup-r-dependencies@v2
         with:
           extra-packages: any::rcmdcheck
           needs: check
 
-      # Step 6: Run R CMD Check
+      # Step 7: Run R CMD Check
       - uses: r-lib/actions/check-r-package@v2
         with:
           upload-snapshots: true
