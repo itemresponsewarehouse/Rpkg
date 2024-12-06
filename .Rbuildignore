@@ -10,3 +10,5 @@
 ^inst/progress-report$
 ^inst/progress-proposal$
 ^inst/final-project$
+^doc$
+^Meta$

@@ -7,122 +7,112 @@ vignette: >
   %\VignetteEncoding{UTF-8}
 ---
 
-```{r, include = FALSE}
-knitr::opts_chunk$set(
-  collapse = TRUE,
-  comment = "#>"
-)
-```
 
 ```{r setup}
+#| eval: false
 library(irwpkg)
+library(mirt)
 ```
 
-# Introduction
+# Overview
 
-This tutorial demonstrates how to use the irwpkg package to explore, filter, and retrieve data from a structured database of item response datasets. The package includes tools for:
+The [Item Response Warehouse (IRW)](https://datapages.github.io/irw/) is a large-scale database of harmonized item response datasets hosted [here](https://redivis.com/datasets/as2e-cv7jb41fd).
 
-1.  Exploring available datasets and their metadata.
+`irwpkg` provides a simple, efficient interface for accessing and analyzing IRW datasets, providing tools for:
 
-2.  Visualizing distributions of key dataset attributes.
+1.  **Exploration**: Browse and identify datasets.
 
-3.  Filtering datasets based on user-defined criteria.
+2.  **Retrieval**: Fetch datasets into R.
 
-4.  Fetching datasets into R for analysis.
+3.  **Reformatting**: Prepare data for psychometric analysis.
 
-# Explore Available Datasets
 
-## List all available datasets
+# 1. Exploration
 
-To view all datasets in the database, use the `list_available_datasets()` function. This provides a summary of dataset names, row counts, and variable counts.
+Gain insights into the IRW database and find datasets relevant to your analysis using tools for listing, summarizing, and filtering.
+
+- `list_available_datasets()`
+- `get_database_metadata()` & `get_table_metadata()`
+- `show_overall_statistics()` & `visualize_metadata_distributions()`
+- `filter_tables()`
+
+
+## List Available Datasets
+Use `list_available_datasets()` to view all datasets and their metadata (names, row counts, variable counts).
 
 ```{r}
 #| eval: false
-list_datasets <- list_available_datasets()
-dim(list_datasets)  # Dimensions of the dataset
-head(list_datasets)  # Preview the first few datasets
+datasets <- list_available_datasets()
+dim(datasets)
+head(datasets)
+
 ```
 
-## Get Metadata for the Database or a Specific Table
-
-To get high-level metadata for the entire database:
-
+## Database Metadata
+Retrieve high-level metadata for the entire database using `get_database_metadata()`:
 ```{r}
 #| eval: false
 db_info <- get_database_metadata()
 ```
 
-To retrieve detailed metadata for a specific table:
-
+## Database Metadata (cont.)
+You can also get metadata about individual datasets using `get_table_metadata()`:
 ```{r}
 #| eval: false
 table_info <- get_table_metadata("lessR_Mach4")
 ```
 
-# Understand Metadata Distributions
-
-Before filtering or selecting datasets, it’s helpful to understand the distribution of key dataset attributes.
-
-## View Overall Statistics
-
-The `show_overall_statistics()` function computes key statistics (e.g., range, mean) for attributes such as `id_count`, `item_count`, `resp_count`, and `sparsity`.
-
-NOTE: `sparsity` is calculated using the formula:
-
-$$
-\text{sparsity} = \left( \frac{\sqrt{\text{resp_count}}}{\text{id_count}} \right) \times \left( \frac{\sqrt{\text{resp_count}}}{\text{item_count}} \right)
-$$
+## Overall Statistics
+View statistical summaries for key dataset attributes with `show_overall_statistics()`:
 
 ```{r}
 #| eval: false
 show_overall_statistics()
 ```
 
-## Visualize Distributions
-
-Use the visualize_metadata_distributions() function to create histograms of dataset attributes. This helps you see the range and frequency of values for attributes like id_count, item_count, resp_count, and sparsity.
+## Overall Statistics (cont.)
+Use `visualize_metadata_distributions()` to generate histograms of dataset attributes.
 
 ```{r}
 #| eval: false
 visualize_metadata_distributions()
 ```
 
-You can also focus on specific ranges for individual attributes by specifying ranges:
-
+## Overall Statistics (cont.)
+Specify custom ranges for attributes if needed:
 ```{r}
 #| eval: false
-visualize_metadata_distributions(
-  ranges = list(id_count = c(0, 50000), resp_count = c(0, 100000))
-)
+visualize_metadata_distributions(ranges = list(
+  id_count = c(0, 10000),
+  resp_count = c(0, 100000),
+  item_count = c(0, 150),
+  sparsity = c(0, 2)
+))
 ```
 
-# Filter datasets
 
-After exploring the distributions, you can filter datasets based on specific criteria using the filter_tables() function.
-
-## Filter by Numeric Ranges
-
-Retrieve datasets with attributes that fall within a specified range:
+## Filter Datasets by Criteria
+Retrieve datasets that match specific numeric ranges of key attributes:
 
 ```{r}
 #| eval: false
-matching_tables <- filter_tables(id_count = c(100, 1000), sparsity = c(0.1, 0.5))
+matching_tables <- filter_tables(
+  id_count = c(100, 1000), 
+  sparsity = c(0.1, 0.5))
 print(matching_tables)
 ```
 
-## Filter by Presence of Specific Columns
+## Filter Datasets by Criteria (cont.)
 
-Filter datasets that include specific columns, such as date, rt, or rater:
+Filter datasets that include specific columns (`date`, `rt`, or `rater`):
 
 ```{r}
 #| eval: false
-matching_tables <- filter_tables(has_date = TRUE)
+matching_tables <- filter_tables(has_rater = TRUE)
 
 print(matching_tables)
 ```
-
-## Combine Numeric and Column Presence Criteria
-
+## Filter Datasets by Criteria (cont.)
 You can combine multiple criteria to refine your search:
 
 ```{r}
@@ -134,56 +124,70 @@ matching_tables <- filter_tables(
 print(matching_tables)
 ```
 
-# Retrieve Datasets
 
-Once you have identified the datasets you need, use the fetch_data() function to load them into R.
+# 2. Retrieval
+Once you’ve identified the desired datasets, fetch them into R for analysis.
 
-## Fetch a Single Dataset
+- `fetch_data()`
+- `download_data()`
 
-To retrieve a specific dataset:
-
+## Fetch a single dataset
+Use `fetch_data()` to retrieve a single dataset:
 ```{r}
 #| eval: false
 swmd_mokken <- fetch_data(name = "swmd_mokken")
+str(swmd_mokken)
+
 ```
 
-## Fetch Multiple Datasets
-
-You can retrieve multiple datasets at once by providing their names as a character vector:
-
+## Fetch multiple datasets
+Retrieve multiple datasets by providing their names:
 ```{r}
 #| eval: false
 datasets <- fetch_data(c("fractals_rating", "spelling2pronounce_edwards2023"))
 print(names(datasets))
+str(datasets$fractals_rating)
+
 ```
 
-Alternatively, you can use the output of filter_tables() directly:
+## Fetch multiple datasets (cont.)
+Alternatively, you can use the output of `filter_tables()` directly:
 
 ```{r}
 #| eval: false
+matching_tables <- filter_tables(has_rater = TRUE)
 datasets <- fetch_data(matching_tables)
 print(names(datasets))
 ```
 
-# Other utility functions
-
-## download datasets
-
-To save a dataset to a file:
+## Download datasets
+Save datasets locally with `download_data()`:
 
 ```{r}
 #| eval: false
 download_data("swmd_mokken", path = "mydata.csv", overwrite=TRUE)
 ```
 
-# Summary
+# 3. Reformatting
+Reformat IRW data for analysis with popular psychometric tools.
 
-This tutorial covered the key features of `irwpkg`: 
+- `reformat()`
+- `irw_rename()`
 
-1. Explore: Use `list_available_datasets()`, `get_database_metadata()`, and `get_table_metadata()` to explore the database.
+## Example workflow
+Fetch a dataset, reformat it, and analyze it using `mirt`:
 
-2.  Visualize: Use `show_overall_statistics()` and `visualize_metadata_distributions()` to understand dataset attributes.
+```{r}
+#| eval: false
+df <- fetch_data(name = "lessR_Mach4")
+rdf = reformat(df)
+mirtmod = mirt::mirt(rdf)
+```
 
-3.  Filter: Use `filter_tables()` to refine your selection based on numeric or column presence criteria.
+```{r}
+#| eval: false
+summary(mirtmod)
+```
 
-4.  Retrieve: Use `fetch_data()` to load datasets into R for analysis.
+
+
