@@ -171,8 +171,19 @@ download_data("swmd_mokken", path = "mydata.csv", overwrite=TRUE)
 # 3. Reformatting
 Reformat IRW data for analysis with popular psychometric tools.
 
-- `reformat()`
 - `irw_rename()`
+- `reformat()`
+
+## Rename IRW Variables
+Use `irw_rename()` to rename IRW variables for consistency.
+Similar to but less flexible than `janitor::clean_names()`, it can handle character vectors or any object with names and standardize them.
+
+```{r}
+#| eval: false
+test_vec <- c("InTeREsTiNG.VAR", "another.VAR", "this.$&^!_VAR")
+irw_rename(test_vec)
+```
+
 
 ## Example item information workflow
 Fetch a dataset, reformat it, and analyze item information functions using `mirt`:
@@ -207,4 +218,30 @@ plot(mokmod, ask=FALSE)
 #| eval: false
 summary(mokmod)
 ```
+
+## Example omega reliability analysis workflow based item response times
+Fetch a dataset, reformat it, and analyze it with `psych` function `omega` for factor analysis:
+
+```{r}
+#| eval: false
+df <- fetch_data(name = "dd_rotation")
+rdf = reformat(df, package = "psych", resp = "rt")
+famod = psych::omega(rdf)
+plot(famod)
+summary(famod)
+```
+
+## Example exploratory factor analysis on longitudinal data
+Fetch a dataset, reformat it, and analyze it with `lavaan` function `efa` for factor analysis:
+
+```{r}
+#| eval: false
+df <- fetch_data(name = "COACH_Chen_2022_ADL")
+rdf = reformat(df,package = "lavaan",item=c("item","wave"))
+lavmod = lavaan::efa(rdf)
+summary(lavmod)
+```
+
+
+
 
