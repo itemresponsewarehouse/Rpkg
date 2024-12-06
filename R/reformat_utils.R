@@ -11,7 +11,7 @@ library(tidyr)
 #' @param item The name of the item variable
 #' @return Returns the data frame with the response variable converted to numeric
 #' 
-#' @importFrom dplyr as_tibble mutate select across pivot_longer left_join uncount everything pivot_wider all_of setdiff distinct filter group_by summarise nrow n
+#' @importFrom dplyr as_tibble mutate select across left_join everything all_of setdiff distinct filter group_by summarise n
 #' @importFrom tidyr pivot_wider pivot_longer drop_na
 #' @importFrom tibble is_tibble
 #' @importFrom tidyselect all_of matches
@@ -19,10 +19,9 @@ library(tidyr)
 #' @importFrom purrr map_chr
 #' @importFrom stringr str_replace str_replace_all
 #' @importFrom utils combn
-
 #' @examples
 #' data = data.frame(id = c(1, 2, 3), item = c(1, 2, 3), resp = c(1, 2, 3))
-#' check_resp(data, "resp", "item")
+#' check_numeric(data, "resp")
 #' @noRd
 
 check_numeric = function(data, resp, item = NULL) {
@@ -65,7 +64,6 @@ check_uniqueness = function(data, cols) {
 }
 
 # Function to find the pivot arguments for pivot_wider
-
 
 find_pivot_args = function(data,
                             id_cols = "id",
