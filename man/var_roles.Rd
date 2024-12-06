@@ -5,7 +5,7 @@
 \alias{var_roles}
 \title{var_roles list is used to create a catalog object to keep track of and catalog all the variables in the tibble}
 \format{
-An object of class \code{list} of length 14.
+A list of lists
 }
 \usage{
 var_roles
