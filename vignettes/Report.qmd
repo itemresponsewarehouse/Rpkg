@@ -174,14 +174,15 @@ Reformat IRW data for analysis with popular psychometric tools.
 - `reformat()`
 - `irw_rename()`
 
-## Example workflow
-Fetch a dataset, reformat it, and analyze it using `mirt`:
+## Example item information workflow
+Fetch a dataset, reformat it, and analyze item information functions using `mirt`:
 
 ```{r}
 #| eval: false
 df <- fetch_data(name = "lessR_Mach4")
 rdf = reformat(df)
 mirtmod = mirt::mirt(rdf)
+plot(mirtmod, type="infotrace")
 ```
 
 ```{r}
@@ -190,4 +191,20 @@ summary(mirtmod)
 ```
 
 
+
+## Example nonparametric IRT item workflow
+Fetch a dataset, reformat it, and analyze to check for item monotonicity using `mokken`:
+
+```{r}
+#| eval: false
+df <- fetch_data(name = "NAMPRB_Siwiak_2024_AOT")
+rdf = reformat(df, package = "mokken")
+mokmod = mokken::check.monotonicity(rdf)
+plot(mokmod, ask=FALSE)
+```
+
+```{r}
+#| eval: false
+summary(mokmod)
+```
 
