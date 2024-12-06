@@ -750,7 +750,16 @@ reformat = function(data,
   if (keep_all) {
     remaining_cols = setdiff(names(data), names(catalog))
     for (col in remaining_cols) {
-      catalog = add_to_catalog(catalog, col, "other")
+      var_role = "other"
+      ## for each of remaining_roles_in_order_of_priority check if the role is in the catalog, if so, set var_role to the first matching role from grep in var_roles
+      for (role in remaining_roles_in_order_of_priority) {
+        if (grepl(var_roles[[role]]$grep, col)) {
+          var_role = role
+          break
+        }
+      }
+      
+      catalog = add_to_catalog(catalog, col, var_role)
       data = data |> dplyr::mutate(dplyr::across(dplyr::all_of(col), catalog[[col]]$dtype))
       
     }
