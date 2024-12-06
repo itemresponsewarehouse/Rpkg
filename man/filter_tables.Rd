@@ -41,16 +41,5 @@ and returns an empty character vector.
 Filters the metadata to return the names of tables that match the specified criteria.
 }
 \examples{
-# Example 1: Filter tables with ID count between 100 and 1000
-filter_tables(id_count = c(100, 1000))
-
-# Example 2: Filter tables with multiple numeric criteria
-filter_tables(id_count = c(100, 1000), sparsity = c(0.1, 0.5))
-
-# Example 3: Filter tables with specific columns
-filter_tables(has_date = TRUE, has_rt = TRUE)
-
-# Example 4: Combine numeric and column presence criteria
-filter_tables(id_count = c(100, 1000), has_date = TRUE)
-
+filter_tables(id_count = c(100, 1000), sparsity = c(0.1, 0.5), has_date = TRUE)
 }

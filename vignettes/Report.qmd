@@ -178,10 +178,12 @@ download_data("swmd_mokken", path = "mydata.csv", overwrite=TRUE)
 
 # Summary
 
-This tutorial covered the key features of `irwpkg`: 1. Explore: Use list_available_datasets(), get_database_metadata(), and get_table_metadata() to explore the database.
+This tutorial covered the key features of `irwpkg`: 
 
-2.  Visualize: Use show_overall_statistics() and visualize_metadata_distributions() to understand dataset attributes.
+1. Explore: Use `list_available_datasets()`, `get_database_metadata()`, and `get_table_metadata()` to explore the database.
 
-3.  Filter: Use filter_tables() to refine your selection based on numeric or column presence criteria.
+2.  Visualize: Use `show_overall_statistics()` and `visualize_metadata_distributions()` to understand dataset attributes.
 
-4.  Retrieve: Use fetch_data() to load datasets into R for analysis.
+3.  Filter: Use `filter_tables()` to refine your selection based on numeric or column presence criteria.
+
+4.  Retrieve: Use `fetch_data()` to load datasets into R for analysis.

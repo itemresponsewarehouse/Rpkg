@@ -16,7 +16,9 @@ Imports:
     redivis,
     stringr,
     tibble,
-    tidyr
+    tidyr,
+    forcats,
+    tidyselect
 Remotes:
     redivis/redivis-r
 Suggests: 
