@@ -43,19 +43,18 @@ jobs:
           use-public-rspm: true
 
       # Step 4: Install remotes
-      # Install the `remotes` package for GitHub installation
+      # Install the `remotes` package for GitHub package installation
       - name: Install remotes
         run: |
           Rscript -e 'if (!requireNamespace("remotes", quietly = TRUE)) install.packages("remotes")'
 
-      # Step 5: Install Non-CRAN Dependencies
-      # Explicitly install `redivis` from GitHub before proceeding
-      - name: Install Non-CRAN Dependencies
+      # Step 5: Install Non-CRAN Dependency (redivis)
+      # Install the `redivis` package manually from GitHub
+      - name: Install redivis
         run: |
           Rscript -e 'remotes::install_github("redivis/redivis-r", ref = "main")'
 
       # Step 6: Install R package dependencies
-      # Use `pak` to resolve dependencies for the package, skipping redivis
       - uses: r-lib/actions/setup-r-dependencies@v2
         with:
           extra-packages: any::rcmdcheck
