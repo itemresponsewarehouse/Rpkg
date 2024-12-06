@@ -2,10 +2,12 @@
 
 export(download_data)
 export(fetch_data)
+export(fetch_table)
 export(filter_tables)
 export(get_database_metadata)
 export(get_metadata)
 export(get_table_metadata)
+export(initialize_datasource)
 export(irw_rename)
 export(list_available_datasets)
 export(reformat)

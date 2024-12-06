@@ -4,9 +4,10 @@
 #' including the number of rows, size in bytes, creation and update timestamps, access level, and URLs.
 #'
 #' @param table_name A character string specifying the name of the table.
+#' @param verbose Logical; whether to print the metadata to the console. Defaults to TRUE.
 #' @return A list containing the table metadata for programmatic use.
 #' @export
-get_table_metadata <- function(table_name) {
+get_table_metadata <- function(table_name, verbose = TRUE) {
   # Fetch the table object
   table <- fetch_table(table_name)
   
@@ -27,20 +28,22 @@ get_table_metadata <- function(table_name) {
   formatted_created_at <- format(as.POSIXct(created_at, origin = "1970-01-01", tz = "UTC"), "%Y-%m-%d %H:%M:%S")
   formatted_updated_at <- format(as.POSIXct(updated_at, origin = "1970-01-01", tz = "UTC"), "%Y-%m-%d %H:%M:%S")
   
-  # Print metadata information
-  cat("Table Metadata for:", table_name, "\n")
-  cat("--------------------------------------------------\n")
-  cat("Name:                     ", name, "\n")
-  cat("Created At:               ", formatted_created_at, "\n")
-  cat("Last Updated At:          ", formatted_updated_at, "\n")
-  cat("Number of Rows:           ", num_rows, "\n")
-  cat("Data Size (KB):           ", round(data_size, 2), "KB\n")
-  cat("Variable Count:           ", variable_count, "\n")
-  cat("Is Sample:                ", ifelse(is_sample, "Yes", "No"), "\n")
-  cat("DOI:                      ", doi_url, "\n")
-  cat("Table URL:                ", table_url, "\n")
-  cat("Container URL:            ", container_url, "\n")
-  cat("--------------------------------------------------\n")
+  # Optionally print metadata information
+  if (verbose) {
+    cat("Table Metadata for:", table_name, "\n")
+    cat("--------------------------------------------------\n")
+    cat("Name:                     ", name, "\n")
+    cat("Created At:               ", formatted_created_at, "\n")
+    cat("Last Updated At:          ", formatted_updated_at, "\n")
+    cat("Number of Rows:           ", num_rows, "\n")
+    cat("Data Size (KB):           ", round(data_size, 2), "KB\n")
+    cat("Variable Count:           ", variable_count, "\n")
+    cat("Is Sample:                ", ifelse(is_sample, "Yes", "No"), "\n")
+    cat("DOI:                      ", doi_url, "\n")
+    cat("Table URL:                ", table_url, "\n")
+    cat("Container URL:            ", container_url, "\n")
+    cat("--------------------------------------------------\n")
+  }
   
   # Compile metadata into a list for programmatic use
   metadata <- list(

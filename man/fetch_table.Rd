@@ -16,3 +16,8 @@ A Redivis table object for the specified table.
 This function initializes the datasource (if not already initialized) and retrieves a specified table by name.
 It is primarily used by other functions to access a table from the datasource.
 }
+\examples{
+\dontrun{
+fetch_table("example_table_name")
+}
+}

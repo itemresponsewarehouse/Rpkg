@@ -4,10 +4,12 @@
 \alias{get_table_metadata}
 \title{Get Metadata for a Specific Table}
 \usage{
-get_table_metadata(table_name)
+get_table_metadata(table_name, verbose = TRUE)
 }
 \arguments{
 \item{table_name}{A character string specifying the name of the table.}
+
+\item{verbose}{Logical; whether to print the metadata to the console. Defaults to TRUE.}
 }
 \value{
 A list containing the table metadata for programmatic use.

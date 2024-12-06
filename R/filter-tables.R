@@ -24,19 +24,18 @@ filter_tables <- function(id_count = NULL, item_count = NULL, resp_count = NULL,
   
   metadata <- get_metadata()
   
-  # Helper functions
+  # Helper function to check if value is within range (inclusive)
   is_within_range <- function(value, range) {
     if (is.null(range)) return(TRUE)
     value >= range[1] & value <= range[2] & !is.na(value)
   }
   
+  # Validate ranges
   validate_range <- function(range, name) {
     if (!is.null(range) && (!is.numeric(range) || length(range) != 2)) {
       stop(sprintf("'%s' must be a numeric vector of length 2.", name))
     }
   }
-  
-  # Validate inputs
   validate_range(id_count, "id_count")
   validate_range(item_count, "item_count")
   validate_range(resp_count, "resp_count")
@@ -65,7 +64,7 @@ filter_tables <- function(id_count = NULL, item_count = NULL, resp_count = NULL,
   
   # Check for matching tables
   if (nrow(metadata) == 0) {
-    message("No tables match the specified criteria. Check your input ranges and column presence filters.")
+    message("No tables match the specified criteria.")
     return(character(0))
   }
   
