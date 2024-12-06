@@ -554,7 +554,7 @@ not_supported_cols = c("rater", "raters", "rater_covariates", "rt") ## currently
 ## lme4: long format with each item as a row
 
 
-#' @importFrom dplyr as_tibble mutate select across pivot_longer left_join uncount everything pivot_wider all_of setdiff distinct filter 
+#' @importFrom dplyr as_tibble mutate select across left_join everything all_of setdiff distinct filter
 #' @importFrom tidyr pivot_wider pivot_longer drop_na
 # @importFrom stats model.matrix
 #' @importFrom psych dummy.code

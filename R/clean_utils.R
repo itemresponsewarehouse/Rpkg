@@ -22,7 +22,7 @@
 #' x
 #' names(x) = irw_name_fix(names(x))
 #' x # now has cleaned names
-#' @importFrom dplyr as_tibble mutate select across pivot_longer left_join uncount everything pivot_wider all_of setdiff distinct filter group_by summarise nrow
+#' @importFrom dplyr as_tibble mutate select across left_join everything all_of setdiff distinct filter group_by summarise
 #' @importFrom tidyr pivot_wider pivot_longer drop_na
 #' @importFrom purrr map_chr
 #' @importFrom stringr str_replace str_replace_all
@@ -94,9 +94,19 @@ irw_name_fix = function(string,
   new_names
 }
 
-## function to apply irw_name_fix to an object with names
+## Function to apply irw_name_fix to an object with names
+#' Apply renaming to an object with names
+#' 
 #' @param x an object with names to clean
-#' @noRd
+#' @param ... additional arguments to be passed down to irw_name_fix
+#' 
+#' @details
+#' This function is the main standardization function for IRW objects. It applies irw_name_fix to the names of an object.
+#' 
+#' @return the object with cleaned names
+#' @examples
+#' irw_rename(data.frame("A B" = 1:3, "C D" = 4:6))
+#' irw_rename(c("A B", "C D"))
 #' @export
 irw_rename = function(x, ...) {
   if (is.data.frame(x)) {
