@@ -5,3 +5,5 @@
 inst/doc
 .DS_Store
 inst/progress-report/progress-report-template_files/
+inst/final-project/project-report_files/
+**/mydata.csv
