@@ -1,22 +1,27 @@
 ---
-title: "Report"
-format: html
-vignette: >
-  %\VignetteIndexEntry{Report}
-  %\VignetteEngine{quarto::html}
-  %\VignetteEncoding{UTF-8}
+title: "Introducing `irwpkg` for the Item Response Warehouse (IRW)"
+date: December 5, 2024
+author: "Hansol Lee & Michael Hardy"
+format: 
+  revealjs:
+    slideNumber: true
 ---
-
-
-```{r setup}
-#| eval: false
+```{r}
+#| echo: false
+#| 
 library(irwpkg)
 library(mirt)
+library(purrr)
 ```
 
-# Overview
+
+# Problem: Usability Challenges of IRW
 
 The [Item Response Warehouse (IRW)](https://datapages.github.io/irw/) is a large-scale database of harmonized item response datasets hosted [here](https://redivis.com/datasets/as2e-cv7jb41fd).
+
+However, its usability has been limited by the lack of a dedicated programming interface, making data access and analysis inefficient.
+
+# Introducing `irwpkg`
 
 `irwpkg` provides a simple, efficient interface for accessing and analyzing IRW datasets, providing tools for:
 
@@ -35,13 +40,14 @@ Gain insights into the IRW database and find datasets relevant to your analysis 
 - `get_database_metadata()` & `get_table_metadata()`
 - `show_overall_statistics()` & `visualize_metadata_distributions()`
 - `filter_tables()`
+---
 
 
 ## List Available Datasets
 Use `list_available_datasets()` to view all datasets and their metadata (names, row counts, variable counts).
 
 ```{r}
-#| eval: false
+#| echo: true
 datasets <- list_available_datasets()
 dim(datasets)
 head(datasets)
@@ -51,14 +57,14 @@ head(datasets)
 ## Database Metadata
 Retrieve high-level metadata for the entire database using `get_database_metadata()`:
 ```{r}
-#| eval: false
+#| echo: true
 db_info <- get_database_metadata()
 ```
 
 ## Database Metadata (cont.)
 You can also get metadata about individual datasets using `get_table_metadata()`:
 ```{r}
-#| eval: false
+#| echo: true
 table_info <- get_table_metadata("lessR_Mach4")
 ```
 
@@ -66,7 +72,7 @@ table_info <- get_table_metadata("lessR_Mach4")
 View statistical summaries for key dataset attributes with `show_overall_statistics()`:
 
 ```{r}
-#| eval: false
+#| echo: true
 show_overall_statistics()
 ```
 
@@ -74,14 +80,14 @@ show_overall_statistics()
 Use `visualize_metadata_distributions()` to generate histograms of dataset attributes.
 
 ```{r}
-#| eval: false
+#| echo: true
 visualize_metadata_distributions()
 ```
 
 ## Overall Statistics (cont.)
 Specify custom ranges for attributes if needed:
 ```{r}
-#| eval: false
+#| echo: true
 visualize_metadata_distributions(ranges = list(
   id_count = c(0, 10000),
   resp_count = c(0, 100000),
@@ -95,7 +101,7 @@ visualize_metadata_distributions(ranges = list(
 Retrieve datasets that match specific numeric ranges of key attributes:
 
 ```{r}
-#| eval: false
+#| echo: true
 matching_tables <- filter_tables(
   id_count = c(100, 1000), 
   sparsity = c(0.1, 0.5))
@@ -107,7 +113,7 @@ print(matching_tables)
 Filter datasets that include specific columns (`date`, `rt`, or `rater`):
 
 ```{r}
-#| eval: false
+#| echo: true
 matching_tables <- filter_tables(has_rater = TRUE)
 
 print(matching_tables)
@@ -116,7 +122,7 @@ print(matching_tables)
 You can combine multiple criteria to refine your search:
 
 ```{r}
-#| eval: false
+#| echo: true
 matching_tables <- filter_tables(
   id_count = c(100, 10000), 
   has_rater = TRUE
@@ -134,7 +140,7 @@ Once you’ve identified the desired datasets, fetch them into R for analysis.
 ## Fetch a single dataset
 Use `fetch_data()` to retrieve a single dataset:
 ```{r}
-#| eval: false
+#| echo: true
 swmd_mokken <- fetch_data(name = "swmd_mokken")
 str(swmd_mokken)
 
@@ -143,7 +149,7 @@ str(swmd_mokken)
 ## Fetch multiple datasets
 Retrieve multiple datasets by providing their names:
 ```{r}
-#| eval: false
+#| echo: true
 datasets <- fetch_data(c("fractals_rating", "spelling2pronounce_edwards2023"))
 print(names(datasets))
 str(datasets$fractals_rating)
@@ -154,7 +160,7 @@ str(datasets$fractals_rating)
 Alternatively, you can use the output of `filter_tables()` directly:
 
 ```{r}
-#| eval: false
+#| echo: true
 matching_tables <- filter_tables(has_rater = TRUE)
 datasets <- fetch_data(matching_tables)
 print(names(datasets))
@@ -164,6 +170,7 @@ print(names(datasets))
 Save datasets locally with `download_data()`:
 
 ```{r}
+#| echo: true
 #| eval: false
 download_data("swmd_mokken", path = "mydata.csv", overwrite=TRUE)
 ```
@@ -178,16 +185,16 @@ Reformat IRW data for analysis with popular psychometric tools.
 Fetch a dataset, reformat it, and analyze it using `mirt`:
 
 ```{r}
-#| eval: false
+#| echo: true
+#| results: hide
 df <- fetch_data(name = "lessR_Mach4")
 rdf = reformat(df)
 mirtmod = mirt::mirt(rdf)
 ```
 
 ```{r}
-#| eval: false
+#| echo: true
 summary(mirtmod)
 ```
 
-
-
+# The End
