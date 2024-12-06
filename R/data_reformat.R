@@ -651,9 +651,12 @@ reformat = function(data,
   
   
   catalog = add_to_catalog(catalog, resp, "resp")
-  catalog = add_to_catalog(catalog, id, "id")
-  catalog = add_to_catalog(catalog, item, "item")
-  
+  for (col in c(id)) {
+    catalog = add_to_catalog(catalog, col, "id")
+  }
+  for (col in c(item)) {
+    catalog = add_to_catalog(catalog, col, "item")
+  }
   
   # Add variables with id and item roles to catalog, converting their data types appropriately
   data = data |> dplyr::mutate(id = catalog[["id"]]$dtype(id))
@@ -780,7 +783,7 @@ reformat = function(data,
         names_from = c(names_from, names(catalog)[sapply(catalog, function(x)
           x$role %in% c("timedate", "item_groups"))])
       }
-      
+
       # find pivot arguments try first from data_cleaned and if not possible, try to find from data
       pivot_args = NULL
       try({
