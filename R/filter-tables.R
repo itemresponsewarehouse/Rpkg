@@ -16,18 +16,7 @@
 #' @return A character vector of table names that match the criteria. If no tables match, it prints a message 
 #'         and returns an empty character vector.
 #' @examples
-#' # Example 1: Filter tables with ID count between 100 and 1000
-#' filter_tables(id_count = c(100, 1000))
-#'
-#' # Example 2: Filter tables with multiple numeric criteria
-#' filter_tables(id_count = c(100, 1000), sparsity = c(0.1, 0.5))
-#'
-#' # Example 3: Filter tables with specific columns
-#' filter_tables(has_date = TRUE, has_rt = TRUE)
-#'
-#' # Example 4: Combine numeric and column presence criteria
-#' filter_tables(id_count = c(100, 1000), has_date = TRUE)
-#' 
+#' filter_tables(id_count = c(100, 1000), sparsity = c(0.1, 0.5), has_date = TRUE)
 #' @importFrom utils read.csv
 #' @export
 filter_tables <- function(id_count = NULL, item_count = NULL, resp_count = NULL, sparsity = NULL,
@@ -35,45 +24,51 @@ filter_tables <- function(id_count = NULL, item_count = NULL, resp_count = NULL,
   
   metadata <- get_metadata()
   
-  # Helper function to check if a value is within the specified range
+  # Helper functions
   is_within_range <- function(value, range) {
-    if (is.null(range)) {
-      return(TRUE)  # No range specified, include all values
+    if (is.null(range)) return(TRUE)
+    value >= range[1] & value <= range[2] & !is.na(value)
+  }
+  
+  validate_range <- function(range, name) {
+    if (!is.null(range) && (!is.numeric(range) || length(range) != 2)) {
+      stop(sprintf("'%s' must be a numeric vector of length 2.", name))
     }
-    value >= range[1] & value <= range[2]
+  }
+  
+  # Validate inputs
+  validate_range(id_count, "id_count")
+  validate_range(item_count, "item_count")
+  validate_range(resp_count, "resp_count")
+  validate_range(sparsity, "sparsity")
+  
+  # Check required columns
+  required_columns <- c("id_count", "item_count", "resp_count", "sparsity", "has_date", "has_rt", "has_rater")
+  missing_columns <- setdiff(required_columns, names(metadata))
+  if (length(missing_columns) > 0) {
+    stop(sprintf("The following required columns are missing from metadata: %s", paste(missing_columns, collapse = ", ")))
   }
   
   # Apply numeric filters
-  if (!is.null(id_count)) {
-    metadata <- metadata[is_within_range(metadata$id_count, id_count), ]
-  }
-  if (!is.null(item_count)) {
-    metadata <- metadata[is_within_range(metadata$item_count, item_count), ]
-  }
-  if (!is.null(resp_count)) {
-    metadata <- metadata[is_within_range(metadata$resp_count, resp_count), ]
-  }
-  if (!is.null(sparsity)) {
-    metadata <- metadata[is_within_range(metadata$sparsity, sparsity), ]
+  numeric_filters <- list(id_count = id_count, item_count = item_count, resp_count = resp_count, sparsity = sparsity)
+  for (filter_name in names(numeric_filters)) {
+    range <- numeric_filters[[filter_name]]
+    if (!is.null(range)) {
+      metadata <- metadata[is_within_range(metadata[[filter_name]], range), ]
+    }
   }
   
   # Apply column presence filters
-  if (!is.null(has_date)) {
-    metadata <- metadata[metadata$has_date == as.numeric(has_date), ]
-  }
-  if (!is.null(has_rt)) {
-    metadata <- metadata[metadata$has_rt == as.numeric(has_rt), ]
-  }
-  if (!is.null(has_rater)) {
-    metadata <- metadata[metadata$has_rater == as.numeric(has_rater), ]
-  }
+  if (!is.null(has_date)) metadata <- metadata[metadata$has_date == as.numeric(has_date), ]
+  if (!is.null(has_rt)) metadata <- metadata[metadata$has_rt == as.numeric(has_rt), ]
+  if (!is.null(has_rater)) metadata <- metadata[metadata$has_rater == as.numeric(has_rater), ]
   
-  # Check if there are any matching tables
+  # Check for matching tables
   if (nrow(metadata) == 0) {
-    message("No tables match the specified criteria.")
-    return(character(0))  # Return an empty character vector
+    message("No tables match the specified criteria. Check your input ranges and column presence filters.")
+    return(character(0))
   }
   
-  # Return the names of the matching tables
+  # Return matching table names
   return(metadata$table_name)
 }
