@@ -90,25 +90,64 @@ as well as data with covariates, groups, item groups, raters, and more. The func
 will automatically identify and convert factor columns to dummy variables if needed.
 }
 \details{
-Currently supported packages:
-mirt, lavaan, sem, psych, ltm, mokken, lme4
-Note: not all functions within each package are supported. See details.
-Manuals ---------------------------------------------------------------------
-mirt: https://cran.r-project.org/web/packages/mirt/mirt.pdf
-lavaan: https://cran.r-project.org/web/packages/lavaan/lavaan.pdf
-psych: https://cran.r-project.org/web/packages/psych/psych.pdf
-ltm: https://cran.r-project.org/web/packages/ltm/ltm.pdf
-mokken: https://cran.r-project.org/web/packages/mokken/mokken.pdf
-lme4: https://cran.r-project.org/web/packages/lme4/lme4.pdf
+The \code{reformat} function simplifies the process of reformatting data for use with various R packages. The function is designed to work with a variety of data formats, including wide and long formats, as well as data with covariates, groups, item groups, raters, and more. With the exception of \code{lme4}, all other package selections default to performing a wider pivot (e.g. \code{tidyr::pivot_wider_spec}) on the data, transposing all items in the dataset into columns.
+This function is not meant for complex modeling tasks, but rather for quickly reformatting data for use with psychometric analysis packages to facilitate greater use of a wide variety of psychometric data and tools in \code{R}.
+
+The benefits of using this function compared to a more robust suite of tools such as \code{recipes} and \code{workflows} tools are:
+\enumerate{
+\item \emph{simplicity} and, in most cases, \emph{speed} by being able to quickly reformat data based on \code{irw} data standards
+\item \emph{usability} as some psychometric researchers may not be familiar enough with how to adapt the complex \code{tidymodels} pipelines across many datasets for latent variable analyses (such as those found in \code{mirt})
+\item \emph{automation} of the most time-consuming parts of \code{tidymodels} (creating recipes where you define all the variable roles and transformations): the reformat function does this automatically by exploiting the knowledge of it being some kind of psychometric dataset.
 }
+
+The \code{reformat} R function (and its supporting functions) is designed to take a data.frame (provided from the \code{irw} database) and reconstruct it in the format required by various \code{R} packages for psychometric analysis. It does this by transforming the reformatted data using user specifications, automatically identifying and cataloging available variables as needed, and matching the transformations with expected format for the user specified package, with robustness checks for various data and user combinations of parameters It returns the data in the desired format as an object with the additional class \code{irw_format} (which will be used for class methods in the future package iterations for greater efficiency).
+These are the steps currently used for \code{reformat}:
+\strong{Analyzing the data provided}
+The function creates a catalog of dataset variables, checking for compatability, identifying the roles of the variables, converting them to expected data types, and prioritizing their importance with respect to the user specifications
+When specified and where possible, the package automatically coerces and prioritizes the variables in the data to the expected data types and roles. The function will also check for the presence of the variables in the data and return an informative error if they are not found.
+The user can provide either column names or a boolean/logical to specify the variables. If the user provides a boolean, the function will attempt to automatically identify the variables based on the user specifications.
+Not every package has support for every variable role currently. The function will return either an error or a warning if the user specifies a variable or output type that is not supported by the package, is in conflict with other data, or is otherwise incompatible. Working with the user base, future iterations of the package will include more support for additional packages and variable roles to better serve the psychometric community. Currently, rater variables are only supported by the \code{lme4} package configuration.
+\strong{Reformatting the data}
+For wider pivots, checks for unique identification of the \code{resp} variable by \code{id} and \code{item} variables (if not found, automatically searches for and uses other variables that would allow for unique identification, and returns an error in the rare case that no unique identification is found in an \code{irw} dataset).
+The default package is \code{mirt}, which is the most common package used for psychometric analysis. The function will pivot the data into a wide format with each item as a column. It will retain \code{NAs} in the data by default, but the user can specify to drop them if needed. This is the same for the \code{ltm} package.
+The \code{mokken} package supports are similar to \code{mirt}, but are more restrictive. The function will pivot the data into a wide format with each item as a column. For \code{mokken}, all rows with missing values will be dropped.
+For the \code{lavaan} package, the function will pivot the data into a very wide format with each item, date, group, etc. are combined into unique variables.
+For users interested in the \code{sem} package, users would probably benefit the most from setting the supported package to \code{lavaan} , as many of the same structural assumptions hold. The \code{lavaan} configuration can support additional variables and covariates that can be uniquely identified and matched on the wide pivoted data.
+For the \code{psych} package, the function will pivot the data into a wide format with each item as a column for factor analysis. This package, like \code{lavaan}, can support additional variables and covariates that can be uniquely identified and matched on the wide pivoted data including automatically transforming dummy variables as needed, and thus easily supports functions like, \code{fa}, \code{bigCor}, etc. However, the function will not support all functions within the package. A user wishing to perform instrument reliability checks such as \code{alpha} or \code{omega} should not specify covariates or other variable roles.
+For the \code{lme4} package, the function will return the data into a long format, converting all variables and variable names in the data to the expected format for linear mixed effects in the package.
+The function will automatically identify and convert factor columns to dummy variables if needed. The function currently supports the following packages: \code{mirt}, \code{lavaan}, \code{psych}, \code{ltm}, \code{mokken}, and \code{lme4}.
+}
+\section{Resources}{
+
+Package Manuals:
+\code{mirt}: https://cran.r-project.org/web/packages/mirt/mirt.pdf
+\code{lavaan}: https://cran.r-project.org/web/packages/lavaan/lavaan.pdf
+\code{psych}: https://cran.r-project.org/web/packages/psych/psych.pdf
+\code{ltm}: https://cran.r-project.org/web/packages/ltm/ltm.pdf
+\code{mokken}: https://cran.r-project.org/web/packages/mokken/mokken.pdf
+\code{lme4}: https://cran.r-project.org/web/packages/lme4/lme4.pdf
+}
+
 \examples{
+## Example 1: Reformat data for mirt package
 df = data.frame(
 id = rep(rep(1:3,3),2),
 item = rep(rep(letters[1:3],each=3),2),
 resp = sample(0:1,9*2,replace=TRUE),
-cov_1 = rep(rnorm(9),2),
+cov_1 = rep(rep(rnorm(3),3),2),
 group = rep(c('G1','G2','G2'),each=3),
 wave = rep(c(1,2),each=9)
 )
+df
+reformat(df)
 
+## Example 2: Reformat data for lavaan package
+reformatted_data = reformat(df, package = "lavaan", timedate = TRUE)
+
+## Example 3: Reformat data for psych package
+reformatted_data = reformat(df, package = "psych", covariates = TRUE)
+
+}
+\seealso{
+\code{\link[recipes:recipe]{recipes::recipe()}},\code{\link[recipes:prep]{recipes::prep()}},\code{\link[recipes:bake]{recipes::bake()}},\code{\link[workflows:workflow]{workflows::workflow()}}
 }

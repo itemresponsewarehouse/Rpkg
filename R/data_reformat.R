@@ -1,8 +1,8 @@
 # Functions for in-session data transformations
 # These functions are used to transform data in-session, for example, to clean or reshape data before analysis.
-# var_roles list is used to create a catalog object to keep track of and catalog all the variables in the tibble -------
 
 #' var_roles list is used to create a catalog object to keep track of and catalog all the variables in the tibble
+#' @format A list of lists
 
 var_roles = list(
   resp = list(
@@ -46,7 +46,7 @@ var_roles = list(
     support_to_role = c("id")
   ),
   timedate = list(
-    dtype = \(x) forcats::as_factor(x, ordered = T),
+    dtype = \(x) forcats::as_factor(x),
     desc = "longitudinal or date variable",
     expected = "date",
     grep = "wave|session|visit|date|time",
@@ -56,7 +56,7 @@ var_roles = list(
     support_to_role = c("id", "item")
   ),
   covariates = list(
-    dtype = \(x) ifelse(is.character(x), forcats::as_factor(x), as.numeric(x)),
+    dtype = ~ if(is.character(.)) forcats::fct(.,na="NA") else as.numeric(.),
     desc = "covariates for the individual/subject",
     expected = "cov",
     grep = "cov_|age|gender|income|education",
@@ -517,51 +517,66 @@ not_supported_cols = c("rater", "raters", "rater_covariates", "rt") ## currently
 #' An object of class `irw_format` inheriting from either a data frame, tibble, or matrix in the format required by the specified package. 
 #' 
 #' @examples
+#' ## Example 1: Reformat data for mirt package
 #' df = data.frame(
 #' id = rep(rep(1:3,3),2),
 #' item = rep(rep(letters[1:3],each=3),2),
 #' resp = sample(0:1,9*2,replace=TRUE),
-#' cov_1 = rep(rnorm(9),2),
+#' cov_1 = rep(rep(rnorm(3),3),2),
 #' group = rep(c('G1','G2','G2'),each=3),
 #' wave = rep(c(1,2),each=9)
 #' )
-#'
-
-#' @details
+#' df
+#' reformat(df)
 #' 
-#' Currently supported packages:
-#' mirt, lavaan, sem, psych, ltm, mokken, lme4
-#' Note: not all functions within each package are supported. See details.
-#' Manuals ---------------------------------------------------------------------
-#' mirt: https://cran.r-project.org/web/packages/mirt/mirt.pdf
-#' lavaan: https://cran.r-project.org/web/packages/lavaan/lavaan.pdf
+#' ## Example 2: Reformat data for lavaan package
+#' reformatted_data = reformat(df, package = "lavaan", timedate = TRUE)
+#' 
+#' ## Example 3: Reformat data for psych package
+#' reformatted_data = reformat(df, package = "psych", covariates = TRUE)
+#' 
+#' @details
+#' The `reformat` function simplifies the process of reformatting data for use with various R packages. The function is designed to work with a variety of data formats, including wide and long formats, as well as data with covariates, groups, item groups, raters, and more. With the exception of `lme4`, all other package selections default to performing a wider pivot (e.g. `tidyr::pivot_wider_spec`) on the data, transposing all items in the dataset into columns. 
+#' This function is not meant for complex modeling tasks, but rather for quickly reformatting data for use with psychometric analysis packages to facilitate greater use of a wide variety of psychometric data and tools in `R`.
+#' 
+#' The benefits of using this function compared to a more robust suite of tools such as `recipes` and `workflows` tools are: 
+#' 1) *simplicity* and, in most cases, *speed* by being able to quickly reformat data based on `irw` data standards
+#' 2) *usability* as some psychometric researchers may not be familiar enough with how to adapt the complex `tidymodels` pipelines across many datasets for latent variable analyses (such as those found in `mirt`)
+#' 3) *automation* of the most time-consuming parts of `tidymodels` (creating recipes where you define all the variable roles and transformations): the reformat function does this automatically by exploiting the knowledge of it being some kind of psychometric dataset. 
+#' 
+#' The `reformat` R function (and its supporting functions) is designed to take a data.frame (provided from the `irw` database) and reconstruct it in the format required by various `R` packages for psychometric analysis. It does this by transforming the reformatted data using user specifications, automatically identifying and cataloging available variables as needed, and matching the transformations with expected format for the user specified package, with robustness checks for various data and user combinations of parameters It returns the data in the desired format as an object with the additional class `irw_format` (which will be used for class methods in the future package iterations for greater efficiency).
+#' These are the steps currently used for `reformat`:
+#' **Analyzing the data provided**
+#' The function creates a catalog of dataset variables, checking for compatability, identifying the roles of the variables, converting them to expected data types, and prioritizing their importance with respect to the user specifications
+#' When specified and where possible, the package automatically coerces and prioritizes the variables in the data to the expected data types and roles. The function will also check for the presence of the variables in the data and return an informative error if they are not found.
+#' The user can provide either column names or a boolean/logical to specify the variables. If the user provides a boolean, the function will attempt to automatically identify the variables based on the user specifications.
+#' Not every package has support for every variable role currently. The function will return either an error or a warning if the user specifies a variable or output type that is not supported by the package, is in conflict with other data, or is otherwise incompatible. Working with the user base, future iterations of the package will include more support for additional packages and variable roles to better serve the psychometric community. Currently, rater variables are only supported by the `lme4` package configuration.
+#' **Reformatting the data**
+#' For wider pivots, checks for unique identification of the `resp` variable by `id` and `item` variables (if not found, automatically searches for and uses other variables that would allow for unique identification, and returns an error in the rare case that no unique identification is found in an `irw` dataset). 
+#' The default package is `mirt`, which is the most common package used for psychometric analysis. The function will pivot the data into a wide format with each item as a column. It will retain `NAs` in the data by default, but the user can specify to drop them if needed. This is the same for the `ltm` package.
+#' The `mokken` package supports are similar to `mirt`, but are more restrictive. The function will pivot the data into a wide format with each item as a column. For `mokken`, all rows with missing values will be dropped. 
+#' For the `lavaan` package, the function will pivot the data into a very wide format with each item, date, group, etc. are combined into unique variables. 
+#' For users interested in the `sem` package, users would probably benefit the most from setting the supported package to `lavaan` , as many of the same structural assumptions hold. The `lavaan` configuration can support additional variables and covariates that can be uniquely identified and matched on the wide pivoted data.
+#' For the `psych` package, the function will pivot the data into a wide format with each item as a column for factor analysis. This package, like `lavaan`, can support additional variables and covariates that can be uniquely identified and matched on the wide pivoted data including automatically transforming dummy variables as needed, and thus easily supports functions like, `fa`, `bigCor`, etc. However, the function will not support all functions within the package. A user wishing to perform instrument reliability checks such as `alpha` or `omega` should not specify covariates or other variable roles.
+#' For the `lme4` package, the function will return the data into a long format, converting all variables and variable names in the data to the expected format for linear mixed effects in the package.
+#' The function will automatically identify and convert factor columns to dummy variables if needed. The function currently supports the following packages: `mirt`, `lavaan`, `psych`, `ltm`, `mokken`, and `lme4`.
+#' @section Resources: 
+#' Package Manuals:
+#' `mirt`: https://cran.r-project.org/web/packages/mirt/mirt.pdf
+#' `lavaan`: https://cran.r-project.org/web/packages/lavaan/lavaan.pdf
+#' `psych`: https://cran.r-project.org/web/packages/psych/psych.pdf
+#' `ltm`: https://cran.r-project.org/web/packages/ltm/ltm.pdf
+#' `mokken`: https://cran.r-project.org/web/packages/mokken/mokken.pdf
+#' `lme4`: https://cran.r-project.org/web/packages/lme4/lme4.pdf
 #  sem: https://cran.r-project.org/web/packages/sem/sem.pdf
-#' psych: https://cran.r-project.org/web/packages/psych/psych.pdf
-#' ltm: https://cran.r-project.org/web/packages/ltm/ltm.pdf
-#' mokken: https://cran.r-project.org/web/packages/mokken/mokken.pdf
-#' lme4: https://cran.r-project.org/web/packages/lme4/lme4.pdf
-
-
-##
-## Arguments -------------------------------------------------------------------
-## mirt: wide format with each item as a column and covdata as a separate dataframe and `itemdesign` would be an "item group" vars
-## mixedmirt: has data and covdata as a separate data.frame
-## lavaan: very wide format with each item, date, group, etc. as a separate column
-## sem: similar to lavaan, but only one "group" column which is a factor
-## psych: wide format with each item as a column for 'fa'.
-## ltm: wide format with each item as a column
-## mokken: wide format with each item as a column
-## lme4: long format with each item as a row
-
-
+#' @seealso [recipes::recipe()],[recipes::prep()],[recipes::bake()],[workflows::workflow()]
 #' @importFrom dplyr as_tibble mutate select across left_join everything all_of setdiff distinct filter
 #' @importFrom tidyr pivot_wider pivot_longer drop_na
 # @importFrom stats model.matrix
 #' @importFrom psych dummy.code
 #' @importFrom tibble is_tibble
 #' @importFrom tidyselect all_of matches
-#' @importFrom forcats as_factor
-
+#' @importFrom forcats as_factor fct
 #' @export
 reformat = function(data,
                     package = "mirt",
@@ -727,10 +742,10 @@ reformat = function(data,
       }
     }
   }
-  
+
   ## if keep_all is true, add all columns not already in the catalog to the catalog
   if (keep_all) {
-    remaining_cols = dplyr::setdiff(names(data), names(catalog))
+    remaining_cols = setdiff(names(data), names(catalog))
     for (col in remaining_cols) {
       catalog = add_to_catalog(catalog, col, "other")
       data = data |> dplyr::mutate(dplyr::across(dplyr::all_of(col), catalog[[col]]$dtype))
@@ -756,10 +771,15 @@ reformat = function(data,
       # get id_cols by finding all variables with id role in catalog
       id_cols = names(catalog)[sapply(catalog, function(x)
         x$role == "id")]
+      
       # get names_from by finding all variables with item role in catalog
       names_from = names(catalog)[sapply(catalog, function(x)
         x$role == "item")]
-      
+      # if lavaan or sem, check if there are either timedate or item_groups and if so, add them to names_from
+      if (package %in% c("lavaan", "sem")) {
+        names_from = c(names_from, names(catalog)[sapply(catalog, function(x)
+          x$role %in% c("timedate", "item_groups"))])
+      }
       
       # find pivot arguments try first from data_cleaned and if not possible, try to find from data
       pivot_args = NULL
@@ -777,7 +797,6 @@ reformat = function(data,
       if (needs_combined_columns(pivot_args)) {
         notify_combined_columns(pivot_args)
       }
-      
       # pivot data
       data_formatted = data_cleaned |> tidyr::pivot_wider(
         names_from = pivot_args$names_from,
@@ -789,13 +808,13 @@ reformat = function(data,
       
       unused_vars = setdiff(names(data_cleaned), as.character(unlist(pivot_args, use.names = F)))
       ## issue warning if cov_wide_supps[[package]] is false and there are other unused variables in the catalog and state which package does not support them and which variables will be ignored
-      
+     
       if ((length(unused_vars) > 0) & !cov_wide_supps[[package]]) {
         warning(
           paste0(
-            "The package '",
+            "The support for package '",
             package,
-            "' does not support the following variables: ",
+            "' does not currently allow the following dropped variables: ",
             paste(unused_vars, collapse = ", ")
           )
         )
@@ -816,9 +835,7 @@ reformat = function(data,
             }
           }
         }
-        
         data_formatted = data_formatted |> dplyr::left_join(tmpdata, by = pivot_args$id_cols)
-        
       }
       ## combine any id_cols to create unique rownames and then drop them
       data_formatted = data_formatted |>
@@ -827,7 +844,7 @@ reformat = function(data,
               sep = sep,
               remove = T) |>
         tibble::column_to_rownames("rowid")
-      
+
     } else {
       data_formatted = data_cleaned |> dplyr::as_tibble()
     }
@@ -849,11 +866,11 @@ reformat = function(data,
     warning(paste0(
       "A total of ",
       length(rows_to_drop),
-      " rows have been dropped due to all  missing values"
+      " rows have been dropped due to all missing values"
     ))
     data_formatted = data_formatted |>  dplyr::filter(!rownames(data_formatted) %in% rows_to_drop)
   }
-  
+
   
   ## if psych package, convert factors to numeric if ordered, else convert to dummies
   if (package %in% c("psych","lavaan")){
@@ -861,6 +878,7 @@ reformat = function(data,
       ## first check if the column has only one value and if so, drop it
       if (one_value_check(data_formatted[[col]])) {
         data_formatted = data_formatted[, !(names(data_formatted) %in% col)]
+        print(paste0("The column '", col, "' has been dropped due to having only one unique value (zero variance)"))
         
       } else if (class(data_formatted[[col]]) %in% c("factor", "ordered", "character", "logical")) {
         data_formatted = check_numeric(data_formatted, col)
