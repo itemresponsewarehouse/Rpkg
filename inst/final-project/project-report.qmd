@@ -225,7 +225,7 @@ Fetch a dataset, reformat it, and analyze item information functions using `mirt
 #| echo: true
 df <- fetch_data(name = "lessR_Mach4")
 rdf = reformat(df)
-mirtmod = mirt::mirt(rdf)
+mirtmod = mirt::mirt(rdf,verbose =FALSE)
 plot(mirtmod, type="infotrace")
 ```
 

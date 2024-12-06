@@ -425,10 +425,10 @@ Hansol Lee &amp; Michael Hardy
 <h1>1. Exploration</h1>
 <p>Gain insights into the IRW database and find datasets relevant to your analysis using tools for listing, summarizing, and filtering.</p>
 <ul>
-<li><code>list_available_datasets()</code></li>
-<li><code>get_database_metadata()</code> &amp; <code>get_table_metadata()</code></li>
-<li><code>show_overall_statistics()</code> &amp; <code>visualize_metadata_distributions()</code></li>
-<li><code>filter_tables()</code></li>
+<li><p><code>list_available_datasets()</code></p></li>
+<li><p><code>get_database_metadata()</code> &amp; <code>get_table_metadata()</code></p></li>
+<li><p><code>show_overall_statistics()</code> &amp; <code>visualize_metadata_distributions()</code></p></li>
+<li><h2 id="filter_tables"><code>filter_tables()</code></h2></li>
 </ul>
 </section>
 <section id="list-available-datasets" class="slide level2">
@@ -488,7 +488,7 @@ Usage Information:         Please find information about data licenses and citat
 --------------------------------------------------
 Name:                      lessR_Mach4 
 Created At:                2024-11-27 05:25:16 
-Last Updated At:           2024-12-06 05:47:45 
+Last Updated At:           2024-12-06 07:41:59 
 Number of Rows:            7020 
 Data Size (KB):            141.86 KB
 Variable Count:            3 
@@ -672,50 +672,186 @@ Sparsity:
 <h1>3. Reformatting</h1>
 <p>Reformat IRW data for analysis with popular psychometric tools.</p>
 <ul>
-<li><code>reformat()</code></li>
 <li><code>irw_rename()</code></li>
+<li><code>reformat()</code></li>
 </ul>
 </section>
-<section id="example-workflow" class="slide level2">
-<h2>Example workflow</h2>
-<p>Fetch a dataset, reformat it, and analyze it using <code>mirt</code>:</p>
+<section id="rename-irw-variables" class="slide level2">
+<h2>Rename IRW Variables</h2>
+<p>Use <code>irw_rename()</code> to rename IRW variables for consistency. Similar to but less flexible than <code>janitor::clean_names()</code>, it can handle character vectors or any object with names and standardize them.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb28"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb28-1"><a href=""></a>df <span class="ot">&lt;-</span> <span class="fu">fetch_data</span>(<span class="at">name =</span> <span class="st">"lessR_Mach4"</span>)</span>
-<span id="cb28-2"><a href=""></a>rdf <span class="ot">=</span> <span class="fu">reformat</span>(df)</span>
-<span id="cb28-3"><a href=""></a>mirtmod <span class="ot">=</span> mirt<span class="sc">::</span><span class="fu">mirt</span>(rdf)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb28"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb28-1"><a href=""></a>test_vec <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"InTeREsTiNG.VAR"</span>, <span class="st">"another.VAR"</span>, <span class="st">"this.$&amp;^!_VAR"</span>)</span>
+<span id="cb28-2"><a href=""></a><span class="fu">irw_rename</span>(test_vec)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
+</section>
+<section id="example-item-information-analysis-workflow" class="slide level2">
+<h2>Example item information analysis workflow</h2>
+<p>Fetch a dataset, reformat it, and analyze item information functions using <code>mirt</code>:</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb29"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb29-1"><a href=""></a><span class="fu">summary</span>(mirtmod)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb29"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb29-1"><a href=""></a>df <span class="ot">&lt;-</span> <span class="fu">fetch_data</span>(<span class="at">name =</span> <span class="st">"lessR_Mach4"</span>)</span>
+<span id="cb29-2"><a href=""></a>rdf <span class="ot">=</span> <span class="fu">reformat</span>(df)</span>
+<span id="cb29-3"><a href=""></a>mirtmod <span class="ot">=</span> mirt<span class="sc">::</span><span class="fu">mirt</span>(rdf,<span class="at">verbose =</span><span class="cn">FALSE</span>)</span>
+<span id="cb29-4"><a href=""></a><span class="fu">plot</span>(mirtmod, <span class="at">type=</span><span class="st">"infotrace"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+
+</div>
+<img data-src="project-report_files/figure-revealjs/unnamed-chunk-16-1.png" width="960" class="r-stretch"></section>
+<section id="example-nonparametric-irt-item-workflow" class="slide level2">
+<h2>Example nonparametric IRT item workflow</h2>
+<p>Fetch a dataset, reformat it, and analyze to check for item monotonicity using <code>mokken</code>:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb30"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb30-1"><a href=""></a>df <span class="ot">&lt;-</span> <span class="fu">fetch_data</span>(<span class="at">name =</span> <span class="st">"NAMPRB_Siwiak_2024_AOT"</span>)</span>
+<span id="cb30-2"><a href=""></a>rdf <span class="ot">=</span> <span class="fu">reformat</span>(df, <span class="at">package =</span> <span class="st">"mokken"</span>)</span>
+<span id="cb30-3"><a href=""></a>mokmod <span class="ot">=</span> mokken<span class="sc">::</span><span class="fu">check.monotonicity</span>(rdf)</span>
+<span id="cb30-4"><a href=""></a><span class="fu">plot</span>(mokmod, <span class="at">ask=</span><span class="cn">FALSE</span>,<span class="at">items =</span><span class="fu">c</span>(<span class="dv">1</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+
+</div>
+<img data-src="project-report_files/figure-revealjs/unnamed-chunk-17-1.png" width="960" class="r-stretch"></section>
+<section id="example-omega-reliability-analysis-workflow-based-item-response-times" class="slide level2">
+<h2>Example omega reliability analysis workflow based item response times</h2>
+<p>Fetch a dataset, reformat it, and analyze it with <code>psych</code> function <code>omega</code> for factor analysis:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb31"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb31-1"><a href=""></a>df <span class="ot">&lt;-</span> <span class="fu">fetch_data</span>(<span class="at">name =</span> <span class="st">"dd_rotation"</span>)</span>
+<span id="cb31-2"><a href=""></a>rdf <span class="ot">=</span> <span class="fu">reformat</span>(df, <span class="at">package =</span> <span class="st">"psych"</span>, <span class="at">resp =</span> <span class="st">"rt"</span>)</span>
+<span id="cb31-3"><a href=""></a>famod <span class="ot">=</span> psych<span class="sc">::</span><span class="fu">omega</span>(rdf)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div>
+<figure>
+<p><img data-src="project-report_files/figure-revealjs/unnamed-chunk-18-1.png" width="960"></p>
+</figure>
+</div>
+</div>
+<div class="sourceCode cell-code" id="cb32"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb32-1"><a href=""></a><span class="fu">plot</span>(famod)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>          F1       h2
-m01 -0.40928 1.68e-01
-m02 -0.28964 8.39e-02
-m03  0.24709 6.11e-02
-m04  0.32276 1.04e-01
-m05 -0.26608 7.08e-02
-m06  0.68497 4.69e-01
-m07  0.71518 5.11e-01
-m08 -0.22941 5.26e-02
-m09  0.59186 3.50e-01
-m10  0.62508 3.91e-01
-m11  0.41775 1.75e-01
-m12 -0.43404 1.88e-01
-m13 -0.35064 1.23e-01
-m14  0.23350 5.45e-02
-m15 -0.33285 1.11e-01
-m16  0.34839 1.21e-01
-m17  0.25251 6.38e-02
-m18 -0.35454 1.26e-01
-m19 -0.00504 2.54e-05
-m20 -0.33801 1.14e-01
+<pre><code>Use omega.diagram to see the  hierarchical structure</code></pre>
+</div>
+<div class="cell-output-display">
+<div>
+<figure>
+<p><img data-src="project-report_files/figure-revealjs/unnamed-chunk-18-2.png" width="960"></p>
+</figure>
+</div>
+</div>
+<div class="sourceCode cell-code" id="cb34"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb34-1"><a href=""></a><span class="fu">summary</span>(famod)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Omega 
+psych::omega(m = rdf)
+Alpha:                 0.87 
+G.6:                   0.86 
+Omega Hierarchical:    0.82 
+Omega H asymptotic:    0.92 
+Omega Total            0.89 
 
-SS loadings:  3.338 
-Proportion Var:  0.167 
+With eigenvalues of:
+   g  F1*  F2*  F3*   h2 
+3.79 0.00 0.46 0.80 2.87 
+The degrees of freedom for the model is 18  and the fit was  0.08 
+The number of observations was  121  with Chi Square =  8.72  with prob &lt;  0.97 
 
-Factor correlations: 
+The root mean square of the residuals is  0.02 
+The df corrected root mean square of the residuals is  0.05 
 
-   F1
-F1  1</code></pre>
+RMSEA and the  0.9 confidence intervals are  0 0 0
+BIC =  -77.61Explained Common Variance of the general factor =  0.75 
+
+ Total, General and Subset omega for each subset
+                                                 g F1*  F2*  F3*
+Omega total for total scores and subscales    0.89  NA 0.80 0.83
+Omega general for total scores and subscales  0.82  NA 0.69 0.73
+Omega group for total scores and subscales    0.07  NA 0.11 0.10</code></pre>
+</div>
+</div>
+</section>
+<section id="example-exploratory-factor-analysis-on-longitudinal-data" class="slide level2">
+<h2>Example exploratory factor analysis on longitudinal data</h2>
+<p>Fetch a dataset, reformat it, and analyze it with <code>lavaan</code> function <code>efa</code> for factor analysis:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb36"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb36-1"><a href=""></a>df <span class="ot">&lt;-</span> <span class="fu">fetch_data</span>(<span class="at">name =</span> <span class="st">"COACH_Chen_2022_ADL"</span>)</span>
+<span id="cb36-2"><a href=""></a>rdf <span class="ot">=</span> <span class="fu">reformat</span>(df,<span class="at">package =</span> <span class="st">"lavaan"</span>,<span class="at">item=</span><span class="fu">c</span>(<span class="st">"item"</span>,<span class="st">"wave"</span>))</span>
+<span id="cb36-3"><a href=""></a>lavmod <span class="ot">=</span> lavaan<span class="sc">::</span><span class="fu">efa</span>(rdf)</span>
+<span id="cb36-4"><a href=""></a><span class="fu">summary</span>(lavmod)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>This is lavaan 0.6-19 -- running exploratory factor analysis
+
+  Estimator                                         ML
+  Rotation method                       GEOMIN OBLIQUE
+  Geomin epsilon                                 0.001
+  Rotation algorithm (rstarts)                GPA (30)
+  Standardized metric                             TRUE
+  Row weights                                     None
+
+                                                  Used       Total
+  Number of observations                          2204        2364
+
+Fit measures:
+                    aic      bic    sabic    chisq  df pvalue   cfi rmsea
+  nfactors = 1 144388.6 144867.2 144600.4 67506.95 819      0 0.534 0.192
+
+Eigenvalues correlation matrix:
+
+      ev1       ev2       ev3       ev4       ev5       ev6       ev7       ev8 
+  25.4801    3.5505    2.0665    1.2873    1.1908    1.0436    0.9557    0.7012 
+      ev9      ev10      ev11      ev12      ev13      ev14      ev15      ev16 
+   0.5295    0.5003    0.4745    0.3883    0.3445    0.3109    0.2835    0.2754 
+     ev17      ev18      ev19      ev20      ev21      ev22      ev23      ev24 
+   0.2116    0.1996    0.1875    0.1564    0.1519    0.1464    0.1280    0.1199 
+     ev25      ev26      ev27      ev28      ev29      ev30      ev31      ev32 
+   0.1187    0.1088    0.1047    0.0970    0.0910    0.0868    0.0807    0.0754 
+     ev33      ev34      ev35      ev36      ev37      ev38      ev39      ev40 
+   0.0717    0.0701    0.0675    0.0600    0.0594    0.0570    0.0533    0.0475 
+     ev41      ev42 
+   0.0395    0.0269 
+
+Standardized loadings: (* = significant at 1% level)
+
+                 f1       unique.var   communalities
+ra_adl_q1_1   0.781*           0.390           0.610
+ra_adl_q1_2   0.777*           0.396           0.604
+ra_adl_q1_3   0.787*           0.381           0.619
+ra_adl_q2_1   0.796*           0.366           0.634
+ra_adl_q2_2   0.789*           0.378           0.622
+ra_adl_q2_3   0.801*           0.359           0.641
+ra_adl_q3_1   0.831*           0.309           0.691
+ra_adl_q3_2   0.832*           0.307           0.693
+ra_adl_q3_3   0.828*           0.315           0.685
+ra_adl_q4_1   0.831*           0.310           0.690
+ra_adl_q4_2   0.827*           0.316           0.684
+ra_adl_q4_3   0.862*           0.257           0.743
+ra_adl_q5_1   0.761*           0.421           0.579
+ra_adl_q5_2   0.719*           0.482           0.518
+ra_adl_q5_3   0.717*           0.486           0.514
+ra_adl_q6_1   0.685*           0.531           0.469
+ra_adl_q6_2   0.682*           0.535           0.465
+ra_adl_q6_3   0.705*           0.504           0.496
+ra_adl_q7_1   0.728*           0.470           0.530
+ra_adl_q7_2   0.723*           0.478           0.522
+ra_adl_q7_3   0.732*           0.465           0.535
+ra_adl_q8_1   0.732*           0.464           0.536
+ra_adl_q8_2   0.726*           0.474           0.526
+ra_adl_q8_3   0.761*           0.422           0.578
+ra_adl_q9_1   0.741*           0.451           0.549
+ra_adl_q9_2   0.748*           0.441           0.559
+ra_adl_q9_3   0.793*           0.371           0.629
+ra_adl_q10_1  0.794*           0.369           0.631
+ra_adl_q10_2  0.795*           0.368           0.632
+ra_adl_q10_3  0.841*           0.293           0.707
+ra_adl_q11_1  0.837*           0.299           0.701
+ra_adl_q11_2  0.840*           0.294           0.706
+ra_adl_q11_3  0.853*           0.272           0.728
+ra_adl_q12_1  0.715*           0.489           0.511
+ra_adl_q12_2  0.709*           0.498           0.502
+ra_adl_q12_3  0.748*           0.440           0.560
+ra_adl_q13_1  0.663*           0.560           0.440
+ra_adl_q13_2  0.673*           0.547           0.453
+ra_adl_q13_3  0.744*           0.447           0.553
+ra_adl_q14_1  0.805*           0.353           0.647
+ra_adl_q14_2  0.818*           0.332           0.668
+ra_adl_q14_3  0.817*           0.333           0.667
+
+                            f1
+Sum of squared loadings 25.030
+Proportion of total      1.000
+Proportion var           0.596
+Cumulative var           0.596</code></pre>
 </div>
 </div>
 </section></section>
