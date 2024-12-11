@@ -50,7 +50,8 @@ The IRW datasets are hosted on [Redivis](https://redivis.com), a data management
 - For detailed instructions, refer to the [Redivis R Client
   documentation](https://apidocs.redivis.com/client-libraries/redivis-r/getting-started).
 
-  ### Troubleshooting
+
+### Troubleshooting
 
 #### No Browser 
 
