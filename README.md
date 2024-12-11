@@ -28,9 +28,10 @@ library(irwpkg)
 
 ### Authentication
 
-The IRW datasets are hosted on [Redivis](https://redivis.com), a data management platform. To access these datasets, you'll need to
+The IRW datasets are hosted on [Redivis](https://redivis.com), a data management platform. To access these datasets, you'll need to:
 
 1. Have a Redivis account (create one at <https://redivis.com/?createAccount>  if you don't have one).
+
 2. Complete a one-time authentication process using the Redivis R Client requiring a pop-up.
 
 **Steps for Authentification**
@@ -50,6 +51,16 @@ The IRW datasets are hosted on [Redivis](https://redivis.com), a data management
 
 - For detailed instructions, refer to the [Redivis R Client
   documentation](https://apidocs.redivis.com/client-libraries/redivis-r/getting-started).
+
+  #### Troubleshooting
+
+##### No Browser 
+
+If the browser window doesn't open automatically, check your pop-up blocker settings.
+
+##### Authentication errors
+
+If you see an authentication error, try clearing your browser cookies and attempting again.
 
 ### Viewing the Vignette
 
@@ -74,13 +85,6 @@ vignette("Report", package = "irwpkg")
 
 #### Troubleshooting
 
-##### No Browser 
-
-If the browser window doesn't open automatically, check your pop-up blocker settings.
-
-##### Authentication errors
-
-If you see an authentication error, try clearing your browser cookies and attempting again.
 
 ##### Missing Vignette
 
