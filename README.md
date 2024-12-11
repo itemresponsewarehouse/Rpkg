@@ -16,9 +16,7 @@ datasets, making it easier to analyze item response data.
 <!-- remotes::install_github("hansorlee/irwpkg") -->
 <!-- ``` -->
 
-## Getting Started
-
-### Loading the Package
+## Loading the Package
 
 After installation, load the `irwpkg` package:
 
@@ -26,7 +24,7 @@ After installation, load the `irwpkg` package:
 library(irwpkg)
 ```
 
-### Authentication
+## Authentication
 
 The IRW datasets are hosted on [Redivis](https://redivis.com), a data management platform. To access these datasets, you'll need to:
 
@@ -52,17 +50,17 @@ The IRW datasets are hosted on [Redivis](https://redivis.com), a data management
 - For detailed instructions, refer to the [Redivis R Client
   documentation](https://apidocs.redivis.com/client-libraries/redivis-r/getting-started).
 
-  #### Troubleshooting
+  ### Troubleshooting
 
-##### No Browser 
+#### No Browser 
 
 If the browser window doesn't open automatically, check your pop-up blocker settings.
 
-##### Authentication errors
+#### Authentication errors
 
 If you see an authentication error, try clearing your browser cookies and attempting again.
 
-### Viewing the Vignette
+## Viewing the Vignette
 
 To help you get started, irwpkg includes a vignette for a tutorial on
 how to use this package. You can access the vignette using the following
@@ -83,10 +81,10 @@ vignette("Report", package = "irwpkg")
 <!-- # remotes::install_github("hansorlee/irwpkg", build_vignettes = TRUE) -->
 <!-- ``` -->
 
-#### Troubleshooting
+### Troubleshooting
 
 
-##### Missing Vignette
+#### Missing Vignette
 
 If the vignette does not appear when running
 `vignette(package = "irwpkg")`, ensure that the package was installed
