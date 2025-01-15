@@ -16,6 +16,19 @@ datasets, making it easier to analyze item response data.
 <!-- remotes::install_github("hansorlee/irwpkg") -->
 <!-- ``` -->
 
+## Installation
+
+To install the development version of `irwpkg` from
+[GitHub](https://github.com/):
+
+``` r
+# Install the remotes package if needed
+# install.packages("remotes")
+
+# Install irwpkg from GitHub
+remotes::install_github("hansorlee/irwpkg", build_vignettes = TRUE)
+```
+
 ## Loading the Package
 
 After installation, load the `irwpkg` package:
