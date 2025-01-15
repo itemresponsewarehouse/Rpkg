@@ -19,7 +19,7 @@ datasets, making it easier to analyze item response data.
 ## Installation
 
 ### Prerequisites
-### Quarto Dependency
+#### Quarto Dependency
 To build vignettes, make sure you have the Quarto CLI installed:
 - [Install Quarto](https://quarto.org/docs/get-started/)
 
