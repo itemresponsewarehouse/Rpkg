@@ -6,24 +6,26 @@ the Item Response Warehouse ([IRW](https://datapages.github.io/irw/)).
 It provides tools for exploring, filtering, retrieving, and reformatting
 datasets, making it easier to analyze item response data.
 
-<!-- ## Installation -->
-<!-- To install the development version of `irwpkg` from [GitHub](https://github.com/): -->
-<!-- ```{r} -->
-<!-- #| eval: false -->
-<!-- # Install the remotes package if needed -->
-<!-- # install.packages("remotes") -->
-<!-- # Install irwpkg from GitHub -->
-<!-- remotes::install_github("hansorlee/irwpkg") -->
-<!-- ``` -->
-
 ## Installation
 
 ### Prerequisites
-- To build vignettes, make sure you have the Quarto CLI installed: [Install Quarto](https://quarto.org/docs/get-started/)
+To install `irwpkg` with vignettes, you must have the Quarto CLI installed on your system.
 
-To install the development version of `irwpkg` from
-[GitHub](https://github.com/):
+1. **Check if Quarto is installed:**
+Run the following command in your terminal:
+```bash
+quarto --version
+```
+If Quarto is not installed, download and install it [here](https://quarto.org/docs/get-started/).
 
+2. **Install the Quarto R Package:**
+Open R and run:
+```r
+install.packages("quarto")
+```
+
+### Install the Package
+To install the development version of `irwpkg` from GitHub:
 ``` r
 # Install the remotes package if needed
 # install.packages("remotes")
@@ -32,15 +34,20 @@ To install the development version of `irwpkg` from
 remotes::install_github("hansorlee/irwpkg", build_vignettes = TRUE)
 ```
 
-## Loading the Package
+If you don't need vignettes, you can install the package without them:
+``` r
+remotes::install_github("hansorlee/irwpkg", build_vignettes = FALSE)
+```
 
-After installation, load the `irwpkg` package:
+## Usage
 
+### Load the Package
+After installation, load the `irwpkg` in your R session:
 ``` r
 library(irwpkg)
 ```
 
-## Authentication
+### Authentication
 
 The IRW datasets are hosted on [Redivis](https://redivis.com), a data management platform. To access these datasets, you'll need to:
 
@@ -67,21 +74,9 @@ The IRW datasets are hosted on [Redivis](https://redivis.com), a data management
   documentation](https://apidocs.redivis.com/client-libraries/redivis-r/getting-started).
 
 
-### Troubleshooting
+## Vignettes
 
-#### No Browser 
-
-If the browser window doesn't open automatically, check your pop-up blocker settings.
-
-#### Authentication errors
-
-If you see an authentication error, try clearing your browser cookies and attempting again.
-
-## Viewing the Vignette
-
-To help you get started, irwpkg includes a vignette for a tutorial on
-how to use this package. You can access the vignette using the following
-commands:
+`irwpkg` includes a vignette to help you get started. To access it, run:
 
 ``` r
 # List all available vignettes for irwpkg
@@ -91,25 +86,30 @@ vignette(package = "irwpkg")
 vignette("Report", package = "irwpkg")
 ```
 
-<!-- #### Troubleshooting -->
-<!-- If the vignette does not appear, ensure that the package was installed with vignettes enabled. You can do this by reinstalling the package: -->
-<!-- ```{r} -->
-<!-- #| eval: false -->
-<!-- # remotes::install_github("hansorlee/irwpkg", build_vignettes = TRUE) -->
-<!-- ``` -->
-
-### Troubleshooting
-
-
-#### Missing Vignette
-
-If the vignette does not appear when running
-`vignette(package = "irwpkg")`, ensure that the package was installed
-with vignettes enabled. Developers can reinstall the package with the
-following command:
-
-``` r
-devtools::install(build_vignettes = TRUE)
+If the vignette does not appear, reinstall the package with vignettes enabled:
+```r
+remotes::install_github("hansorlee/irwpkg", build_vignettes = TRUE, force = TRUE)
 ```
 
-<!-- Please feel free to suggest additional features or report issues on the repository’s GitHub Issues page! -->
+## Troubleshooting
+
+#### Installation Issues
+- Error: vignette builder 'quarto' not found:
+Make sure you have the Quarto CLI installed: [Install Quarto](https://quarto.org/docs/get-started/)
+
+- Missing vignette after installation:
+If the vignette does not appear when running `vignette(package = "irwpkg")`, ensure that the package was installed with vignettes enabled.
+``` r
+remotes::install_github("hansorlee/irwpkg", build_vignettes = TRUE)
+```
+
+#### Authentication Issues
+- No Browser Pop-up:
+If the browser window doesn't open automatically, check your pop-up blocker settings.
+
+- Authentication errors:
+If you see an authentication error, try clearing your browser cookies and attempting again.
+
+## Feedback and Contributions
+If you encounter issues or have suggestions for improving `irwpkg`, please submit them on the [GitHub Issues page](https://github.com/hansorlee/irwpkg/issues). Contributions are welcome!
+
