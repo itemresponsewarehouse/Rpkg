@@ -41,8 +41,7 @@ The IRW datasets are hosted on [Redivis](https://redivis.com), a data management
 
 
 ## Vignettes
-
-`irwpkg` includes a vignette to help you get started. To access it, run:
+The vignette included in irwpkg demonstrates the package’s functionalities and provides example usage for querying, processing, and analyzing data from the IRW. You can access it with:
 
 ``` r
 # List all available vignettes for irwpkg
