@@ -4,7 +4,8 @@ Title: Package for working with data from the IRW
 Version: 0.1.0
 Authors@R: c(
   person("Hansol", "Lee", email = "hansol@stanford.edu",role = c("aut", "cre")),
-	person("Michael", "Hardy", email = "hardym@stanford.edu",role = c("aut"))
+	person("Michael", "Hardy", email = "hardym@stanford.edu",role = c("aut")),
+	person("Ben", "Domingue", email = "bdomingu@stanford.edu", role = c("aut"))
 	)
 Maintainer: Hansol Lee <hansol@stanford.edu>
 Description: Functions to manage data from the Item Response Warehouse. 
@@ -34,3 +35,4 @@ LazyData: true
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.2
 Config/testthat/edition: 3
+Config/build/clean-inst-doc: FALSE
