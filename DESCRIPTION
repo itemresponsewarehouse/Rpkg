@@ -28,7 +28,6 @@ Suggests:
     testthat (>= 3.0.0),
     evaluate
 VignetteBuilder: quarto
-SystemRequirements: Quarto CLI (https://quarto.org/docs/get-started/)
 License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: true
