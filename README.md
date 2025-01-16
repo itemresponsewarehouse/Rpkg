@@ -7,36 +7,13 @@ It provides tools for exploring, filtering, retrieving, and reformatting
 datasets, making it easier to analyze item response data.
 
 ## Installation
-
-### Prerequisites
-To install `irwpkg` with vignettes, you must have the Quarto CLI installed on your system.
-
-1. **Check if Quarto is installed:**
-Run the following command in your terminal:
-```bash
-quarto --version
-```
-If Quarto is not installed, download and install it [here](https://quarto.org/docs/get-started/).
-
-2. **Install the Quarto R Package:**
-Open R and run:
-```r
-install.packages("quarto")
-```
-
-### Install the Package
 To install the development version of `irwpkg` from GitHub:
 ``` r
 # Install the remotes package if needed
 # install.packages("remotes")
 
 # Install irwpkg from GitHub
-remotes::install_github("hansorlee/irwpkg", build_vignettes = TRUE)
-```
-
-If you don't need vignettes, you can install the package without them:
-``` r
-remotes::install_github("hansorlee/irwpkg", build_vignettes = FALSE)
+remotes::install_github("hansorlee/irwpkg")
 ```
 
 ## Usage
@@ -86,22 +63,7 @@ vignette(package = "irwpkg")
 vignette("Report", package = "irwpkg")
 ```
 
-If the vignette does not appear, reinstall the package with vignettes enabled:
-```r
-remotes::install_github("hansorlee/irwpkg", build_vignettes = TRUE, force = TRUE)
-```
-
 ## Troubleshooting
-
-#### Installation Issues
-- Error: vignette builder 'quarto' not found:
-Make sure you have the Quarto CLI installed: [Install Quarto](https://quarto.org/docs/get-started/)
-
-- Missing vignette after installation:
-If the vignette does not appear when running `vignette(package = "irwpkg")`, ensure that the package was installed with vignettes enabled.
-``` r
-remotes::install_github("hansorlee/irwpkg", build_vignettes = TRUE)
-```
 
 #### Authentication Issues
 - No Browser Pop-up:
