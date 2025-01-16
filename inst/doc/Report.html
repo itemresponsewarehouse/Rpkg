@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.7.3">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+
+<title>Report</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+width: 0.8em;
+margin: 0 0.8em 0.2em -1em;  vertical-align: middle;
+}
+.display.math{display: block; text-align: center; margin: 0.5rem auto;}
+
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { display: inline-block; text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+{ counter-reset: source-line 0; }
+pre.numberSource code > span
+{ position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+{ content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-khtml-user-select: none; -moz-user-select: none;
+-ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #aaaaaa;
+}
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa; padding-left: 4px; }
+div.sourceCode
+{ }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } 
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.at { color: #7d9029; } 
+code span.bn { color: #40a070; } 
+code span.bu { color: #008000; } 
+code span.cf { color: #007020; font-weight: bold; } 
+code span.ch { color: #4070a0; } 
+code span.cn { color: #880000; } 
+code span.co { color: #60a0b0; font-style: italic; } 
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.do { color: #ba2121; font-style: italic; } 
+code span.dt { color: #902000; } 
+code span.dv { color: #40a070; } 
+code span.er { color: #ff0000; font-weight: bold; } 
+code span.ex { } 
+code span.fl { color: #40a070; } 
+code span.fu { color: #06287e; } 
+code span.im { color: #008000; font-weight: bold; } 
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.kw { color: #007020; font-weight: bold; } 
+code span.op { color: #666666; } 
+code span.ot { color: #007020; } 
+code span.pp { color: #bc7a00; } 
+code span.sc { color: #4070a0; } 
+code span.ss { color: #bb6688; } 
+code span.st { color: #4070a0; } 
+code span.va { color: #19177c; } 
+code span.vs { color: #4070a0; } 
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } 
+</style>
+
+
+
+
+<style type="text/css">body {background-color: #fff;margin: 1em auto;max-width: 700px;overflow: visible;padding-left: 2em;padding-right: 2em;font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;font-size: 14px;line-height: 1.35;}table {margin: 1em auto;border-width: 1px;border-color: #DDDDDD;border-style: outset;border-collapse: collapse;}table th {border-width: 2px;padding: 5px;border-style: inset;}table td {border-width: 1px;border-style: inset;line-height: 18px;padding: 5px 5px;}table, table th, table td {border-left-style: none;border-right-style: none;}table thead, table tr.even {background-color: #f7f7f7;}p {margin: 0.5em 0;}blockquote {background-color: #f6f6f6;padding: 0.25em 0.75em;}hr {border-style: solid;border: none;border-top: 1px solid #777;margin: 28px 0;}dl {margin-left: 0;}dl dd {margin-bottom: 13px;margin-left: 13px;}dl dt {font-weight: bold;}ul {margin-top: 0;}ul li {list-style: circle outside;}ul ul {margin-bottom: 0;}pre, code {background-color: #f7f7f7;border-radius: 3px;color: #333;white-space: pre-wrap; }pre {border-radius: 3px;margin: 5px 0px 10px 0px;padding: 10px;}pre:not([class]) {background-color: #f7f7f7;}code {font-family: Consolas, Monaco, 'Courier New', monospace;font-size: 85%;}p > code, li > code {padding: 2px 0px;}div.figure {text-align: center;}img {background-color: #FFFFFF;padding: 2px;border: 1px solid #DDDDDD;border-radius: 3px;border: 1px solid #CCCCCC;margin: 0 5px;}h1 {margin-top: 0;font-size: 35px;line-height: 40px;}h2 {border-bottom: 4px solid #f7f7f7;padding-top: 10px;padding-bottom: 2px;font-size: 145%;}h3 {border-bottom: 2px solid #f7f7f7;padding-top: 10px;font-size: 120%;}h4 {border-bottom: 1px solid #f7f7f7;margin-left: 8px;font-size: 105%;}h5, h6 {border-bottom: 1px solid #ccc;font-size: 105%;}a {color: #0033dd;text-decoration: none;}a:hover {color: #6666ff; }a:visited {color: #800080; }a:visited:hover {color: #BB00BB; }a[href^="http:"] {text-decoration: underline; }a[href^="https:"] {text-decoration: underline; }</style>
+</head>
+
+<body>
+
+
+<header id="title-block-header">
+<h1 class="title">Report</h1>
+
+</header>
+
+
+<div class="cell">
+<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(irwpkg)</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(mirt)</span></code></pre></div>
+</div>
+<h1 id="overview">Overview</h1>
+<p>The <a href="https://datapages.github.io/irw/">Item Response Warehouse (IRW)</a> is a large-scale database of harmonized item response datasets hosted <a href="https://redivis.com/datasets/as2e-cv7jb41fd">here</a>.</p>
+<p><code>irwpkg</code> provides a simple, efficient interface for accessing and analyzing IRW datasets, providing tools for:</p>
+<ol type="1">
+<li><p><strong>Exploration</strong>: Browse and identify datasets.</p></li>
+<li><p><strong>Retrieval</strong>: Fetch datasets into R.</p></li>
+<li><p><strong>Reformatting</strong>: Prepare data for psychometric analysis.</p></li>
+</ol>
+<h1 id="exploration">1. Exploration</h1>
+<p>Gain insights into the IRW database and find datasets relevant to your analysis using tools for listing, summarizing, and filtering.</p>
+<ul>
+<li><code>list_available_datasets()</code></li>
+<li><code>get_database_metadata()</code> &amp; <code>get_table_metadata()</code></li>
+<li><code>show_overall_statistics()</code> &amp; <code>visualize_metadata_distributions()</code></li>
+<li><code>filter_tables()</code></li>
+</ul>
+<h2 id="list-available-datasets">List Available Datasets</h2>
+<p>Use <code>list_available_datasets()</code> to view all datasets and their metadata (names, row counts, variable counts).</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>datasets <span class="ot">&lt;-</span> <span class="fu">list_available_datasets</span>()</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="fu">dim</span>(datasets)</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(datasets)</span></code></pre></div>
+</div>
+<h2 id="database-metadata">Database Metadata</h2>
+<p>Retrieve high-level metadata for the entire database using <code>get_database_metadata()</code>:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>db_info <span class="ot">&lt;-</span> <span class="fu">get_database_metadata</span>()</span></code></pre></div>
+</div>
+<h2 id="database-metadata-cont.">Database Metadata (cont.)</h2>
+<p>You can also get metadata about individual datasets using <code>get_table_metadata()</code>:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>table_info <span class="ot">&lt;-</span> <span class="fu">get_table_metadata</span>(<span class="st">&quot;lessR_Mach4&quot;</span>)</span></code></pre></div>
+</div>
+<h2 id="overall-statistics">Overall Statistics</h2>
+<p>View statistical summaries for key dataset attributes with <code>show_overall_statistics()</code>:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="fu">show_overall_statistics</span>()</span></code></pre></div>
+</div>
+<h2 id="overall-statistics-cont.">Overall Statistics (cont.)</h2>
+<p>Use <code>visualize_metadata_distributions()</code> to generate histograms of dataset attributes.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="fu">visualize_metadata_distributions</span>()</span></code></pre></div>
+</div>
+<h2 id="overall-statistics-cont.-1">Overall Statistics (cont.)</h2>
+<p>Specify custom ranges for attributes if needed:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="fu">visualize_metadata_distributions</span>(<span class="at">ranges =</span> <span class="fu">list</span>(</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">id_count =</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">10000</span>),</span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">resp_count =</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">100000</span>),</span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">item_count =</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">150</span>),</span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">sparsity =</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">2</span>)</span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>))</span></code></pre></div>
+</div>
+<h2 id="filter-datasets-by-criteria">Filter Datasets by Criteria</h2>
+<p>Retrieve datasets that match specific numeric ranges of key attributes:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>matching_tables <span class="ot">&lt;-</span> <span class="fu">filter_tables</span>(</span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">id_count =</span> <span class="fu">c</span>(<span class="dv">100</span>, <span class="dv">1000</span>), </span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">sparsity =</span> <span class="fu">c</span>(<span class="fl">0.1</span>, <span class="fl">0.5</span>))</span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(matching_tables)</span></code></pre></div>
+</div>
+<h2 id="filter-datasets-by-criteria-cont.">Filter Datasets by Criteria (cont.)</h2>
+<p>Filter datasets that include specific columns (<code>date</code>, <code>rt</code>, or <code>rater</code>):</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>matching_tables <span class="ot">&lt;-</span> <span class="fu">filter_tables</span>(<span class="at">has_rater =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(matching_tables)</span></code></pre></div>
+</div>
+<h2 id="filter-datasets-by-criteria-cont.-1">Filter Datasets by Criteria (cont.)</h2>
+<p>You can combine multiple criteria to refine your search:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>matching_tables <span class="ot">&lt;-</span> <span class="fu">filter_tables</span>(</span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">id_count =</span> <span class="fu">c</span>(<span class="dv">100</span>, <span class="dv">10000</span>), </span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">has_rater =</span> <span class="cn">TRUE</span></span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(matching_tables)</span></code></pre></div>
+</div>
+<h1 id="retrieval">2. Retrieval</h1>
+<p>Once you’ve identified the desired datasets, fetch them into R for analysis.</p>
+<ul>
+<li><code>fetch_data()</code></li>
+<li><code>download_data()</code></li>
+</ul>
+<h2 id="fetch-a-single-dataset">Fetch a single dataset</h2>
+<p>Use <code>fetch_data()</code> to retrieve a single dataset:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>swmd_mokken <span class="ot">&lt;-</span> <span class="fu">fetch_data</span>(<span class="at">name =</span> <span class="st">&quot;swmd_mokken&quot;</span>)</span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a><span class="fu">str</span>(swmd_mokken)</span></code></pre></div>
+</div>
+<h2 id="fetch-multiple-datasets">Fetch multiple datasets</h2>
+<p>Retrieve multiple datasets by providing their names:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb12"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>datasets <span class="ot">&lt;-</span> <span class="fu">fetch_data</span>(<span class="fu">c</span>(<span class="st">&quot;fractals_rating&quot;</span>, <span class="st">&quot;spelling2pronounce_edwards2023&quot;</span>))</span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(<span class="fu">names</span>(datasets))</span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a><span class="fu">str</span>(datasets<span class="sc">$</span>fractals_rating)</span></code></pre></div>
+</div>
+<h2 id="fetch-multiple-datasets-cont.">Fetch multiple datasets (cont.)</h2>
+<p>Alternatively, you can use the output of <code>filter_tables()</code> directly:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>matching_tables <span class="ot">&lt;-</span> <span class="fu">filter_tables</span>(<span class="at">has_rater =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>datasets <span class="ot">&lt;-</span> <span class="fu">fetch_data</span>(matching_tables)</span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(<span class="fu">names</span>(datasets))</span></code></pre></div>
+</div>
+<h2 id="download-datasets">Download datasets</h2>
+<p>Save datasets locally with <code>download_data()</code>:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb14"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="fu">download_data</span>(<span class="st">&quot;swmd_mokken&quot;</span>, <span class="at">path =</span> <span class="st">&quot;mydata.csv&quot;</span>, <span class="at">overwrite=</span><span class="cn">TRUE</span>)</span></code></pre></div>
+</div>
+<h1 id="reformatting">3. Reformatting</h1>
+<p>Reformat IRW data for analysis with popular psychometric tools.</p>
+<ul>
+<li><code>irw_rename()</code></li>
+<li><code>reformat()</code></li>
+</ul>
+<h2 id="rename-irw-variables">Rename IRW Variables</h2>
+<p>Use <code>irw_rename()</code> to rename IRW variables for consistency. Similar to but less flexible than <code>janitor::clean_names()</code>, it can handle character vectors or any object with names and standardize them.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb15"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>test_vec <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">&quot;InTeREsTiNG.VAR&quot;</span>, <span class="st">&quot;another.VAR&quot;</span>, <span class="st">&quot;this.$&amp;^!_VAR&quot;</span>)</span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a><span class="fu">irw_rename</span>(test_vec)</span></code></pre></div>
+</div>
+<h2 id="example-item-information-workflow">Example item information workflow</h2>
+<p>Fetch a dataset, reformat it, and analyze item information functions using <code>mirt</code>:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb16"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>df <span class="ot">&lt;-</span> <span class="fu">fetch_data</span>(<span class="at">name =</span> <span class="st">&quot;lessR_Mach4&quot;</span>)</span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>rdf <span class="ot">=</span> <span class="fu">reformat</span>(df)</span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a>mirtmod <span class="ot">=</span> mirt<span class="sc">::</span><span class="fu">mirt</span>(rdf)</span>
+<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(mirtmod, <span class="at">type=</span><span class="st">&quot;infotrace&quot;</span>)</span></code></pre></div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb17"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(mirtmod)</span></code></pre></div>
+</div>
+<h2 id="example-nonparametric-irt-item-workflow">Example nonparametric IRT item workflow</h2>
+<p>Fetch a dataset, reformat it, and analyze to check for item monotonicity using <code>mokken</code>:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb18"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a>df <span class="ot">&lt;-</span> <span class="fu">fetch_data</span>(<span class="at">name =</span> <span class="st">&quot;NAMPRB_Siwiak_2024_AOT&quot;</span>)</span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a>rdf <span class="ot">=</span> <span class="fu">reformat</span>(df, <span class="at">package =</span> <span class="st">&quot;mokken&quot;</span>)</span>
+<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a>mokmod <span class="ot">=</span> mokken<span class="sc">::</span><span class="fu">check.monotonicity</span>(rdf)</span>
+<span id="cb18-4"><a href="#cb18-4" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(mokmod, <span class="at">ask=</span><span class="cn">FALSE</span>)</span></code></pre></div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb19"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(mokmod)</span></code></pre></div>
+</div>
+<h2 id="example-omega-reliability-analysis-workflow-based-item-response-times">Example omega reliability analysis workflow based item response times</h2>
+<p>Fetch a dataset, reformat it, and analyze it with <code>psych</code> function <code>omega</code> for factor analysis:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb20"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a>df <span class="ot">&lt;-</span> <span class="fu">fetch_data</span>(<span class="at">name =</span> <span class="st">&quot;dd_rotation&quot;</span>)</span>
+<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a>rdf <span class="ot">=</span> <span class="fu">reformat</span>(df, <span class="at">package =</span> <span class="st">&quot;psych&quot;</span>, <span class="at">resp =</span> <span class="st">&quot;rt&quot;</span>)</span>
+<span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a>famod <span class="ot">=</span> psych<span class="sc">::</span><span class="fu">omega</span>(rdf)</span>
+<span id="cb20-4"><a href="#cb20-4" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(famod)</span>
+<span id="cb20-5"><a href="#cb20-5" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(famod)</span></code></pre></div>
+</div>
+<h2 id="example-exploratory-factor-analysis-on-longitudinal-data">Example exploratory factor analysis on longitudinal data</h2>
+<p>Fetch a dataset, reformat it, and analyze it with <code>lavaan</code> function <code>efa</code> for factor analysis:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb21"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a>df <span class="ot">&lt;-</span> <span class="fu">fetch_data</span>(<span class="at">name =</span> <span class="st">&quot;COACH_Chen_2022_ADL&quot;</span>)</span>
+<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a>rdf <span class="ot">=</span> <span class="fu">reformat</span>(df,<span class="at">package =</span> <span class="st">&quot;lavaan&quot;</span>,<span class="at">item=</span><span class="fu">c</span>(<span class="st">&quot;item&quot;</span>,<span class="st">&quot;wave&quot;</span>))</span>
+<span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a>lavmod <span class="ot">=</span> lavaan<span class="sc">::</span><span class="fu">efa</span>(rdf)</span>
+<span id="cb21-4"><a href="#cb21-4" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(lavmod)</span></code></pre></div>
+</div>
+
+
+
+
+
+</body></html>
