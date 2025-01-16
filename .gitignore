@@ -5,5 +5,5 @@
 .DS_Store
 **/mydata.csv
 /Meta/
-.Rproj
+*.Rproj
 /doc/
