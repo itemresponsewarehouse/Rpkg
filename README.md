@@ -30,12 +30,14 @@ The IRW datasets are hosted on [Redivis](https://redivis.com), a data management
 
 1. Have a Redivis account (create one at <https://redivis.com/?createAccount>  if you don't have one).
 2. Complete a one-time authentication process using the Redivis R Client requiring a pop-up.
+
+   **Steps for Authentication:**
    
-   a. When you first use a function in `irwpkg` that connects to Redivis (e.g., `list_available_datasets()`), a browser window will open, prompting you to sign in to your Redivis account.
+   1. When you first use a function in `irwpkg` that connects to Redivis (e.g., `list_available_datasets()`), a browser window will open, prompting you to sign in to your Redivis account.
    
-   b. After signing in, allow access for the Redivis R Client by clicking **Allow**.
+   2. After signing in, allow access for the Redivis R Client by clicking **Allow**.
    
-   c. Once authentication is successful, close the browser window. You will see the message “Authentication was successful” in the R console.
+   3. Once authentication is successful, close the browser window. You will see the message “Authentication was successful” in the R console.
 
    - **Note:** You only need to authenticate once per session.
      
