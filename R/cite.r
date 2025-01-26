@@ -1,62 +1,72 @@
-#' Generate Citation or BibTeX for a Table
+#' Generate Citation and BibTeX for a Table
 #'
-#' Generates a citation or BibTeX entry for a table in the data warehouse.
+#' Generates and displays both a citation and BibTeX entry for a table.
 #'
 #' @param table_name A character string specifying the name of the table.
-#' @param if_bibtex Logical; if TRUE, returns the BibTeX entry instead of the citation. Defaults to FALSE.
-#' @return A character string containing the citation or BibTeX entry, NA if neither is available, or NULL if the table does not exist.
+#' @return Invisibly returns the formatted string (so it can be captured programmatically if needed).
 #' @export
-irw_cite <- function(table_name, if_bibtex = FALSE) {
-  dict <- data_index
-  table_row <- dict[dict$Filename == table_name, ]
+irw_citation <- function(table_name) {
+  # Look up the table in the metadata
+  table_row <- data_index[data_index$Filename == table_name, ]
   
   if (nrow(table_row) == 0) {
     warning("The table '", table_name, "' does not exist in the metadata.")
-    return(NULL)
+    result <- paste0("No citation or BibTeX entry available for the table '", table_name, "'.")
+    cat(result, "\n")
+    return(invisible(result))
   }
   
+  # Extract DOI and Reference
   doi <- table_row$DOI
   reference <- table_row$Reference
   
-  if (if_bibtex) {
-    if (!is.null(doi) && nzchar(doi)) {
-      response <- tryCatch({
-        httr::GET(
-          glue::glue("https://doi.org/{doi}"),
-          httr::add_headers(Accept = "application/x-bibtex")
-        )
-      }, error = function(e)
-        NULL)
-      if (!is.null(response) &&
-          httr::status_code(response) == 200) {
-        bibtex <- httr::content(response, as = "text", encoding = "UTF-8")
-      } else {
-        bibtex <- glue::glue("# Error fetching BibTeX for DOI: {doi}")
-      }
-    } else {
-      bibtex_dict <- bibtex_manual
-      bibtex_table_row <- bibtex_dict[bibtex_dict$Filename == table_name, ]
-      if (nrow(bibtex_table_row) == 0) {
-        warning("# No BibTeX or DOI available for table: ", table_name)
-        return(NULL)
-      }
-      bibtex <- bibtex_table_row$BibTex
-    }
-    if (!is.na(bibtex)) {
-      cat("BibTeX entry for table ", table_name, " is:\n", bibtex)
-    }
-    return(bibtex)
+  # Prepare citation
+  if (!is.null(doi) && nzchar(doi) && !is.na(doi)) {
+    citation <- paste0("https://doi.org/", doi)
+  } else if (!is.null(reference) && nzchar(reference)) {
+    citation <- reference
   } else {
-    if (!is.null(doi) && nzchar(doi)) {
-      citation <- paste0("https://doi.org/", doi)
-    } else if (!is.null(reference) && nzchar(reference)) {
-      citation <- reference
-    } else {
-      citation <- NA
-    }
-    if (!is.na(citation)) {
-      cat("To cite ", table_name, " in publication use:\n", citation)
-    }
-    return(citation)
+    citation <- "No citation available for this table."
   }
+  
+  # Prepare BibTeX
+  bibtex <- NULL
+  if (!is.null(doi) && nzchar(doi) && !is.na(doi)) {
+    response <- tryCatch({
+      httr::GET(
+        glue::glue("https://doi.org/{doi}"),
+        httr::add_headers(Accept = "application/x-bibtex")
+      )
+    }, error = function(e) NULL)
+    
+    if (!is.null(response) && httr::status_code(response) == 200) {
+      bibtex <- httr::content(response, as = "text", encoding = "UTF-8")
+    }
+  }
+  
+  # Fallback to bibtex_manual if DOI BibTeX is not available
+  if (is.null(bibtex)) {
+    bibtex_row <- bibtex_manual[bibtex_manual$Filename == table_name, ]
+    if (nrow(bibtex_row) > 0) {
+      bibtex <- bibtex_row$BibTex
+    }
+  }
+  
+  if (is.null(bibtex)) {
+    bibtex <- "No BibTeX entry available for this table."
+  }
+  
+  # Combine and format the output
+  result <- paste0(
+    "Citation for '", table_name, "':\n",
+    citation, "\n\n",
+    "BibTeX entry for '", table_name, "':\n",
+    bibtex
+  )
+  
+  # Display the result using cat()
+  cat(result, "\n")
+  
+  # Return the result invisibly for programmatic use
+  return(invisible(result))
 }
