@@ -1,21 +1,105 @@
-#' Show Overall Statistics for Metadata
+#' Retrieve Metadata for a Specific Table
 #'
-#' Computes and displays overall statistics for the datasets stored in the internal metadata file.
+#' Fetches and displays detailed metadata for a specified table in the IRW database.
+#' The metadata includes information such as the number of rows, size in bytes, timestamps,
+#' access level, and related URLs.
+#'
+#' @param table_name A character string specifying the name of the table to retrieve metadata for.
+#' @param verbose Logical; whether to print the metadata to the console. Defaults to `TRUE`.
+#' @return A list containing the table metadata for programmatic use, including:
+#'   \item{name}{The name of the table.}
+#'   \item{created_at}{The creation timestamp of the table (formatted as a string).}
+#'   \item{updated_at}{The last update timestamp of the table (formatted as a string).}
+#'   \item{num_rows}{The number of rows in the table.}
+#'   \item{data_size_kb}{The size of the table in kilobytes.}
+#'   \item{variable_count}{The number of variables in the table.}
+#'   \item{is_sample}{Logical; indicates whether the table is a sample dataset.}
+#'   \item{doi}{The DOI of the table, if available.}
+#'   \item{table_url}{The URL to the table.}
+#'   \item{container_url}{The URL to the container of the table.}
+#' @examples
+#' \dontrun{
+#'   metadata <- irw_table_metadata("abortion")
+#'   print(metadata)
+#' }
+#' @export
+irw_table_metadata <- function(table_name, verbose = TRUE) {
+  # Fetch the table object
+  table <- .fetch_redivis_table(table_name)
+  
+  # Retrieve metadata properties
+  name <- table$properties$name
+  created_at <- table$properties$createdAt / 1000  # Convert from milliseconds to seconds
+  updated_at <- table$properties$updatedAt / 1000  # Convert from milliseconds to seconds
+  num_rows <- table$properties$numRows
+  data_size <- table$properties$numBytes / 1024  # Convert bytes to KB
+  variable_count <- table$properties$variableCount
+  table_url <- table$properties$url
+  is_sample <- table$properties$isSample
+  container_url <- table$properties$container$url
+  doi <- table$properties$container$doi
+  doi_url <- paste0("https://doi.org/", doi)
+  
+  # Format dates
+  formatted_created_at <- format(as.POSIXct(created_at, origin = "1970-01-01", tz = "UTC"), "%Y-%m-%d %H:%M:%S")
+  formatted_updated_at <- format(as.POSIXct(updated_at, origin = "1970-01-01", tz = "UTC"), "%Y-%m-%d %H:%M:%S")
+  
+  # Optionally print metadata information
+  if (verbose) {
+    cat("Table Metadata for:", table_name, "\n")
+    cat("--------------------------------------------------\n")
+    cat("Name:                     ", name, "\n")
+    cat("Created At:               ", formatted_created_at, "\n")
+    cat("Last Updated At:          ", formatted_updated_at, "\n")
+    cat("Number of Rows:           ", num_rows, "\n")
+    cat("Data Size (KB):           ", round(data_size, 2), "KB\n")
+    cat("Variable Count:           ", variable_count, "\n")
+    cat("Is Sample:                ", ifelse(is_sample, "Yes", "No"), "\n")
+    cat("DOI:                      ", doi_url, "\n")
+    cat("Table URL:                ", table_url, "\n")
+    cat("Container URL:            ", container_url, "\n")
+    cat("--------------------------------------------------\n")
+  }
+  
+  # Compile metadata into a list for programmatic use
+  metadata <- list(
+    name = name,
+    created_at = formatted_created_at,
+    updated_at = formatted_updated_at,
+    num_rows = num_rows,
+    data_size_kb = round(data_size, 2),
+    variable_count = variable_count,
+    is_sample = is_sample,
+    doi = doi,
+    table_url = table_url,
+    container_url = container_url
+  )
+  
+  # Return the metadata list
+  return(metadata)
+}
+
+#' Display Overall Metadata Statistics
+#'
+#' Computes and displays overall statistics for datasets stored in the IRW database.
+#' The statistics include the range (minimum, maximum) and mean values for key attributes,
+#' as well as counts of tables with specific characteristics such as raters or response times.
 #'
 #' @details
-#' The function dynamically loads the `metadata.csv` file from the package's `data/` folder
-#' and computes:
-#' - Range (min, max) and mean values for `id_count`, `item_count`, `resp_count`, and `sparsity`.
-#' - Number of tables with `rater`, `response time (rt)`, and `date` information.
+#' This function uses an internal metadata structure and dynamically computes statistics
+#' for key attributes, such as:
+#' - `id_count`: Number of unique IDs per dataset.
+#' - `item_count`: Number of unique items per dataset.
+#' - `resp_count`: Total number of responses in each dataset.
+#' - `sparsity`: Sparsity measure for each dataset (between 0 and 1).
 #'
-#' The function prints the statistics to the console without returning any value.
-#'
-#' @importFrom utils read.csv
+#' @return Prints the statistics to the console. Does not return a value.
 #' @examples
-#'   show_overall_statistics()
-#'
+#' \dontrun{
+#'   irw_overall_stats()
+#' }
 #' @export
-show_overall_statistics <- function() {
+irw_overall_stats <- function() {
   
   # Helper function to compute range and mean
   compute_stats <- function(x) {
@@ -86,44 +170,24 @@ show_overall_statistics <- function() {
 
 #' Visualize Metadata Distributions
 #'
-#' Visualizes the distributions of key numeric attributes in the metadata file as raw count histograms.
+#' Generates histograms for the distributions of key attributes in the IRW metadata.
 #'
-#' @param ranges A named list where each attribute has a numeric vector of two values specifying
-#'        the lower and upper range for the histogram (e.g., `list(id_count = c(0, 10000))`).
-#'        Attributes not included in `ranges` will use their full data range.
-#'
-#'        The attributes that can be adjusted are:
-#'        - `"id_count"`: Number of unique IDs per dataset (e.g., `ranges = list(id_count = c(0, 50000))`).
-#'        - `"item_count"`: Number of unique items per dataset (e.g., `ranges = list(item_count = c(0, 50))`).
-#'        - `"resp_count"`: Total number of responses (e.g., `ranges = list(resp_count = c(0, 100000))`).
-#'        - `"sparsity"`: Sparsity measure, ranging between 0 and 1 (e.g., `ranges = list(sparsity = c(0.1, 0.9))`).
-#'
-#'        Users can specify ranges for one or more attributes, and attributes not included in `ranges`
-#'        will automatically use their full range.
-#'
-#' @importFrom utils read.csv data
-#' @importFrom graphics par hist mtext axis
+#' @param ranges A named list specifying the lower and upper range for each attribute to visualize.
+#'        If not provided, the full range of data will be used for each attribute. Valid attributes include:
+#'        - `"id_count"`: Number of unique IDs per dataset.
+#'        - `"item_count"`: Number of unique items per dataset.
+#'        - `"resp_count"`: Total number of responses per dataset.
+#'        - `"sparsity"`: Sparsity measure (between 0 and 1).
+#' @return No return value. Outputs histograms to the console.
 #' @examples
-#' # Example 1: Visualize with default ranges for all attributes
-#' visualize_metadata_distributions()
+#' # Example with default ranges:
+#' irw_visualize()
 #'
-#' # Example 2: Visualize with custom ranges for some attributes
-#' visualize_metadata_distributions(
-#'   ranges = list(id_count = c(0, 1000), resp_count = c(0, 100000))
-#' )
-#'
-#' # Example 3: Visualize with custom ranges for all attributes
-#' visualize_metadata_distributions(
-#'   ranges = list(
-#'     id_count = c(0, 1000),
-#'     item_count = c(0, 300),
-#'     resp_count = c(0, 100000),
-#'     sparsity = c(0, 3)
-#'   )
-#' )
-#'
+#' # Example with custom ranges:
+#' irw_visualize(ranges = list(id_count = c(0, 1000), sparsity = c(0.1, 0.9)))
+#' @importFrom graphics axis hist mtext par
 #' @export
-visualize_metadata_distributions <- function(ranges = list()) {
+irw_visualize <- function(ranges = list()) {
   
   # Attributes to visualize
   attributes <- c("id_count", "item_count", "resp_count", "sparsity")
@@ -216,20 +280,22 @@ visualize_metadata_distributions <- function(ranges = list()) {
 
 #' List Available Datasets
 #'
-#' Retrieves a summary of available datasets in the datasource, including the dataset name,
-#' number of rows, and variable count for each dataset.
+#' Retrieves a summary of available datasets in the IRW database, including their name,
+#' number of rows, and variable count.
 #'
-#' @return A data frame where each row corresponds to a dataset, with columns for the
-#'         dataset name (`name`), number of rows (`numRows`), and variable count (`variableCount`).
+#' @return A data frame with the following columns:
+#'   \item{name}{The name of the dataset.}
+#'   \item{numRows}{The number of rows in the dataset.}
+#'   \item{variableCount}{The number of variables in the dataset.}
 #' @examples
 #' \dontrun{
-#'   datasets_summary <- list_available_datasets()
-#'   print(datasets_summary)
+#'   datasets <- irw_list_datasets()
+#'   print(datasets)
 #' }
 #' @export
-list_available_datasets <- function() {
+irw_list_datasets <- function() {
   # Initialize the datasource if not already set
-  ds <- initialize_datasource()
+  ds <- .initialize_datasource()
   
   # Retrieve the list of datasets from the datasource
   datasets <- ds$list_tables()  # Assuming 'list_tables()' returns datasets as well
@@ -250,16 +316,32 @@ list_available_datasets <- function() {
 
 
 
-#' Get Database Metadata
+#' Retrieve Database Metadata
 #'
-#' Retrieves and prints comprehensive metadata about the IRW database, including version, number of tables,
-#' data size, access information, and relevant URLs.
+#' Fetches and displays comprehensive metadata for the IRW database, including the database version,
+#' number of tables, total data size, and relevant URLs.
 #'
-#' @return A list containing the database metadata for programmatic use.
+#' @return A list containing the database metadata, including:
+#'   \item{version}{The version of the database.}
+#'   \item{table_count}{The total number of tables in the database.}
+#'   \item{created_at}{The creation timestamp of the database (formatted as a string).}
+#'   \item{updated_at}{The last update timestamp of the database (formatted as a string).}
+#'   \item{total_size_gb}{The total size of the database in gigabytes.}
+#'   \item{active_data_size_gb}{The size of active tabular data in gigabytes.}
+#'   \item{doi}{The DOI of the database.}
+#'   \item{dataset_url}{The URL to the database.}
+#'   \item{documentation}{The link to the database documentation.}
+#'   \item{methodology}{The link to the database methodology.}
+#'   \item{usage_info}{The link to usage information.}
+#' @examples
+#' \dontrun{
+#'   db_metadata <- irw_db_metadata()
+#'   print(db_metadata)
+#' }
 #' @export
-get_database_metadata <- function() {
+irw_db_metadata <- function() {
   # Initialize the datasource if it hasn't been initialized
-  ds <- initialize_datasource()
+  ds <- .initialize_datasource()
   
   # Retrieve metadata properties
   version <- ds$properties$version$tag

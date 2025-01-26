@@ -1,10 +1,21 @@
-# Functions for in-session data transformations
-# These functions are used to transform data in-session, for example, to clean or reshape data before analysis.
+# -----------------------------------------------------------------------------
+# Libraries
+# -----------------------------------------------------------------------------
+library(dplyr)
+library(tidyr)
+library(tibble)
+library(forcats)
+library(purrr)
+library(stringr)
+library(psych)
 
-#' var_roles list is used to create a catalog object to keep track of and catalog all the variables in the tibble
-#' @format A list of lists
+# -----------------------------------------------------------------------------
+# Internal Configuration
+# -----------------------------------------------------------------------------
 
-var_roles = list(
+#' @noRd
+# Variable roles configuration
+var_roles <- list(
   resp = list(
     dtype = numeric,
     desc = "response variable",
@@ -56,13 +67,16 @@ var_roles = list(
     support_to_role = c("id", "item")
   ),
   covariates = list(
-    dtype = ~ if(is.character(.)) forcats::fct(.,na="NA") else as.numeric(.),
+    dtype = \(x) if (is.character(x))
+      forcats::fct(x, na = "NA")
+    else
+      as.numeric(x),
     desc = "covariates for the individual/subject",
     expected = "cov",
     grep = "cov_|age|gender|income|education",
-    multiple_allowed = T,
+    multiple_allowed = TRUE,
     priority = 6,
-    required = F,
+    required = FALSE,
     support_to_role = "id"
   ),
   levels = list(
@@ -148,8 +162,40 @@ var_roles = list(
   )
 )
 
-## The supported packages list will be used to create data templates for more complex requests in future iterations -------
-## The suported funcs list will be used to create data templates for more complex requests in future iterations
+# ------------------------------------------------------------------------------
+# Global Metadata
+# ------------------------------------------------------------------------------
+
+# List of supported packages that pivot data to wide format
+piv_wide_pkg = list(
+  mirt = TRUE,
+  lavaan = TRUE,
+  sem = FALSE,
+  psych = TRUE,
+  ltm = TRUE,
+  mokken = TRUE,
+  lme4 = FALSE
+)
+
+# List of supported packages for covariates in wide format
+cov_wide_supps = list(
+  mirt = FALSE,
+  lavaan = TRUE,
+  sem = TRUE,
+  psych = TRUE,
+  ltm = FALSE,
+  mokken = FALSE,
+  lme4 = TRUE
+)
+
+# Variables not currently supported
+not_supported_cols = c("rater", "raters", "rater_covariates", "rt")
+
+# ------------------------------------------------------------------------------
+# Supported Functions and Configurations
+# ------------------------------------------------------------------------------
+
+# Define configurations for supported packages and their functions
 supported_funcs = list(
   mirt = list(
     mirt = list(
@@ -456,29 +502,322 @@ supported_funcs = list(
   )
 )
 
-piv_wide_pkg = list(
-  mirt = T,
-  lavaan = T,
-  sem = F,
-  psych = T,
-  ltm = T,
-  mokken = T,
-  lme4 = F
-)
 
-cov_wide_supps = list(
-  mirt = F,
-  lavaan = T,
-  sem = T,
-  psych = T,
-  ltm = F,
-  mokken = F,
-  lme4 = T
-)
+# -----------------------------------------------------------------------------
+# Internal Utility Functions
+# -----------------------------------------------------------------------------
+#' @title Cleans names for consistent IRW objects during transformations
+#'
+#' @description
+#' Similar to but less flexible than `janitor::clean_names()`, resulting strings
+#' are unique and consist only of the `_` character, numbers, and lower case letters in lower case.
+#' character, numbers, and letters to put files in compliance
+#'
+#' The order of operations is: make replacements,
+#' remove initial spaces and punctuation, apply `tolower()`, and add numeric suffixes
+#' to resolve any duplicated names.
+#'
+#' @param string A character vector of names to clean.
+#' @param replace A named character vector where the name is replaced by the
+#'   value.
+#'
+#' @return Returns the "cleaned" object
+#' @seealso [janitor::clean_names()]
+#' @examples
+#'
+#' # cleaning the names of a vector:
+#' x = structure(1:3, names = c("name with space", "TwoWords", "total $ (2009)"))
+#' x
+#' names(x) = irw_name_fix(names(x))
+#' x # now has cleaned names
+#' @importFrom dplyr as_tibble mutate select across left_join everything all_of setdiff distinct filter group_by summarise
+#' @importFrom tidyr pivot_wider pivot_longer drop_na
+#' @importFrom purrr map_chr
+#' @importFrom stringr str_replace str_replace_all
+#' @noRd
+
+irw_name_fix = function(string,
+                        replace =
+                          c(
+                            "'" = "",
+                            "\"" = "_",
+                            "%" = "_pct",
+                            "#" = "_num",
+                            " " = "_",
+                            "-" = "_",
+                            "/" = "_",
+                            "__" = "_",
+                            "@" = "_at_"
+                          ),
+                        digit_first_ok = FALSE,
+                        digit_prefix = "x",
+                        ...) {
+  if (is.data.frame(string)) {
+    stop("`string` must not be a data.frame, use clean_names()")
+  }
+  
+  replaced_names =
+    stringr::str_replace_all(string = string, pattern = replace)
+  
+  # Remove starting spaces and punctuation
+  str_start =
+    stringr::str_replace(string = replaced_names,
+                         # Description of this regexp:
+                         # \A: beginning of the string (rather than beginning of the line as ^ would indicate)
+                         # \h: any horizontal whitespace character (spaces, tabs, and anything else that is a Unicode whitespace)
+                         # \s: non-unicode whitespace matching (it may overlap with \h)
+                         # \p{}: indicates a unicode class of characters, so these will also match (P) punctuation, (S) symbols, (Z) separators, and (C) "other" characters
+                         # * means all of the above zero or more times (not + so that the capturing part of the regexp works)
+                         # (.*)$: captures everything else in the string for the replacement
+                         pattern = "\\A[\\h\\s\\p{P}\\p{S}\\p{Z}\\p{C}]*(.*)$",
+                         replacement = "\\1")
+  # Convert all interior spaces and punctuation to single dots
+  cleaned_names =
+    stringr::str_replace_all(string = str_start,
+                             pattern = "[\\h\\s\\p{P}\\p{S}\\p{Z}\\p{C}]+",
+                             replacement = "_")
+  
+  new_names = tolower(cleaned_names)
+  
+  ## correct any names beginning with a digit
+  if (any(grepl("\\A\\d", new_names)) & !digit_first_ok) {
+    ## add prefix to those staring w digit
+    new_names[grepl("\\A\\d", new_names)] =
+      paste0(digit_prefix, new_names[grepl("\\A\\d", new_names)])
+    
+  }
+  
+  
+  # add counters to duplicated names
+  while (any(duplicated(new_names))) {
+    dupes =
+      vapply(seq_along(new_names), function(i) {
+        sum(new_names[i] == new_names[1:i])
+      }, 1L)
+    
+    new_names[dupes > 1] =
+      paste(new_names[dupes > 1], dupes[dupes > 1], sep = "_")
+  }
+  
+  new_names
+}
+
+## Function to apply irw_name_fix to an object with names
+#' Apply renaming to an object with names
+#'
+#' @param x an object with names to clean
+#' @param ... additional arguments to be passed down to irw_name_fix
+#'
+#' @details
+#' This function is the main standardization function for IRW objects. It applies irw_name_fix to the names of an object.
+#'
+#' @return the object with cleaned names
+#' @examples
+#' irw_rename(data.frame("A B" = 1:3, "C D" = 4:6))
+#' irw_rename(c("A B", "C D"))
+#' @export
+irw_rename = function(x, ...) {
+  if (is.data.frame(x)) {
+    x |> dplyr::rename_with(function(.name) {
+      irw_name_fix(.name)
+    })
+  } else if (is.character(x)) {
+    purrr::map_chr(c(x), irw_name_fix)
+  } else {
+    stop("x must be a data frame or character vector")
+  }
+}
+
+one_value_check = function(x) {
+  x = x[!is.na(x)]
+  length(unique(x)) < 2
+}
+
+one_value_check_grp = function(x, f) {
+  x_split = split(x, f)
+  any(vapply(x_split, one_value_check, logical(1)))
+}
+
+#' @title Check if the response variable is numeric
+#' @description
+#' This function checks if the response variable is numeric and if not, converts it to numeric.
+#' If more than 75% of values of resp would be NAs when converting resp to numeric, it will return an error. Otherwise it will attempt to make it a factor.
+#' If the number of unique values < total number of unique items, it will convert resp to factor, with an informative warning, and change its dtype in the catalog.
+#' @param data A data frame with the response variable
+#' @param resp The name of the response variable
+#' @param item The name of the item variable
+#' @return Returns the data frame with the response variable converted to numeric
+#'
+#' @importFrom dplyr as_tibble mutate select across left_join everything all_of setdiff distinct filter group_by summarise n
+#' @importFrom tidyr pivot_wider pivot_longer drop_na
+#' @importFrom tibble is_tibble
+#' @importFrom tidyselect all_of matches
+#' @importFrom forcats as_factor
+#' @importFrom purrr map_chr
+#' @importFrom stringr str_replace str_replace_all
+#' @importFrom utils combn
+#' @examples
+#' data = data.frame(id = c(1, 2, 3), item = c(1, 2, 3), resp = c(1, 2, 3))
+#' check_numeric(data, "resp")
+#' @noRd
+
+check_numeric = function(data, resp, item = NULL) {
+  if (!is.numeric(data[[resp]])) {
+    if (sum(is.na(as.numeric(data[[resp]]))) > 0.75 * nrow(data) &
+        !is.null(item) & (resp == "resp")) {
+      if (length(unique(data[[resp]])) < length(unique(data[[item]]))) {
+        warning(
+          "The variable ",
+          resp,
+          " is not numeric. Because the number  of unique values is less than the total number of unique items, it will be converted to a factor."
+        )
+        data[[resp]] = as.factor(data[[resp]])
+      } else {
+        stop("More than 75% of values would be NAs when converting resp to numeric")
+      }
+    } else if (is.null(item) & (resp != "resp")) {
+      if (sum(is.na(as.numeric(data[[resp]]))) > 0.75 * nrow(data)) {
+        data[[resp]] = as.factor(data[[resp]])
+      } else {
+        data[[resp]] = as.numeric(data[[resp]])
+      }
+    }
+    else {
+      data[[resp]] = as.numeric(data[[resp]])
+    }
+  }
+  data
+}
 
 
-not_supported_cols = c("rater", "raters", "rater_covariates", "rt") ## currently not supported
+#' @noRd
+# Check if the dataframe is uniquely identified by the specified columns
+check_uniqueness = function(data, cols) {
+  data |>
+    dplyr::group_by(dplyr::across(dplyr::all_of(cols)))  |>
+    dplyr::summarise(n = dplyr::n(), .groups = "drop") |>
+    dplyr::filter(n > 1) |>
+    nrow() == 0
+}
 
+# Function to find the pivot arguments for pivot_wider
+
+find_pivot_args = function(data,
+                           id_cols = "id",
+                           names_from = "item",
+                           values_from = "resp",
+                           catalog = catalog) {
+  # Initial check using provided id_cols and names_from
+  if (check_uniqueness(data, c(id_cols, names_from))) {
+    return(list(
+      id_cols = id_cols,
+      names_from = names_from,
+      values_from = values_from
+    ))
+  }
+  
+  # Identify additional columns
+  additional_cols = setdiff(names(data), c(id_cols, names_from, values_from))
+  if (length(additional_cols) == 0) {
+    stop("Could not find a combination of columns to ensure unique identification.")
+  }
+  
+  
+  # Try adding columns to id_cols based on
+  for (col in additional_cols) {
+    if (check_uniqueness(data, c(id_cols, col, names_from))) {
+      return(list(
+        id_cols = c(id_cols, col),
+        names_from = names_from,
+        values_from = values_from
+      ))
+    }
+  }
+  
+  # Try adding columns to names_from
+  for (col in additional_cols) {
+    if (check_uniqueness(data, c(id_cols, names_from, col))) {
+      return(list(
+        id_cols = id_cols,
+        names_from = c(names_from, col),
+        values_from = values_from
+      ))
+    }
+  }
+  if (length(additional_cols) < 2) {
+    stop("Could not find a combination of columns to ensure unique identification.")
+  }
+  
+  # Try combinations of additional columns
+  for (cols in utils::combn(additional_cols, 2, simplify = FALSE)) {
+    if (check_uniqueness(data, c(id_cols, names_from, cols))) {
+      return(list(
+        id_cols = id_cols,
+        names_from = c(names_from, cols),
+        values_from = values_from
+      ))
+    }
+    if (check_uniqueness(data, c(id_cols, cols, names_from))) {
+      return(list(
+        id_cols = c(id_cols, cols),
+        names_from = c(names_from)
+      ))
+    }
+  }
+  
+  stop("Could not find a combination of columns to ensure unique identification.")
+}
+
+# Example usage:
+# df = tibble::tibble(
+#   id = c(1, 1, 2, 2),
+#   item = c("A", "B", "A", "B"),
+#   resp = c(10, 20, 10, 20),
+#   extra = c("X", "Y", "X", "Y")
+# )
+# piv_args = find_pivot_args(df, id_cols = "id", names_from = "item")
+# newdf = inject(pivot_wider(df,!!!piv_args))
+# list_of_all_piv_args
+
+
+needs_combined_columns = function(args) {
+  # Check each argument for length > 1
+  for (arg_name in names(args)) {
+    arg_value = args[[arg_name]]
+    
+    if (length(arg_value) > 1) {
+      return(TRUE)
+    }
+  }
+  
+  return(FALSE)
+}
+
+
+notify_combined_columns = function(args) {
+  # Pre-allocate messages vector
+  messages = character(0)
+  
+  # Single pass through arguments
+  combined_info = Filter(function(x)
+    length(x) > 1, args)
+  
+  # Build all messages at once if needed
+  if (length(combined_info) > 0) {
+    messages = sprintf(
+      "The following columns are being combined for '%s': %s",
+      names(combined_info),
+      vapply(combined_info, function(x)
+        paste(x, collapse = ", "), character(1))
+    )
+    # Single message call
+    message(paste(messages, collapse = "\n"))
+  }
+}
+
+# -----------------------------------------------------------------------------
+# Exported Function
+# -----------------------------------------------------------------------------
 
 #' @title returns irw dataframes in the format required by the package
 #'
@@ -513,10 +852,11 @@ not_supported_cols = c("rater", "raters", "rater_covariates", "rt") ## currently
 #' @param sep character: The separator to be used when combining variables in the data. Default is "_".
 #' @param return_obj character: The format in which the data should be returned. Options are "tibble", "data.frame", or "matrix". Default is "tibble".
 #' @param return_options list: Currently does nothing. A list of additional options to be passed to the return object. Default is NULL. (see details)
-#' @return 
-#' An object of class `irw_format` inheriting from either a data frame, tibble, or matrix in the format required by the specified package. 
-#' 
+#' @return
+#' An object of class `irw_format` inheriting from either a data frame, tibble, or matrix in the format required by the specified package.
+#'
 #' @examples
+#' \dontrun{
 #' ## Example 1: Reformat data for mirt package
 #' df = data.frame(
 #' id = rep(rep(1:3,3),2),
@@ -526,41 +866,43 @@ not_supported_cols = c("rater", "raters", "rater_covariates", "rt") ## currently
 #' group = rep(c('G1','G2','G2'),each=3),
 #' wave = rep(c(1,2),each=9)
 #' )
-#' df
-#' reformat(df)
-#' 
+#' irw_reformat(df)
+#'
 #' ## Example 2: Reformat data for lavaan package
-#' reformatted_data = reformat(df, package = "lavaan", timedate = TRUE)
-#' 
+#' reformatted_data = irw_reformat(df, package = "lavaan", timedate = TRUE)
+#'
 #' ## Example 3: Reformat data for psych package
-#' reformatted_data = reformat(df, package = "psych", covariates = TRUE)
-#' 
+#' reformatted_data = irw_reformat(df, package = "psych", covariates = TRUE)
+#' }
 #' @details
-#' The `reformat` function simplifies the process of reformatting data for use with various R packages. The function is designed to work with a variety of data formats, including wide and long formats, as well as data with covariates, groups, item groups, raters, and more. With the exception of `lme4`, all other package selections default to performing a wider pivot (e.g. `tidyr::pivot_wider_spec`) on the data, transposing all items in the dataset into columns. 
+#' The `irw_reformat` function simplifies the process of reformatting data for use with various R packages. The function is designed to work with a variety of data formats, including wide and long formats, as well as data with covariates, groups, item groups, raters, and more. With the exception of `lme4`, all other package selections default to performing a wider pivot (e.g. `tidyr::pivot_wider_spec`) on the data, transposing all items in the dataset into columns.
 #' This function is not meant for complex modeling tasks, but rather for quickly reformatting data for use with psychometric analysis packages to facilitate greater use of a wide variety of psychometric data and tools in `R`.
-#' 
-#' The benefits of using this function compared to a more robust suite of tools such as `recipes` and `workflows` tools are: 
+#'
+#' The benefits of using this function compared to a more robust suite of tools such as `recipes` and `workflows` tools are:
 #' 1) *simplicity* and, in most cases, *speed* by being able to quickly reformat data based on `irw` data standards
 #' 2) *usability* as some psychometric researchers may not be familiar enough with how to adapt the complex `tidymodels` pipelines across many datasets for latent variable analyses (such as those found in `mirt`)
-#' 3) *automation* of the most time-consuming parts of `tidymodels` (creating recipes where you define all the variable roles and transformations): the reformat function does this automatically by exploiting the knowledge of it being some kind of psychometric dataset. 
-#' 
-#' The `reformat` R function (and its supporting functions) is designed to take a data.frame (provided from the `irw` database) and reconstruct it in the format required by various `R` packages for psychometric analysis. It does this by transforming the reformatted data using user specifications, automatically identifying and cataloging available variables as needed, and matching the transformations with expected format for the user specified package, with robustness checks for various data and user combinations of parameters It returns the data in the desired format as an object with the additional class `irw_format` (which will be used for class methods in the future package iterations for greater efficiency).
-#' These are the steps currently used for `reformat`:
+#' 3) *automation* of the most time-consuming parts of `tidymodels` (creating recipes where you define all the variable roles and transformations): the reformat function does this automatically by exploiting the knowledge of it being some kind of psychometric dataset.
+#'
+#' The `irw_reformat` R function (and its supporting functions) is designed to take a data.frame (provided from the `irw` database) and reconstruct it in the format required by various `R` packages for psychometric analysis. It does this by transforming the reformatted data using user specifications, automatically identifying and cataloging available variables as needed, and matching the transformations with expected format for the user specified package, with robustness checks for various data and user combinations of parameters It returns the data in the desired format as an object with the additional class `irw_format` (which will be used for class methods in the future package iterations for greater efficiency).
+#' These are the steps currently used for `irw_reformat`:
+#'
 #' **Analyzing the data provided**
 #' The function creates a catalog of dataset variables, checking for compatability, identifying the roles of the variables, converting them to expected data types, and prioritizing their importance with respect to the user specifications
 #' When specified and where possible, the package automatically coerces and prioritizes the variables in the data to the expected data types and roles. The function will also check for the presence of the variables in the data and return an informative error if they are not found.
 #' The user can provide either column names or a boolean/logical to specify the variables. If the user provides a boolean, the function will attempt to automatically identify the variables based on the user specifications.
 #' Not every package has support for every variable role currently. The function will return either an error or a warning if the user specifies a variable or output type that is not supported by the package, is in conflict with other data, or is otherwise incompatible. Working with the user base, future iterations of the package will include more support for additional packages and variable roles to better serve the psychometric community. Currently, rater variables are only supported by the `lme4` package configuration.
+#'
 #' **Reformatting the data**
-#' For wider pivots, checks for unique identification of the `resp` variable by `id` and `item` variables (if not found, automatically searches for and uses other variables that would allow for unique identification, and returns an error in the rare case that no unique identification is found in an `irw` dataset). 
+#' For wider pivots, checks for unique identification of the `resp` variable by `id` and `item` variables (if not found, automatically searches for and uses other variables that would allow for unique identification, and returns an error in the rare case that no unique identification is found in an `irw` dataset).
 #' The default package is `mirt`, which is the most common package used for psychometric analysis. The function will pivot the data into a wide format with each item as a column. It will retain `NAs` in the data by default, but the user can specify to drop them if needed. This is the same for the `ltm` package.
-#' The `mokken` package supports are similar to `mirt`, but are more restrictive. The function will pivot the data into a wide format with each item as a column. For `mokken`, all rows with missing values will be dropped. 
-#' For the `lavaan` package, the function will pivot the data into a very wide format with each item, date, group, etc. are combined into unique variables. 
+#' The `mokken` package supports are similar to `mirt`, but are more restrictive. The function will pivot the data into a wide format with each item as a column. For `mokken`, all rows with missing values will be dropped.
+#' For the `lavaan` package, the function will pivot the data into a very wide format with each item, date, group, etc. are combined into unique variables.
 #' For users interested in the `sem` package, users would probably benefit the most from setting the supported package to `lavaan` , as many of the same structural assumptions hold. The `lavaan` configuration can support additional variables and covariates that can be uniquely identified and matched on the wide pivoted data.
 #' For the `psych` package, the function will pivot the data into a wide format with each item as a column for factor analysis. This package, like `lavaan`, can support additional variables and covariates that can be uniquely identified and matched on the wide pivoted data including automatically transforming dummy variables as needed, and thus easily supports functions like, `fa`, `bigCor`, etc. However, the function will not support all functions within the package. A user wishing to perform instrument reliability checks such as `alpha` or `omega` should not specify covariates or other variable roles.
 #' For the `lme4` package, the function will return the data into a long format, converting all variables and variable names in the data to the expected format for linear mixed effects in the package.
 #' The function will automatically identify and convert factor columns to dummy variables if needed. The function currently supports the following packages: `mirt`, `lavaan`, `psych`, `ltm`, `mokken`, and `lme4`.
-#' @section Resources: 
+#'
+#' @section Resources:
 #' Package Manuals:
 #' `mirt`: https://cran.r-project.org/web/packages/mirt/mirt.pdf
 #' `lavaan`: https://cran.r-project.org/web/packages/lavaan/lavaan.pdf
@@ -578,29 +920,30 @@ not_supported_cols = c("rater", "raters", "rater_covariates", "rt") ## currently
 #' @importFrom tidyselect all_of matches
 #' @importFrom forcats as_factor fct
 #' @export
-reformat = function(data,
-                    package = "mirt",
-                    id = "id",
-                    item = "item",
-                    resp = "resp",
-                    groups = NULL,
-                    timedate = NULL,
-                    covariates = NULL,
-                    levels = NULL,
-                    rt = NULL,
-                    qmatrix = NULL,
-                    item_groups = NULL,
-                    group_covariates = NULL,
-                    raters = NULL,
-                    rater_covariates = NULL,
-                    keep_all = F,
-                    facts2dummies = NULL,
-                    as_args_list = F, ## currently not supported
-                    drop_na_vals = F,
-                    item_prefix = "item_",
-                    sep = "_",
-                    return_obj = "tibble",
-                    return_options = NULL) {
+irw_reformat = function(data,
+                        package = "mirt",
+                        id = "id",
+                        item = "item",
+                        resp = "resp",
+                        groups = NULL,
+                        timedate = NULL,
+                        covariates = NULL,
+                        levels = NULL,
+                        rt = NULL,
+                        qmatrix = NULL,
+                        item_groups = NULL,
+                        group_covariates = NULL,
+                        raters = NULL,
+                        rater_covariates = NULL,
+                        keep_all = F,
+                        facts2dummies = NULL,
+                        as_args_list = F,
+                        ## currently not supported
+                        drop_na_vals = F,
+                        item_prefix = "item_",
+                        sep = "_",
+                        return_obj = "tibble",
+                        return_options = NULL) {
   if (!tibble::is_tibble(data)) {
     data = dplyr::as_tibble(data)
   }
@@ -630,7 +973,7 @@ reformat = function(data,
   data = data |> irw_rename()
   catalog_names$cleaned_names = names(data)
   # Check to ensure the identified columns "id", "item", and "resp" are present in the tibble (if not it will return an error)
-  if (!all(c(id,item, resp) %in% names(data))) {
+  if (!all(c(id, item, resp) %in% names(data))) {
     stop("The columns for 'id', 'item', and 'resp' must be present in the data")
   }
   
@@ -683,7 +1026,7 @@ reformat = function(data,
     for (arg_value in applicable_args) {
       if (is.character(arg_value)) {
         user_specified_char_columns_found_in_args = c(user_specified_char_columns_found_in_args,
-                                                       arg_value)
+                                                      arg_value)
       }
     }
   }
@@ -699,7 +1042,8 @@ reformat = function(data,
     role_col = eval(parse(text = role))
     if (!is.null(role_col)) {
       # if character is in not_supported_cols, return an error
-      if ((role %in% not_supported_cols) & !cov_wide_supps[[package]] & piv_wide_pkg[[package]]) {
+      if ((role %in% not_supported_cols) &
+          !cov_wide_supps[[package]] & piv_wide_pkg[[package]]) {
         stop(paste0("Arguments for '", role, "' are not currently supported"))
       }
       # if the role is a character (or character vector) and not in the not_supported_cols list
@@ -737,7 +1081,7 @@ reformat = function(data,
         candidate_cols = dplyr::setdiff(candidate_cols, names(catalog))
         # remove any columns that have been specified in the args
         candidate_cols = dplyr::setdiff(candidate_cols,
-                                  user_specified_char_columns_found_in_args)
+                                        user_specified_char_columns_found_in_args)
         for (col in candidate_cols) {
           catalog = add_to_catalog(catalog, col, role)
           data = data |> dplyr::mutate(dplyr::across(dplyr::all_of(col), catalog[[col]]$dtype))
@@ -745,7 +1089,7 @@ reformat = function(data,
       }
     }
   }
-
+  
   ## if keep_all is true, add all columns not already in the catalog to the catalog
   if (keep_all) {
     remaining_cols = setdiff(names(data), names(catalog))
@@ -792,7 +1136,7 @@ reformat = function(data,
         names_from = c(names_from, names(catalog)[sapply(catalog, function(x)
           x$role %in% c("timedate", "item_groups"))])
       }
-
+      
       # find pivot arguments try first from data_cleaned and if not possible, try to find from data
       pivot_args = NULL
       try({
@@ -820,7 +1164,7 @@ reformat = function(data,
       
       unused_vars = setdiff(names(data_cleaned), as.character(unlist(pivot_args, use.names = F)))
       ## issue warning if cov_wide_supps[[package]] is false and there are other unused variables in the catalog and state which package does not support them and which variables will be ignored
-     
+      
       if ((length(unused_vars) > 0) & !cov_wide_supps[[package]]) {
         warning(
           paste0(
@@ -838,11 +1182,13 @@ reformat = function(data,
         if (nrow(tmpdata) > nrow(data_formatted)) {
           for (col in names(tmpdata)) {
             if (length(unique(tmpdata[[col]])) > nrow(data_formatted)) {
-              warning(paste0(
-                "The column '",
-                col,
-                "' has been dropped due to having more unique values than the id values. To keep, set package to `lme4` and set keep_all to `TRUE`."
-              ))
+              warning(
+                paste0(
+                  "The column '",
+                  col,
+                  "' has been dropped due to having more unique values than the id values. To keep, set package to `lme4` and set keep_all to `TRUE`."
+                )
+              )
               tmpdata = tmpdata |> dplyr::select(-dplyr::all_of(col)) |> dplyr::distinct()
             }
           }
@@ -852,11 +1198,11 @@ reformat = function(data,
       ## combine any id_cols to create unique rownames and then drop them
       data_formatted = data_formatted |>
         tidyr::unite("rowid",
-              pivot_args$id_cols,
-              sep = sep,
-              remove = T) |>
+                     pivot_args$id_cols,
+                     sep = sep,
+                     remove = T) |>
         tibble::column_to_rownames("rowid")
-
+      
     } else {
       data_formatted = data_cleaned |> dplyr::as_tibble()
     }
@@ -882,19 +1228,26 @@ reformat = function(data,
     ))
     data_formatted = data_formatted |>  dplyr::filter(!rownames(data_formatted) %in% rows_to_drop)
   }
-
+  
   
   ## if psych package, convert factors to numeric if ordered, else convert to dummies
-  if (package %in% c("psych","lavaan")){
+  if (package %in% c("psych", "lavaan")) {
     for (col in names(data_formatted)) {
       ## first check if the column has only one value and if so, drop it
       if (one_value_check(data_formatted[[col]])) {
         data_formatted = data_formatted[, !(names(data_formatted) %in% col)]
-        print(paste0("The column '", col, "' has been dropped due to having only one unique value (zero variance)"))
+        print(
+          paste0(
+            "The column '",
+            col,
+            "' has been dropped due to having only one unique value (zero variance)"
+          )
+        )
         
       } else if (class(data_formatted[[col]]) %in% c("factor", "ordered", "character", "logical")) {
         data_formatted = check_numeric(data_formatted, col)
-        if (is.factor(data_formatted[[col]]) & package %in% c("psych")) {
+        if (is.factor(data_formatted[[col]]) &
+            package %in% c("psych")) {
           dummy_cols = psych::dummy.code(data_formatted[[col]], na.rm = T)
           data_formatted = cbind(data_formatted, dummy_cols)
           # cbind(data_formatted, dummy_cols)
