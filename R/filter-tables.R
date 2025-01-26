@@ -22,8 +22,6 @@
 filter_tables <- function(id_count = NULL, item_count = NULL, resp_count = NULL, sparsity = NULL,
                           has_date = NULL, has_rt = NULL, has_rater = NULL) {
   
-  metadata <- get_metadata()
-  
   # Helper function to check if value is within range (inclusive)
   is_within_range <- function(value, range) {
     if (is.null(range)) return(TRUE)

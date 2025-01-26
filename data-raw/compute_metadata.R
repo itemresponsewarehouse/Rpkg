@@ -170,5 +170,5 @@ results <- compute_metadata()
 
 
 metadata <- read.csv("data/metadata.csv", stringsAsFactors = FALSE)
-save(metadata, file = "data/metadata.rda")
+# save(metadata, file = "data/metadata.rda")
 

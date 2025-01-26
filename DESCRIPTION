@@ -19,7 +19,9 @@ Imports:
     tibble,
     tidyr,
     forcats,
-    tidyselect
+    tidyselect,
+    glue,
+    httr
 Remotes:
     redivis/redivis-r
 Suggests: 

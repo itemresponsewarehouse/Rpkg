@@ -16,7 +16,6 @@
 #'
 #' @export
 show_overall_statistics <- function() {
-  metadata <- get_metadata()
   
   # Helper function to compute range and mean
   compute_stats <- function(x) {
@@ -125,7 +124,6 @@ show_overall_statistics <- function() {
 #'
 #' @export
 visualize_metadata_distributions <- function(ranges = list()) {
-  metadata <- get_metadata()
   
   # Attributes to visualize
   attributes <- c("id_count", "item_count", "resp_count", "sparsity")
