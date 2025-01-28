@@ -13,11 +13,15 @@
 #' Default is `FALSE`.
 #' @return A message confirming the file download location.
 #' @export
-irw_download <- function(table_name, path = NULL, overwrite = FALSE) {
+irw_download <- function(table_name,
+                         path = NULL,
+                         overwrite = FALSE) {
   table <- .fetch_redivis_table(table_name)
   # Check if the table object has the download method
   if (!is.function(table$download)) {
-    stop("The provided object does not support downloading. Ensure it is a valid Redivis data table.")
+    stop(
+      "The provided object does not support downloading. Ensure it is a valid Redivis data table."
+    )
   }
   
   # Attempt to download the file
@@ -32,87 +36,82 @@ irw_download <- function(table_name, path = NULL, overwrite = FALSE) {
 
 
 
-#' Generate Citation and BibTeX for a Table
+#' Save BibTeX Entries for IRW Tables
 #'
-#' Generates and displays both a citation and BibTeX entry for a table.
+#' Saves BibTeX entries for one or more IRW tables to a specified output file.
+#' Updates the BibTeX key to match the table name.
 #'
-#' @param table_name A character string specifying the name of the table.
-#' @return Invisibly returns the formatted string (so it can be captured programmatically if needed).
+#' @param table_names A character vector of table names for which BibTeX entries are generated.
+#' @param output_file A character string specifying the file path to save BibTeX entries. Default is "refs.bib".
+#' @return Invisibly returns BibTeX entries as a character vector.
 #' @export
-irw_citation <- function(table_names,print=TRUE,output.file="refs.bib") {
-    cite_inner<-function(table_name) {
-                                        # Look up the table in the metadata
-        table_row <- data_index[data_index$Filename == table_name, ]
-        
-        if (nrow(table_row) == 0) {
-            warning("The table '", table_name, "' does not exist in the metadata.")
-            result <- paste0("No citation or BibTeX entry available for the table '", table_name, "'.")
-            cat(result, "\n")
-            return(invisible(result))
-        }
-        
-                                        # Extract DOI and Reference
-        doi <- table_row$DOI
-        reference <- table_row$Reference
-        
-                                        # Prepare citation
-        if (!is.null(doi) && nzchar(doi) && !is.na(doi)) {
-            citation <- paste0("https://doi.org/", doi)
-        } else if (!is.null(reference) && nzchar(reference)) {
-            citation <- reference
-        } else {
-            citation <- "No citation available for this table."
-        }
-        
-                                        # Prepare BibTeX
-        bibtex <- NULL
-        if (!is.null(doi) && nzchar(doi) && !is.na(doi)) {
-            response <- tryCatch({
-                httr::GET(
-                          glue::glue("https://doi.org/{doi}"),
-                          httr::add_headers(Accept = "application/x-bibtex")
-                      )
-            }, error = function(e) NULL)
-            
-            if (!is.null(response) && httr::status_code(response) == 200) {
-                bibtex <- httr::content(response, as = "text", encoding = "UTF-8")
-            }
-        }
-        
-                                        # Fallback to bibtex_manual if DOI BibTeX is not available
-        if (is.null(bibtex)) {
-            bibtex_row <- bibtex_manual[bibtex_manual$Filename == table_name, ]
-            if (nrow(bibtex_row) > 0) {
-                bibtex <- bibtex_row$BibTex
-            }
-        }
-        
-        noreturn.flag<-FALSE
-        if (is.null(bibtex)) {
-            bibtex <- "No BibTeX entry available for this table."
-        }
-        
-        if (print) {
-                                        # Combine and format the output
-            result <- paste0(
-                "Citation for '", table_name, "':\n",
-                citation, "\n\n",
-                "BibTeX entry for '", table_name, "':\n",
-                bibtex
-            )
-            
-                                        # Display the result using cat()
-            cat(result, "\n")
-            return(NULL)
-        } else {
-            return(bibtex) 
-        }
+irw_save_bibtex <- function(table_names, output_file = "refs.bib") {
+  # Initialize lists for valid BibTeX entries and invalid table names
+  valid_entries <- character()
+  invalid_tables <- character()
+  
+  # Process each table name
+  for (table_name in table_names) {
+    table_row <- data_index[data_index$Filename == table_name, ]
+    
+    # Handle missing tables
+    if (nrow(table_row) == 0) {
+      invalid_tables <- c(invalid_tables, table_name)
+      next
     }
-    L<-sapply(table_names,cite_inner)
-    if (!print) {
-        L<-L[grep("^@",L)] #no empty ones
-        txt<-paste(L,collapse='\n\n')
-        cat(txt,file=output.file)
+    
+    # Fetch BibTeX from DOI
+    doi <- table_row$DOI
+    bibtex <- if (!is.na(doi) && nzchar(doi)) {
+      response <- tryCatch(
+        httr::GET(
+          glue::glue("https://doi.org/{doi}"),
+          httr::add_headers(Accept = "application/x-bibtex")
+        ),
+        error = function(e) NULL
+      )
+      if (!is.null(response) && httr::status_code(response) == 200) {
+        httr::content(response, as = "text", encoding = "UTF-8")
+      } else {
+        NULL
+      }
+    } else {
+      NULL
     }
-    return(NULL)
+    
+    # Fallback to manual BibTeX
+    if (is.null(bibtex)) {
+      manual_bibtex <- bibtex_manual[bibtex_manual$Filename == table_name, "BibTex", drop = FALSE]
+      if (nrow(manual_bibtex) > 0) {
+        bibtex <- manual_bibtex$BibTex
+      } else {
+        invalid_tables <- c(invalid_tables, table_name)
+        next
+      }
+    }
+    
+    # Update the BibTeX key while preserving the entry type
+    if (!is.null(bibtex) && grepl("^@", bibtex)) {
+      bibtex <- sub("@(\\w+)\\{[^,]+,", paste0("@\\1{", table_name, ","), bibtex)
+    }
+    
+    # Add valid BibTeX to the list
+    valid_entries <- c(valid_entries, bibtex)
+  }
+  
+  # Save valid entries to file
+  if (length(valid_entries) > 0) {
+    writeLines(unique(valid_entries), con = output_file)
+    message("BibTeX entries saved to: ", output_file)
+  } else {
+    message("No valid BibTeX entries found. Output file was not created.")
+  }
+  
+  # Message for invalid tables
+  if (length(invalid_tables) > 0) {
+    message("NOTE: These tables were not saved due to invalid names or missing BibTeX info: ", 
+            paste(invalid_tables, collapse = ", "))
+  }
+  
+  invisible(valid_entries)
 }
