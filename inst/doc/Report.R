@@ -38,7 +38,7 @@
 #   id_count = c(0, 10000),
 #   resp_count = c(0, 100000),
 #   item_count = c(0, 150),
-#   sparsity = c(0, 2)
+#   density = c(0, 2)
 # ))
 
 
@@ -46,7 +46,7 @@
 #| eval: false
 # matching_tables <- filter_tables(
 #   id_count = c(100, 1000),
-#   sparsity = c(0.1, 0.5))
+#   density = c(0.1, 0.5))
 # print(matching_tables)
 
 

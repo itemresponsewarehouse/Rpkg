@@ -6,7 +6,7 @@
 #   id_count = c(500, 1500, 300, 800),
 #   item_count = c(50, 200, 100, 75),
 #   resp_count = c(10000, 20000, 5000, 8000),
-#   sparsity = c(0.2, 0.5, 0.1, 0.3),
+#   density = c(0.2, 0.5, 0.1, 0.3),
 #   has_date = c(1, 0, 1, 1),
 #   has_rt = c(0, 1, 1, 0),
 #   has_rater = c(1, 1, 0, 0),
@@ -46,10 +46,10 @@
 #   expect_true(any(grepl("Max: 20000", output)))   # Max response count
 #   expect_true(any(grepl("Mean:", output)))        # Just check for "Mean", ignore decimals
 #   
-#   # Sparsity: Min, Max, and Mean values
-#   expect_true(any(grepl("Sparsity:", output)))
-#   expect_true(any(grepl("Min: 0.100", output)))   # Min sparsity
-#   expect_true(any(grepl("Max: 0.500", output)))   # Max sparsity
+#   # Density: Min, Max, and Mean values
+#   expect_true(any(grepl("Density:", output)))
+#   expect_true(any(grepl("Min: 0.100", output)))   # Min density
+#   expect_true(any(grepl("Max: 0.500", output)))   # Max density
 #   expect_true(any(grepl("Mean:", output)))        # Just check for "Mean", ignore decimals
 #   
 #   # Table count and counts for specific columns (rater, rt, date)

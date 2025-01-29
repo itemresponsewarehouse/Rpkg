@@ -1,4 +1,4 @@
-"table_name","id_count","item_count","resp_count","resp_unique","sparsity","resp_per_id","resp_per_item","mean_normalized_resp","has_rt","has_date","has_rater"
+"table_name","id_count","item_count","resp_count","resp_unique","density","resp_per_id","resp_per_item","mean_normalized_resp","has_rt","has_date","has_rater"
 "lessR_Mach4",351,20,7020,6,1,20,351,0.461168091168092,0,0,0
 "movac_pakpour2022",6008,12,72096,7,1,12,6008,0.748036348360931,0,0,0
 "SABFI2_Gallardo_Pujol_2018_IntHapp",419,9,3771,5,1,9,419,0.697533810660303,0,0,0

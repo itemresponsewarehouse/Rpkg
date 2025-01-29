@@ -91,7 +91,7 @@ irw_table_metadata <- function(table_name, verbose = TRUE) {
 #' - `id_count`: Number of unique IDs per dataset.
 #' - `item_count`: Number of unique items per dataset.
 #' - `resp_count`: Total number of responses in each dataset.
-#' - `sparsity`: Sparsity measure for each dataset (between 0 and 1).
+#' - `density`: Density measure for each dataset (between 0 and 1).
 #'
 #' @return Prints the statistics to the console. Does not return a value.
 #' @examples
@@ -115,7 +115,7 @@ irw_overall_stats <- function() {
     id_count = compute_stats(metadata$id_count),
     item_count = compute_stats(metadata$item_count),
     resp_count = compute_stats(metadata$resp_count),
-    sparsity = compute_stats(metadata$sparsity)
+    density = compute_stats(metadata$density)
   )
   
   # Additional counts
@@ -159,10 +159,10 @@ irw_overall_stats <- function() {
   )
   cat(
     sprintf(
-      "Sparsity:\n  Min: %.3f, Max: %.3f, Mean: %.3f\n",
-      stats$sparsity$min,
-      stats$sparsity$max,
-      stats$sparsity$mean
+      "Density:\n  Min: %.3f, Max: %.3f, Mean: %.3f\n",
+      stats$density$min,
+      stats$density$max,
+      stats$density$mean
     )
   )
 }
@@ -177,27 +177,27 @@ irw_overall_stats <- function() {
 #'        - `"id_count"`: Number of unique IDs per dataset.
 #'        - `"item_count"`: Number of unique items per dataset.
 #'        - `"resp_count"`: Total number of responses per dataset.
-#'        - `"sparsity"`: Sparsity measure (between 0 and 1).
+#'        - `"density"`: Density measure (between 0 and 1).
 #' @return No return value. Outputs histograms to the console.
 #' @examples
 #' # Example with default ranges:
 #' irw_visualize()
 #'
 #' # Example with custom ranges:
-#' irw_visualize(ranges = list(id_count = c(0, 1000), sparsity = c(0.1, 0.9)))
+#' irw_visualize(ranges = list(id_count = c(0, 1000), density = c(0.1, 0.9)))
 #' @importFrom graphics axis hist mtext par
 #' @export
 irw_visualize <- function(ranges = list()) {
   
   # Attributes to visualize
-  attributes <- c("id_count", "item_count", "resp_count", "sparsity")
+  attributes <- c("id_count", "item_count", "resp_count", "density")
   
   # User-friendly labels for attributes
   attribute_labels <- list(
     id_count = "Number of Unique IDs",
     item_count = "Number of Unique Items",
     resp_count = "Total Number of Responses",
-    sparsity = "Sparsity Measure"
+    density = "Density Measure"
   )
   
   # Helper function to limit values to the user-defined range

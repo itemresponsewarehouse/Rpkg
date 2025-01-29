@@ -57,7 +57,7 @@ irw_fetch <- function(name) {
 #' Filter Tables by Criteria
 #'
 #' Filters the IRW database metadata to return the names of tables that match the specified criteria.
-#' Criteria include ranges for numeric attributes (e.g., `id_count`, `sparsity`) and the presence of specific columns 
+#' Criteria include ranges for numeric attributes (e.g., `id_count`, `density`) and the presence of specific columns 
 #' (e.g., `date`, `response time`, or `rater`).
 #'
 #' @param id_count A numeric vector of two values specifying the range for the number of unique IDs 
@@ -66,7 +66,7 @@ irw_fetch <- function(name) {
 #'        Default is `NULL`.
 #' @param resp_count A numeric vector of two values specifying the range for the total number of responses. 
 #'        Default is `NULL`.
-#' @param sparsity A numeric vector of two values specifying the range for sparsity (between 0 and 1). 
+#' @param density A numeric vector of two values specifying the range for density (between 0 and 1). 
 #'        Default is `NULL`.
 #' @param has_date Logical; `TRUE` to include tables with a `date` column, `FALSE` to exclude them, 
 #'        or `NULL` to ignore this criterion. Default is `NULL`.
@@ -78,10 +78,10 @@ irw_fetch <- function(name) {
 #'         and returns an empty character vector.
 #' @examples
 #' \dontrun{
-#'   irw_filter(id_count = c(100, 1000), sparsity = c(0.1, 0.5), has_date = TRUE)
+#'   irw_filter(id_count = c(100, 1000), density = c(0.1, 0.5), has_date = TRUE)
 #' }
 #' @export
-irw_filter <- function(id_count = NULL, item_count = NULL, resp_count = NULL, sparsity = NULL,
+irw_filter <- function(id_count = NULL, item_count = NULL, resp_count = NULL, density = NULL,
                           has_date = NULL, has_rt = NULL, has_rater = NULL) {
   
   # Helper function to check if value is within range (inclusive)
@@ -99,17 +99,17 @@ irw_filter <- function(id_count = NULL, item_count = NULL, resp_count = NULL, sp
   validate_range(id_count, "id_count")
   validate_range(item_count, "item_count")
   validate_range(resp_count, "resp_count")
-  validate_range(sparsity, "sparsity")
+  validate_range(density, "density")
   
   # Check required columns
-  required_columns <- c("id_count", "item_count", "resp_count", "sparsity", "has_date", "has_rt", "has_rater")
+  required_columns <- c("id_count", "item_count", "resp_count", "density", "has_date", "has_rt", "has_rater")
   missing_columns <- setdiff(required_columns, names(metadata))
   if (length(missing_columns) > 0) {
     stop(sprintf("The following required columns are missing from metadata: %s", paste(missing_columns, collapse = ", ")))
   }
   
   # Apply numeric filters
-  numeric_filters <- list(id_count = id_count, item_count = item_count, resp_count = resp_count, sparsity = sparsity)
+  numeric_filters <- list(id_count = id_count, item_count = item_count, resp_count = resp_count, density = density)
   for (filter_name in names(numeric_filters)) {
     range <- numeric_filters[[filter_name]]
     if (!is.null(range)) {
