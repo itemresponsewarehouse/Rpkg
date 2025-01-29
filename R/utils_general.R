@@ -68,9 +68,11 @@ irw_save_bibtex <- function(table_names, output_file = "refs.bib") {
           glue::glue("https://doi.org/{doi}"),
           httr::add_headers(Accept = "application/x-bibtex")
         ),
-        error = function(e) NULL
+        error = function(e)
+          NULL
       )
-      if (!is.null(response) && httr::status_code(response) == 200) {
+      if (!is.null(response) &&
+          httr::status_code(response) == 200) {
         httr::content(response, as = "text", encoding = "UTF-8")
       } else {
         NULL
@@ -92,7 +94,9 @@ irw_save_bibtex <- function(table_names, output_file = "refs.bib") {
     
     # Update the BibTeX key while preserving the entry type
     if (!is.null(bibtex) && grepl("^@", bibtex)) {
-      bibtex <- sub("@(\\w+)\\{[^,]+,", paste0("@\\1{", table_name, ","), bibtex)
+      bibtex <- sub("@(\\w+)\\{[^,]+,",
+                    paste0("@\\1{", table_name, ","),
+                    bibtex)
     }
     
     # Add valid BibTeX to the list
@@ -109,8 +113,10 @@ irw_save_bibtex <- function(table_names, output_file = "refs.bib") {
   
   # Message for invalid tables
   if (length(invalid_tables) > 0) {
-    message("NOTE: These tables were not saved due to invalid names or missing BibTeX info: ", 
-            paste(invalid_tables, collapse = ", "))
+    message(
+      "NOTE: These tables were not saved due to invalid names or missing BibTeX info: ",
+      paste(invalid_tables, collapse = ", ")
+    )
   }
   
   invisible(valid_entries)

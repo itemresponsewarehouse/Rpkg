@@ -7,3 +7,5 @@
 /Meta/
 *.Rproj
 /doc/
+inst/doc
+docs
