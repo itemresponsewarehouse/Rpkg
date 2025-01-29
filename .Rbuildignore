@@ -5,3 +5,7 @@
 ^cran-comments\.m
 ^data-raw$
 ^Meta$
+^vignettes/articles$
+^_pkgdown\.yml$
+^docs$
+^pkgdown$
