@@ -4,7 +4,7 @@
 #   id_count = c(500, 1500, 300, 800),
 #   item_count = c(50, 200, 100, 75),
 #   resp_count = c(10000, 20000, 5000, 8000),
-#   sparsity = c(0.2, 0.5, 0.1, 0.3),
+#   density = c(0.2, 0.5, 0.1, 0.3),
 #   has_date = c(1, 0, 1, 1),
 #   has_rt = c(0, 1, 1, 0),
 #   has_rater = c(1, 1, 0, 0),
@@ -25,8 +25,8 @@
 #   result <- suppressMessages(filter_tables(id_count = c(500, 1000)))
 #   expect_equal(result, c("table1", "table4"))
 #   
-#   # Test 2: Filter by sparsity
-#   result <- suppressMessages(filter_tables(sparsity = c(0.1, 0.3)))
+#   # Test 2: Filter by density
+#   result <- suppressMessages(filter_tables(density = c(0.1, 0.3)))
 #   expect_equal(result, c("table1", "table3", "table4"))
 #   
 #   # Test 3: Filter by presence of date and RT columns

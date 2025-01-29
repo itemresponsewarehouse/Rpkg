@@ -98,7 +98,7 @@ compute_metadata <- function(output_file = file.path(output_base_dir, "metadata.
     item_count <- length(unique(table_data$item))
     resp_count <- nrow(table_data)
     resp_unique <- length(unique(table_data$resp))
-    sparsity <- (sqrt(resp_count) / id_count) * (sqrt(resp_count) / item_count)
+    density <- (sqrt(resp_count) / id_count) * (sqrt(resp_count) / item_count)
     resp_per_id <- mean(as.numeric(table(table_data$id)))
     resp_per_item <- mean(as.numeric(table(table_data$item)))
     
@@ -122,7 +122,7 @@ compute_metadata <- function(output_file = file.path(output_base_dir, "metadata.
       item_count = item_count,
       resp_count = resp_count,
       resp_unique = resp_unique,
-      sparsity = sparsity,
+      density = density,
       resp_per_id = resp_per_id,
       resp_per_item = resp_per_item,
       mean_normalized_resp = mean_normalized_resp,
