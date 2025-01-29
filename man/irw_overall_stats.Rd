@@ -21,7 +21,7 @@ for key attributes, such as:
 \item \code{id_count}: Number of unique IDs per dataset.
 \item \code{item_count}: Number of unique items per dataset.
 \item \code{resp_count}: Total number of responses in each dataset.
-\item \code{sparsity}: Sparsity measure for each dataset (between 0 and 1).
+\item \code{density}: Density measure for each dataset (between 0 and 1).
 }
 }
 \examples{

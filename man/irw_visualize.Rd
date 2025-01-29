@@ -12,7 +12,7 @@ If not provided, the full range of data will be used for each attribute. Valid a
 - \code{"id_count"}: Number of unique IDs per dataset.
 - \code{"item_count"}: Number of unique items per dataset.
 - \code{"resp_count"}: Total number of responses per dataset.
-- \code{"sparsity"}: Sparsity measure (between 0 and 1).}
+- \code{"density"}: Density measure (between 0 and 1).}
 }
 \value{
 No return value. Outputs histograms to the console.
@@ -25,5 +25,5 @@ Generates histograms for the distributions of key attributes in the IRW metadata
 irw_visualize()
 
 # Example with custom ranges:
-irw_visualize(ranges = list(id_count = c(0, 1000), sparsity = c(0.1, 0.9)))
+irw_visualize(ranges = list(id_count = c(0, 1000), density = c(0.1, 0.9)))
 }

@@ -8,7 +8,7 @@ irw_filter(
   id_count = NULL,
   item_count = NULL,
   resp_count = NULL,
-  sparsity = NULL,
+  density = NULL,
   has_date = NULL,
   has_rt = NULL,
   has_rater = NULL
@@ -24,7 +24,7 @@ Default is \code{NULL}.}
 \item{resp_count}{A numeric vector of two values specifying the range for the total number of responses.
 Default is \code{NULL}.}
 
-\item{sparsity}{A numeric vector of two values specifying the range for sparsity (between 0 and 1).
+\item{density}{A numeric vector of two values specifying the range for density (between 0 and 1).
 Default is \code{NULL}.}
 
 \item{has_date}{Logical; \code{TRUE} to include tables with a \code{date} column, \code{FALSE} to exclude them,
@@ -42,11 +42,11 @@ and returns an empty character vector.
 }
 \description{
 Filters the IRW database metadata to return the names of tables that match the specified criteria.
-Criteria include ranges for numeric attributes (e.g., \code{id_count}, \code{sparsity}) and the presence of specific columns
+Criteria include ranges for numeric attributes (e.g., \code{id_count}, \code{density}) and the presence of specific columns
 (e.g., \code{date}, \verb{response time}, or \code{rater}).
 }
 \examples{
 \dontrun{
-  irw_filter(id_count = c(100, 1000), sparsity = c(0.1, 0.5), has_date = TRUE)
+  irw_filter(id_count = c(100, 1000), density = c(0.1, 0.5), has_date = TRUE)
 }
 }
