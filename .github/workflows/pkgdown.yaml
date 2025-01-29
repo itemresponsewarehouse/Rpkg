@@ -30,12 +30,18 @@ jobs:
         with:
           use-public-rspm: true
 
-      # Install dependencies manually (replace setup-r-dependencies@v2)
-      - name: Install dependencies manually
+      # Install dependencies manually
+      - name: Install dependencies
         run: |
-          install.packages(c("remotes", "pak", "pkgdown"))
+          install.packages(c("remotes", "pkgdown"))
           remotes::install_github("redivis/redivis-r", ref="main")
           remotes::install_deps(dependencies = TRUE)
+        shell: Rscript {0}
+
+      # Install irwpkg before building site
+      - name: Install irwpkg before building site
+        run: |
+          remotes::install_local(dependencies = TRUE)
         shell: Rscript {0}
 
       - name: Build site

@@ -21,6 +21,8 @@ Apply renaming to an object with names
 This function is the main standardization function for IRW objects. It applies irw_name_fix to the names of an object.
 }
 \examples{
+\dontrun{
 irw_rename(data.frame("A B" = 1:3, "C D" = 4:6))
 irw_rename(c("A B", "C D"))
+}
 }
