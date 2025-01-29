@@ -1,5 +1,5 @@
-# Workflow derived from https://github.com/r-lib/actions/tree/v2/examples
-# Need help debugging build failures? Start at https://github.com/r-lib/actions#where-to-find-help
+# GitHub Actions Workflow for pkgdown deployment
+
 on:
   push:
     branches: [main, master]
@@ -15,7 +15,6 @@ permissions: read-all
 jobs:
   pkgdown:
     runs-on: ubuntu-latest
-    # Only restrict concurrency for non-PR jobs
     concurrency:
       group: pkgdown-${{ github.event_name != 'pull_request' || github.run_id }}
     env:
@@ -31,16 +30,13 @@ jobs:
         with:
           use-public-rspm: true
 
-      - name: Install dependencies (including redivis)
+      # Install dependencies manually (replace setup-r-dependencies@v2)
+      - name: Install dependencies manually
         run: |
-          install.packages("remotes")
-          remotes::install_github("redivis/redivis-r")  # Ensure redivis is installed
+          install.packages(c("remotes", "pak", "pkgdown"))
+          remotes::install_github("redivis/redivis-r", ref="main")
+          remotes::install_deps(dependencies = TRUE)
         shell: Rscript {0}
-
-      - uses: r-lib/actions/setup-r-dependencies@v2
-        with:
-          extra-packages: any::pkgdown, local::.
-          needs: website
 
       - name: Build site
         run: pkgdown::build_site_github_pages(new_process = FALSE, install = FALSE)
