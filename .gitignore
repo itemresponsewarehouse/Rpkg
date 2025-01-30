@@ -3,7 +3,6 @@
 .RData
 .Ruserdata
 .DS_Store
-**/mydata.csv
 /Meta/
 *.Rproj
 /doc/
