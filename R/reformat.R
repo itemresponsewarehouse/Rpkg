@@ -921,7 +921,7 @@ notify_combined_columns = function(args) {
 #' @importFrom tibble is_tibble
 #' @importFrom tidyselect all_of matches
 #' @importFrom forcats as_factor fct
-#' @export
+#' @noRd
 irw_reformat = function(data,
                         package = "mirt",
                         id = "id",

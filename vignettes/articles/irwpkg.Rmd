@@ -15,92 +15,93 @@ knitr::opts_chunk$set(
 library(irwpkg)
 ```
 
-# 1. Explore
-
-## Explore IRW DB
-
-View all datasets and their metadata (names, row counts, variable counts).
-
-```{r}
-datasets <- irw_list_datasets()
-dim(datasets)
-head(datasets)
-```
-
-Note: when you first use a function in irwpkg that connects to Redivis (e.g., `irw_list_datasets()`), a browser window will open, prompting you to sign in to your Redivis account. 
-
-After signing in, allow access for the Redivis R Client by clicking Allow.
-
-Once authentication is successful, close the browser window. You will see the message “Authentication was successful” in the R console.
-
-```{r}
-db_info <- irw_db_metadata()
-irw_overall_stats()
-```
-
-```{r}
-table_info <- irw_table_metadata("lessR_Mach4")
-```
-
-```{r}
-irw_visualize()
-irw_visualize(ranges = list(
-  id_count = c(0, 10000),
-  resp_count = c(0, 100000),
-  item_count = c(0, 150),
-  density = c(0, 2)
-))
-```
-
-## Find datasets by criteria
-```{r}
-matching_tables <- irw_filter(
-  id_count = c(100, 1000), 
-  density = c(0.1, 0.5))
-print(matching_tables)
-```
-
-```{r}
-matching_tables <- irw_filter(has_rater = TRUE)
-print(matching_tables)
-```
-
-```{r}
-matching_tables <- irw_filter(
-  id_count = c(100, 10000), 
-  has_rater = TRUE
-)
-print(matching_tables)
-```
-
-# Fetch
-```{r}
-swmd_mokken <- irw_fetch(name = "swmd_mokken")
-str(swmd_mokken)
-```
-
-```{r}
-datasets <- irw_fetch(c("fractals_rating", "spelling2pronounce_edwards2023"))
-print(names(datasets))
-str(datasets$fractals_rating)
-```
+# Example workflow
 
 
-```{r}
-matching_tables <- irw_filter(has_rater = TRUE)
-datasets <- irw_fetch(matching_tables)
-print(names(datasets))
-```
 
-## Download
 
-```{r, eval=FALSE}
-irw_download(swmd_mokken, "swmd_mokken.csv")
-```
 
-```{r, eval=FALSE}
-irw_save_bibtex("swmd_mokken")
-```
-# Reformat
+<!-- ## Explore IRW DB -->
+
+<!-- View all datasets and their metadata (names, row counts, variable counts). -->
+
+<!-- ```{r} -->
+<!-- datasets <- irw_list_datasets() -->
+<!-- dim(datasets) -->
+<!-- head(datasets) -->
+<!-- ``` -->
+
+<!-- Note: when you first use a function in irwpkg that connects to Redivis (e.g., `irw_list_datasets()`), a browser window will open, prompting you to sign in to your Redivis account.  -->
+
+<!-- After signing in, allow access for the Redivis R Client by clicking Allow. -->
+
+<!-- Once authentication is successful, close the browser window. You will see the message “Authentication was successful” in the R console. -->
+
+<!-- ```{r} -->
+<!-- db_info <- irw_db_metadata() -->
+<!-- irw_overall_stats() -->
+<!-- ``` -->
+
+
+<!-- ```{r} -->
+<!-- irw_visualize() -->
+<!-- irw_visualize(ranges = list( -->
+<!--   id_count = c(0, 10000), -->
+<!--   resp_count = c(0, 100000), -->
+<!--   item_count = c(0, 150), -->
+<!--   density = c(0, 2) -->
+<!-- )) -->
+<!-- ``` -->
+
+<!-- ## Find datasets by criteria -->
+<!-- ```{r} -->
+<!-- matching_tables <- irw_filter( -->
+<!--   id_count = c(100, 1000),  -->
+<!--   density = c(0.1, 0.5)) -->
+<!-- print(matching_tables) -->
+<!-- ``` -->
+
+<!-- ```{r} -->
+<!-- matching_tables <- irw_filter(has_rater = TRUE) -->
+<!-- print(matching_tables) -->
+<!-- ``` -->
+
+<!-- ```{r} -->
+<!-- matching_tables <- irw_filter( -->
+<!--   id_count = c(100, 10000),  -->
+<!--   has_rater = TRUE -->
+<!-- ) -->
+<!-- print(matching_tables) -->
+<!-- ``` -->
+
+<!-- # Fetch -->
+<!-- ```{r} -->
+<!-- swmd_mokken <- irw_fetch(name = "swmd_mokken") -->
+<!-- str(swmd_mokken) -->
+<!-- ``` -->
+
+<!-- ```{r} -->
+<!-- datasets <- irw_fetch(c("fractals_rating", "spelling2pronounce_edwards2023")) -->
+<!-- print(names(datasets)) -->
+<!-- str(datasets$fractals_rating) -->
+<!-- ``` -->
+
+
+<!-- ```{r} -->
+<!-- matching_tables <- irw_filter(has_rater = TRUE) -->
+<!-- datasets <- irw_fetch(matching_tables) -->
+<!-- print(names(datasets)) -->
+<!-- ``` -->
+
+<!-- ## Download -->
+
+<!-- ```{r, eval=FALSE} -->
+<!-- irw_download(swmd_mokken, "swmd_mokken.csv") -->
+<!-- ``` -->
+
+<!-- ```{r, eval=FALSE} -->
+<!-- irw_save_bibtex("swmd_mokken") -->
+<!-- ``` -->
+<!-- # Reformat -->
 
 
