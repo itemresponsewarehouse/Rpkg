@@ -8,7 +8,7 @@ Authors@R: c(
 	person("Ben", "Domingue", email = "bdomingu@stanford.edu", role = c("aut"))
 	)
 Maintainer: Hansol Lee <hansol@stanford.edu>
-URL: https://datapages.github.io/irw/
+URL: https://hansorlee.github.io/irwpkg
 BugReports: itemresponsewarehouse@stanford.edu
 Description: Functions to manage data from the Item Response Warehouse. 
 Depends: R (>= 3.5.0)
