@@ -2,5 +2,27 @@ url: https://hansorlee.github.io/irwpkg
 
 template:
   bootstrap: 5
-  light-switch: true
-
+  
+reference:
+- title: Explore
+  desc: Functions for exploring IRW database.
+- contents:
+  - irw_list_datasets
+  - irw_db_metadata
+  - irw_table_metadata
+  - irw_visualize
+  - irw_overall_stats
+  - irw_filter
+- title: Fetch
+  desc: Functions for fetching IRW data.
+- contents:
+  - irw_fetch
+  - irw_download
+  - irw_save_bibtex
+- title: Reformat
+  desc: Functions for reformatting IRW dataframes for psychometric analsysis.
+- contents: 
+  - irw_reformat
+- title: Example IRW data
+- contents:
+  - swmd_mokken

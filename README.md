@@ -24,7 +24,7 @@ After installation, load the `irwpkg` in your R session:
 library(irwpkg)
 ```
 
-### Authentication
+### IMPORTANT: Redivis Authentication
 
 The IRW datasets are hosted on [Redivis](https://redivis.com), a data management platform. To access these datasets, you'll need to:
 
@@ -39,17 +39,6 @@ The IRW datasets are hosted on [Redivis](https://redivis.com), a data management
 
 **Note:** You only need to authenticate once per session. For detailed instructions, refer to the [Redivis R Client documentation](https://apidocs.redivis.com/client-libraries/redivis-r/getting-started).
 
-
-## Vignettes
-The vignette included in irwpkg demonstrates the package’s functionalities and provides example usage for querying, processing, and analyzing data from the IRW. You can access it with:
-
-``` r
-# List all available vignettes for irwpkg
-vignette(package = "irwpkg")
-
-# Open the main vignette titled "Report"
-vignette("Report", package = "irwpkg")
-```
 
 ## Troubleshooting
 
