@@ -617,6 +617,7 @@ irw_name_fix = function(string,
 #' irw_rename(data.frame("A B" = 1:3, "C D" = 4:6))
 #' irw_rename(c("A B", "C D"))
 #' }
+#' @noRd
 irw_rename = function(x, ...) {
   if (is.data.frame(x)) {
     x |> dplyr::rename_with(function(.name) {
