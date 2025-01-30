@@ -31,18 +31,33 @@ jobs:
         with:
           use-public-rspm: true
 
-      # Install dependencies manually
+      # ✅ Cache R packages
+      - name: Cache R packages
+        uses: actions/cache@v3
+        with:
+          path: ${{ env.R_LIBS_USER }}
+          key: r-packages-${{ runner.os }}-${{ hashFiles('DESCRIPTION') }}
+          restore-keys: |
+            r-packages-${{ runner.os }}-
+
+      # ✅ Install only missing dependencies
       - name: Install dependencies
         run: |
           install.packages(c("remotes", "pkgdown"))
           remotes::install_github("redivis/redivis-r", ref="main")
-          remotes::install_deps(dependencies = TRUE)
+          remotes::install_deps(dependencies = TRUE, upgrade = "never")
         shell: Rscript {0}
 
-      # Install irwpkg before building site
-      - name: Install irwpkg before building site
+      # ✅ Install pkgdown (only if missing)
+      - name: Install pkgdown
         run: |
-          remotes::install_local(dependencies = TRUE)
+          if (!requireNamespace("pkgdown", quietly = TRUE)) install.packages("pkgdown")
+        shell: Rscript {0}
+
+      # ✅ Install irwpkg (only if missing)
+      - name: Install irwpkg
+        run: |
+          if (!requireNamespace("irwpkg", quietly = TRUE)) remotes::install_local(dependencies = TRUE)
         shell: Rscript {0}
 
       # Build the site
@@ -50,7 +65,7 @@ jobs:
         run: pkgdown::build_site()
         shell: Rscript {0}
 
-      # Upload `docs/` as an artifact for GitHub Pages deployment
+      # Upload `docs/` for GitHub Pages deployment
       - name: Upload GitHub Pages artifact
         uses: actions/upload-pages-artifact@v2
         with:
@@ -59,3 +74,4 @@ jobs:
       # Deploy to GitHub Pages
       - name: Deploy to GitHub Pages 🚀
         uses: actions/deploy-pages@v2
+        

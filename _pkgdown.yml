@@ -3,8 +3,4 @@ url: https://hansorlee.github.io/irwpkg
 template:
   bootstrap: 5
 
-links:
-  - text: "Contact IRW Team"
-    href: mailto:itemresponsewarehouse@stanford.edu
-  - text: "Visit the IRW Website"
-    href: https://datapages.github.io/irw/
+
