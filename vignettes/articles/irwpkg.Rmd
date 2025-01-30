@@ -1,5 +1,5 @@
 ---
-title: "quick-guide"
+title: "irwpkg"
 ---
 
 ```{r, include = FALSE}

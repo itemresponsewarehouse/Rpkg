@@ -2,5 +2,5 @@ url: https://hansorlee.github.io/irwpkg
 
 template:
   bootstrap: 5
-
+  light-switch: true
 
