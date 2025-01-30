@@ -1,5 +1,5 @@
 ---
-title: "Introduction to irwpkg"
+title: "Getting Started with irwpkg"
 ---
 
 ```{r, include = FALSE}
@@ -9,99 +9,100 @@ knitr::opts_chunk$set(
 )
 ```
 
-`irwpkg` is an R package designed to simplify access to datasets from the [Item Response Warehouse (IRW)](https://datapages.github.io/irw/). It provides tools for exploring, filtering, retrieving, and reformatting datasets, making it easier to analyze item response data.
 
-```{r setup}
+## 📌 Overview
+`irwpkg` provides an interface to access datasets from the [Item Response Warehouse (IRW)](https://datapages.github.io/irw/). 
+
+```{r setup, echo=FALSE}
 library(irwpkg)
 ```
 
-# Example workflow
+---
 
+## Explore Available Datasets
+Before fetching data, you can explore the available datasets and their metadata.
 
+List all datasets and their metadata:
+```{r, eval=FALSE}
+irw_list_datasets()
+irw_db_metadata()
+irw_overall_stats()
+```
 
+Visualize dataset distributions:
+```{r, eval=FALSE}
+irw_visualize()
+```
 
+Customize visualization ranges:
+```{r, eval=FALSE}
+irw_visualize(ranges = list(
+  id_count = c(0, 10000),
+  resp_count = c(0, 100000),
+  item_count = c(0, 150),
+  density = c(0, 2)
+))
+```
 
-<!-- ## Explore IRW DB -->
+---
 
-<!-- View all datasets and their metadata (names, row counts, variable counts). -->
+## Find Datasets by Criteria
+Filter datasets based on key attributes.
 
-<!-- ```{r} -->
-<!-- datasets <- irw_list_datasets() -->
-<!-- dim(datasets) -->
-<!-- head(datasets) -->
-<!-- ``` -->
+Example: Filter by respondent count and density range:
+```{r, eval=FALSE}
+irw_filter(id_count = c(100, 1000), density = c(0.1, 0.5))
+```
 
-<!-- Note: when you first use a function in irwpkg that connects to Redivis (e.g., `irw_list_datasets()`), a browser window will open, prompting you to sign in to your Redivis account.  -->
+Find datasets with rater-based scoring:
+```{r, eval=FALSE}
+irw_filter(has_rater = TRUE)
+```
 
-<!-- After signing in, allow access for the Redivis R Client by clicking Allow. -->
+Combine multiple filters:
+```{r, eval=FALSE}
+irw_filter(id_count = c(100, 10000), has_rater = TRUE)
+```
 
-<!-- Once authentication is successful, close the browser window. You will see the message “Authentication was successful” in the R console. -->
+---
 
-<!-- ```{r} -->
-<!-- db_info <- irw_db_metadata() -->
-<!-- irw_overall_stats() -->
-<!-- ``` -->
+## Fetch Datasets
+Retrieve datasets directly into R for analysis.
 
+Fetch a single dataset:
+```{r, eval=FALSE}
+swmd_mokken <- irw_fetch("swmd_mokken")
+str(swmd_mokken)
+```
 
-<!-- ```{r} -->
-<!-- irw_visualize() -->
-<!-- irw_visualize(ranges = list( -->
-<!--   id_count = c(0, 10000), -->
-<!--   resp_count = c(0, 100000), -->
-<!--   item_count = c(0, 150), -->
-<!--   density = c(0, 2) -->
-<!-- )) -->
-<!-- ``` -->
+Fetch multiple datasets:
+```{r, eval=FALSE}
+datasets <- irw_fetch(c("fractals_rating", "spelling2pronounce_edwards2023"))
+print(names(datasets))
+```
 
-<!-- ## Find datasets by criteria -->
-<!-- ```{r} -->
-<!-- matching_tables <- irw_filter( -->
-<!--   id_count = c(100, 1000),  -->
-<!--   density = c(0.1, 0.5)) -->
-<!-- print(matching_tables) -->
-<!-- ``` -->
+Fetch datasets that match specific filters:
+```{r, eval=FALSE}
+matching_tables <- irw_filter(has_rater = TRUE)
+datasets <- irw_fetch(matching_tables)
+print(names(datasets))
+```
 
-<!-- ```{r} -->
-<!-- matching_tables <- irw_filter(has_rater = TRUE) -->
-<!-- print(matching_tables) -->
-<!-- ``` -->
+---
 
-<!-- ```{r} -->
-<!-- matching_tables <- irw_filter( -->
-<!--   id_count = c(100, 10000),  -->
-<!--   has_rater = TRUE -->
-<!-- ) -->
-<!-- print(matching_tables) -->
-<!-- ``` -->
+## Download Datasets
+Save datasets locally.
 
-<!-- # Fetch -->
-<!-- ```{r} -->
-<!-- swmd_mokken <- irw_fetch(name = "swmd_mokken") -->
-<!-- str(swmd_mokken) -->
-<!-- ``` -->
+Save as CSV:
+```{r, eval=FALSE}
+irw_download("gilbert_meta_48")
+```
 
-<!-- ```{r} -->
-<!-- datasets <- irw_fetch(c("fractals_rating", "spelling2pronounce_edwards2023")) -->
-<!-- print(names(datasets)) -->
-<!-- str(datasets$fractals_rating) -->
-<!-- ``` -->
+Save dataset metadata as a BibTeX citation:
+```{r, eval=FALSE}
+irw_save_bibtex("gilbert_meta_48")
+```
 
-
-<!-- ```{r} -->
-<!-- matching_tables <- irw_filter(has_rater = TRUE) -->
-<!-- datasets <- irw_fetch(matching_tables) -->
-<!-- print(names(datasets)) -->
-<!-- ``` -->
-
-<!-- ## Download -->
-
-<!-- ```{r, eval=FALSE} -->
-<!-- irw_download(swmd_mokken, "swmd_mokken.csv") -->
-<!-- ``` -->
-
-<!-- ```{r, eval=FALSE} -->
-<!-- irw_save_bibtex("swmd_mokken") -->
-<!-- ``` -->
-<!-- # Reformat -->
+---
 
 
