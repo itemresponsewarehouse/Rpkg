@@ -8,9 +8,8 @@ Authors@R: c(
 	person("Ben", "Domingue", email = "bdomingu@stanford.edu", role = c("aut"))
 	)
 Maintainer: Hansol Lee <hansol@stanford.edu>
-URL: https://hansorlee.github.io/irwpkg
+URL: https://github.com/hansorlee/irwpkg
 Contact: mailto:itemresponsewarehouse@stanford.edu
-BugReports: https://github.com/hansorlee/irwpkg/issues
 Description: Functions to manage data from the Item Response Warehouse. 
 Depends: R (>= 3.5.0)
 Imports:
@@ -38,3 +37,4 @@ RoxygenNote: 7.3.2
 Config/testthat/edition: 3
 Config/build/clean-inst-doc: FALSE
 Config/Needs/website: rmarkdown
+BugReports: https://github.com/hansorlee/irwpkg/issues
