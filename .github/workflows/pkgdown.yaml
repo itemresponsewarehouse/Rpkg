@@ -33,7 +33,7 @@ jobs:
 
       # ✅ Cache R packages
       - name: Cache R packages
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: ${{ env.R_LIBS_USER }}
           key: r-packages-${{ runner.os }}-${{ hashFiles('DESCRIPTION') }}
