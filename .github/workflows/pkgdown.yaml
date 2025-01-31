@@ -60,17 +60,10 @@ jobs:
           if (!requireNamespace("irwpkg", quietly = TRUE)) remotes::install_local(dependencies = TRUE)
         shell: Rscript {0}
 
-      # Build the site
+      # ✅ Build the site
       - name: Build site
         run: pkgdown::build_site()
         shell: Rscript {0}
-
-      # ✅ Update actions/upload-artifact to v4
-      - name: Upload artifact for debugging
-        uses: actions/upload-artifact@v4
-        with:
-          name: pkgdown-docs
-          path: docs  # Adjust this if needed
 
       # ✅ Upload `docs/` for GitHub Pages deployment
       - name: Upload GitHub Pages artifact
@@ -78,7 +71,6 @@ jobs:
         with:
           path: docs  # This is where pkgdown generates the website
 
-      # Deploy to GitHub Pages
+      # ✅ Deploy to GitHub Pages
       - name: Deploy to GitHub Pages 🚀
         uses: actions/deploy-pages@v2
-        
