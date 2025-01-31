@@ -19,6 +19,10 @@ reference:
   - irw_fetch
   - irw_download
   - irw_save_bibtex
+- title: Reformat
+  dec: Functions for reformatting IRW data for psychometric analysis.
+- contents:
+  - irw_long2resp
 - title: Example IRW data
 - contents:
   - swmd_mokken
