@@ -70,22 +70,22 @@ jobs:
           path: docs  # Ensure this is the correct path
           overwrite: true  # ✅ Required to allow re-upload
 
+
   deploy:
-    needs: pkgdown
+    needs: pkgdown  # Ensure deploy runs only if pkgdown is successful
     runs-on: ubuntu-latest
     steps:
-      - name: Download artifact
+      - name: Download Built Site Artifact
         uses: actions/download-artifact@v4
         with:
-          name: pkgdown-docs
-          path: docs
+          pattern: pkgdown-docs  
+          merge-multiple: true  
+          path: docs  
 
-      # ✅ Upload `docs/` for GitHub Pages deployment
       - name: Upload GitHub Pages artifact
         uses: actions/upload-pages-artifact@v2
         with:
-          path: docs  # Ensure this is the correct path
+          path: docs 
 
-      # ✅ Deploy to GitHub Pages
       - name: Deploy to GitHub Pages 🚀
         uses: actions/deploy-pages@v4
