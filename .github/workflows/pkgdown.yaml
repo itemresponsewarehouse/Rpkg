@@ -19,7 +19,7 @@ jobs:
   pkgdown:
     runs-on: ubuntu-latest
     concurrency:
-      group: pkgdown-${{ github.event_name != 'pull_request' || github.run_id }}
+      group: pkgdown-${{ github.run_id }} # Fixed concurrency syntax
     env:
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
     steps:
@@ -31,7 +31,7 @@ jobs:
         with:
           use-public-rspm: true
 
-      # ✅ Update actions/cache to v4
+      # ✅ Use updated actions/cache v4
       - name: Cache R packages
         uses: actions/cache@v4
         with:
@@ -40,7 +40,7 @@ jobs:
           restore-keys: |
             r-packages-${{ runner.os }}-
 
-      # ✅ Install only missing dependencies
+      # ✅ Install dependencies
       - name: Install dependencies
         run: |
           install.packages(c("remotes", "pkgdown"))
@@ -48,28 +48,32 @@ jobs:
           remotes::install_deps(dependencies = TRUE, upgrade = "never")
         shell: Rscript {0}
 
-      # ✅ Install pkgdown (only if missing)
       - name: Install pkgdown
         run: |
           if (!requireNamespace("pkgdown", quietly = TRUE)) install.packages("pkgdown")
         shell: Rscript {0}
 
-      # ✅ Install irwpkg (only if missing)
       - name: Install irwpkg
         run: |
           if (!requireNamespace("irwpkg", quietly = TRUE)) remotes::install_local(dependencies = TRUE)
         shell: Rscript {0}
 
-      # ✅ Build the site
       - name: Build site
         run: pkgdown::build_site()
         shell: Rscript {0}
+
+      # ✅ Upload artifact before deployment
+      - name: Upload artifact for debugging
+        uses: actions/upload-artifact@v4  # ✅ FIXED
+        with:
+          name: pkgdown-docs
+          path: docs  # Ensure this is the correct path
 
       # ✅ Upload `docs/` for GitHub Pages deployment
       - name: Upload GitHub Pages artifact
         uses: actions/upload-pages-artifact@v2
         with:
-          path: docs  # This is where pkgdown generates the website
+          path: docs  # Ensure this is the correct path
 
       # ✅ Deploy to GitHub Pages
       - name: Deploy to GitHub Pages 🚀
