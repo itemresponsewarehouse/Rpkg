@@ -281,10 +281,10 @@ irw_visualize <- function(ranges = list()) {
 #' List Available Datasets
 #'
 #' Retrieves a summary of available datasets in the IRW database, including their name,
-#' number of rows, and variable count.
+#' number of rows, and variable count, sorted alphabetically by dataset name.
 #'
 #' @return A data frame with the following columns:
-#'   \item{name}{The name of the dataset.}
+#'   \item{name}{The name of the dataset, sorted alphabetically.}
 #'   \item{numRows}{The number of rows in the dataset.}
 #'   \item{variableCount}{The number of variables in the dataset.}
 #' @examples
@@ -302,14 +302,14 @@ irw_list_datasets <- function() {
   
   # Extract metadata to create a data frame
   datasets_info <- data.frame(
-    name = sapply(datasets, function(dataset)
-      dataset$name),
-    numRows = sapply(datasets, function(dataset)
-      dataset$properties$numRows),
-    variableCount = sapply(datasets, function(dataset)
-      dataset$properties$variableCount),
+    name = sapply(datasets, function(dataset) dataset$name),
+    numRows = sapply(datasets, function(dataset) dataset$properties$numRows),
+    variableCount = sapply(datasets, function(dataset) dataset$properties$variableCount),
     stringsAsFactors = FALSE
   )
+  
+  # Sort datasets_info by the name column in alphabetical order
+  datasets_info <- datasets_info[order(datasets_info$name), ]
   
   return(datasets_info)
 }
