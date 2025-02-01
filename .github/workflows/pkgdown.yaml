@@ -19,7 +19,7 @@ jobs:
   pkgdown:
     runs-on: ubuntu-latest
     concurrency:
-      group: pkgdown-${{ github.run_id }} # Fixed concurrency syntax
+      group: pkgdown-${{ github.run_id }}
     env:
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
     steps:
@@ -31,7 +31,7 @@ jobs:
         with:
           use-public-rspm: true
 
-      # ✅ Use updated actions/cache v4
+      # ✅ Update actions/cache to v4
       - name: Cache R packages
         uses: actions/cache@v4
         with:
@@ -62,12 +62,23 @@ jobs:
         run: pkgdown::build_site()
         shell: Rscript {0}
 
-      # ✅ Upload artifact before deployment
-      - name: Upload artifact for debugging
-        uses: actions/upload-artifact@v4  # ✅ FIXED
+      # ✅ Upload artifact using v4 (overwrite to allow updates)
+      - name: Upload artifact for GitHub Pages deployment
+        uses: actions/upload-artifact@v4
         with:
           name: pkgdown-docs
           path: docs  # Ensure this is the correct path
+          overwrite: true  # ✅ Required to allow re-upload
+
+  deploy:
+    needs: pkgdown
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: pkgdown-docs
+          path: docs
 
       # ✅ Upload `docs/` for GitHub Pages deployment
       - name: Upload GitHub Pages artifact
