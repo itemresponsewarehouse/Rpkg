@@ -29,13 +29,14 @@ jobs:
         with:
           use-public-rspm: true
 
-      - name: Cache R packages
-        uses: actions/cache@v4
-        with:
-          path: ${{ env.R_LIBS_USER }}
-          key: r-packages-${{ runner.os }}-${{ hashFiles('DESCRIPTION') }}
-          restore-keys: |
-            r-packages-${{ runner.os }}-
+      # Disabled cache step
+      # - name: Cache R packages
+      #   uses: actions/cache@v4
+      #   with:
+      #     path: ${{ env.R_LIBS_USER }}
+      #     key: r-packages-${{ runner.os }}-${{ hashFiles('DESCRIPTION') }}
+      #     restore-keys: |
+      #       r-packages-${{ runner.os }}-
 
       - name: Install dependencies
         run: |
