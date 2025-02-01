@@ -4,13 +4,13 @@
 \alias{irw_long2resp}
 \title{Convert IRW Long-Format Data to Wide-Format Response Matrix}
 \usage{
-irw_long2resp(df, wave = 1, values_fn = mean, density_threshold = NULL)
+irw_long2resp(df, wave = NULL, values_fn = mean, density_threshold = NULL)
 }
 \arguments{
 \item{df}{A data frame containing IRW-compliant item response data in long format.}
 
-\item{wave}{A numeric value specifying which wave to filter (default: \code{1}).
-If the dataset does not have a "wave" column, this input is ignored.}
+\item{wave}{(Optional) A numeric value specifying which wave to filter.
+If the dataset does not have a "wave" column, a message will indicate that wave filtering is ignored.}
 
 \item{values_fn}{A function to resolve duplicate \code{id}-\code{item} responses (default: \code{mean}).}
 

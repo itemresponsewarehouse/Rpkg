@@ -3,12 +3,12 @@
 #' Converts an IRW-compliant dataset from long format to wide format while handling
 #' optional metadata elements, filtering by wave, and ensuring consistency.
 #'
-#' The function automatically drops the `date` column if present, as it is not required
-#' for response matrix conversion.
+#' The function **automatically removes all non-essential columns** (e.g., metadata, covariates, etc.).
 #'
 #' @param df A data frame containing IRW-compliant item response data in long format.
-#' @param wave A numeric value specifying which wave to filter (default: `1`).
+#' @param wave (Optional) A numeric value specifying which wave to filter.
 #'        If the dataset does not have a "wave" column, this input is ignored.
+#'        If `wave = NULL` (default), the function automatically selects the wave with the most data entries.
 #' @param values_fn A function to resolve duplicate `id`-`item` responses (default: `mean`).
 #' @param density_threshold A numeric value between `0.5` and `1.0` specifying the 
 #'        minimum response density required for a respondent (`id`) to be included. Default is `NULL` (no filtering).
@@ -16,7 +16,7 @@
 #'
 #' @importFrom stats aggregate reshape
 #' @export
-irw_long2resp <- function(df, wave = 1, values_fn = mean, density_threshold = NULL) {
+irw_long2resp <- function(df, wave = NULL, values_fn = mean, density_threshold = NULL) {
   
   # Ensure required columns exist
   required_cols <- c("id", "item", "resp")
@@ -25,23 +25,26 @@ irw_long2resp <- function(df, wave = 1, values_fn = mean, density_threshold = NU
     stop("Missing required IRW columns: ", paste(missing_cols, collapse = ", "))
   }
   
-  # Drop 'date' column if present (silently, no message)
-  if ("date" %in% names(df)) {
-    df <- df[ , !(names(df) %in% "date")]
-  }
+  # Keep only essential columns: id, item, resp, and wave (if present)
+  essential_cols <- c("id", "item", "resp", "wave")
+  df <- df[, intersect(names(df), essential_cols), drop = FALSE]
   
-  # Handle wave filtering if wave input is specified
-  if (!is.null(wave)) {
-    if ("wave" %in% names(df)) {
-      if (!wave %in% unique(df$wave)) {
-        message("Wave ", wave, " not found in data. No filtering applied.")
-      } else {
-        message("Filtering for wave ", wave, ".")
-        df <- df[df$wave == wave, , drop = FALSE]
-      }
-    } else {
-      message("Dataset does not contain a 'wave' column. Ignoring wave input (", wave, ").")
+  # Handle wave filtering (default: use the most common wave)
+  if ("wave" %in% names(df)) {
+    if (is.null(wave)) {
+      wave_counts <- table(df$wave)
+      wave <- as.numeric(names(wave_counts)[which.max(wave_counts)])  # Select the most common wave
+      message("No wave specified. Using wave ", wave, " (most frequent).")
     }
+    
+    if (!wave %in% unique(df$wave)) {
+      message("Wave ", wave, " not found in data. No filtering applied.")
+    } else {
+      message("Filtering for wave ", wave, ".")
+      df <- df[df$wave == wave, , drop = FALSE]
+    }
+  } else if (!is.null(wave)) {
+    message("Dataset does not contain a 'wave' column. Ignoring wave input (", wave, ").")
   }
   
   # Ensure item names have "item_" prefix
