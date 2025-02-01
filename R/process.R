@@ -11,6 +11,7 @@
 #' @param values_fn A function to resolve duplicate `id`-`item` responses (default: `mean`).
 #' @return A data frame in wide format where rows represent `id` values and columns represent `item` responses.
 #'
+#' @importFrom stats aggregate reshape
 #' @export
 irw_long2resp <- function(df, wave_col = NULL, wave = 1, values_fn = mean) {
   
