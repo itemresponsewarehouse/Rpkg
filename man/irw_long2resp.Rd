@@ -4,18 +4,26 @@
 \alias{irw_long2resp}
 \title{Convert IRW Long-Format Data to Wide-Format Response Matrix}
 \usage{
-irw_long2resp(df, wave = NULL, values_fn = mean, density_threshold = NULL)
+irw_long2resp(
+  df,
+  wave = NULL,
+  id_density_threshold = 0.1,
+  dedup_method = "mode"
+)
 }
 \arguments{
 \item{df}{A data frame containing IRW-compliant item response data in long format.}
 
 \item{wave}{(Optional) A numeric value specifying which wave to filter.
-If the dataset does not have a "wave" column, a message will indicate that wave filtering is ignored.}
+If the dataset does not have a "wave" column, this input is ignored.
+Defaults to the most frequent wave if \code{NULL}.}
 
-\item{values_fn}{A function to resolve duplicate \code{id}-\code{item} responses (default: \code{mean}).}
+\item{id_density_threshold}{A numeric value between \code{0.0} and \code{1.0} specifying the
+minimum response density required for an \code{id} to be included.
+Default is \code{0.1}. Set to \code{NULL} to disable filtering.}
 
-\item{density_threshold}{A numeric value between \code{0.5} and \code{1.0} specifying the
-minimum response density required for a respondent (\code{id}) to be included. Default is \code{NULL} (no filtering).}
+\item{dedup_method}{A string specifying how to handle duplicate \code{id}-\code{item} responses.
+Options: \code{"mode"} (default), \code{"mean"}, \code{"median"}, \code{"first"}.}
 }
 \value{
 A data frame in wide format where rows represent \code{id} values and columns represent \verb{item_*} responses.
@@ -25,6 +33,11 @@ Converts an IRW-compliant dataset from long format to wide format while handling
 optional metadata elements, filtering by wave, and ensuring consistency.
 }
 \details{
-The function automatically drops the \code{date} column if present, as it is not required
-for response matrix conversion.
+This function applies a default sparsity filter with a threshold of \code{0.1} for \code{id} density
+to avoid excessive sparsity in the response matrix.
+Users can disable filtering by setting \code{id_density_threshold = NULL}.
+
+Additionally, the function detects and resolves duplicate id-item responses.
+By default, it keeps the \strong{most common response (mode)}, but users can specify
+an alternative method (\code{mean}, \code{median}, or \code{first} response).
 }
