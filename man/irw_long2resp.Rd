@@ -4,23 +4,27 @@
 \alias{irw_long2resp}
 \title{Convert IRW Long-Format Data to Wide-Format Response Matrix}
 \usage{
-irw_long2resp(df, wave_col = NULL, wave = 1, values_fn = mean)
+irw_long2resp(df, wave = 1, values_fn = mean, density_threshold = NULL)
 }
 \arguments{
 \item{df}{A data frame containing IRW-compliant item response data in long format.}
 
-\item{wave_col}{(Optional) A character string specifying the column name for wave number.
-If \code{NULL}, no filtering by wave is performed.}
-
 \item{wave}{A numeric value specifying which wave to filter (default: \code{1}).
-Only applicable if \code{wave_col} is provided.}
+If the dataset does not have a "wave" column, this input is ignored.}
 
 \item{values_fn}{A function to resolve duplicate \code{id}-\code{item} responses (default: \code{mean}).}
+
+\item{density_threshold}{A numeric value between \code{0.5} and \code{1.0} specifying the
+minimum response density required for a respondent (\code{id}) to be included. Default is \code{NULL} (no filtering).}
 }
 \value{
-A data frame in wide format where rows represent \code{id} values and columns represent \code{item} responses.
+A data frame in wide format where rows represent \code{id} values and columns represent \verb{item_*} responses.
 }
 \description{
 Converts an IRW-compliant dataset from long format to wide format while handling
 optional metadata elements, filtering by wave, and ensuring consistency.
+}
+\details{
+The function automatically drops the \code{date} column if present, as it is not required
+for response matrix conversion.
 }
