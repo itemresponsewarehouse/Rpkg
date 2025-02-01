@@ -55,7 +55,7 @@ jobs:
         shell: Rscript {0}
 
       - name: Build site
-        run: pkgdown::build_site(path = "docs")
+        run: pkgdown::build_site()
         shell: Rscript {0}
 
       - name: Upload artifact for GitHub Pages deployment
