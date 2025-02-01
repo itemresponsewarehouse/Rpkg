@@ -14,9 +14,6 @@
 #' @export
 irw_long2resp <- function(df, wave_col = NULL, wave = 1, values_fn = mean) {
   
-  library(dplyr)
-  library(tidyr)
-  
   # Ensure required columns exist
   required_cols <- c("id", "item", "resp")
   missing_cols <- setdiff(required_cols, names(df))
@@ -24,24 +21,23 @@ irw_long2resp <- function(df, wave_col = NULL, wave = 1, values_fn = mean) {
     stop("Missing required IRW columns: ", paste(missing_cols, collapse = ", "))
   }
   
-  # Handle date column: Drop with message
+  # Drop 'date' column if present
   if ("date" %in% names(df)) {
     message("Dropping 'date' column to maintain IRW standards.")
-    df <- df %>% select(-date)
+    df <- df[ , !(names(df) %in% "date")]
   }
   
   # If wave_col is provided, filter to selected wave
   if (!is.null(wave_col)) {
     if (!wave_col %in% names(df)) stop("Wave column not found in data.")
-    df <- df %>% filter(.data[[wave_col]] == wave)
+    df <- df[df[[wave_col]] == wave, , drop = FALSE]
   }
   
   # Ensure item names are character strings and properly prefixed
-  df <- df %>% mutate(item = paste0("item_", as.character(item)))
+  df$item <- paste0("item_", as.character(df$item))
   
   # Convert resp to numeric (force conversion)
-  df <- df %>%
-    mutate(resp = suppressWarnings(as.numeric(resp)))  # Converts invalid entries to NA
+  df$resp <- suppressWarnings(as.numeric(df$resp))  # Converts invalid entries to NA
   
   # Warn if non-numeric responses exist
   if (any(is.na(df$resp))) {
@@ -49,17 +45,17 @@ irw_long2resp <- function(df, wave_col = NULL, wave = 1, values_fn = mean) {
   }
   
   # Resolve duplicate responses per `id`-`item` combination
-  df <- df %>%
-    group_by(id, item) %>%
-    summarise(resp = values_fn(resp, na.rm = TRUE), .groups = "drop")  # Remove NA values
+  df_agg <- aggregate(resp ~ id + item, data = df, FUN = values_fn, na.rm = TRUE)
   
-  # Convert long to wide format
-  wide_df <- df %>%
-    pivot_wider(names_from = item, values_from = resp, values_fn = list(resp = values_fn))
+  # Convert to wide format using base R reshape
+  wide_df <- reshape(df_agg, idvar = "id", timevar = "item", direction = "wide")
   
-  # Convert response values to numeric
+  # Rename columns to remove "resp." prefix
+  names(wide_df) <- sub("resp\\.", "", names(wide_df))
+  
+  # Ensure response values are numeric
   response_cols <- setdiff(names(wide_df), "id")
-  wide_df <- wide_df %>% mutate(across(all_of(response_cols), as.numeric))
+  wide_df[response_cols] <- lapply(wide_df[response_cols], as.numeric)
   
   return(wide_df)
 }
