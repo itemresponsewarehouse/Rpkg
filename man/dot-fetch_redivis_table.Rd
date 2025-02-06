@@ -2,18 +2,17 @@
 % Please edit documentation in R/connection.R
 \name{.fetch_redivis_table}
 \alias{.fetch_redivis_table}
-\title{Fetch Table Data}
+\title{Fetch Table Data with Retry}
 \usage{
 .fetch_redivis_table(name)
 }
 \arguments{
-\item{name}{A character string specifying the name of the table to retrieve.}
+\item{name}{A character string specifying the table name.}
 }
 \value{
-A Redivis table object for the specified table.
+A Redivis table object.
 }
 \description{
-This function initializes the datasource (if not already initialized) and retrieves a specified table by name.
-It is primarily used by other functions to access a table from the datasource.
+Retrieves a specified table from Redivis with automatic retry logic.
 }
 \keyword{internal}

@@ -2,7 +2,7 @@
 % Please edit documentation in R/connection.R
 \name{.initialize_datasource}
 \alias{.initialize_datasource}
-\title{Initialize Datasource}
+\title{Initialize Datasource (With Retry Logic)}
 \usage{
 .initialize_datasource()
 }
@@ -10,7 +10,6 @@
 The initialized datasource connection.
 }
 \description{
-This function initializes the Redivis datasource connection if it is not already set.
-If the global variable \code{datasource} doesn't exist or is NULL, it sets up a new connection.
+Ensures a stable connection to Redivis. If it fails, retries automatically.
 }
 \keyword{internal}

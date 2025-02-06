@@ -3,47 +3,72 @@
 # Define a package environment to store global variables
 .irw_env <- new.env(parent = emptyenv())
 
-#' Initialize Datasource
+#' Retry with Exponential Backoff
 #'
-#' This function initializes the Redivis datasource connection if it is not already set.
-#' If the global variable `datasource` doesn't exist or is NULL, it sets up a new connection.
+#' Helper function that retries a given expression up to `max_attempts` times.
+#' Wait time increases exponentially on each failure.
+#'
+#' @param expr The expression to evaluate (typically a function call).
+#' @param max_attempts Maximum number of attempts before giving up.
+#' @param base_delay Initial wait time (seconds) before retrying.
+#' @return The result of `expr` if successful, otherwise stops with an error.
+#' @keywords internal
+.retry_with_backoff <- function(expr, max_attempts = 3, base_delay = 1) {
+  attempt <- 1
+  
+  while (attempt <= max_attempts) {
+    tryCatch({
+      return(eval(expr))  # Try evaluating the expression
+    }, error = function(e) {
+      if (attempt == max_attempts) {
+        stop("Redivis request failed after ", max_attempts, " attempts: ", e$message)
+      }
+      
+      # Calculate backoff delay
+      delay <- base_delay * (2 ^ (attempt - 1))  # Exponential growth (1s, 2s, 4s)
+      message("Attempt ", attempt, " failed: ", e$message, ". Retrying in ", delay, " seconds...")
+      
+      Sys.sleep(delay)  # Wait before retrying
+      attempt <- attempt + 1
+    })
+  }
+}
+
+
+#' Initialize Datasource (With Retry Logic)
+#'
+#' Ensures a stable connection to Redivis. If it fails, retries automatically.
 #' @return The initialized datasource connection.
 #' @keywords internal
 .initialize_datasource <- function() {
   if (!exists("datasource", envir = .irw_env) || is.null(.irw_env$datasource)) {
-    tryCatch({
+    .irw_env$datasource <- .retry_with_backoff(quote({
       datasource <- redivis::user("datapages")$dataset("item_response_warehouse")
-      datasource$get() # Test the connection
-      .irw_env$datasource <- datasource
-    }, error = function(e) {
-      stop("Failed to initialize the datasource: ", e$message)
-    })
+      datasource$get()  # Test connection
+      datasource
+    }))
   }
   return(.irw_env$datasource)
 }
 
-#' Fetch Table Data
+#' Fetch Table Data with Retry
 #'
-#' This function initializes the datasource (if not already initialized) and retrieves a specified table by name.
-#' It is primarily used by other functions to access a table from the datasource.
-#'
-#' @param name A character string specifying the name of the table to retrieve.
-#' @return A Redivis table object for the specified table.
+#' Retrieves a specified table from Redivis with automatic retry logic.
+#' @param name A character string specifying the table name.
+#' @return A Redivis table object.
 #' @keywords internal
 .fetch_redivis_table <- function(name) {
   if (!is.character(name) || length(name) != 1) {
     stop("The 'name' parameter must be a single character string.")
   }
   
-  # Initialize datasource if not already set
+  # Initialize datasource if not set
   ds <- .initialize_datasource()
   
-  # Access the specified table
-  tryCatch({
+  # Fetch table with retries
+  .retry_with_backoff(quote({
     table_data <- ds$table(name)
-    table_data$get() # Perform an API request to fetch the table data
-    return(table_data)
-  }, error = function(e) {
-    stop("Failed to fetch the table '", name, "': ", e$message)
-  })
+    table_data$get()  # Perform API request
+    table_data
+  }))
 }
