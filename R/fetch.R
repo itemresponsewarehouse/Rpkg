@@ -44,6 +44,18 @@ irw_fetch <- function(name) {
 }
 
 
+#' Retrieve IRW Metadata Table
+#'
+#' Fetches the metadata table from Redivis and returns it as a tibble.
+#' Automatically checks for updates and refreshes only when needed.
+#'
+#' @return A tibble containing metadata information.
+#' @export
+irw_metadata <- function() {
+  return(.fetch_metadata_table())  
+}
+
+
 #' Filter Tables by Criteria
 #'
 #' Filters the IRW database metadata to return the names of tables that match the specified criteria.
@@ -121,4 +133,6 @@ irw_filter <- function(id_count = NULL, item_count = NULL, resp_count = NULL, de
   # Return matching table names
   return(metadata$table_name)
 }
+
+
 
