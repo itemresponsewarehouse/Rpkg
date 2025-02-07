@@ -4,20 +4,22 @@
 \alias{.retry_with_backoff}
 \title{Retry with Exponential Backoff}
 \usage{
-.retry_with_backoff(expr, max_attempts = 3, base_delay = 1)
+.retry_with_backoff(expr, max_attempts = 3, base_delay = 1, timeout_sec = 10)
 }
 \arguments{
-\item{expr}{The expression to evaluate (typically a function call).}
+\item{expr}{A function that executes the API call.}
 
-\item{max_attempts}{Maximum number of attempts before giving up.}
+\item{max_attempts}{Integer. Maximum number of retry attempts. Default is 3.}
 
-\item{base_delay}{Initial wait time (seconds) before retrying.}
+\item{base_delay}{Numeric. Initial wait time (seconds) before retrying. Default is 1.}
+
+\item{timeout_sec}{Numeric. Maximum time (seconds) allowed for each API call before forcing a retry. Default is 10.}
 }
 \value{
-The result of \code{expr} if successful, otherwise stops with an error.
+The result of the API call if successful; otherwise, stops with an error.
 }
 \description{
-Helper function that retries a given expression up to \code{max_attempts} times.
-Wait time increases exponentially on each failure.
+Automatically retries an API call if it fails due to transient issues.
+Uses exponential backoff and applies a timeout to prevent excessive waiting.
 }
 \keyword{internal}

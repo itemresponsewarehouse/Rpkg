@@ -2,7 +2,7 @@
 % Please edit documentation in R/connection.R
 \name{.fetch_redivis_table}
 \alias{.fetch_redivis_table}
-\title{Fetch Table Data with Retry}
+\title{Fetch Table Data}
 \usage{
 .fetch_redivis_table(name)
 }
@@ -14,5 +14,6 @@ A Redivis table object.
 }
 \description{
 Retrieves a specified table from Redivis with automatic retry logic.
+This function returns a Redivis table object, which can later be converted to a tibble.
 }
 \keyword{internal}

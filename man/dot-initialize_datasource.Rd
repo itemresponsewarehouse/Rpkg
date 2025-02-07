@@ -2,14 +2,15 @@
 % Please edit documentation in R/connection.R
 \name{.initialize_datasource}
 \alias{.initialize_datasource}
-\title{Initialize Datasource (With Retry Logic)}
+\title{Initialize Datasource}
 \usage{
 .initialize_datasource()
 }
 \value{
-The initialized datasource connection.
+A Redivis dataset object representing the connected datasource.
 }
 \description{
-Ensures a stable connection to Redivis. If it fails, retries automatically.
+Establishes a connection to the Redivis datasource. Ensures \code{get()} is called
+to properly retrieve the dataset.
 }
 \keyword{internal}

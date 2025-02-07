@@ -10,12 +10,12 @@ irw_fetch(name)
 \item{name}{A character vector specifying one or more dataset names to fetch.}
 }
 \value{
-If a single dataset is fetched, returns a data frame. If multiple datasets are fetched,
-returns a named list of data frames, where each name corresponds to the dataset name.
+If a single dataset is fetched, returns a tibble. If multiple datasets are fetched,
+returns a named list of tibbles or error messages for datasets that failed to load.
 }
 \description{
 Retrieves one or more datasets from the Item Response Warehouse (IRW) database by their names.
-The datasets are fetched as data frames and can be accessed programmatically for analysis.
+The datasets are fetched as data frames (tibbles) and can be accessed programmatically for analysis.
 }
 \examples{
 \dontrun{

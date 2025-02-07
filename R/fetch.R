@@ -1,11 +1,11 @@
 #' Fetch Data from the IRW Database
 #'
 #' Retrieves one or more datasets from the Item Response Warehouse (IRW) database by their names.
-#' The datasets are fetched as data frames and can be accessed programmatically for analysis.
+#' The datasets are fetched as data frames (tibbles) and can be accessed programmatically for analysis.
 #'
 #' @param name A character vector specifying one or more dataset names to fetch.
-#' @return If a single dataset is fetched, returns a data frame. If multiple datasets are fetched, 
-#'         returns a named list of data frames, where each name corresponds to the dataset name.
+#' @return If a single dataset is fetched, returns a tibble. If multiple datasets are fetched, 
+#'         returns a named list of tibbles or error messages for datasets that failed to load.
 #' @examples
 #' \dontrun{
 #'   # Fetch a single dataset
@@ -18,38 +18,28 @@
 #' }
 #' @export
 irw_fetch <- function(name) {
-  # Helper function to fetch and convert a single dataset
+  # Helper function to fetch a single dataset
   fetch_single_data <- function(dataset_name) {
-    # Attempt to fetch the table
-    table <- tryCatch(
-      .fetch_redivis_table(dataset_name),
+    tryCatch(
+      {
+        table <- suppressMessages(.fetch_redivis_table(dataset_name)) 
+        table$to_tibble()  
+      },
       error = function(e) {
-        stop(paste("Unable to fetch the dataset", shQuote(dataset_name),
-                   "from the IRW database. Please check the dataset name."))
+        error_message <- paste("Error fetching dataset", shQuote(dataset_name), ":", e$message)
+        message(error_message)  # print error immediately
+        return(error_message)  # save error message in list output
       }
     )
-    
-    # Convert the table to a data frame
-    df <- tryCatch(
-      table$to_data_frame(),
-      error = function(e) {
-        stop(paste("Failed to convert the dataset", shQuote(dataset_name),
-                   "to a data frame. Please ensure the dataset is in a compatible format."))
-      }
-    )
-    
-    return(df)
   }
   
   # Check if fetching a single or multiple datasets
   if (length(name) == 1) {
-    # Return a single data frame
-    return(fetch_single_data(name))
+    return(fetch_single_data(name))  # Return a single tibble or error message
   } else {
-    # Return a named list of data frames if multiple datasets
     dataset_list <- lapply(name, fetch_single_data)
     names(dataset_list) <- name
-    return(dataset_list)
+    return(dataset_list)  # Return a named list of tibbles/errors
   }
 }
 

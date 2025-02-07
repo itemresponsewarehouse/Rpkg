@@ -13,9 +13,7 @@ Contact: mailto:itemresponsewarehouse@stanford.edu
 Description: Functions to manage data from the Item Response Warehouse. 
 Depends: R (>= 3.5.0)
 Imports:
-    dplyr,
-    psych,
-    purrr,
+    R.utils,
     redivis,
     stringr,
     tibble,
