@@ -14,6 +14,9 @@ Description: Functions to manage data from the Item Response Warehouse.
 Depends: R (>= 3.5.0)
 Imports:
     R.utils,
+    dplyr,
+    psych,
+    purrr,
     redivis,
     stringr,
     tibble,
