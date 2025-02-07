@@ -221,25 +221,10 @@ irw_filter <- function(id_count = NULL, item_count = NULL, resp_count = NULL, de
 #' This function filters datasets using **precomputed metadata**, which contains summary statistics
 #' for each dataset (e.g., number of responses, number of participants, density scores, etc.).
 #'
-#' ## Metadata Information
-#' Metadata provides key characteristics of each dataset in the IRW database.
-#' If you're unsure what filtering criteria to use, you may find it helpful to inspect the metadata 
-#' by running `summary(irw_metadata())`, which gives an overview of available dataset properties.
-#'
-#' ## Available Filters
-#' Users can filter datasets using any of the following metadata fields:
-#' - `n_responses`: Number of total responses in the dataset (numeric range, e.g., `c(0, 100000)`).
-#' - `n_categories`: Number of unique response categories (numeric range, e.g., `c(2, 10)`).
-#' - `n_participants`: Number of participants in the dataset (numeric range).
-#' - `n_items`: Number of test items/questions (numeric range).
-#' - `responses_per_participant`: Average number of responses per participant (numeric range).
-#' - `responses_per_item`: Average number of responses per item (numeric range).
-#' - `density`: Data density score, which measures the completeness of the dataset (numeric range).
-#'
-#' ## Usage
-#' Users can call `irw_filter_beta()` directly if they already know their filtering criteria.
-#' However, if they want to explore dataset properties first, they may optionally run `summary(irw_metadata())`
-#' to get an overview before specifying filters.
+#' ## Exploring Metadata
+#' To understand available dataset properties before filtering, run `summary(irw_metadata())`.
+#' This provides an overview of key characteristics such as response counts, participant numbers, and density.
+#' Users can then apply `irw_filter_beta()` to select datasets matching their criteria.
 #'
 #' @param n_responses A numeric vector of length 2 specifying the range for total responses.
 #' @param n_categories A numeric vector of length 2 specifying the range for unique response categories.

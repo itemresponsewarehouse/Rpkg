@@ -38,32 +38,11 @@ This function filters datasets using \strong{precomputed metadata}, which contai
 for each dataset (e.g., number of responses, number of participants, density scores, etc.).
 }
 \details{
-\subsection{Metadata Information}{
+\subsection{Exploring Metadata}{
 
-Metadata provides key characteristics of each dataset in the IRW database.
-If you're unsure what filtering criteria to use, you may find it helpful to inspect the metadata
-by running \code{summary(irw_metadata())}, which gives an overview of available dataset properties.
-}
-
-\subsection{Available Filters}{
-
-Users can filter datasets using any of the following metadata fields:
-\itemize{
-\item \code{n_responses}: Number of total responses in the dataset (numeric range, e.g., \code{c(0, 100000)}).
-\item \code{n_categories}: Number of unique response categories (numeric range, e.g., \code{c(2, 10)}).
-\item \code{n_participants}: Number of participants in the dataset (numeric range).
-\item \code{n_items}: Number of test items/questions (numeric range).
-\item \code{responses_per_participant}: Average number of responses per participant (numeric range).
-\item \code{responses_per_item}: Average number of responses per item (numeric range).
-\item \code{density}: Data density score, which measures the completeness of the dataset (numeric range).
-}
-}
-
-\subsection{Usage}{
-
-Users can call \code{irw_filter_beta()} directly if they already know their filtering criteria.
-However, if they want to explore dataset properties first, they may optionally run \code{summary(irw_metadata())}
-to get an overview before specifying filters.
+To understand available dataset properties before filtering, run \code{summary(irw_metadata())}.
+This provides an overview of key characteristics such as response counts, participant numbers, and density.
+Users can then apply \code{irw_filter_beta()} to select datasets matching their criteria.
 }
 }
 \examples{
