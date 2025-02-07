@@ -13,6 +13,16 @@ irw_filter(
   has_rt = NULL,
   has_rater = NULL
 )
+
+irw_filter(
+  id_count = NULL,
+  item_count = NULL,
+  resp_count = NULL,
+  density = NULL,
+  has_date = NULL,
+  has_rt = NULL,
+  has_rater = NULL
+)
 }
 \arguments{
 \item{id_count}{A numeric vector of two values specifying the range for the number of unique IDs
@@ -39,13 +49,23 @@ or \code{NULL} to ignore this criterion. Default is \code{NULL}.}
 \value{
 A character vector of table names that match the criteria. If no tables match, it prints a message
 and returns an empty character vector.
+
+A character vector of table names that match the criteria. If no tables match, it prints a message
+and returns an empty character vector.
 }
 \description{
 Filters the IRW database metadata to return the names of tables that match the specified criteria.
 Criteria include ranges for numeric attributes (e.g., \code{id_count}, \code{density}) and the presence of specific columns
 (e.g., \code{date}, \verb{response time}, or \code{rater}).
+
+Filters the IRW database metadata to return the names of tables that match the specified criteria.
+Criteria include ranges for numeric attributes (e.g., \code{id_count}, \code{density}) and the presence of specific columns
+(e.g., \code{date}, \verb{response time}, or \code{rater}).
 }
 \examples{
+\dontrun{
+  irw_filter(id_count = c(100, 1000), density = c(0.1, 0.5), has_date = TRUE)
+}
 \dontrun{
   irw_filter(id_count = c(100, 1000), density = c(0.1, 0.5), has_date = TRUE)
 }
