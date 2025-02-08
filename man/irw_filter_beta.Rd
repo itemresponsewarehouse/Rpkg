@@ -11,7 +11,8 @@ irw_filter_beta(
   n_items = NULL,
   responses_per_participant = NULL,
   responses_per_item = NULL,
-  density = NULL
+  density = c(0.5, 1),
+  var = NULL
 )
 }
 \arguments{
@@ -27,10 +28,14 @@ irw_filter_beta(
 
 \item{responses_per_item}{A numeric vector of length 2 specifying the range for average responses per item.}
 
-\item{density}{A numeric vector of length 2 specifying the range for data density.}
+\item{density}{A numeric vector of length 2 specifying the range for data density.
+Defaults to \code{c(0.5, 1)}. To disable this filter, set \code{density = NULL}.}
+
+\item{var}{A character vector specifying one or more available variables (\code{"treat"}, \code{"wave"}, \code{"date"}, \code{"rt"}, \code{"rater"}).
+Only datasets containing all specified variables will be returned.}
 }
 \value{
-A character vector of dataset names matching \strong{all specified criteria}.
+A character vector of dataset names matching \strong{all specified criteria} or an empty result if invalid input is provided.
 }
 \description{
 Identifies datasets in the Item Response Warehouse (IRW) based on user-defined criteria.
@@ -43,20 +48,5 @@ for each dataset (e.g., number of responses, number of participants, density sco
 To understand available dataset properties before filtering, run \code{summary(irw_metadata())}.
 This provides an overview of key characteristics such as response counts, participant numbers, and density.
 Users can then apply \code{irw_filter_beta()} to select datasets matching their criteria.
-}
-}
-\examples{
-\dontrun{
-  # Example 1: Filter datasets with 0-100,000 responses
-  irw_filter_beta(n_responses = c(0, 100000))
-
-  # Example 2: Filter datasets with at least 500 participants and at most 10 items
-  irw_filter_beta(n_participants = c(500, Inf), n_items = c(0, 10))
-
-  # Example 3: Filter datasets with response density between 0.5 and 1.5
-  irw_filter_beta(density = c(0.5, 1.5))
-
-  # Example 4: Combine multiple filters
-  irw_filter_beta(n_responses = c(0, 100000), n_participants = c(500, Inf), density = c(0.5, 1.5))
 }
 }
