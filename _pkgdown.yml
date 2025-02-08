@@ -10,10 +10,8 @@ reference:
   - irw_list_datasets
   - irw_db_metadata
   - irw_table_metadata
-  - irw_visualize
-  - irw_overall_stats
-  - irw_filter
   - irw_metadata
+  - irw_filter
 - title: Fetch
   desc: Functions for fetching IRW data.
 - contents:

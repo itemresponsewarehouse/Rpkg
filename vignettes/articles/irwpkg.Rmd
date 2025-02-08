@@ -25,25 +25,14 @@ Before fetching data, you can explore the available datasets and their metadata.
 List all datasets and their metadata:
 ```{r, eval=FALSE}
 irw_list_datasets()
+
+metadata <- irw_metadata()
+summary(metadata)
+
 irw_db_metadata()
 irw_table_metadata("4thgrade_math_sirt")
-irw_overall_stats()
 ```
 
-Visualize dataset distributions:
-```{r, eval=FALSE}
-irw_visualize()
-```
-
-Customize visualization ranges:
-```{r, eval=FALSE}
-irw_visualize(ranges = list(
-  id_count = c(0, 10000),
-  resp_count = c(0, 100000),
-  item_count = c(0, 150),
-  density = c(0, 2)
-))
-```
 
 ---
 
