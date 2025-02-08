@@ -2,27 +2,12 @@
 % Please edit documentation in R/explore.R
 \name{irw_table_metadata}
 \alias{irw_table_metadata}
-\title{Retrieve Metadata for a Specific Table}
+\title{Retrieve and Print Metadata for a Specific Table}
 \usage{
-irw_table_metadata(table_name, verbose = TRUE)
+irw_table_metadata(table_name)
 }
 \arguments{
 \item{table_name}{A character string specifying the name of the table to retrieve metadata for.}
-
-\item{verbose}{Logical; whether to print the metadata to the console. Defaults to \code{TRUE}.}
-}
-\value{
-A list containing the table metadata for programmatic use, including:
-\item{name}{The name of the table.}
-\item{created_at}{The creation timestamp of the table (formatted as a string).}
-\item{updated_at}{The last update timestamp of the table (formatted as a string).}
-\item{num_rows}{The number of rows in the table.}
-\item{data_size_kb}{The size of the table in kilobytes.}
-\item{variable_count}{The number of variables in the table.}
-\item{is_sample}{Logical; indicates whether the table is a sample dataset.}
-\item{doi}{The DOI of the table, if available.}
-\item{table_url}{The URL to the table.}
-\item{container_url}{The URL to the container of the table.}
 }
 \description{
 Fetches and displays detailed metadata for a specified table in the IRW database.
@@ -31,7 +16,6 @@ access level, and related URLs.
 }
 \examples{
 \dontrun{
-  metadata <- irw_table_metadata("abortion")
-  print(metadata)
+  irw_table_metadata("abortion")
 }
 }

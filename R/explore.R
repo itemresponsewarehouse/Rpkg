@@ -1,29 +1,16 @@
-#' Retrieve Metadata for a Specific Table
+#' Retrieve and Print Metadata for a Specific Table
 #'
 #' Fetches and displays detailed metadata for a specified table in the IRW database.
 #' The metadata includes information such as the number of rows, size in bytes, timestamps,
 #' access level, and related URLs.
 #'
 #' @param table_name A character string specifying the name of the table to retrieve metadata for.
-#' @param verbose Logical; whether to print the metadata to the console. Defaults to `TRUE`.
-#' @return A list containing the table metadata for programmatic use, including:
-#'   \item{name}{The name of the table.}
-#'   \item{created_at}{The creation timestamp of the table (formatted as a string).}
-#'   \item{updated_at}{The last update timestamp of the table (formatted as a string).}
-#'   \item{num_rows}{The number of rows in the table.}
-#'   \item{data_size_kb}{The size of the table in kilobytes.}
-#'   \item{variable_count}{The number of variables in the table.}
-#'   \item{is_sample}{Logical; indicates whether the table is a sample dataset.}
-#'   \item{doi}{The DOI of the table, if available.}
-#'   \item{table_url}{The URL to the table.}
-#'   \item{container_url}{The URL to the container of the table.}
 #' @examples
 #' \dontrun{
-#'   metadata <- irw_table_metadata("abortion")
-#'   print(metadata)
+#'   irw_table_metadata("abortion")
 #' }
 #' @export
-irw_table_metadata <- function(table_name, verbose = TRUE) {
+irw_table_metadata <- function(table_name) {
   # Fetch the table object
   table <- .fetch_redivis_table(table_name)
   
@@ -38,45 +25,29 @@ irw_table_metadata <- function(table_name, verbose = TRUE) {
   is_sample <- table$properties$isSample
   container_url <- table$properties$container$url
   doi <- table$properties$container$doi
-  doi_url <- paste0("https://doi.org/", doi)
+  doi_url <- if (!is.null(doi)) paste0("https://doi.org/", doi) else "N/A"
   
   # Format dates
   formatted_created_at <- format(as.POSIXct(created_at, origin = "1970-01-01", tz = "UTC"), "%Y-%m-%d %H:%M:%S")
   formatted_updated_at <- format(as.POSIXct(updated_at, origin = "1970-01-01", tz = "UTC"), "%Y-%m-%d %H:%M:%S")
   
-  # Optionally print metadata information
-  if (verbose) {
-    cat("Table Metadata for:", table_name, "\n")
-    cat("--------------------------------------------------\n")
-    cat("Name:                     ", name, "\n")
-    cat("Created At:               ", formatted_created_at, "\n")
-    cat("Last Updated At:          ", formatted_updated_at, "\n")
-    cat("Number of Rows:           ", num_rows, "\n")
-    cat("Data Size (KB):           ", round(data_size, 2), "KB\n")
-    cat("Variable Count:           ", variable_count, "\n")
-    cat("Is Sample:                ", ifelse(is_sample, "Yes", "No"), "\n")
-    cat("DOI:                      ", doi_url, "\n")
-    cat("Table URL:                ", table_url, "\n")
-    cat("Container URL:            ", container_url, "\n")
-    cat("--------------------------------------------------\n")
-  }
+  # Print metadata information
+  cat("\nTable Metadata for:", table_name, "\n")
+  cat(strrep("-", 50), "\n")
+  cat(sprintf("%-25s %s\n", "Name:", name))
+  cat(sprintf("%-25s %s\n", "Created At:", formatted_created_at))
+  cat(sprintf("%-25s %s\n", "Last Updated At:", formatted_updated_at))
+  cat(sprintf("%-25s %d\n", "Number of Rows:", num_rows))
+  cat(sprintf("%-25s %.2f KB\n", "Data Size (KB):", data_size))
+  cat(sprintf("%-25s %d\n", "Variable Count:", variable_count))
+  cat(sprintf("%-25s %s\n", "Is Sample:", ifelse(is_sample, "Yes", "No")))
+  cat(sprintf("%-25s %s\n", "DOI:", doi_url))
+  cat(sprintf("%-25s %s\n", "Table URL:", table_url))
+  cat(sprintf("%-25s %s\n", "Container URL:", container_url))
+  cat(strrep("-", 50), "\n\n")
   
-  # Compile metadata into a list for programmatic use
-  metadata <- list(
-    name = name,
-    created_at = formatted_created_at,
-    updated_at = formatted_updated_at,
-    num_rows = num_rows,
-    data_size_kb = round(data_size, 2),
-    variable_count = variable_count,
-    is_sample = is_sample,
-    doi = doi,
-    table_url = table_url,
-    container_url = container_url
-  )
-  
-  # Return the metadata list
-  return(metadata)
+  # No return value—only prints output
+  invisible(NULL)
 }
 
 
@@ -118,27 +89,14 @@ irw_list_datasets <- function() {
 }
 
 
-#' Retrieve Database Metadata
+#' Retrieve and Print IRW Database Metadata
 #'
 #' Fetches and displays comprehensive metadata for the IRW database, including the database version,
 #' number of tables, total data size, and relevant URLs.
 #'
-#' @return A list containing the database metadata, including:
-#'   \item{version}{The version of the database.}
-#'   \item{table_count}{The total number of tables in the database.}
-#'   \item{created_at}{The creation timestamp of the database (formatted as a string).}
-#'   \item{updated_at}{The last update timestamp of the database (formatted as a string).}
-#'   \item{total_size_gb}{The total size of the database in gigabytes.}
-#'   \item{active_data_size_gb}{The size of active tabular data in gigabytes.}
-#'   \item{doi}{The DOI of the database.}
-#'   \item{dataset_url}{The URL to the database.}
-#'   \item{documentation}{The link to the database documentation.}
-#'   \item{methodology}{The link to the database methodology.}
-#'   \item{usage_info}{The link to usage information.}
 #' @examples
 #' \dontrun{
-#'   db_metadata <- irw_db_metadata()
-#'   print(db_metadata)
+#'   irw_db_metadata()
 #' }
 #' @export
 irw_db_metadata <- function() {
@@ -153,49 +111,32 @@ irw_db_metadata <- function() {
   total_size <- ds$properties$totalNumBytes / (1024 ^ 3)  # Convert bytes to GB
   active_size <- ds$properties$totalActiveTabularBytes / (1024 ^ 3)  # Convert bytes to GB
   doi <- ds$properties$doi
-  doi_url <- paste0("https://doi.org/", doi)
+  doi_url <- if (!is.null(doi)) paste0("https://doi.org/", doi) else "N/A"
   dataset_url <- ds$properties$url
-  documentation_link <- ds$properties$links[[1]]$url
-  methodology_link <- ds$properties$methodologyMarkdown
-  usage_link <- ds$properties$usageMarkdown
+  documentation_link <- if (!is.null(ds$properties$links[[1]]$url)) ds$properties$links[[1]]$url else "N/A"
+  methodology_link <- if (!is.null(ds$properties$methodologyMarkdown)) ds$properties$methodologyMarkdown else "N/A"
+  usage_link <- if (!is.null(ds$properties$usageMarkdown)) ds$properties$usageMarkdown else "N/A"
   
   # Format dates
-  formatted_created_at <- format(as.POSIXct(created_at, origin = "1970-01-01", tz = "UTC"),
-                                 "%Y-%m-%d %H:%M:%S")
-  formatted_updated_at <- format(as.POSIXct(updated_at, origin = "1970-01-01", tz = "UTC"),
-                                 "%Y-%m-%d %H:%M:%S")
+  formatted_created_at <- format(as.POSIXct(created_at, origin = "1970-01-01", tz = "UTC"), "%Y-%m-%d %H:%M:%S")
+  formatted_updated_at <- format(as.POSIXct(updated_at, origin = "1970-01-01", tz = "UTC"), "%Y-%m-%d %H:%M:%S")
   
   # Print metadata information
-  cat("IRW Database Metadata:\n")
-  cat("--------------------------------------------------\n")
-  cat("Version:                  ", version, "\n")
-  cat("Table Count:              ", table_count, "\n")
-  cat("Created At:               ", formatted_created_at, "\n")
-  cat("Last Updated At:          ", formatted_updated_at, "\n")
-  cat("Total Data Size (GB):     ", round(total_size, 2), "GB\n")
-  cat("Active Data Size (GB):    ", round(active_size, 2), "GB\n")
-  cat("DOI:                      ", doi_url, "\n")
-  cat("Dataset URL:              ", dataset_url, "\n")
-  cat("Documentation:            ", documentation_link, "\n")
-  cat("Methodology:              ", methodology_link)
-  cat("Usage Information:        ", usage_link, "\n")
-  cat("--------------------------------------------------\n")
+  cat("\nIRW Database Metadata\n")
+  cat(strrep("-", 50), "\n")
+  cat(sprintf("%-25s %s\n", "Version:", version))
+  cat(sprintf("%-25s %d\n", "Table Count:", table_count))
+  cat(sprintf("%-25s %s\n", "Created At:", formatted_created_at))
+  cat(sprintf("%-25s %s\n", "Last Updated At:", formatted_updated_at))
+  cat(sprintf("%-25s %.2f GB\n", "Total Data Size:", total_size))
+  cat(sprintf("%-25s %.2f GB\n", "Active Data Size:", active_size))
+  cat(sprintf("%-25s %s\n", "DOI:", doi_url))
+  cat(sprintf("%-25s %s\n", "Dataset URL:", dataset_url))
+  cat(sprintf("%-25s %s\n", "Documentation:", documentation_link))
+  cat(sprintf("%-25s %s\n", "Methodology:", methodology_link))
+  cat(sprintf("%-25s %s\n", "Usage Information:", usage_link))
+  cat(strrep("-", 50), "\n")
   
-  # Compile metadata into a list for programmatic use
-  metadata <- list(
-    version = version,
-    table_count = table_count,
-    created_at = formatted_created_at,
-    updated_at = formatted_updated_at,
-    total_size_gb = round(total_size, 2),
-    active_data_size_gb = round(active_size, 2),
-    doi = doi,
-    dataset_url = dataset_url,
-    documentation = documentation_link,
-    methodology = methodology_link,
-    usage_info = usage_link
-  )
-  
-  # Return the metadata list
-  return(metadata)
+  # No return value—only prints output
+  invisible(NULL)
 }
