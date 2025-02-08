@@ -26,6 +26,7 @@ List all datasets and their metadata:
 ```{r, eval=FALSE}
 irw_list_datasets()
 irw_db_metadata()
+irw_table_metadata("4thgrade_math_sirt")
 irw_overall_stats()
 ```
 
@@ -51,17 +52,17 @@ Filter datasets based on key attributes.
 
 Example: Filter by respondent count and density range:
 ```{r, eval=FALSE}
-irw_filter(id_count = c(100, 1000), density = c(0.1, 0.5))
+irw_filter(n_participants = c(100, 1000), density = c(0.1, 0.5))
 ```
 
 Find datasets with rater-based scoring:
 ```{r, eval=FALSE}
-irw_filter(has_rater = TRUE)
+irw_filter(var="rt")
 ```
 
 Combine multiple filters:
 ```{r, eval=FALSE}
-irw_filter(id_count = c(100, 10000), has_rater = TRUE)
+irw_filter(n_participants = c(100, 10000), var="rt", density=c(0.1, 0.5))
 ```
 
 ---
@@ -83,7 +84,11 @@ print(names(datasets))
 
 Fetch datasets that match specific filters:
 ```{r, eval=FALSE}
-matching_tables <- irw_filter(has_rater = TRUE)
+matching_tables <- irw_filter(var="rater", density=NULL)
+metadata = irw_metadata()
+metadata[metadata$dataset_name %in% matching_tables, ] 
+
+matching_tables <- irw_filter(var="rater", density=NULL, responses_per_item = c(0,1000))
 datasets <- irw_fetch(matching_tables)
 print(names(datasets))
 ```

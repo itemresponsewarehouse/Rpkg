@@ -13,7 +13,6 @@ reference:
   - irw_visualize
   - irw_overall_stats
   - irw_filter
-  - irw_filter_beta
   - irw_metadata
 - title: Fetch
   desc: Functions for fetching IRW data.

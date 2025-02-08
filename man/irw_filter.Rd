@@ -2,71 +2,63 @@
 % Please edit documentation in R/fetch.R
 \name{irw_filter}
 \alias{irw_filter}
-\title{Filter Tables by Criteria}
+\title{Filter Available Datasets in IRW}
 \usage{
 irw_filter(
-  id_count = NULL,
-  item_count = NULL,
-  resp_count = NULL,
-  density = NULL,
-  has_date = NULL,
-  has_rt = NULL,
-  has_rater = NULL
-)
-
-irw_filter(
-  id_count = NULL,
-  item_count = NULL,
-  resp_count = NULL,
-  density = NULL,
-  has_date = NULL,
-  has_rt = NULL,
-  has_rater = NULL
+  n_responses = NULL,
+  n_categories = NULL,
+  n_participants = NULL,
+  n_items = NULL,
+  responses_per_participant = NULL,
+  responses_per_item = NULL,
+  density = c(0.5, 1),
+  var = NULL
 )
 }
 \arguments{
-\item{id_count}{A numeric vector of two values specifying the range for the number of unique IDs
-(e.g., \code{c(100, 1000)}). Default is \code{NULL}, which ignores this criterion.}
+\item{n_responses}{A numeric vector of length 2 specifying the range for total responses.}
 
-\item{item_count}{A numeric vector of two values specifying the range for the number of unique items.
-Default is \code{NULL}.}
+\item{n_categories}{A numeric vector of length 2 specifying the range for unique response categories.}
 
-\item{resp_count}{A numeric vector of two values specifying the range for the total number of responses.
-Default is \code{NULL}.}
+\item{n_participants}{A numeric vector of length 2 specifying the range for the number of participants.}
 
-\item{density}{A numeric vector of two values specifying the range for density (between 0 and 1).
-Default is \code{NULL}.}
+\item{n_items}{A numeric vector of length 2 specifying the range for the number of items.}
 
-\item{has_date}{Logical; \code{TRUE} to include tables with a \code{date} column, \code{FALSE} to exclude them,
-or \code{NULL} to ignore this criterion. Default is \code{NULL}.}
+\item{responses_per_participant}{A numeric vector of length 2 specifying the range for average responses per participant.}
 
-\item{has_rt}{Logical; \code{TRUE} to include tables with a \code{rt} column, \code{FALSE} to exclude them,
-or \code{NULL} to ignore this criterion. Default is \code{NULL}.}
+\item{responses_per_item}{A numeric vector of length 2 specifying the range for average responses per item.}
 
-\item{has_rater}{Logical; \code{TRUE} to include tables with a \code{rater} column, \code{FALSE} to exclude them,
-or \code{NULL} to ignore this criterion. Default is \code{NULL}.}
+\item{density}{A numeric vector of length 2 specifying the range for data density.
+Defaults to \code{c(0.5, 1)}. To disable this filter, set \code{density = NULL}.}
+
+\item{var}{A character vector specifying one or more available variables (\code{"treat"}, \code{"wave"}, \code{"date"}, \code{"rt"}, \code{"rater"}).
+Only datasets containing all specified variables will be returned.}
 }
 \value{
-A character vector of table names that match the criteria. If no tables match, it prints a message
-and returns an empty character vector.
-
-A character vector of table names that match the criteria. If no tables match, it prints a message
-and returns an empty character vector.
+A character vector of dataset names matching \strong{all specified criteria} or an empty result if invalid input is provided.
 }
 \description{
-Filters the IRW database metadata to return the names of tables that match the specified criteria.
-Criteria include ranges for numeric attributes (e.g., \code{id_count}, \code{density}) and the presence of specific columns
-(e.g., \code{date}, \verb{response time}, or \code{rater}).
+Identifies datasets in the Item Response Warehouse (IRW) based on user-defined criteria.
+This function filters datasets using \strong{precomputed metadata}, which contains summary statistics
+for each dataset (e.g., number of responses, number of participants, density scores, etc.).
+}
+\details{
+\subsection{Exploring Metadata}{
 
-Filters the IRW database metadata to return the names of tables that match the specified criteria.
-Criteria include ranges for numeric attributes (e.g., \code{id_count}, \code{density}) and the presence of specific columns
-(e.g., \code{date}, \verb{response time}, or \code{rater}).
+To understand available dataset properties before filtering, run \code{summary(irw_metadata())}.
+This provides an overview of key characteristics such as response counts, participant numbers, and density.
+Users can then apply \code{irw_filter()} to select datasets matching their criteria.
+}
 }
 \examples{
 \dontrun{
-  irw_filter(id_count = c(100, 1000), density = c(0.1, 0.5), has_date = TRUE)
-}
-\dontrun{
-  irw_filter(id_count = c(100, 1000), density = c(0.1, 0.5), has_date = TRUE)
+  # Example 1: Filter datasets with at least 1,000 responses and contain "rt"
+  irw_filter(n_responses = c(1000, Inf), var = "rt")
+
+  # Example 2: Disable density filtering and return datasets with "wave"
+  irw_filter(var = "wave", density = NULL)
+
+  # Example 3: Find datasets with at least 500 participants and response density 0.3-0.8
+  irw_filter(n_participants = c(500, Inf), density = c(0.3, 0.8))
 }
 }
