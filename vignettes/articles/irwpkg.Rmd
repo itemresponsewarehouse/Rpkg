@@ -24,7 +24,7 @@ Before fetching data, you can explore the available datasets and their metadata.
 
 List all datasets and their metadata:
 ```{r, eval=FALSE}
-irw_list_datasets()
+irw_list_tables()
 
 metadata <- irw_metadata()
 summary(metadata)
@@ -51,7 +51,7 @@ irw_filter(var="rt")
 
 Combine multiple filters:
 ```{r, eval=FALSE}
-irw_filter(n_participants = c(100, 10000), var="rt", density=c(0.1, 0.5))
+irw_filter(n_participants = c(100, 10000), var="cov_", density=c(0.1, 0.8))
 ```
 
 ---

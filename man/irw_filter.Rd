@@ -31,11 +31,13 @@ irw_filter(
 \item{density}{A numeric vector of length 2 specifying the range for data density.
 Defaults to \code{c(0.5, 1)}. To disable this filter, set \code{density = NULL}.}
 
-\item{var}{A character vector specifying one or more available variables (\code{"treat"}, \code{"wave"}, \code{"date"}, \code{"rt"}, \code{"rater"}).
-Only datasets containing all specified variables will be returned.}
+\item{var}{A character vector specifying one or more variables.
+- If \strong{exact variable names} are provided, only datasets containing \strong{all specified variables} will be returned.
+- If a variable name \strong{contains an underscore} (e.g., \code{"cov_"}, \code{"Qmatrix_"}), the function will match all datasets that
+contain \strong{at least one variable} that starts with that prefix.}
 }
 \value{
-A character vector of dataset names matching \strong{all specified criteria} or an empty result if invalid input is provided.
+A sorted character vector of dataset names matching \strong{all specified criteria} or an empty result if no matches are found.
 }
 \description{
 Identifies datasets in the Item Response Warehouse (IRW) based on user-defined criteria.
@@ -60,5 +62,11 @@ Users can then apply \code{irw_filter()} to select datasets matching their crite
 
   # Example 3: Find datasets with at least 500 participants and response density 0.3-0.8
   irw_filter(n_participants = c(500, Inf), density = c(0.3, 0.8))
+
+  # Example 4: Retrieve datasets that contain **all** of "treat", "rt", and any "cov_*" variables
+  irw_filter(var = c("treat", "rt", "cov_"))
+
+  # Example 5: Retrieve datasets that contain any variable starting with "Qmatrix_"
+  irw_filter(var = c("Qmatrix_"))
 }
 }

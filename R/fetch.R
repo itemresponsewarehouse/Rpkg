@@ -75,9 +75,11 @@ irw_metadata <- function() {
 #' @param responses_per_item A numeric vector of length 2 specifying the range for average responses per item.
 #' @param density A numeric vector of length 2 specifying the range for data density.
 #'                Defaults to `c(0.5, 1)`. To disable this filter, set `density = NULL`.
-#' @param var A character vector specifying one or more available variables (`"treat"`, `"wave"`, `"date"`, `"rt"`, `"rater"`).
-#'            Only datasets containing all specified variables will be returned.
-#' @return A character vector of dataset names matching **all specified criteria** or an empty result if invalid input is provided.
+#' @param var A character vector specifying one or more variables.
+#'            - If **exact variable names** are provided, only datasets containing **all specified variables** will be returned.
+#'            - If a variable name **contains an underscore** (e.g., `"cov_"`, `"Qmatrix_"`), the function will match all datasets that 
+#'              contain **at least one variable** that starts with that prefix.
+#' @return A sorted character vector of dataset names matching **all specified criteria** or an empty result if no matches are found.
 #'
 #' @examples
 #' \dontrun{
@@ -89,6 +91,12 @@ irw_metadata <- function() {
 #'
 #'   # Example 3: Find datasets with at least 500 participants and response density 0.3-0.8
 #'   irw_filter(n_participants = c(500, Inf), density = c(0.3, 0.8))
+#'
+#'   # Example 4: Retrieve datasets that contain **all** of "treat", "rt", and any "cov_*" variables
+#'   irw_filter(var = c("treat", "rt", "cov_"))
+#'
+#'   # Example 5: Retrieve datasets that contain any variable starting with "Qmatrix_"
+#'   irw_filter(var = c("Qmatrix_"))
 #' }
 #' @export
 irw_filter <- function(n_responses = NULL,
@@ -98,43 +106,35 @@ irw_filter <- function(n_responses = NULL,
                        responses_per_participant = NULL,
                        responses_per_item = NULL,
                        density = c(0.5, 1),
-                       # Default density filter
                        var = NULL) {
+  
   metadata <- irw_metadata()  # Load latest metadata
   
-  # Store the number of datasets before filtering
+  # Store initial dataset count
   initial_count <- nrow(metadata)
   
-  # Define available variables for filtering
-  available_vars <- c("treat", "wave", "date", "rt", "rater")
+  # Convert "variables" column from "|"-separated string to list
+  metadata$variables_list <- strsplit(metadata$variables, "\\| ")
   
-  # Check for invalid variable names
+  # Apply variable filtering
   if (!is.null(var)) {
-    invalid_vars <- setdiff(var, available_vars)
+    metadata <- metadata[sapply(metadata$variables_list, function(vars) {
+      all(sapply(var, function(v) {
+        if (grepl("_", v)) {
+          # If variable contains "_", treat it as a prefix (match any variable that starts with it)
+          any(grepl(paste0("^", v), vars))
+        } else {
+          # Exact match
+          v %in% vars
+        }
+      }))
+    }), ]
     
-    if (length(invalid_vars) > 0) {
-      warning(
-        "The following variables are not available for filtering: ",
-        paste(invalid_vars, collapse = ", "),
-        ". Currently, you can only filter by: ",
-        paste(available_vars, collapse = ", "),
-        "."
-      )
-      return(character(0))  # Return empty result
-    }
-    
-    # Filter by valid variable names
-    for (v in var) {
-      metadata <- metadata[metadata[[paste0("has_", v)]] == TRUE, ]
-    }
-    
-    # If filtering by `var` alone removed all datasets, return early
-    if (nrow(metadata) == 0) {
-      return(character(0))  # No datasets left after `var` filtering
-    }
+    # If no datasets remain after filtering, return empty result
+    if (nrow(metadata) == 0) return(character(0))
   }
   
-  # Store the count before applying density filtering
+  # Store dataset count before applying density filtering
   count_before_density <- nrow(metadata)
   
   # Numeric filters
@@ -172,11 +172,12 @@ irw_filter <- function(n_responses = NULL,
       identical(density, c(0.5, 1)) && num_removed_by_density > 0) {
     message(
       sprintf(
-        "Note: The default density filter (0.5 to 1) was applied and removed %d dataset(s). To disable it, set `density = NULL`.",
+        "Note: The default density filter (0.5 to 1) was applied and removed %d dataset(s). To disable it, set density = NULL.",
         num_removed_by_density
       )
     )
   }
   
-  return(metadata$dataset_name)
+  # Sort final dataset names in alphabetical order before returning
+  return(sort(metadata$dataset_name))
 }
