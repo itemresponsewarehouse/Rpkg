@@ -52,40 +52,40 @@ irw_table_metadata <- function(table_name) {
 
 
 
-#' List Available Datasets
+#' List Available Tables
 #'
-#' Retrieves a summary of available datasets in the IRW database, including their name,
-#' number of rows, and variable count, sorted alphabetically by dataset name.
+#' Retrieves a summary of available tables in the IRW database, including their name,
+#' number of rows, and variable count, sorted alphabetically by table name.
 #'
 #' @return A data frame with the following columns:
-#'   \item{name}{The name of the dataset, sorted alphabetically.}
-#'   \item{numRows}{The number of rows in the dataset.}
-#'   \item{variableCount}{The number of variables in the dataset.}
+#'   \item{name}{The name of the table, sorted alphabetically.}
+#'   \item{numRows}{The number of rows in the table.}
+#'   \item{variableCount}{The number of variables in the table.}
 #' @examples
 #' \dontrun{
-#'   datasets <- irw_list_datasets()
-#'   print(datasets)
+#'   tables <- irw_list_tables()
+#'   print(tables)
 #' }
 #' @export
-irw_list_datasets <- function() {
+irw_list_tables <- function() {
   # Initialize the datasource if not already set
   ds <- .initialize_datasource()
   
-  # Retrieve the list of datasets from the datasource
-  datasets <- ds$list_tables()  # Assuming 'list_tables()' returns datasets as well
+  # Retrieve the list of tables from the datasource
+  tables <- ds$list_tables()  
   
   # Extract metadata to create a data frame
-  datasets_info <- data.frame(
-    name = sapply(datasets, function(dataset) dataset$name),
-    numRows = sapply(datasets, function(dataset) dataset$properties$numRows),
-    variableCount = sapply(datasets, function(dataset) dataset$properties$variableCount),
+  tables_info <- data.frame(
+    name = sapply(tables, function(table) table$name),
+    numRows = sapply(tables, function(table) table$properties$numRows),
+    variableCount = sapply(tables, function(table) table$properties$variableCount),
     stringsAsFactors = FALSE
   )
   
-  # Sort datasets_info by the name column in alphabetical order
-  datasets_info <- datasets_info[order(datasets_info$name), ]
+  # Sort tables_info by the name column in alphabetical order
+  tables_info <- tables_info[order(tables_info$name), ]
   
-  return(datasets_info)
+  return(tables_info)
 }
 
 
