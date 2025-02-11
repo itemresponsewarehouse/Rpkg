@@ -18,13 +18,13 @@
 #' @param id_density_threshold A numeric value between `0.0` and `1.0` specifying the 
 #'        minimum response density required for an `id` to be included. 
 #'        Default is `0.1`. Set to `NULL` to disable filtering.
-#' @param dedup_method A string specifying how to handle duplicate `id`-`item` responses.
-#'        Options: `"mode"` (default), `"mean"`, `"median"`, `"first"`.
+#' @param agg_method A string specifying how to handle multiple `id`-`item` pairs.
+#'        Options: `"mean"` (default), `"mode"`, `"median"`, `"first"`.
 #' @return A data frame in wide format where rows represent `id` values and columns represent `item_*` responses.
 #'
 #' @importFrom stats aggregate median na.omit reshape
 #' @export
-irw_long2resp <- function(df, wave = NULL, id_density_threshold = 0.1, dedup_method = "mode") {
+irw_long2resp <- function(df, wave = NULL, id_density_threshold = 0.1, agg_method = "mean") {
   
   # Ensure required columns exist
   required_cols <- c("id", "item", "resp")
@@ -125,33 +125,36 @@ irw_long2resp <- function(df, wave = NULL, id_density_threshold = 0.1, dedup_met
   
   if (num_affected_pairs > 0) {
     messages <- c(messages, paste0(
-      "Found ", num_duplicate_responses, " extra duplicate responses across ", 
+      "Found ", num_duplicate_responses, " responses across ", 
       num_affected_pairs, " unique id-item pairs (", prop_dup_pairs, "% of total). ",
-      "Average extra duplicates per affected pair: ", avg_duplicates_per_pair, ". ",
-      "Keeping responses based on '", dedup_method, "' method."
+      "Average responses per pair: ", avg_duplicates_per_pair, ". ",
+      "Aggregating responses based on '", agg_method, "' method."
     ))
   }
   
   # Deduplication function based on user input
-  if (dedup_method == "mode") {
+  if (agg_method == "mode") {
     mode_fn <- function(x) {
       x <- na.omit(x)
       ux <- unique(x)
       ux[which.max(tabulate(match(x, ux)))]  # Mode function
     }
     df <- aggregate(resp ~ id + item, data = df, FUN = mode_fn)
-  } else if (dedup_method == "mean") {
+  } else if (agg_method == "mean") {
     df <- aggregate(resp ~ id + item, data = df, FUN = mean, na.rm = TRUE)
-  } else if (dedup_method == "median") {
+  } else if (agg_method == "median") {
     df <- aggregate(resp ~ id + item, data = df, FUN = median, na.rm = TRUE)
-  } else if (dedup_method == "first") {
+  } else if (agg_method == "first") {
     df <- df[!duplicated(df[, c("id", "item")]), ]
   } else {
-    stop("Invalid `dedup_method`. Choose from 'mode', 'mean', 'median', or 'first'.")
+    stop("Invalid `agg_method`. Choose from 'mode', 'mean', 'median', or 'first'.")
   }
   
   # Convert to wide format
   wide_df <- reshape(df, idvar = "id", timevar = "item", direction = "wide")
+  
+  # Remove "resp." prefix from column names
+  colnames(wide_df) <- sub("^resp\\.", "", colnames(wide_df))
   
   # Print messages at the end
   if (length(messages) > 0) {

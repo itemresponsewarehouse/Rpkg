@@ -4,12 +4,7 @@
 \alias{irw_long2resp}
 \title{Convert IRW Long-Format Data to Wide-Format Response Matrix}
 \usage{
-irw_long2resp(
-  df,
-  wave = NULL,
-  id_density_threshold = 0.1,
-  dedup_method = "mode"
-)
+irw_long2resp(df, wave = NULL, id_density_threshold = 0.1, agg_method = "mean")
 }
 \arguments{
 \item{df}{A data frame containing IRW-compliant item response data in long format.}
@@ -22,8 +17,8 @@ Defaults to the most frequent wave if \code{NULL}.}
 minimum response density required for an \code{id} to be included.
 Default is \code{0.1}. Set to \code{NULL} to disable filtering.}
 
-\item{dedup_method}{A string specifying how to handle duplicate \code{id}-\code{item} responses.
-Options: \code{"mode"} (default), \code{"mean"}, \code{"median"}, \code{"first"}.}
+\item{agg_method}{A string specifying how to handle multiple \code{id}-\code{item} pairs.
+Options: \code{"mean"} (default), \code{"mode"}, \code{"median"}, \code{"first"}.}
 }
 \value{
 A data frame in wide format where rows represent \code{id} values and columns represent \verb{item_*} responses.
