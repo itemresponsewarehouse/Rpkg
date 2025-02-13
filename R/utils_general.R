@@ -52,7 +52,7 @@ irw_save_bibtex <- function(table_names, output_file = "refs.bib") {
   
   # Process each table name
   for (table_name in table_names) {
-    table_row <- data_index[data_index$Filename == table_name, ]
+    table_row <- data_index[data_index$table == table_name, ]
     
     # Handle missing tables
     if (nrow(table_row) == 0) {
@@ -83,7 +83,7 @@ irw_save_bibtex <- function(table_names, output_file = "refs.bib") {
     
     # Fallback to manual BibTeX
     if (is.null(bibtex)) {
-      manual_bibtex <- bibtex_manual[bibtex_manual$Filename == table_name, "BibTex", drop = FALSE]
+      manual_bibtex <- bibtex_manual[bibtex_manual$table == table_name, "BibTex", drop = FALSE]
       if (nrow(manual_bibtex) > 0) {
         bibtex <- manual_bibtex$BibTex
       } else {
