@@ -4,12 +4,12 @@
 \alias{.retry_with_backoff}
 \title{Retry with Exponential Backoff}
 \usage{
-.retry_with_backoff(expr, max_attempts = 3, base_delay = 1, timeout_sec = 10)
+.retry_with_backoff(expr, max_attempts = 5, base_delay = 1, timeout_sec = 10)
 }
 \arguments{
 \item{expr}{A function that executes the API call.}
 
-\item{max_attempts}{Integer. Maximum number of retry attempts. Default is 3.}
+\item{max_attempts}{Integer. Maximum number of retry attempts. Default is 5.}
 
 \item{base_delay}{Numeric. Initial wait time (seconds) before retrying. Default is 1.}
 

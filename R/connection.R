@@ -7,13 +7,13 @@
 #' Uses exponential backoff and applies a timeout to prevent excessive waiting.
 #'
 #' @param expr A function that executes the API call.
-#' @param max_attempts Integer. Maximum number of retry attempts. Default is 3.
+#' @param max_attempts Integer. Maximum number of retry attempts. Default is 5.
 #' @param base_delay Numeric. Initial wait time (seconds) before retrying. Default is 1.
 #' @param timeout_sec Numeric. Maximum time (seconds) allowed for each API call before forcing a retry. Default is 10.
 #' @return The result of the API call if successful; otherwise, stops with an error.
 #' @importFrom R.utils withTimeout
 #' @keywords internal
-.retry_with_backoff <- function(expr, max_attempts = 3, base_delay = 1, timeout_sec = 10) {
+.retry_with_backoff <- function(expr, max_attempts = 5, base_delay = 1, timeout_sec = 10) {
   attempt <- 1
   result <- NULL
   
@@ -142,4 +142,44 @@
   .irw_env$metadata_version <- latest_version_tag
   
   return(.irw_env$metadata_tibble)
+}
+
+
+#' Fetch Bibliography Metadata Table
+#'
+#' Retrieves the metadata table from Redivis user("bdomingu")$dataset("irw_meta")$table("biblio").
+#' Only fetches new data if the table version tag has changed.
+#'
+#' @return A cached or newly fetched tibble containing biblio information.
+#' @keywords internal
+.fetch_biblio_table <- function() {
+  dataset <- redivis::user("bdomingu")$dataset("irw_meta")
+  
+  # Ensure we have the latest dataset 
+  .retry_with_backoff(function() {
+    dataset$get()
+  })
+  
+  # Retrieve version tag
+  latest_version_tag <- dataset$properties$version$tag
+  
+  # If biblio exists in cache and the version tag is the same, return cached tibble
+  if (!is.null(latest_version_tag) &&
+      exists("biblio_tibble", envir = .irw_env) &&
+      exists("biblio_version", envir = .irw_env) &&
+      identical(.irw_env$biblio_version, latest_version_tag)) {
+    return(.irw_env$biblio_tibble)  # Return cached biblio tibble
+  }
+  
+  # Fetch new biblio table and convert it to a tibble
+  table <- dataset$table("biblio")
+  
+  .irw_env$biblio_tibble <- .retry_with_backoff(function() {
+    table$to_tibble()
+  })
+  
+  # Store the new version tag
+  .irw_env$biblio_version <- latest_version_tag
+  
+  return(.irw_env$biblio_tibble)
 }

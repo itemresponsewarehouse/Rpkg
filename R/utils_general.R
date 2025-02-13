@@ -51,44 +51,48 @@ irw_save_bibtex <- function(table_names, output_file = "refs.bib") {
   missing_tables <- character()
   missing_doi_tables <- character()
   
+  # Fetch the biblio table that contains both DOI fields and manual BibTeX entries
+  biblio <- .fetch_biblio_table()
+  
   # Process each table name
   for (table_name in table_names) {
-    # Step 1: Fetch table from Redivis
-    table <- tryCatch(
-      .fetch_redivis_table(table_name),
-      error = function(e) {
-        missing_tables <<- c(missing_tables, table_name)  # Track tables not found in IRW
-        NULL
-      }
-    )
+    # Check if the table is in biblio
+    if (!table_name %in% biblio$table) {
+      missing_tables <- c(missing_tables, table_name)
+      next
+    }
     
-    # If table retrieval failed, move to next table
-    if (is.null(table)) next
+    # Attempt to retrieve a DOI. If "DOI__for_paper_" is empty, fall back to "DOI".
+    doi_for_paper <- biblio[biblio$table == table_name, "DOI__for_paper_", drop = TRUE]
+    doi_alternative <- biblio[biblio$table == table_name, "DOI", drop = TRUE]
     
-    # Step 2: Retrieve DOI from Redivis
-    doi <- table$properties$container$doi
+    # Prefer "DOI__for_paper_" if it's non-empty; otherwise, use "DOI".
+    doi <- if (!is.null(doi_for_paper) && nzchar(doi_for_paper)) {
+      doi_for_paper
+    } else {
+      doi_alternative
+    }
     
-    # Attempt to fetch BibTeX using DOI
-    bibtex <- if (!is.null(doi) && nzchar(doi)) {
+    # Attempt to fetch BibTeX from the DOI
+    bibtex <- NULL
+    if (!is.null(doi) && nzchar(doi)) {
       response <- tryCatch(
         httr::GET(
           glue::glue("https://doi.org/{doi}"),
           httr::add_headers(Accept = "application/x-bibtex")
         ),
-        error = function(e) NULL
+        error = function(e)
+          NULL
       )
-      if (!is.null(response) && httr::status_code(response) == 200) {
-        httr::content(response, as = "text", encoding = "UTF-8")
-      } else {
-        NULL
+      if (!is.null(response) &&
+          httr::status_code(response) == 200) {
+        bibtex <- httr::content(response, as = "text", encoding = "UTF-8")
       }
-    } else {
-      NULL
     }
     
-    # Step 3: Fall back to manual BibTeX if DOI retrieval fails
+    # If DOI-based retrieval fails, use the manual BibTeX entry in biblio
     if (is.null(bibtex)) {
-      manual_bibtex <- bibtex_manual[bibtex_manual$Filename == table_name, "BibTex", drop = TRUE]
+      manual_bibtex <- biblio[biblio$table == table_name, "BibTex", drop = TRUE]
       if (length(manual_bibtex) > 0 && nzchar(manual_bibtex)) {
         bibtex <- manual_bibtex
       } else {
@@ -99,7 +103,9 @@ irw_save_bibtex <- function(table_names, output_file = "refs.bib") {
     
     # Update the BibTeX key while preserving the entry type
     if (!is.null(bibtex) && grepl("^@", bibtex)) {
-      bibtex <- sub("@(\\w+)\\{[^,]+,", paste0("@\\1{", table_name, ","), bibtex)
+      bibtex <- sub("@(\\w+)\\{[^,]+,",
+                    paste0("@\\1{", table_name, ","),
+                    bibtex)
       valid_entries <- c(valid_entries, bibtex)
     }
   }
@@ -107,17 +113,22 @@ irw_save_bibtex <- function(table_names, output_file = "refs.bib") {
   # Save valid entries to file
   if (length(valid_entries) > 0) {
     writeLines(unique(valid_entries), con = output_file)
+    message("BibTeX entries saved to: ", output_file)
   }
   
   # Messages for missing tables and missing DOIs
   if (length(missing_tables) > 0) {
-    message("NOTE: These tables were not processed because they do not exist in IRW. Please check the names: ", 
-            paste(missing_tables, collapse = ", "))
+    message(
+      "NOTE: These tables were not processed because they do not exist in IRW. Please check the names: ",
+      paste(missing_tables, collapse = ", ")
+    )
   }
   
   if (length(missing_doi_tables) > 0) {
-    message("NOTE: These tables were missing valid DOI information, and no manual BibTeX entry was found: ", 
-            paste(missing_doi_tables, collapse = ", "))
+    message(
+      "NOTE: These tables were missing valid DOI information, and no manual BibTeX entry was found: ",
+      paste(missing_doi_tables, collapse = ", ")
+    )
   }
   
   invisible(valid_entries)
