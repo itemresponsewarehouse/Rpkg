@@ -19,13 +19,13 @@
 #' @export
 irw_fetch <- function(name) {
   # Helper function to fetch a single dataset
-  fetch_single_data <- function(dataset_name) {
+  fetch_single_data <- function(table) {
     tryCatch({
-      table <- suppressMessages(.fetch_redivis_table(dataset_name))
+      table <- suppressMessages(.fetch_redivis_table(table))
       table$to_tibble()
     }, error = function(e) {
       error_message <- paste("Error fetching dataset",
-                             shQuote(dataset_name),
+                             shQuote(table),
                              ":",
                              e$message)
       message(error_message)  # print error immediately
@@ -179,5 +179,5 @@ irw_filter <- function(n_responses = NULL,
   }
   
   # Sort final dataset names in alphabetical order before returning
-  return(sort(metadata$dataset_name))
+  return(sort(metadata$table))
 }

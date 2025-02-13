@@ -48,31 +48,36 @@ irw_download <- function(table_name,
 irw_save_bibtex <- function(table_names, output_file = "refs.bib") {
   # Initialize lists for valid BibTeX entries and invalid table names
   valid_entries <- character()
-  invalid_tables <- character()
+  missing_tables <- character()
+  missing_doi_tables <- character()
   
   # Process each table name
   for (table_name in table_names) {
-    table_row <- data_index[data_index$Filename == table_name, ]
+    # Step 1: Fetch table from Redivis
+    table <- tryCatch(
+      .fetch_redivis_table(table_name),
+      error = function(e) {
+        missing_tables <<- c(missing_tables, table_name)  # Track tables not found in IRW
+        NULL
+      }
+    )
     
-    # Handle missing tables
-    if (nrow(table_row) == 0) {
-      invalid_tables <- c(invalid_tables, table_name)
-      next
-    }
+    # If table retrieval failed, move to next table
+    if (is.null(table)) next
     
-    # Fetch BibTeX from DOI
-    doi <- table_row$DOI
-    bibtex <- if (!is.na(doi) && nzchar(doi)) {
+    # Step 2: Retrieve DOI from Redivis
+    doi <- table$properties$container$doi
+    
+    # Attempt to fetch BibTeX using DOI
+    bibtex <- if (!is.null(doi) && nzchar(doi)) {
       response <- tryCatch(
         httr::GET(
           glue::glue("https://doi.org/{doi}"),
           httr::add_headers(Accept = "application/x-bibtex")
         ),
-        error = function(e)
-          NULL
+        error = function(e) NULL
       )
-      if (!is.null(response) &&
-          httr::status_code(response) == 200) {
+      if (!is.null(response) && httr::status_code(response) == 200) {
         httr::content(response, as = "text", encoding = "UTF-8")
       } else {
         NULL
@@ -81,42 +86,38 @@ irw_save_bibtex <- function(table_names, output_file = "refs.bib") {
       NULL
     }
     
-    # Fallback to manual BibTeX
+    # Step 3: Fall back to manual BibTeX if DOI retrieval fails
     if (is.null(bibtex)) {
-      manual_bibtex <- bibtex_manual[bibtex_manual$Filename == table_name, "BibTex", drop = FALSE]
-      if (nrow(manual_bibtex) > 0) {
-        bibtex <- manual_bibtex$BibTex
+      manual_bibtex <- bibtex_manual[bibtex_manual$Filename == table_name, "BibTex", drop = TRUE]
+      if (length(manual_bibtex) > 0 && nzchar(manual_bibtex)) {
+        bibtex <- manual_bibtex
       } else {
-        invalid_tables <- c(invalid_tables, table_name)
+        missing_doi_tables <- c(missing_doi_tables, table_name)
         next
       }
     }
     
     # Update the BibTeX key while preserving the entry type
     if (!is.null(bibtex) && grepl("^@", bibtex)) {
-      bibtex <- sub("@(\\w+)\\{[^,]+,",
-                    paste0("@\\1{", table_name, ","),
-                    bibtex)
+      bibtex <- sub("@(\\w+)\\{[^,]+,", paste0("@\\1{", table_name, ","), bibtex)
+      valid_entries <- c(valid_entries, bibtex)
     }
-    
-    # Add valid BibTeX to the list
-    valid_entries <- c(valid_entries, bibtex)
   }
   
   # Save valid entries to file
   if (length(valid_entries) > 0) {
     writeLines(unique(valid_entries), con = output_file)
-    message("BibTeX entries saved to: ", output_file)
-  } else {
-    message("No valid BibTeX entries found. Output file was not created.")
   }
   
-  # Message for invalid tables
-  if (length(invalid_tables) > 0) {
-    message(
-      "NOTE: These tables were not saved due to invalid names or missing BibTeX info: ",
-      paste(invalid_tables, collapse = ", ")
-    )
+  # Messages for missing tables and missing DOIs
+  if (length(missing_tables) > 0) {
+    message("NOTE: These tables were not processed because they do not exist in IRW. Please check the names: ", 
+            paste(missing_tables, collapse = ", "))
+  }
+  
+  if (length(missing_doi_tables) > 0) {
+    message("NOTE: These tables were missing valid DOI information, and no manual BibTeX entry was found: ", 
+            paste(missing_doi_tables, collapse = ", "))
   }
   
   invisible(valid_entries)
