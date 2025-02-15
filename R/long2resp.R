@@ -7,10 +7,6 @@
 #' to avoid excessive sparsity in the response matrix.
 #' Users can disable filtering by setting `id_density_threshold = NULL`.
 #'
-#' Additionally, the function detects and resolves duplicate id-item responses.
-#' By default, it keeps the **most common response (mode)**, but users can specify
-#' an alternative method (`mean`, `median`, or `first` response).
-#'
 #' @param df A data frame containing IRW-compliant item response data in long format.
 #' @param wave (Optional) A numeric value specifying which wave to filter.
 #'        If the dataset does not have a "wave" column, this input is ignored.

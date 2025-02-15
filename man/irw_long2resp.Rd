@@ -31,8 +31,4 @@ optional metadata elements, filtering by wave, and ensuring consistency.
 This function applies a default sparsity filter with a threshold of \code{0.1} for \code{id} density
 to avoid excessive sparsity in the response matrix.
 Users can disable filtering by setting \code{id_density_threshold = NULL}.
-
-Additionally, the function detects and resolves duplicate id-item responses.
-By default, it keeps the \strong{most common response (mode)}, but users can specify
-an alternative method (\code{mean}, \code{median}, or \code{first} response).
 }
