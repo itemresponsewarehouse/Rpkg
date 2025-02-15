@@ -15,10 +15,11 @@ reference:
   desc: Functions for fetching IRW data.
 - contents:
   - irw_fetch
+  - irw_merge
   - irw_download
   - irw_save_bibtex
-- title: Reformat
-  dec: Functions for reformatting IRW data for psychometric analysis.
+- title: Process
+  dec: Functions for processing IRW data for psychometric analysis.
 - contents:
   - irw_long2resp
 - title: Example IRW data

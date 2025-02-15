@@ -33,17 +33,24 @@ irw_long2resp <- function(df, wave = NULL, id_density_threshold = 0.1, agg_metho
     stop("Missing required IRW columns: ", paste(missing_cols, collapse = ", "))
   }
   
-  # Stop execution if 'date' or 'rater' columns exist
-  if (any(c("date", "rater") %in% names(df))) {
-    stop("This function does not yet support data with 'date' or 'rater' columns.")
+  # Stop execution if 'date' exists
+  if ("date" %in% names(df)) {
+    stop("This function does not yet support data with 'date'.")
+  }
+
+  # Store messages to print at the end
+  messages <- c()
+  
+  # Check for "rater" column and count unique raters
+  if ("rater" %in% names(df)) {
+    num_raters <- length(unique(df$rater))
+    messages <- c(messages, paste0("NOTE: This dataset contains 'rater' information with ", num_raters, " unique raters.\n"))
   }
   
   # Drop non-essential columns except id, item, resp, and wave (if exists)
   essential_cols <- c("id", "item", "resp", "wave")
   df <- df[, intersect(names(df), essential_cols), drop = FALSE]
-  
-  # Store messages to print at the end
-  messages <- c()
+
   
   # Handle wave filtering
   if ("wave" %in% names(df)) {
@@ -127,12 +134,12 @@ irw_long2resp <- function(df, wave = NULL, id_density_threshold = 0.1, agg_metho
     messages <- c(messages, paste0(
       "Found ", num_duplicate_responses, " responses across ", 
       num_affected_pairs, " unique id-item pairs (", prop_dup_pairs, "% of total). ",
-      "Average responses per pair: ", avg_duplicates_per_pair, ". ",
-      "Aggregating responses based on '", agg_method, "' method."
+      "\nAverage responses per pair: ", avg_duplicates_per_pair, ". ",
+      "\nAggregating responses based on agg_method='", agg_method, "'."
     ))
   }
   
-  # Deduplication function based on user input
+  # Aggregation based on user input
   if (agg_method == "mode") {
     mode_fn <- function(x) {
       x <- na.omit(x)
