@@ -35,107 +35,84 @@ irw_list_tables <- function() {
 }
 
 
-#' Retrieve and Print IRW Database Metadata
+#' Retrieve and Print IRW Database or Table Information
 #'
-#' Fetches and displays comprehensive metadata for the IRW database, including the database version,
-#' number of tables, total data size, and relevant URLs.
+#' Fetches and displays information for the IRW database or a specified table.
+#' If no table name is provided, it returns general database information.
+#' If a table name is provided, it returns detailed information about that table.
 #'
+#' @param table_name Optional. A character string specifying the name of the table to retrieve information for.
 #' @examples
 #' \dontrun{
-#'   irw_db_metadata()
+#'   irw_info()  # Prints database information
+#'   irw_info("abortion")  # Prints table-specific information
 #' }
 #' @export
-irw_db_metadata <- function() {
-  # Initialize the datasource if it hasn't been initialized
-  ds <- .initialize_datasource()
+irw_info <- function(table_name = NULL) {
+  if (is.null(table_name)) {
+    # Fetch database information
+    ds <- .initialize_datasource()
+    version <- ds$properties$version$tag
+    table_count <- ds$properties$tableCount
+    created_at <- ds$properties$createdAt / 1000  # Convert from milliseconds to seconds
+    updated_at <- ds$properties$updatedAt / 1000  # Convert from milliseconds to seconds
+    total_size <- ds$properties$totalNumBytes / (1024 ^ 3)  # Convert bytes to GB
+    dataset_url <- ds$properties$url
+    documentation_link <- if (!is.null(ds$properties$links[[1]]$url)) ds$properties$links[[1]]$url else "N/A"
+    methodology_link <- "Tables have been harmonized as per details given here: (https://datapages.github.io/irw/standard.html)."
+    usage_link <- "Please find information about data licenses and citation info here: (https://datapages.github.io/irw/docs.html)."
+    
+    formatted_created_at <- format(as.POSIXct(created_at, origin = "1970-01-01", tz = "UTC"), "%Y-%m-%d %H:%M:%S")
+    formatted_updated_at <- format(as.POSIXct(updated_at, origin = "1970-01-01", tz = "UTC"), "%Y-%m-%d %H:%M:%S")
+    
+    message(strrep("-", 50))
+    message("IRW Database Information")
+    message(strrep("-", 50))
+    message(sprintf("%-25s %s", "Version:", version))
+    message(sprintf("%-25s %d", "Table Count:", table_count))
+    message(sprintf("%-25s %.2f GB", "Total Data Size:", total_size))
+    message(sprintf("%-25s %s", "Created At:", formatted_created_at))
+    message(sprintf("%-25s %s", "Last Updated At:", formatted_updated_at))
+    message(strrep("-", 50))
+    message(sprintf("%-25s %s", "Redivis URL:", dataset_url))
+    message(sprintf("%-25s %s", "Data Website:", documentation_link))
+    message(sprintf("%-25s %s", "Methodology:", methodology_link))
+    message(sprintf("%-25s %s", "Usage Information:", usage_link))
+    message(strrep("-", 50))
+  } else {
+    # Fetch table-specific information
+    table <- .fetch_redivis_table(table_name)
+    bib <- .fetch_biblio_table()
+    thisbib <- bib[bib$table == table_name, ]
+    
+    name <- table$properties$name
+    num_rows <- table$properties$numRows
+    data_size <- table$properties$numBytes / 1024  # Convert bytes to KB
+    variable_count <- table$properties$variableCount
+    table_url <- table$properties$url
+    doi <- thisbib$DOI__for_paper_
+    url_data <- thisbib$URL__for_data_
+    licence <- thisbib$Derived_License
+    description <- thisbib$Description
+    reference <- thisbib$Reference_x  
+    
+    message(strrep("-", 50))
+    message("Table Information for: ", table_name)
+    message(strrep("-", 50))
+    message(sprintf("%-25s %s", "Description:", description))
+    message(sprintf("%-25s %d", "Number of Rows:", num_rows))
+    message(sprintf("%-25s %d", "Variable Count:", variable_count))
+    message(sprintf("%-25s %.2f KB", "Data Size (KB):", data_size))
+    message(strrep("-", 50))
+    message(sprintf("%-25s %s", "Redivis URL:", table_url))
+    message(sprintf("%-25s %s", "Data URL:", url_data))
+    message(sprintf("%-25s %s", "DOI:", doi))
+    message(sprintf("%-25s %s", "License:", licence))
+    message(strrep("-", 50))
+    message(sprintf("%s%s", "Reference:\n", reference))
+    message(strrep("-", 50))
+  }
   
-  # Retrieve metadata properties
-  version <- ds$properties$version$tag
-  table_count <- ds$properties$tableCount
-  created_at <- ds$properties$createdAt / 1000  # Convert from milliseconds to seconds
-  updated_at <- ds$properties$updatedAt / 1000  # Convert from milliseconds to seconds
-  total_size <- ds$properties$totalNumBytes / (1024 ^ 3)  # Convert bytes to GB
-  active_size <- ds$properties$totalActiveTabularBytes / (1024 ^ 3)  # Convert bytes to GB
-  doi <- ds$properties$doi
-  doi_url <- if (!is.null(doi)) paste0("https://doi.org/", doi) else "N/A"
-  dataset_url <- ds$properties$url
-  documentation_link <- if (!is.null(ds$properties$links[[1]]$url)) ds$properties$links[[1]]$url else "N/A"
-  methodology_link <- if (!is.null(ds$properties$methodologyMarkdown)) ds$properties$methodologyMarkdown else "N/A"
-  usage_link <- if (!is.null(ds$properties$usageMarkdown)) ds$properties$usageMarkdown else "N/A"
-  
-  # Format dates
-  formatted_created_at <- format(as.POSIXct(created_at, origin = "1970-01-01", tz = "UTC"), "%Y-%m-%d %H:%M:%S")
-  formatted_updated_at <- format(as.POSIXct(updated_at, origin = "1970-01-01", tz = "UTC"), "%Y-%m-%d %H:%M:%S")
-  
-  # Print metadata information
-  cat("\nIRW Database Metadata\n")
-  cat(strrep("-", 50), "\n")
-  cat(sprintf("%-25s %s\n", "Version:", version))
-  cat(sprintf("%-25s %d\n", "Table Count:", table_count))
-  cat(sprintf("%-25s %s\n", "Created At:", formatted_created_at))
-  cat(sprintf("%-25s %s\n", "Last Updated At:", formatted_updated_at))
-  cat(sprintf("%-25s %.2f GB\n", "Total Data Size:", total_size))
-  cat(sprintf("%-25s %.2f GB\n", "Active Data Size:", active_size))
-  cat(sprintf("%-25s %s\n", "DOI:", doi_url))
-  cat(sprintf("%-25s %s\n", "Dataset URL:", dataset_url))
-  cat(sprintf("%-25s %s\n", "Documentation:", documentation_link))
-  cat(sprintf("%-25s %s\n", "Methodology:", methodology_link))
-  cat(sprintf("%-25s %s\n", "Usage Information:", usage_link))
-  cat(strrep("-", 50), "\n")
-  
-  # No return value—only prints output
-  invisible(NULL)
-}
-
-#' Retrieve and Print Metadata for a Specific Table
-#'
-#' Fetches and displays detailed metadata for a specified table in the IRW database.
-#' The metadata includes information such as the number of rows, size in bytes, timestamps,
-#' access level, and related URLs.
-#'
-#' @param table_name A character string specifying the name of the table to retrieve metadata for.
-#' @examples
-#' \dontrun{
-#'   irw_table_metadata("abortion")
-#' }
-#' @export
-irw_table_metadata <- function(table_name) {
-  # Fetch the table object
-  table <- .fetch_redivis_table(table_name)
-  
-  # Retrieve metadata properties
-  name <- table$properties$name
-  created_at <- table$properties$createdAt / 1000  # Convert from milliseconds to seconds
-  updated_at <- table$properties$updatedAt / 1000  # Convert from milliseconds to seconds
-  num_rows <- table$properties$numRows
-  data_size <- table$properties$numBytes / 1024  # Convert bytes to KB
-  variable_count <- table$properties$variableCount
-  table_url <- table$properties$url
-  is_sample <- table$properties$isSample
-  container_url <- table$properties$container$url
-  doi <- table$properties$container$doi
-  doi_url <- if (!is.null(doi)) paste0("https://doi.org/", doi) else "N/A"
-  
-  # Format dates
-  formatted_created_at <- format(as.POSIXct(created_at, origin = "1970-01-01", tz = "UTC"), "%Y-%m-%d %H:%M:%S")
-  formatted_updated_at <- format(as.POSIXct(updated_at, origin = "1970-01-01", tz = "UTC"), "%Y-%m-%d %H:%M:%S")
-  
-  # Print metadata information
-  cat("\nTable Metadata for:", table_name, "\n")
-  cat(strrep("-", 50), "\n")
-  cat(sprintf("%-25s %s\n", "Name:", name))
-  cat(sprintf("%-25s %s\n", "Created At:", formatted_created_at))
-  cat(sprintf("%-25s %s\n", "Last Updated At:", formatted_updated_at))
-  cat(sprintf("%-25s %d\n", "Number of Rows:", num_rows))
-  cat(sprintf("%-25s %.2f KB\n", "Data Size (KB):", data_size))
-  cat(sprintf("%-25s %d\n", "Variable Count:", variable_count))
-  cat(sprintf("%-25s %s\n", "Is Sample:", ifelse(is_sample, "Yes", "No")))
-  cat(sprintf("%-25s %s\n", "DOI:", doi_url))
-  cat(sprintf("%-25s %s\n", "Table URL:", table_url))
-  cat(sprintf("%-25s %s\n", "Container URL:", container_url))
-  cat(strrep("-", 50), "\n\n")
-  
-  # No return value—only prints output
   invisible(NULL)
 }
 

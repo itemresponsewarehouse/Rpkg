@@ -7,9 +7,8 @@ reference:
 - title: Explore
   desc: Functions for exploring IRW database.
 - contents:
+  - irw_info
   - irw_list_tables
-  - irw_db_metadata
-  - irw_table_metadata
   - irw_metadata
   - irw_filter
 - title: Fetch

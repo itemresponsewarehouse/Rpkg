@@ -25,12 +25,8 @@ Before fetching data, you can explore the available datasets and their metadata.
 List all datasets and their metadata:
 ```{r, eval=FALSE}
 irw_list_tables()
-
-metadata <- irw_metadata()
-summary(metadata)
-
-irw_db_metadata()
-irw_table_metadata("4thgrade_math_sirt")
+irw_info()
+irw_info("4thgrade_math_sirt")
 ```
 
 
