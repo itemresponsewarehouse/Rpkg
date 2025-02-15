@@ -62,16 +62,8 @@ irw_save_bibtex <- function(table_names, output_file = "refs.bib") {
       next
     }
     
-    # Attempt to retrieve a DOI. If "DOI__for_paper_" is empty, fall back to "DOI".
-    doi_for_paper <- biblio[biblio$table == table_name, "DOI__for_paper_", drop = TRUE]
-    doi_alternative <- biblio[biblio$table == table_name, "DOI", drop = TRUE]
-    
-    # Prefer "DOI__for_paper_" if it's non-empty; otherwise, use "DOI".
-    doi <- if (!is.null(doi_for_paper) && nzchar(doi_for_paper)) {
-      doi_for_paper
-    } else {
-      doi_alternative
-    }
+    # Retrieve DOI from "DOI__for_paper_"
+    doi <- biblio[biblio$table == table_name, "DOI__for_paper_", drop = TRUE]
     
     # Attempt to fetch BibTeX from the DOI
     bibtex <- NULL
