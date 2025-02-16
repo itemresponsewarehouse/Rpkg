@@ -191,8 +191,7 @@
   .irw_env$biblio_version <- latest_version_tag
   
   # Filter biblio table to only include tables that exist in the IRW database
-  filtered_biblio_tibble <- .irw_env$biblio_tibble %>%
-    dplyr::filter(table %in% table_name_list)  # Only keep tables that exist in IRW
+  filtered_biblio_tibble <- .irw_env$biblio_tibble[.irw_env$biblio_tibble$table %in% table_name_list, ]
   
   return(filtered_biblio_tibble)
 }
