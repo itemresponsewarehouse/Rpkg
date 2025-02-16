@@ -58,24 +58,37 @@ irw_merge <- function(table_name, add_source_column = FALSE) {
     return(NULL)
   }
   
-  # Fetch tables and check structures
-  fetch_and_check <- function(tbl_name) {
+  # Fetch tables and merge incrementally
+  merged_table <- NULL
+  all_tables <- list()  # Keep track of the tables to perform the checks after fetching
+  
+  for (tbl_name in merge_candidates) {
+    # Fetch the table (data and structure)
     data <- irw_fetch(tbl_name)  # Fetch table
-    structure <- colnames(data)  # Extract column names as structure
-    if (add_source_column) {
-      data$source_table <- tbl_name  # Add column indicating the source table
-    }
-    message(sprintf("Processing table: %s (Rows: %d, Columns: %d)", tbl_name, nrow(data), ncol(data)))
-    return(list(name = tbl_name, data = data, structure = structure))
+    
+    # Add the table to the list of fetched tables
+    all_tables[[tbl_name]] <- list(data = data, structure = colnames(data))
+
+    
+    message(sprintf("Fetching table: %s (Rows: %d, Columns: %d)", tbl_name, nrow(data), ncol(data)))
+    
+    # Attempt to rbind with the existing merged table
+    tryCatch({
+      if (is.null(merged_table)) {
+        merged_table <- data  # Initialize the merged table
+      } else {
+        merged_table <- rbind(merged_table, data)  # Try to merge incrementally
+      }
+    }, error = function(e) {
+      # If rbind fails, stop the function and show error message
+      stop(sprintf("Merging aborted due to structural mismatch: %s", e$message))  # Stop the function
+    })
   }
   
-  table_list <- lapply(merge_candidates, fetch_and_check)
-  
-  # Check for ID column consistency and item uniqueness
-  check_ids_and_items <- function(table_list) {
-    # Assuming 'id', 'item', and 'resp' columns exist
-    id_columns <- lapply(table_list, function(x) x$data$id)  # Check 'id' column consistency
-    item_columns <- lapply(table_list, function(x) x$data$item)  # Check 'item' columns
+  # Now, check IDs and items after fetching all tables
+  check_ids_and_items <- function() {
+    id_columns <- lapply(all_tables, function(x) x$data$id)  # Check 'id' column consistency
+    item_columns <- lapply(all_tables, function(x) x$data$item)  # Check 'item' columns
     
     # Check if IDs are just a sequence of numbers (1, 2, 3, ...)
     id_consistency <- all(sapply(id_columns, function(x) {
@@ -83,12 +96,12 @@ irw_merge <- function(table_name, add_source_column = FALSE) {
     }))
     
     if (id_consistency) {
-      message("IDs are sequential (1...n). You may need to manually verify the IDs, as there could be multiple studies in a single DOI with different subjects, where IDs are the same in both studies (e.g., 1, 2, 3,...).")
+      message("\nNOTE: IDs are sequential (1...n). You may need to manually verify the IDs, as there could be multiple studies with different subjects, where IDs are the same in both studies (e.g., 1, 2, 3,...). Proceed with caution.")
     } else {
       # Check if IDs are the same across all datasets
       id_consistency <- all(sapply(id_columns, function(x) length(intersect(x, id_columns[[1]])) > 0))
       if (!id_consistency) {
-        stop("ID columns do not match across datasets. You may need to manually verify.")
+        message("\nNOTE: IDs do not match across tables. Proceed with caution.")
       }
     }
     
@@ -108,42 +121,39 @@ irw_merge <- function(table_name, add_source_column = FALSE) {
     }
     
     if (!item_consistency) {
-      stop("Item columns overlap across datasets. Manual verification required.")
+      message("\nNOTE: There are items that overlap across tables. Proceed with caution.")
     }
+    
+    # Return whether merging should continue (based on item consistency and id consistency)
+    return(id_consistency && item_consistency)
   }
   
-  check_ids_and_items(table_list)
+  # Check IDs and items, and prompt user if needed
+  proceed <- check_ids_and_items()
   
-  # Identify groups of tables with the same structure
-  structure_map <- split(table_list, sapply(table_list, function(x) paste(sort(x$structure), collapse = ",")))
-  
-  # Merge tables that share the same structure
-  merged_tables <- list()
-  failed_tables <- c()
-  
-  for (key in names(structure_map)) {
-    subset <- structure_map[[key]]
-    if (length(subset) > 1) {
-      merged_tables[[key]] <- dplyr::bind_rows(lapply(subset, function(x) x$data))
+  if (!proceed) {
+    proceed_input <- readline(prompt = "Do you still want to proceed with merging? (yes/no): ")
+    
+    # Handle user input
+    while (tolower(proceed_input) != "yes" && tolower(proceed_input) != "no") {
+      proceed_input <- readline(prompt = "Please answer 'yes' or 'no': ")
+    }
+    
+    if (tolower(proceed_input) == "yes") {
+      add_source_column <- TRUE  # Set add_source_column to TRUE if user confirms
     } else {
-      failed_tables <- c(failed_tables, subset[[1]]$name)
+      message("Merge operation canceled.")
+      return(NULL)
     }
   }
-  
-  if (length(failed_tables) > 0) {
-    message("The following tables could not be merged due to structural differences:")
-    for (tbl in failed_tables) {
-      message(sprintf("  - %s", tbl))
-    }
+
+  if (add_source_column) {
+    merged_table$source_table <- rep(names(all_tables), sapply(all_tables, function(x) nrow(x$data)))
   }
-  
   # Print final processing message
-  if (length(merged_tables) == 1) {
-    merged_table <- merged_tables[[1]]
-    message(sprintf("\nProcessing done. Merged table dimension: Rows: %d, Columns: %d", nrow(merged_table), ncol(merged_table)))
-    return(merged_table)  # Return single merged table directly
-  } else {
-    message("Processing done. Returning multiple merged tables.")
-    return(merged_tables)  # Return list of merged tables
+  message(sprintf("\nProcessing done. Merged table dimension: Rows: %d, Columns: %d", nrow(merged_table), ncol(merged_table)))
+  if (add_source_column) {
+    message("The merged table includes a 'source_table' column indicating the source of each row.")
   }
+  return(merged_table)
 }
