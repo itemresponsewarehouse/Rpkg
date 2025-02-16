@@ -68,7 +68,7 @@ irw_merge <- function(table_name, add_source_column = FALSE) {
     
     # Add the table to the list of fetched tables
     all_tables[[tbl_name]] <- list(data = data, structure = colnames(data))
-
+    
     
     message(sprintf("Fetching table: %s (Rows: %d, Columns: %d)", tbl_name, nrow(data), ncol(data)))
     
@@ -146,7 +146,7 @@ irw_merge <- function(table_name, add_source_column = FALSE) {
       return(NULL)
     }
   }
-
+  
   if (add_source_column) {
     merged_table$source_table <- rep(names(all_tables), sapply(all_tables, function(x) nrow(x$data)))
   }
