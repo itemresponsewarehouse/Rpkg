@@ -51,14 +51,29 @@ irw_save_bibtex <- function(table_names, output_file = "refs.bib") {
   missing_tables <- character()
   missing_doi_tables <- character()
   
-  # Fetch the biblio table that contains both DOI fields and manual BibTeX entries
-  biblio <- .fetch_biblio_table()
-  
   # Process each table name
   for (table_name in table_names) {
+    # Check if the table exists in IRW by attempting to fetch it
+    tryCatch({
+      # If the table exists in IRW, this will succeed
+      irw_table <- .fetch_redivis_table(table_name)
+    }, error = function(e) {
+      # If an error occurs, the table is missing from IRW
+      missing_tables <<- c(missing_tables, table_name)
+      return(NULL)  # Skip processing for this table
+    })
+    
+    # If the table is missing from IRW, skip further processing and just report it
+    if (table_name %in% missing_tables) {
+      next
+    }
+    
+    # Now that the table exists in IRW, fetch the biblio table
+    biblio <- .fetch_biblio_table()
+    
     # Check if the table is in biblio
     if (!table_name %in% biblio$table) {
-      missing_tables <- c(missing_tables, table_name)
+      missing_doi_tables <- c(missing_doi_tables, table_name)
       next
     }
     
@@ -111,14 +126,14 @@ irw_save_bibtex <- function(table_names, output_file = "refs.bib") {
   # Messages for missing tables and missing DOIs
   if (length(missing_tables) > 0) {
     message(
-      "NOTE: These tables were not processed because they do not exist in IRW. Please check the names: ",
+      "NOTE: These tables were not processed because they do not exist in the IRW database. Please check the names:\n",
       paste(missing_tables, collapse = ", ")
     )
   }
   
   if (length(missing_doi_tables) > 0) {
     message(
-      "NOTE: These tables were missing valid DOI information, and no manual BibTeX entry was found: ",
+      "NOTE: These tables exist in the IRW database but were missing valid DOI information, and no manual BibTeX entry was found:\n",
       paste(missing_doi_tables, collapse = ", ")
     )
   }

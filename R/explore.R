@@ -18,7 +18,9 @@ irw_list_tables <- function() {
   ds <- .initialize_datasource()
   
   # Retrieve the list of tables from the datasource
-  tables <- ds$list_tables()  
+  tables <- .retry_with_backoff(function() {
+    ds$list_tables()  
+  })
   
   # Extract metadata to create a data frame
   tables_info <- data.frame(
