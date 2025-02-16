@@ -1,13 +1,13 @@
 #' Merge Tables Sharing the Same DOI or BibTex
 #'
 #' Identifies and merges tables that share the same DOI or, if DOI is missing, the same BibTex entry.
-#' If tables do not have the same structure, only those with identical structures will be merged,
-#' and a message will be printed listing tables that could not be merged.
+#' If tables do not have the same structure, only those with identical structures will be merged.
 #'
 #' @param table_name A character string specifying the name of the table to find merge candidates for.
+#' @param add_source_column A boolean value indicating whether to add the `source_table` column (default is FALSE).
 #' @return A merged data frame containing all tables with the same DOI or BibTex, or NULL if no merge candidates are found.
 #' @export
-irw_merge <- function(table_name) {
+irw_merge <- function(table_name, add_source_column = FALSE) {
   # Fetch bibliography table
   bib <- .fetch_biblio_table()
   
@@ -25,6 +25,7 @@ irw_merge <- function(table_name) {
   
   # Find merge candidates
   maps <- generate_doi_bibtex_mapping(bib)
+  
   find_merge_candidates <- function(table_name, maps) {
     for (doi in names(maps$doi_map)) {
       if (table_name %in% maps$doi_map[[doi]]) {
@@ -61,11 +62,57 @@ irw_merge <- function(table_name) {
   fetch_and_check <- function(tbl_name) {
     data <- irw_fetch(tbl_name)  # Fetch table
     structure <- colnames(data)  # Extract column names as structure
+    if (add_source_column) {
+      data$source_table <- tbl_name  # Add column indicating the source table
+    }
     message(sprintf("Processing table: %s (Rows: %d, Columns: %d)", tbl_name, nrow(data), ncol(data)))
     return(list(name = tbl_name, data = data, structure = structure))
   }
   
   table_list <- lapply(merge_candidates, fetch_and_check)
+  
+  # Check for ID column consistency and item uniqueness
+  check_ids_and_items <- function(table_list) {
+    # Assuming 'id', 'item', and 'resp' columns exist
+    id_columns <- lapply(table_list, function(x) x$data$id)  # Check 'id' column consistency
+    item_columns <- lapply(table_list, function(x) x$data$item)  # Check 'item' columns
+    
+    # Check if IDs are just a sequence of numbers (1, 2, 3, ...)
+    id_consistency <- all(sapply(id_columns, function(x) {
+      all(x == seq_along(x))  # Check if the IDs are a sequence (1, 2, 3, ...)
+    }))
+    
+    if (id_consistency) {
+      message("IDs are sequential (1...n). You may need to manually verify the IDs, as there could be multiple studies in a single DOI with different subjects, where IDs are the same in both studies (e.g., 1, 2, 3,...).")
+    } else {
+      # Check if IDs are the same across all datasets
+      id_consistency <- all(sapply(id_columns, function(x) length(intersect(x, id_columns[[1]])) > 0))
+      if (!id_consistency) {
+        stop("ID columns do not match across datasets. You may need to manually verify.")
+      }
+    }
+    
+    # Check if item columns are unique across datasets
+    item_consistency <- TRUE
+    if (length(item_columns) > 1) {
+      for (i in 1:(length(item_columns) - 1)) {
+        for (j in (i + 1):length(item_columns)) {
+          # Check for intersection between items in different datasets
+          if (length(intersect(item_columns[[i]], item_columns[[j]])) > 0) {
+            item_consistency <- FALSE
+            break
+          }
+        }
+        if (!item_consistency) break
+      }
+    }
+    
+    if (!item_consistency) {
+      stop("Item columns overlap across datasets. Manual verification required.")
+    }
+  }
+  
+  check_ids_and_items(table_list)
   
   # Identify groups of tables with the same structure
   structure_map <- split(table_list, sapply(table_list, function(x) paste(sort(x$structure), collapse = ",")))

@@ -7,10 +7,11 @@
 .fetch_biblio_table()
 }
 \value{
-A cached or newly fetched tibble containing biblio information.
+A tibble containing filtered biblio information, with only the tables that exist in the IRW database.
 }
 \description{
 Retrieves the metadata table from Redivis user("bdomingu")$dataset("irw_meta")$table("biblio").
 Only fetches new data if the table version tag has changed.
+This version filters out any tables that do not exist in the IRW database.
 }
 \keyword{internal}
