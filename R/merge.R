@@ -95,7 +95,7 @@ irw_merge <- function(table_name, add_source_column = FALSE) {
     
     if (!id_consistency) {
       message("\nNOTE: IDs do not match across tables. Proceed with caution.")
-    } else {
+    } else { 
       # Check if unique IDs form a sequence
       id_consistency <- !(all(sapply(id_columns, function(x) {
         unique_ids <- sort(unique(x))  # Get unique IDs and sort them
@@ -133,7 +133,7 @@ irw_merge <- function(table_name, add_source_column = FALSE) {
   proceed <- check_ids_and_items()
   
   if (!proceed) {
-    proceed_input <- readline(prompt = "\nDo you still want to proceed with merging? (yes/no): ")
+    proceed_input <- readline(prompt = "Do you still want to proceed with merging? (yes/no): ")
     
     # Handle user input
     while (tolower(proceed_input) != "yes" && tolower(proceed_input) != "no") {

@@ -86,28 +86,33 @@
   
   tryCatch({
     table_data <- ds$table(name)
-    table_data$get()  # fetch data immediately (without retry)
+    table_data$get()  # try to fetch table
     table_data
   }, error = function(e) {
     error_message <- e$message
     
-    # If dataset does not exist, stop immediately (don't retry)
+    # If table does not exist, stop immediately (don't retry)
     if (grepl("not_found_error", error_message, ignore.case = TRUE)) {
       stop(paste("\nTable", shQuote(name), "does not exist in the IRW database."), call. = FALSE)
     }
     
-    # If dataset does not exist, stop immediately (don't retry)
+    # If table cannot be fetched due to an invalid format, stop immediately (don't retry)
     if (grepl("invalid_request_error", error_message, ignore.case = TRUE)) {
       stop(paste("\nTable", shQuote(name), "cannot be fetched due to an invalid format."),
            call. = FALSE)
     }
     
-    # For transient errors, apply automatic retry logic
-    .retry_with_backoff(function() {
-      table_data <- ds$table(name)
-      table_data$get()
-      table_data
-    })
+    # If the specific error is the 'stream_callback' function error, retry with backoff
+    if (grepl("could not find function \"stream_callback\"", error_message, ignore.case = TRUE)) {
+      .retry_with_backoff(function() {
+        table_data <- ds$table(name)
+        table_data$get()
+        table_data
+      })
+    } else {
+      # For all other errors, stop with the error message
+      stop(paste("\nAn unknown error occurred:", error_message), call. = FALSE)
+    }
   })
 }
 
