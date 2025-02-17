@@ -4,12 +4,12 @@
 \alias{irw_merge}
 \title{Merge Tables Sharing the Same DOI or BibTex}
 \usage{
-irw_merge(table_name, add_source_column = FALSE)
+irw_merge(table_name, add_source_column = TRUE)
 }
 \arguments{
 \item{table_name}{A character string specifying the name of the table to find merge candidates for.}
 
-\item{add_source_column}{A boolean value indicating whether to add the \code{source_table} column (default is FALSE).}
+\item{add_source_column}{A boolean value indicating whether to add the \code{source_table} column (default is TRUE).}
 }
 \value{
 A merged data frame containing all tables with the same DOI or BibTex, or NULL if no merge candidates are found.
