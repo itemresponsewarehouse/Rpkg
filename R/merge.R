@@ -10,6 +10,7 @@
 irw_merge <- function(table_name, add_source_column = FALSE) {
   # Fetch bibliography table
   bib <- .fetch_biblio_table()
+  print(dim(bib))
   
   # Generate DOI and BibTex mapping, ignoring "NA" DOI values
   generate_doi_bibtex_mapping <- function(biblio_table) {

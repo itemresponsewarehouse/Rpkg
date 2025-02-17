@@ -169,13 +169,9 @@
   
   # Fetch the biblio table from the Redivis dataset
   dataset <- redivis::user("bdomingu")$dataset("irw_meta")
-  
-  # Ensure we have the latest dataset 
   .retry_with_backoff(function() {
     dataset$get()
   })
-  
-  # Retrieve version tag
   latest_version_tag <- dataset$properties$version$tag
   
   # If biblio exists in cache and the version tag is the same, return cached tibble
@@ -188,16 +184,14 @@
   
   # Fetch new biblio table and convert it to a tibble
   table <- dataset$table("biblio")
-  
-  .irw_env$biblio_tibble <- .retry_with_backoff(function() {
+  biblio_tibble <- .retry_with_backoff(function() {
     table$to_tibble()
   })
   
   # Store the new version tag
   .irw_env$biblio_version <- latest_version_tag
-  
   # Filter biblio table to only include tables that exist in the IRW database
-  filtered_biblio_tibble <- .irw_env$biblio_tibble[.irw_env$biblio_tibble$table %in% table_name_list, ]
+  .irw_env$biblio_tibble = biblio_tibble[biblio_tibble$table %in% table_name_list, ]
   
-  return(filtered_biblio_tibble)
+  return(.irw_env$biblio_tibble)
 }
