@@ -10,7 +10,6 @@
 irw_merge <- function(table_name, add_source_column = FALSE) {
   # Fetch bibliography table
   bib <- .fetch_biblio_table()
-  print(dim(bib))
   
   # Generate DOI and BibTex mapping, ignoring "NA" DOI values
   generate_doi_bibtex_mapping <- function(biblio_table) {
@@ -91,18 +90,19 @@ irw_merge <- function(table_name, add_source_column = FALSE) {
     id_columns <- lapply(all_tables, function(x) x$data$id)  # Check 'id' column consistency
     item_columns <- lapply(all_tables, function(x) x$data$item)  # Check 'item' columns
     
-    # Check if IDs are just a sequence of numbers (1, 2, 3, ...)
-    id_consistency <- all(sapply(id_columns, function(x) {
-      all(x == seq_along(x))  # Check if the IDs are a sequence (1, 2, 3, ...)
-    }))
+    # Check if IDs are the same across all datasets
+    id_consistency <- all(sapply(id_columns, function(x) length(intersect(x, id_columns[[1]])) > 0))
     
-    if (id_consistency) {
-      message("\nNOTE: IDs are sequential (1...n). You may need to manually verify the IDs, as there could be multiple studies with different subjects, where IDs are the same in both studies (e.g., 1, 2, 3,...). Proceed with caution.")
+    if (!id_consistency) {
+      message("\nNOTE: IDs do not match across tables. Proceed with caution.")
     } else {
-      # Check if IDs are the same across all datasets
-      id_consistency <- all(sapply(id_columns, function(x) length(intersect(x, id_columns[[1]])) > 0))
+      # Check if unique IDs form a sequence
+      id_consistency <- !(all(sapply(id_columns, function(x) {
+        unique_ids <- sort(unique(x))  # Get unique IDs and sort them
+        all(unique_ids == seq(min(unique_ids), max(unique_ids)))  # Check if the sorted unique IDs are a sequence
+      })))
       if (!id_consistency) {
-        message("\nNOTE: IDs do not match across tables. Proceed with caution.")
+        message("\nNOTE: IDs are sequential (1...n). You may need to manually verify the IDs, as there could be multiple studies with different subjects, where IDs are the same in both studies (e.g., 1, 2, 3,...). Proceed with caution.")
       }
     }
     
@@ -133,7 +133,7 @@ irw_merge <- function(table_name, add_source_column = FALSE) {
   proceed <- check_ids_and_items()
   
   if (!proceed) {
-    proceed_input <- readline(prompt = "Do you still want to proceed with merging? (yes/no): ")
+    proceed_input <- readline(prompt = "\nDo you still want to proceed with merging? (yes/no): ")
     
     # Handle user input
     while (tolower(proceed_input) != "yes" && tolower(proceed_input) != "no") {
