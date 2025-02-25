@@ -46,11 +46,10 @@ jobs:
           Rscript -e "if (!requireNamespace('remotes', quietly = TRUE)) install.packages('remotes')"
           Rscript -e "remotes::install_github('redivis/redivis-r', ref='main')"
 
-      # Install renv and restore dependencies
-      - name: Install renv and Restore Dependencies
-        run: |
-          Rscript -e "install.packages('renv')"
-          Rscript -e "renv::restore()"
+      - uses: r-lib/actions/setup-r-dependencies@v2
+        with:
+          extra-packages: any::rcmdcheck
+          needs: check
 
       - uses: r-lib/actions/check-r-package@v2
         with:

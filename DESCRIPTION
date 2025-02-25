@@ -1,27 +1,20 @@
 Package: irwpkg
 Type: Package
-Title: Package for working with data from the IRW
-Version: 0.1.0
+Title: Package for Working with Data from the Item Response Warehouse
+Version: 1.0.0
 Authors@R: c(
   person("Hansol", "Lee", email = "hansol@stanford.edu",role = c("aut", "cre")),
 	person("Michael", "Hardy", email = "hardym@stanford.edu",role = c("aut")),
 	person("Ben", "Domingue", email = "bdomingu@stanford.edu", role = c("aut"))
 	)
 Maintainer: Hansol Lee <hansol@stanford.edu>
-URL: https://hansorlee.github.io/irwpkg
+URL: https://hansorlee.github.io/irwpkg/
 Contact: mailto:itemresponsewarehouse@stanford.edu
-Description: Functions to manage data from the Item Response Warehouse. 
-Depends: R (>= 3.5.0)
+Description: Functions to manage data from the Item Response Warehouse. Requires the `redivis` package, which can be installed from GitHub using `devtools::install_github('redivis/redivis-r', ref='main')`.
+Additional_repositories: https://github.com/redivis/redivis-r
+Depends: R (>= 4.0.0)
 Imports:
     R.utils,
-    dplyr,
-    psych,
-    purrr,
-    stringr,
-    tibble,
-    tidyr,
-    forcats,
-    tidyselect,
     glue,
     httr
 Suggests: 

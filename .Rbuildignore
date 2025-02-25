@@ -13,3 +13,4 @@
 ^pkgdown$
 ^hansol-sandbox$
 
+^cran-comments\.md$
