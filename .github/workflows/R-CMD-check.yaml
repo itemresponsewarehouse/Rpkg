@@ -39,6 +39,12 @@ jobs:
           r-version: ${{ matrix.config.r }}
           http-user-agent: ${{ matrix.config.http-user-agent }}
           use-public-rspm: true
+          
+      # Install Redivis from GitHub before checking dependencies
+      - name: Install Redivis from GitHub
+        run: |
+          Rscript -e "if (!requireNamespace('remotes', quietly = TRUE)) install.packages('remotes')"
+          Rscript -e "remotes::install_github('redivis/redivis-r', ref='main')"
 
       - uses: r-lib/actions/setup-r-dependencies@v2
         with:

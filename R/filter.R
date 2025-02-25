@@ -49,7 +49,7 @@ irw_filter <- function(n_responses = NULL,
                        responses_per_item = NULL,
                        density = c(0.5, 1),
                        var = NULL) {
-  
+  .check_redivis()
   metadata <- irw_metadata()  # Load latest metadata
   
   # Store initial dataset count

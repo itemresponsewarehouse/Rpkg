@@ -17,7 +17,6 @@ Imports:
     dplyr,
     psych,
     purrr,
-    redivis,
     stringr,
     tibble,
     tidyr,
@@ -25,11 +24,10 @@ Imports:
     tidyselect,
     glue,
     httr
-Remotes:
-    redivis/redivis-r
 Suggests: 
     testthat (>= 3.0.0),
-    evaluate
+    evaluate,
+    redivis
 License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: true

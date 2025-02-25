@@ -14,6 +14,7 @@
 #' }
 #' @export
 irw_list_tables <- function() {
+  .check_redivis()
   # Initialize the datasource if not already set
   ds <- .initialize_datasource()
   
@@ -51,6 +52,7 @@ irw_list_tables <- function() {
 #' }
 #' @export
 irw_info <- function(table_name = NULL) {
+  .check_redivis()
   if (is.null(table_name)) {
     # Fetch database information
     ds <- .initialize_datasource()
