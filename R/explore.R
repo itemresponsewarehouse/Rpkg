@@ -9,31 +9,37 @@
 #'   \item{variableCount}{The number of variables in the table.}
 #' @examples
 #' \dontrun{
-#'   tables <- irw_list_tables()
-#'   print(tables)
+#' tables <- irw_list_tables()
+#' print(tables)
 #' }
 #' @export
 irw_list_tables <- function() {
   .check_redivis()
   # Initialize the datasource if not already set
   ds <- .initialize_datasource()
-  
+
   # Retrieve the list of tables from the datasource
   tables <- .retry_with_backoff(function() {
-    ds$list_tables()  
+    ds$list_tables()
   })
-  
+
   # Extract metadata to create a data frame
   tables_info <- data.frame(
-    name = sapply(tables, function(table) table$name),
-    numRows = sapply(tables, function(table) table$properties$numRows),
-    variableCount = sapply(tables, function(table) table$properties$variableCount),
+    name = vapply(tables, function(table) {
+      table$name
+    }, character(1)),
+    numRows = vapply(tables, function(table) {
+      table$properties$numRows
+    }, numeric(1)),
+    variableCount = vapply(tables, function(table) {
+      table$properties$variableCount
+    }, numeric(1)),
     stringsAsFactors = FALSE
   )
-  
+
   # Sort tables_info by the name column in alphabetical order
   tables_info <- tables_info[order(tables_info$name), ]
-  
+
   return(tables_info)
 }
 
@@ -47,8 +53,8 @@ irw_list_tables <- function() {
 #' @param table_name Optional. A character string specifying the name of the table to retrieve information for.
 #' @examples
 #' \dontrun{
-#'   irw_info()  # Prints database information
-#'   irw_info("abortion")  # Prints table-specific information
+#' irw_info() # Prints database information
+#' irw_info("abortion") # Prints table-specific information
 #' }
 #' @export
 irw_info <- function(table_name = NULL) {
@@ -58,17 +64,27 @@ irw_info <- function(table_name = NULL) {
     ds <- .initialize_datasource()
     version <- ds$properties$version$tag
     table_count <- ds$properties$tableCount
-    created_at <- ds$properties$createdAt / 1000  # Convert from milliseconds to seconds
-    updated_at <- ds$properties$updatedAt / 1000  # Convert from milliseconds to seconds
-    total_size <- ds$properties$totalNumBytes / (1024 ^ 3)  # Convert bytes to GB
+    created_at <- ds$properties$createdAt / 1000 # Convert from milliseconds to seconds
+    updated_at <- ds$properties$updatedAt / 1000 # Convert from milliseconds to seconds
+    total_size <- ds$properties$totalNumBytes / (1024^3) # Convert bytes to GB
     dataset_url <- ds$properties$url
-    documentation_link <- if (!is.null(ds$properties$links[[1]]$url)) ds$properties$links[[1]]$url else "N/A"
+    documentation_link <- if (!is.null(ds$properties$links[[1]]$url)) {
+      ds$properties$links[[1]]$url
+    } else {
+      "N/A"
+    }
     methodology_link <- "Tables have been harmonized as per details given here: (https://datapages.github.io/irw/standard.html)."
     usage_link <- "Please find information about data licenses and citation info here: (https://datapages.github.io/irw/docs.html)."
-    
-    formatted_created_at <- format(as.POSIXct(created_at, origin = "1970-01-01", tz = "UTC"), "%Y-%m-%d %H:%M:%S")
-    formatted_updated_at <- format(as.POSIXct(updated_at, origin = "1970-01-01", tz = "UTC"), "%Y-%m-%d %H:%M:%S")
-    
+
+    formatted_created_at <- format(
+      as.POSIXct(created_at, origin = "1970-01-01", tz = "UTC"),
+      "%Y-%m-%d %H:%M:%S"
+    )
+    formatted_updated_at <- format(
+      as.POSIXct(updated_at, origin = "1970-01-01", tz = "UTC"),
+      "%Y-%m-%d %H:%M:%S"
+    )
+
     message(strrep("-", 50))
     message("IRW Database Information")
     message(strrep("-", 50))
@@ -88,18 +104,18 @@ irw_info <- function(table_name = NULL) {
     table <- .fetch_redivis_table(table_name)
     bib <- .fetch_biblio_table()
     thisbib <- bib[bib$table == table_name, ]
-    
+
     name <- table$properties$name
     num_rows <- table$properties$numRows
-    data_size <- table$properties$numBytes / 1024  # Convert bytes to KB
+    data_size <- table$properties$numBytes / 1024 # Convert bytes to KB
     variable_count <- table$properties$variableCount
     table_url <- table$properties$url
     doi <- thisbib$DOI__for_paper_
     url_data <- thisbib$URL__for_data_
     licence <- thisbib$Derived_License
     description <- thisbib$Description
-    reference <- thisbib$Reference_x  
-    
+    reference <- thisbib$Reference_x
+
     message(strrep("-", 50))
     message("Table Information for: ", table_name)
     message(strrep("-", 50))
@@ -116,7 +132,6 @@ irw_info <- function(table_name = NULL) {
     message(sprintf("%s%s", "Reference:\n", reference))
     message(strrep("-", 50))
   }
-  
+
   invisible(NULL)
 }
-

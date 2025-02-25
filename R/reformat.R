@@ -8,11 +8,11 @@
 #' library(purrr)
 #' library(stringr)
 #' library(psych)
-#' 
+#'
 #' # -----------------------------------------------------------------------------
 #' # Internal Configuration
 #' # -----------------------------------------------------------------------------
-#' 
+#'
 #' #' @noRd
 #' # Variable roles configuration
 #' var_roles <- list(
@@ -161,11 +161,11 @@
 #'     support_to_role = NULL
 #'   )
 #' )
-#' 
+#'
 #' # ------------------------------------------------------------------------------
 #' # Global Metadata
 #' # ------------------------------------------------------------------------------
-#' 
+#'
 #' # List of supported packages that pivot data to wide format
 #' piv_wide_pkg = list(
 #'   mirt = TRUE,
@@ -176,7 +176,7 @@
 #'   mokken = TRUE,
 #'   lme4 = FALSE
 #' )
-#' 
+#'
 #' # List of supported packages for covariates in wide format
 #' cov_wide_supps = list(
 #'   mirt = FALSE,
@@ -187,14 +187,14 @@
 #'   mokken = FALSE,
 #'   lme4 = TRUE
 #' )
-#' 
+#'
 #' # Variables not currently supported
 #' not_supported_cols = c("rater", "raters", "rater_covariates", "rt")
-#' 
+#'
 #' # ------------------------------------------------------------------------------
 #' # Supported Functions and Configurations
 #' # ------------------------------------------------------------------------------
-#' 
+#'
 #' # Define configurations for supported packages and their functions
 #' supported_funcs = list(
 #'   mirt = list(
@@ -209,7 +209,7 @@
 #'       args_list_outputs = list(covdata = "a data.frame of data used for latent regression models", itemdesign = "data.frame with rows equal to the number of items and columns containing any item-design effects. rownames must be defined and matched with colnames in the data input."),
 #'       func_support = T,
 #'       other_output_support = F
-#'       
+#'
 #'     ),
 #'     mixedmirt = list(
 #'       call = "mirt::mixedmirt",
@@ -263,7 +263,7 @@
 #'       func_support = F,
 #'       other_output_support = F
 #'     )
-#'     
+#'
 #'   ),
 #'   ltm = list(
 #'     rasch = list(
@@ -430,7 +430,7 @@
 #'       func_support = F,
 #'       other_output_support = F
 #'     )
-#'     
+#'
 #'   ),
 #'   lavaan = list(
 #'     efa = list(
@@ -498,11 +498,11 @@
 #'       ## currently not supported
 #'       args_list_outputs = list(level.two.var = "vector of length nrow(X) or matrix with number of rows equal to nrow(X) that indicates the level two variable for nested data")
 #'     )
-#'     
+#'
 #'   )
 #' )
-#' 
-#' 
+#'
+#'
 #' # -----------------------------------------------------------------------------
 #' # Internal Utility Functions
 #' # -----------------------------------------------------------------------------
@@ -535,7 +535,7 @@
 #' #' @importFrom purrr map_chr
 #' #' @importFrom stringr str_replace str_replace_all
 #' #' @noRd
-#' 
+#'
 #' irw_name_fix = function(string,
 #'                         replace =
 #'                           c(
@@ -555,10 +555,10 @@
 #'   if (is.data.frame(string)) {
 #'     stop("`string` must not be a data.frame, use clean_names()")
 #'   }
-#'   
+#'
 #'   replaced_names =
 #'     stringr::str_replace_all(string = string, pattern = replace)
-#'   
+#'
 #'   # Remove starting spaces and punctuation
 #'   str_start =
 #'     stringr::str_replace(string = replaced_names,
@@ -576,32 +576,32 @@
 #'     stringr::str_replace_all(string = str_start,
 #'                              pattern = "[\\h\\s\\p{P}\\p{S}\\p{Z}\\p{C}]+",
 #'                              replacement = "_")
-#'   
+#'
 #'   new_names = tolower(cleaned_names)
-#'   
+#'
 #'   ## correct any names beginning with a digit
 #'   if (any(grepl("\\A\\d", new_names)) & !digit_first_ok) {
 #'     ## add prefix to those staring w digit
 #'     new_names[grepl("\\A\\d", new_names)] =
 #'       paste0(digit_prefix, new_names[grepl("\\A\\d", new_names)])
-#'     
+#'
 #'   }
-#'   
-#'   
+#'
+#'
 #'   # add counters to duplicated names
 #'   while (any(duplicated(new_names))) {
 #'     dupes =
 #'       vapply(seq_along(new_names), function(i) {
 #'         sum(new_names[i] == new_names[1:i])
 #'       }, 1L)
-#'     
+#'
 #'     new_names[dupes > 1] =
 #'       paste(new_names[dupes > 1], dupes[dupes > 1], sep = "_")
 #'   }
-#'   
+#'
 #'   new_names
 #' }
-#' 
+#'
 #' ## Function to apply irw_name_fix to an object with names
 #' #' Apply renaming to an object with names
 #' #'
@@ -629,17 +629,17 @@
 #'     stop("x must be a data frame or character vector")
 #'   }
 #' }
-#' 
+#'
 #' one_value_check = function(x) {
 #'   x = x[!is.na(x)]
 #'   length(unique(x)) < 2
 #' }
-#' 
+#'
 #' one_value_check_grp = function(x, f) {
 #'   x_split = split(x, f)
 #'   any(vapply(x_split, one_value_check, logical(1)))
 #' }
-#' 
+#'
 #' #' @title Check if the response variable is numeric
 #' #' @description
 #' #' This function checks if the response variable is numeric and if not, converts it to numeric.
@@ -662,7 +662,7 @@
 #' #' data = data.frame(id = c(1, 2, 3), item = c(1, 2, 3), resp = c(1, 2, 3))
 #' #' check_numeric(data, "resp")
 #' #' @noRd
-#' 
+#'
 #' check_numeric = function(data, resp, item = NULL) {
 #'   if (!is.numeric(data[[resp]])) {
 #'     if (sum(is.na(as.numeric(data[[resp]]))) > 0.75 * nrow(data) &
@@ -690,8 +690,8 @@
 #'   }
 #'   data
 #' }
-#' 
-#' 
+#'
+#'
 #' #' @noRd
 #' # Check if the dataframe is uniquely identified by the specified columns
 #' check_uniqueness = function(data, cols) {
@@ -701,9 +701,9 @@
 #'     dplyr::filter(n > 1) |>
 #'     nrow() == 0
 #' }
-#' 
+#'
 #' # Function to find the pivot arguments for pivot_wider
-#' 
+#'
 #' find_pivot_args = function(data,
 #'                            id_cols = "id",
 #'                            names_from = "item",
@@ -717,14 +717,14 @@
 #'       values_from = values_from
 #'     ))
 #'   }
-#'   
+#'
 #'   # Identify additional columns
 #'   additional_cols = setdiff(names(data), c(id_cols, names_from, values_from))
 #'   if (length(additional_cols) == 0) {
 #'     stop("Could not find a combination of columns to ensure unique identification.")
 #'   }
-#'   
-#'   
+#'
+#'
 #'   # Try adding columns to id_cols based on
 #'   for (col in additional_cols) {
 #'     if (check_uniqueness(data, c(id_cols, col, names_from))) {
@@ -735,7 +735,7 @@
 #'       ))
 #'     }
 #'   }
-#'   
+#'
 #'   # Try adding columns to names_from
 #'   for (col in additional_cols) {
 #'     if (check_uniqueness(data, c(id_cols, names_from, col))) {
@@ -749,7 +749,7 @@
 #'   if (length(additional_cols) < 2) {
 #'     stop("Could not find a combination of columns to ensure unique identification.")
 #'   }
-#'   
+#'
 #'   # Try combinations of additional columns
 #'   for (cols in utils::combn(additional_cols, 2, simplify = FALSE)) {
 #'     if (check_uniqueness(data, c(id_cols, names_from, cols))) {
@@ -766,10 +766,10 @@
 #'       ))
 #'     }
 #'   }
-#'   
+#'
 #'   stop("Could not find a combination of columns to ensure unique identification.")
 #' }
-#' 
+#'
 #' # Example usage:
 #' # df = tibble::tibble(
 #' #   id = c(1, 1, 2, 2),
@@ -780,30 +780,30 @@
 #' # piv_args = find_pivot_args(df, id_cols = "id", names_from = "item")
 #' # newdf = inject(pivot_wider(df,!!!piv_args))
 #' # list_of_all_piv_args
-#' 
-#' 
+#'
+#'
 #' needs_combined_columns = function(args) {
 #'   # Check each argument for length > 1
 #'   for (arg_name in names(args)) {
 #'     arg_value = args[[arg_name]]
-#'     
+#'
 #'     if (length(arg_value) > 1) {
 #'       return(TRUE)
 #'     }
 #'   }
-#'   
+#'
 #'   return(FALSE)
 #' }
-#' 
-#' 
+#'
+#'
 #' notify_combined_columns = function(args) {
 #'   # Pre-allocate messages vector
 #'   messages = character(0)
-#'   
+#'
 #'   # Single pass through arguments
 #'   combined_info = Filter(function(x)
 #'     length(x) > 1, args)
-#'   
+#'
 #'   # Build all messages at once if needed
 #'   if (length(combined_info) > 0) {
 #'     messages = sprintf(
@@ -816,11 +816,11 @@
 #'     message(paste(messages, collapse = "\n"))
 #'   }
 #' }
-#' 
+#'
 #' # -----------------------------------------------------------------------------
 #' # Exported Function
 #' # -----------------------------------------------------------------------------
-#' 
+#'
 #' #' @title returns irw dataframes in the format required by the package
 #' #'
 #' #' @description
@@ -963,11 +963,11 @@
 #'       )
 #'     )
 #'   }
-#'   
+#'
 #'   return_obj_options = c("tibble", "data.frame", "matrix")
-#'   
+#'
 #'   required_cols = c(id, item, resp)
-#'   
+#'
 #'   # Create a catalog object to keep track of and catalog all the variables in the tibble
 #'   catalog = list()
 #'   catalog_names = list()
@@ -978,7 +978,7 @@
 #'   if (!all(c(id, item, resp) %in% names(data))) {
 #'     stop("The columns for 'id', 'item', and 'resp' must be present in the data")
 #'   }
-#'   
+#'
 #'   # Function to add variables to the catalog and convert them to the appropriate data type
 #'   add_to_catalog = function(catalog = catalog, var_name, role) {
 #'     catalog[[var_name]] = list(
@@ -989,12 +989,12 @@
 #'     )
 #'     catalog
 #'   }
-#'   
-#'   
+#'
+#'
 #'   # Convert resp to numeric if necessary
 #'   data = data |> check_numeric(resp, item)
-#'   
-#'   
+#'
+#'
 #'   catalog = add_to_catalog(catalog, resp, "resp")
 #'   for (col in c(id)) {
 #'     catalog = add_to_catalog(catalog, col, "id")
@@ -1002,11 +1002,11 @@
 #'   for (col in c(item)) {
 #'     catalog = add_to_catalog(catalog, col, "item")
 #'   }
-#'   
+#'
 #'   # Add variables with id and item roles to catalog, converting their data types appropriately
 #'   data = data |> dplyr::mutate(id = catalog[["id"]]$dtype(id))
 #'   data = data |> dplyr::mutate(item = catalog[["item"]]$dtype(item))
-#'   
+#'
 #'   # Check if any other variables have been specified in the args and add them to the catalog
 #'   if (keep_all) {
 #'     user_specified_char_columns_found_in_args = names(data)[!names(data) %in% c(id, item, resp)]
@@ -1024,7 +1024,7 @@
 #'       qmatrix,
 #'       timedate
 #'     )
-#'     
+#'
 #'     for (arg_value in applicable_args) {
 #'       if (is.character(arg_value)) {
 #'         user_specified_char_columns_found_in_args = c(user_specified_char_columns_found_in_args,
@@ -1032,7 +1032,7 @@
 #'       }
 #'     }
 #'   }
-#'   
+#'
 #'   # Add all other variables indicated in args to the catalog
 #'   # for each role in var_roles, check if the role is in args, if so, add to catalog
 #'   # This loop iterates over the names of the elements in the 'var_roles' list.
@@ -1054,7 +1054,7 @@
 #'         if (!all(role_col %in% names(data))) {
 #'           stop(paste0("The column '", role_col, "' must be present in the data"))
 #'         }
-#'         
+#'
 #'         # check if the variable name has already been used in the catalog by a higher priority var_role (if check fails, do not add variable to catalog informative warning  about which have already been used)
 #'         for (r in c(role_col)) {
 #'           if (r %in% names(catalog)) {
@@ -1091,7 +1091,7 @@
 #'       }
 #'     }
 #'   }
-#'   
+#'
 #'   ## if keep_all is true, add all columns not already in the catalog to the catalog
 #'   if (keep_all) {
 #'     remaining_cols = setdiff(names(data), names(catalog))
@@ -1104,24 +1104,24 @@
 #'           break
 #'         }
 #'       }
-#'       
+#'
 #'       catalog = add_to_catalog(catalog, col, var_role)
 #'       data = data |> dplyr::mutate(dplyr::across(dplyr::all_of(col), catalog[[col]]$dtype))
-#'       
+#'
 #'     }
 #'   }
-#'   
-#'   
+#'
+#'
 #'   # create copy of data with only the columns in the catalog
 #'   data_cleaned = data[, names(catalog)]
-#'   
+#'
 #'   # Check whether 'item' needs the item_prefix added (whether items are already prefixed or numeric)
 #'   if (all(grepl("^\\d+$", unique(data$item)))) {
 #'     item_prefix = item_prefix
 #'   } else {
 #'     item_prefix = ""
 #'   }
-#'   
+#'
 #'   # check if output format is wide
 #'   if (package %in% names(supported_funcs)) {
 #'     if (piv_wide_pkg[[package]]) {
@@ -1129,7 +1129,7 @@
 #'       # get id_cols by finding all variables with id role in catalog
 #'       id_cols = names(catalog)[sapply(catalog, function(x)
 #'         x$role == "id")]
-#'       
+#'
 #'       # get names_from by finding all variables with item role in catalog
 #'       names_from = names(catalog)[sapply(catalog, function(x)
 #'         x$role == "item")]
@@ -1138,7 +1138,7 @@
 #'         names_from = c(names_from, names(catalog)[sapply(catalog, function(x)
 #'           x$role %in% c("timedate", "item_groups"))])
 #'       }
-#'       
+#'
 #'       # find pivot arguments try first from data_cleaned and if not possible, try to find from data
 #'       pivot_args = NULL
 #'       try({
@@ -1150,7 +1150,7 @@
 #'           pivot_args, use.names = F
 #'         )), names(catalog)))]
 #'       }
-#'       
+#'
 #'       ## print notification if pivot_args need to be combined
 #'       if (needs_combined_columns(pivot_args)) {
 #'         notify_combined_columns(pivot_args)
@@ -1163,10 +1163,10 @@
 #'         names_prefix = item_prefix,
 #'         names_sep = sep
 #'       )
-#'       
+#'
 #'       unused_vars = setdiff(names(data_cleaned), as.character(unlist(pivot_args, use.names = F)))
 #'       ## issue warning if cov_wide_supps[[package]] is false and there are other unused variables in the catalog and state which package does not support them and which variables will be ignored
-#'       
+#'
 #'       if ((length(unused_vars) > 0) & !cov_wide_supps[[package]]) {
 #'         warning(
 #'           paste0(
@@ -1204,7 +1204,7 @@
 #'                      sep = sep,
 #'                      remove = T) |>
 #'         tibble::column_to_rownames("rowid")
-#'       
+#'
 #'     } else {
 #'       data_formatted = data_cleaned |> dplyr::as_tibble()
 #'     }
@@ -1220,7 +1220,7 @@
 #'     ))
 #'     data_formatted = data_formatted |> dplyr::select(-dplyr::all_of(cols_to_drop))
 #'   }
-#'   
+#'
 #'   rows_to_drop = rownames(data_formatted)[rowSums(is.na(data_formatted)) == ncol(data_formatted)]
 #'   if (length(rows_to_drop) > 0) {
 #'     warning(paste0(
@@ -1230,8 +1230,8 @@
 #'     ))
 #'     data_formatted = data_formatted |>  dplyr::filter(!rownames(data_formatted) %in% rows_to_drop)
 #'   }
-#'   
-#'   
+#'
+#'
 #'   ## if psych package, convert factors to numeric if ordered, else convert to dummies
 #'   if (package %in% c("psych", "lavaan")) {
 #'     for (col in names(data_formatted)) {
@@ -1245,7 +1245,7 @@
 #'             "' has been dropped due to having only one unique value (zero variance)"
 #'           )
 #'         )
-#'         
+#'
 #'       } else if (class(data_formatted[[col]]) %in% c("factor", "ordered", "character", "logical")) {
 #'         data_formatted = check_numeric(data_formatted, col)
 #'         if (is.factor(data_formatted[[col]]) &
@@ -1258,12 +1258,12 @@
 #'       }
 #'     }
 #'   }
-#'   
+#'
 #'   ## drop na rows if drop_na_vals is true or if the package is mokken
 #'   if (drop_na_vals | package == "mokken") {
 #'     data_formatted = data_formatted |> tidyr::drop_na()
 #'   }
-#'   
+#'
 #'   # Return the formatted data
 #'   if (return_obj == "tibble") {
 #'     data_formatted = dplyr::as_tibble(data_formatted)
@@ -1274,12 +1274,12 @@
 #'   } else {
 #'     stop("Unsupported return object type")
 #'   }
-#'   
+#'
 #'   # Add class to the formatted data
 #'   class(data_formatted) = c("irw_format", class(data_formatted))
-#'   
+#'
 #'   return(data_formatted)
-#'   
-#'   
-#'   
+#'
+#'
+#'
 #' }

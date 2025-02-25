@@ -42,12 +42,12 @@ irw_filter(n_participants = c(100, 1000), density = c(0.1, 0.5))
 
 Find datasets with rater-based scoring:
 ```{r, eval=FALSE}
-irw_filter(var="rt")
+irw_filter(var = "rt")
 ```
 
 Combine multiple filters:
 ```{r, eval=FALSE}
-irw_filter(n_participants = c(100, 10000), var="cov_", density=c(0.1, 0.8))
+irw_filter(n_participants = c(100, 10000), var = "cov_", density = c(0.1, 0.8))
 ```
 
 ---
@@ -69,11 +69,11 @@ print(names(datasets))
 
 Fetch datasets that match specific filters:
 ```{r, eval=FALSE}
-matching_tables <- irw_filter(var="rater", density=NULL)
-metadata = irw_metadata()
-metadata[metadata$dataset_name %in% matching_tables, ] 
+matching_tables <- irw_filter(var = "rater", density = NULL)
+metadata <- irw_metadata()
+metadata[metadata$dataset_name %in% matching_tables, ]
 
-matching_tables <- irw_filter(var="rater", density=NULL, responses_per_item = c(0,1000))
+matching_tables <- irw_filter(var = "rater", density = NULL, responses_per_item = c(0, 1000))
 datasets <- irw_fetch(matching_tables)
 print(names(datasets))
 ```

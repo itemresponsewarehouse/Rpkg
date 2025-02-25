@@ -8,39 +8,44 @@
 #'         returns a named list of tibbles or error messages for datasets that failed to load.
 #' @examples
 #' \dontrun{
-#'   # Fetch a single dataset
-#'   df <- irw_fetch("example_dataset")
-#'   print(df)
+#' # Fetch a single dataset
+#' df <- irw_fetch("example_dataset")
+#' print(df)
 #'
-#'   # Fetch multiple datasets
-#'   datasets <- irw_fetch(c("dataset1", "dataset2"))
-#'   print(names(datasets))  # Outputs: "dataset1" and "dataset2"
+#' # Fetch multiple datasets
+#' datasets <- irw_fetch(c("dataset1", "dataset2"))
+#' print(names(datasets)) # Outputs: "dataset1" and "dataset2"
 #' }
 #' @export
 irw_fetch <- function(name) {
   .check_redivis()
   # Helper function to fetch a single dataset
   fetch_single_data <- function(table) {
-    tryCatch({
-      table <- suppressMessages(.fetch_redivis_table(table))
-      table$to_tibble()
-    }, error = function(e) {
-      error_message <- paste("Error fetching dataset",
-                             shQuote(table),
-                             ":",
-                             e$message)
-      message(error_message)  # print error immediately
-      return(error_message)  # save error message in list output
-    })
+    tryCatch(
+      {
+        table <- suppressMessages(.fetch_redivis_table(table))
+        table$to_tibble()
+      },
+      error = function(e) {
+        error_message <- paste(
+          "Error fetching dataset",
+          shQuote(table),
+          ":",
+          e$message
+        )
+        message(error_message) # print error immediately
+        return(error_message) # save error message in list output
+      }
+    )
   }
-  
+
   # Check if fetching a single or multiple datasets
   if (length(name) == 1) {
-    return(fetch_single_data(name))  # Return a single tibble or error message
+    return(fetch_single_data(name)) # Return a single tibble or error message
   } else {
     dataset_list <- lapply(name, fetch_single_data)
     names(dataset_list) <- name
-    return(dataset_list)  # Return a named list of tibbles/errors
+    return(dataset_list) # Return a named list of tibbles/errors
   }
 }
 
@@ -56,4 +61,3 @@ irw_metadata <- function() {
   .check_redivis()
   return(.fetch_metadata_table())
 }
-

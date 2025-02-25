@@ -16,44 +16,49 @@
 .retry_with_backoff <- function(expr, max_attempts = 5, base_delay = 1, timeout_sec = 10) {
   attempt <- 1
   result <- NULL
-  
+
   while (attempt <= max_attempts) {
     result <- tryCatch(
       {
         withTimeout(expr(), timeout = timeout_sec, onTimeout = "error")
       },
       TimeoutException = function(e) {
-        if (getOption("irwpkg.verbose", FALSE)) 
+        if (getOption("irwpkg.verbose", FALSE)) {
           message("Attempt ", attempt, " timed out after ", timeout_sec, " seconds.")
+        }
         NULL
       },
       error = function(e) {
-        if (getOption("irwpkg.verbose", FALSE)) 
+        if (getOption("irwpkg.verbose", FALSE)) {
           message("Attempt ", attempt, " failed: ", e$message)
+        }
         NULL
       }
     )
-    
-    if (!is.null(result)) return(result)
-    
+
+    if (!is.null(result)) {
+      return(result)
+    }
+
     if (attempt == max_attempts) {
       stop("Redivis request failed after ", max_attempts, " attempts.")
     }
-    
-    delay <- base_delay * (2 ^ (attempt - 1))
-    if (getOption("irwpkg.verbose", FALSE)) 
+
+    delay <- base_delay * (2^(attempt - 1))
+    if (getOption("irwpkg.verbose", FALSE)) {
       message("Retrying in ", delay, " seconds...")
-    
+    }
+
     Sys.sleep(delay)
     attempt <- attempt + 1
   }
-  
+
   stop("Redivis request failed after ", max_attempts, " attempts.")
 }
 
 #' Initialize Datasource
 #'
-#' Establishes a connection to the Redivis datasource. Ensures `get()` is called 
+#' Establishes a connection to the Redivis datasource. Ensures `get()` is called
 #' to properly retrieve the dataset.
 #'
 #' @return A Redivis dataset object representing the connected datasource.
@@ -81,39 +86,43 @@
   if (!is.character(name) || length(name) != 1) {
     stop("The 'name' parameter must be a single character string.")
   }
-  
+
   ds <- .initialize_datasource()
-  
-  tryCatch({
-    table_data <- ds$table(name)
-    table_data$get()  # try to fetch table
-    table_data
-  }, error = function(e) {
-    error_message <- e$message
-    
-    # If table does not exist, stop immediately (don't retry)
-    if (grepl("not_found_error", error_message, ignore.case = TRUE)) {
-      stop(paste("\nTable", shQuote(name), "does not exist in the IRW database."), call. = FALSE)
+
+  tryCatch(
+    {
+      table_data <- ds$table(name)
+      table_data$get() # try to fetch table
+      table_data
+    },
+    error = function(e) {
+      error_message <- e$message
+
+      # If table does not exist, stop immediately (don't retry)
+      if (grepl("not_found_error", error_message, ignore.case = TRUE)) {
+        stop(paste("\nTable", shQuote(name), "does not exist in the IRW database."), call. = FALSE)
+      }
+
+      # If table cannot be fetched due to an invalid format, stop immediately (don't retry)
+      if (grepl("invalid_request_error", error_message, ignore.case = TRUE)) {
+        stop(paste("\nTable", shQuote(name), "cannot be fetched due to an invalid format."),
+          call. = FALSE
+        )
+      }
+
+      # If the specific error is the 'stream_callback' function error, retry with backoff
+      if (grepl("could not find function \"stream_callback\"", error_message, ignore.case = TRUE)) {
+        .retry_with_backoff(function() {
+          table_data <- ds$table(name)
+          table_data$get()
+          table_data
+        })
+      } else {
+        # For all other errors, stop with the error message
+        stop(paste("\nAn unknown error occurred:", error_message), call. = FALSE)
+      }
     }
-    
-    # If table cannot be fetched due to an invalid format, stop immediately (don't retry)
-    if (grepl("invalid_request_error", error_message, ignore.case = TRUE)) {
-      stop(paste("\nTable", shQuote(name), "cannot be fetched due to an invalid format."),
-           call. = FALSE)
-    }
-    
-    # If the specific error is the 'stream_callback' function error, retry with backoff
-    if (grepl("could not find function \"stream_callback\"", error_message, ignore.case = TRUE)) {
-      .retry_with_backoff(function() {
-        table_data <- ds$table(name)
-        table_data$get()
-        table_data
-      })
-    } else {
-      # For all other errors, stop with the error message
-      stop(paste("\nAn unknown error occurred:", error_message), call. = FALSE)
-    }
-  })
+  )
 }
 
 #' Fetch Metadata Table
@@ -125,33 +134,33 @@
 #' @keywords internal
 .fetch_metadata_table <- function() {
   dataset <- redivis::user("bdomingu")$dataset("irw_meta")
-  
+
   # Ensure we have the latest dataset metadata
   .retry_with_backoff(function() {
     dataset$get()
   })
-  
+
   # Retrieve version tag
   latest_version_tag <- dataset$properties$version$tag
-  
+
   # If metadata exists in cache and the version tag is the same, return cached tibble
   if (!is.null(latest_version_tag) &&
-      exists("metadata_tibble", envir = .irw_env) &&
-      exists("metadata_version", envir = .irw_env) &&
-      identical(.irw_env$metadata_version, latest_version_tag)) {
-    return(.irw_env$metadata_tibble)  # Return cached metadata tibble
+    exists("metadata_tibble", envir = .irw_env) &&
+    exists("metadata_version", envir = .irw_env) &&
+    identical(.irw_env$metadata_version, latest_version_tag)) {
+    return(.irw_env$metadata_tibble) # Return cached metadata tibble
   }
-  
+
   # Fetch new metadata table and convert it to a tibble
   table <- dataset$table("metadata")
-  
+
   .irw_env$metadata_tibble <- .retry_with_backoff(function() {
     table$to_tibble()
   })
-  
+
   # Store the new version tag
   .irw_env$metadata_version <- latest_version_tag
-  
+
   return(.irw_env$metadata_tibble)
 }
 
@@ -167,37 +176,37 @@
 .fetch_biblio_table <- function() {
   # Initialize the datasource
   ds <- .initialize_datasource()
-  
+
   # Retrieve the list of tables from the datasource
   tables <- ds$list_tables()
-  table_name_list <- sapply(tables, function(table) table$name)  # List of available table names in IRW
-  
+  table_name_list <- vapply(tables, function(table) table$name, character(1)) # List of available table names in IRW
+
   # Fetch the biblio table from the Redivis dataset
   dataset <- redivis::user("bdomingu")$dataset("irw_meta")
   .retry_with_backoff(function() {
     dataset$get()
   })
   latest_version_tag <- dataset$properties$version$tag
-  
+
   # If biblio exists in cache and the version tag is the same, return cached tibble
   if (!is.null(latest_version_tag) &&
-      exists("biblio_tibble", envir = .irw_env) &&
-      exists("biblio_version", envir = .irw_env) &&
-      identical(.irw_env$biblio_version, latest_version_tag)) {
-    return(.irw_env$biblio_tibble)  # Return cached biblio tibble
+    exists("biblio_tibble", envir = .irw_env) &&
+    exists("biblio_version", envir = .irw_env) &&
+    identical(.irw_env$biblio_version, latest_version_tag)) {
+    return(.irw_env$biblio_tibble) # Return cached biblio tibble
   }
-  
+
   # Fetch new biblio table and convert it to a tibble
   table <- dataset$table("biblio")
   biblio_tibble <- .retry_with_backoff(function() {
     table$to_tibble()
   })
-  
+
   # Store the new version tag
   .irw_env$biblio_version <- latest_version_tag
   # Filter biblio table to only include tables that exist in the IRW database
-  .irw_env$biblio_tibble = biblio_tibble[biblio_tibble$table %in% table_name_list, ]
-  
+  .irw_env$biblio_tibble <- biblio_tibble[biblio_tibble$table %in% table_name_list, ]
+
   return(.irw_env$biblio_tibble)
 }
 

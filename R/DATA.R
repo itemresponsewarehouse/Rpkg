@@ -12,7 +12,7 @@
 #' }
 #'
 #' @details
-#' This dataset is part of the IRW database and serves as an example for using package functions. 
+#' This dataset is part of the IRW database and serves as an example for using package functions.
 #' It includes basic variables typically present in psychometric datasets such as subject identifiers,
 #' item identifiers, and response variables.
 #'

@@ -15,10 +15,10 @@ generate_doi_bibtex_mapping <- function(biblio_table) {
     !is.na(biblio_table$DOI__for_paper_)
   doi_map <- split(biblio_table$table[valid_doi_entries], biblio_table$DOI__for_paper_[valid_doi_entries])
   bibtex_map <- split(biblio_table$table, biblio_table$BibTex)
-  
-  doi_map <- doi_map[lengths(doi_map) > 1]  # Keep only DOIs with multiple tables
-  bibtex_map <- bibtex_map[lengths(bibtex_map) > 1]  # Keep only BibTex with multiple tables
-  
+
+  doi_map <- doi_map[lengths(doi_map) > 1] # Keep only DOIs with multiple tables
+  bibtex_map <- bibtex_map[lengths(bibtex_map) > 1] # Keep only BibTex with multiple tables
+
   return(list(doi_map = doi_map, bibtex_map = bibtex_map))
 }
 
@@ -34,14 +34,14 @@ generate_doi_bibtex_mapping <- function(biblio_table) {
 #' @noRd
 find_merge_candidates <- function(table_name, maps) {
   candidates <- NULL
-  
+
   for (doi in names(maps$doi_map)) {
     if (table_name %in% maps$doi_map[[doi]]) {
       candidates <- maps$doi_map[[doi]]
       break
     }
   }
-  
+
   if (is.null(candidates)) {
     for (bibtex in names(maps$bibtex_map)) {
       if (table_name %in% maps$bibtex_map[[bibtex]]) {
@@ -50,13 +50,13 @@ find_merge_candidates <- function(table_name, maps) {
       }
     }
   }
-  
+
   # Ensure input table_name is first in the list
   if (!is.null(candidates)) {
     candidates <- c(table_name, setdiff(candidates, table_name))
   }
-  
-  return(candidates)  # Returns ordered list with input table_name first
+
+  return(candidates) # Returns ordered list with input table_name first
 }
 
 #' Get Number of Respondents from Metadata
@@ -88,13 +88,13 @@ check_n_respondents <- function(table_names) {
   n_respondents <- get_n_respondents()
   n_values <- n_respondents[table_names]
   unique_n <- unique(n_values)
-  
+
   # Display N respondents for each table
   message("\nFound ", length(table_names), " tables to merge: ")
   for (tbl in table_names) {
     message(sprintf("   %s (N = %d)", tbl, n_respondents[tbl]))
   }
-  
+
   # Check if all N respondents are equal
   if (length(unique_n) == 1) {
     message("\nAll tables have the same number of respondents (N = ", unique_n, ").")
@@ -102,24 +102,24 @@ check_n_respondents <- function(table_names) {
     message("\nWARNING: The number of respondents (N) is not consistent across tables.")
     message("Merging tables with inconsistent N respondents may require human judgment.")
   }
-  
+
   # Ask user if they want to proceed
   repeat {
     proceed_input <- readline(prompt = "Do you want to proceed with merging these tables? (yes/no): ")
     proceed_input <- tolower(trimws(proceed_input))
-    
+
     if (proceed_input %in% c("yes", "no")) {
-      break  # Exit loop if input is valid
+      break # Exit loop if input is valid
     }
-    
+
     message("Invalid input. Please enter 'yes' or 'no'.")
   }
-  
+
   if (proceed_input == "no") {
     message("Merge operation canceled.")
     return(FALSE)
   }
-  
+
   return(TRUE)
 }
 
@@ -138,49 +138,49 @@ check_n_respondents <- function(table_names) {
 #'   - `FALSE` if any warning condition is triggered.
 #' @noRd
 check_ids_and_items <- function(all_tables) {
-  id_columns <- lapply(all_tables, function(x) sort(unique(na.omit(x$id))))  # Extract unique IDs, removing NA
-  item_columns <- lapply(all_tables, function(x) unique(na.omit(x$item)))  # Extract unique items
-  
-  messages <- c()  # Collect messages
-  
+  id_columns <- lapply(all_tables, function(x) sort(unique(na.omit(x$id)))) # Extract unique IDs, removing NA
+  item_columns <- lapply(all_tables, function(x) unique(na.omit(x$item))) # Extract unique items
+
+  messages <- c() # Collect messages
+
   # Step 1: Check if all tables share the same set of IDs
-  all_ids <- Reduce(union, id_columns)  # Get all unique IDs across tables
-  shared_ids <- Reduce(intersect, id_columns)  # Get IDs that are common across all tables
-  id_match <- length(all_ids) == length(shared_ids)  # If all IDs are shared, this should be TRUE
-  
+  all_ids <- Reduce(union, id_columns) # Get all unique IDs across tables
+  shared_ids <- Reduce(intersect, id_columns) # Get IDs that are common across all tables
+  id_match <- length(all_ids) == length(shared_ids) # If all IDs are shared, this should be TRUE
+
   if (!id_match) {
     messages <- c(messages, "IDs do not match across tables.")
   }
-  
+
   # Step 2: If there are any IDs shared, further check if they form a strict sequence (1,2,3,...)
   id_sequential <- FALSE
-  any_id_overlap <- length(shared_ids) > 0  # TRUE if there's any overlap
+  any_id_overlap <- length(shared_ids) > 0 # TRUE if there's any overlap
   if (any_id_overlap) {
-    expected_seq <- seq(min(shared_ids), max(shared_ids))  # Expected sequence from min to max ID
+    expected_seq <- seq(min(shared_ids), max(shared_ids)) # Expected sequence from min to max ID
     id_sequential <- length(shared_ids) == length(expected_seq) &&
       all(shared_ids == expected_seq)
-    
+
     if (id_sequential) {
       messages <- c(messages, "IDs are sequential (1...n). You may need to manually verify the IDs, as there could be multiple studies with different subjects, where IDs are the same in both studies.")
     }
   }
-  
+
   # Step 3: Check if item columns have overlapping items across tables
-  item_overlap <- any(sapply(1:(length(item_columns) - 1), function(i) {
-    any(sapply((i + 1):length(item_columns), function(j) {
+  item_overlap <- any(vapply(1:(length(item_columns) - 1), function(i) {
+    any(vapply((i + 1):length(item_columns), function(j) {
       length(intersect(item_columns[[i]], item_columns[[j]])) > 0
-    }))
-  }))
-  
+    }, logical(1)))
+  }, logical(1)))
+
   if (item_overlap) {
     messages <- c(messages, "There are items that overlap across tables.")
   }
-  
+
   # Print all messages at the end
   if (length(messages) > 0) {
     message("\nNOTE:\n- ", paste(messages, collapse = "\n- "))
   }
-  
+
   # Return TRUE only if none of the warning messages were triggered
   return(length(messages) == 0)
 }
@@ -199,82 +199,85 @@ irw_merge <- function(table_name, add_source_column = TRUE) {
   .check_redivis()
   # Fetch bibliography table
   bib <- .fetch_biblio_table()
-  
+
   # Find merge candidates
   maps <- generate_doi_bibtex_mapping(bib)
   merge_candidates <- find_merge_candidates(table_name, maps)
-  
+
   if (is.null(merge_candidates)) {
     message("No mergeable tables found for ", table_name)
     return(NULL)
   }
-  
+
   # Check N respondents before fetching any data
   proceed <- check_n_respondents(merge_candidates)
   if (!proceed) {
-    return(NULL)  # User chose not to proceed
+    return(NULL) # User chose not to proceed
   }
-  
+
   # Fetch tables and merge incrementally
   merged_table <- NULL
-  all_tables <- list()  # Keep track of successfully merged tables
-  skipped_tables <- list()  # Keep track of tables that fail to merge
-  
+  all_tables <- list() # Keep track of successfully merged tables
+  skipped_tables <- list() # Keep track of tables that fail to merge
+
   for (tbl_name in merge_candidates) {
     data <- irw_fetch(tbl_name)
-    
-    message(sprintf("Fetching table: %s (Rows: %d, Columns: %d)...", tbl_name, nrow(data), ncol(data) ))
-    
+
+    message(sprintf("Fetching table: %s (Rows: %d, Columns: %d)...", tbl_name, nrow(data), ncol(data)))
+
     # Add source column before merging if requested
     if (add_source_column) data$source_table <- tbl_name
-    
+
     # Attempt to rbind with the existing merged table
-    tryCatch({
-      if (is.null(merged_table)) {
-        merged_table <- data  # Initialize the merged table
-        all_tables[[tbl_name]] <- data
-      } else {
-        merged_table <- rbind(merged_table, data)  # Try to merge incrementally
-        # Add the table to the list of fetched tables
-        all_tables[[tbl_name]] <- data
+    tryCatch(
+      {
+        if (is.null(merged_table)) {
+          merged_table <- data # Initialize the merged table
+          all_tables[[tbl_name]] <- data
+        } else {
+          merged_table <- rbind(merged_table, data) # Try to merge incrementally
+          # Add the table to the list of fetched tables
+          all_tables[[tbl_name]] <- data
+        }
+      },
+      error = function(e) {
+        # If rbind fails, add the table to the skipped list and continue merging
+        skipped_tables[[tbl_name]] <<- e$message
+        message(sprintf("- Skipping table '%s' due to structural mismatch: %s", tbl_name, e$message))
       }
-    }, error = function(e) {
-      # If rbind fails, add the table to the skipped list and continue merging
-      skipped_tables[[tbl_name]] <<- e$message
-      message(sprintf("- Skipping table '%s' due to structural mismatch: %s", tbl_name, e$message))
-    })
+    )
   }
-  
+
   # If all tables failed to merge, return NULL
   if (length(merge_candidates) == 1 + length(skipped_tables)) {
     message("\nMerging failed for all tables. No data merged.")
     return(NULL)
   }
-  
+
   # Check IDs and items, and prompt user if needed
   proceed <- check_ids_and_items(all_tables)
-  
+
   if (!proceed) {
     repeat {
       proceed_input <- readline(prompt = "Do you still want to proceed with merging? (yes/no): ")
-      proceed_input <- tolower(trimws(proceed_input))  # Convert to lowercase and trim spaces
-      
+      proceed_input <- tolower(trimws(proceed_input)) # Convert to lowercase and trim spaces
+
       if (proceed_input %in% c("yes", "no")) {
-        break  # Exit loop if input is valid
+        break # Exit loop if input is valid
       }
-      
+
       message("Invalid input. Please enter 'yes' or 'no'.")
     }
-    
+
     if (proceed_input == "yes") {
-      add_source_column <- TRUE  # Set add_source_column to TRUE if user confirms
+      add_source_column <- TRUE # Set add_source_column to TRUE if user confirms
     } else {
       message("Merge operation canceled.")
       return(NULL)
     }
   }
 
-  
+
   # Print final processing message
   message(
     sprintf(
@@ -283,11 +286,11 @@ irw_merge <- function(table_name, add_source_column = TRUE) {
       ncol(merged_table)
     )
   )
-  
+
   if (add_source_column) {
     message("- The merged table includes a 'source_table' column indicating the source of each row.")
   }
-  
+
   # Print summary of skipped tables (if any)
   if (length(skipped_tables) > 0) {
     message("- The following tables were skipped due to structural issues:")
@@ -295,6 +298,6 @@ irw_merge <- function(table_name, add_source_column = TRUE) {
       message(sprintf("  - %s", tbl))
     }
   }
-  
+
   return(merged_table)
 }

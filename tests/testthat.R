@@ -8,5 +8,6 @@
 
 library(testthat)
 library(irwpkg)
+library(mockery)
 
 test_check("irwpkg")

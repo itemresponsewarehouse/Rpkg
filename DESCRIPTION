@@ -10,7 +10,7 @@ Authors@R: c(
 Maintainer: Hansol Lee <hansol@stanford.edu>
 URL: https://hansorlee.github.io/irwpkg/
 Contact: mailto:itemresponsewarehouse@stanford.edu
-Description: Functions to manage data from the Item Response Warehouse. Requires the `redivis` package, which can be installed from GitHub using `devtools::install_github('redivis/redivis-r', ref='main')`.
+Description: Functions to manage data from the Item Response Warehouse. 
 Additional_repositories: https://github.com/redivis/redivis-r
 Depends: R (>= 4.0.0)
 Imports:
@@ -20,7 +20,8 @@ Imports:
 Suggests: 
     testthat (>= 3.0.0),
     evaluate,
-    redivis
+    redivis,
+    mockery
 License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: true
