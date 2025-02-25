@@ -44,3 +44,7 @@ The IRW datasets are hosted on [Redivis](https://redivis.com), a data management
 ## Feedback and Contributions
 
 If you encounter issues or have suggestions for improving `irwpkg`, please submit them on the [GitHub Issues page](https://github.com/hansorlee/irwpkg/issues). Contributions are welcome!
+
+<!-- badges: start -->
+[![R-CMD-check](https://github.com/hansorlee/irwpkg/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/hansorlee/irwpkg/actions/workflows/R-CMD-check.yaml)
+<!-- badges: end -->
