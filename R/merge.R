@@ -59,6 +59,70 @@ find_merge_candidates <- function(table_name, maps) {
   return(candidates)  # Returns ordered list with input table_name first
 }
 
+#' Get Number of Respondents from Metadata
+#'
+#' This function retrieves the number of respondents for each table from metadata.csv.
+#' It calls irw_metadata() to get the metadata and extracts the relevant information.
+#'
+#' @return A named vector where names are table names and values are the number of respondents.
+#' @noRd
+get_n_respondents <- function() {
+  metadata <- irw_metadata()
+  n_respondents <- metadata$n_participants
+  names(n_respondents) <- metadata$table
+  return(n_respondents)
+}
+
+#' Check Number of Respondents Consistency
+#'
+#' This function checks if the number of respondents is consistent across all tables to be merged.
+#' It retrieves the number of respondents from metadata.csv and displays the counts before asking
+#' the user if they want to proceed.
+#'
+#' @param table_names A character vector of table names to be checked.
+#' @return Logical value:
+#'   - `TRUE` if the user confirms to proceed.
+#'   - `FALSE` if the user chooses not to proceed.
+#' @noRd
+check_n_respondents <- function(table_names) {
+  n_respondents <- get_n_respondents()
+  n_values <- n_respondents[table_names]
+  unique_n <- unique(n_values)
+  
+  # Display N respondents for each table
+  message("\nFound ", length(table_names), " tables to merge: ")
+  for (tbl in table_names) {
+    message(sprintf("   %s (N = %d)", tbl, n_respondents[tbl]))
+  }
+  
+  # Check if all N respondents are equal
+  if (length(unique_n) == 1) {
+    message("\nAll tables have the same number of respondents (N = ", unique_n, ").")
+  } else {
+    message("\nWARNING: The number of respondents (N) is not consistent across tables.")
+    message("Merging tables with inconsistent N respondents may require human judgment.")
+  }
+  
+  # Ask user if they want to proceed
+  repeat {
+    proceed_input <- readline(prompt = "Do you want to proceed with merging these tables? (yes/no): ")
+    proceed_input <- tolower(trimws(proceed_input))
+    
+    if (proceed_input %in% c("yes", "no")) {
+      break  # Exit loop if input is valid
+    }
+    
+    message("Invalid input. Please enter 'yes' or 'no'.")
+  }
+  
+  if (proceed_input == "no") {
+    message("Merge operation canceled.")
+    return(FALSE)
+  }
+  
+  return(TRUE)
+}
+
 #' Check consistency of IDs and items across multiple tables
 #'
 #' This function verifies that:
@@ -144,24 +208,11 @@ irw_merge <- function(table_name, add_source_column = TRUE) {
     return(NULL)
   }
   
-  # Print merge message with table count before fetching data
-  message(sprintf("Found %d tables to merge:", length(merge_candidates)))
-  message(paste("  ", merge_candidates, collapse = "\n"))
-  
-  # Ask user for confirmation before proceeding
-  repeat {
-    response <- readline(prompt = "Do you want to proceed with merging these tables? (yes/no): ")
-    response <- tolower(trimws(response))  # Normalize input
-    if (response %in% c("yes", "no"))
-      break  # Valid input, exit loop
-    message("Invalid input. Please enter 'yes' or 'no'.")
+  # Check N respondents before fetching any data
+  proceed <- check_n_respondents(merge_candidates)
+  if (!proceed) {
+    return(NULL)  # User chose not to proceed
   }
-  
-  if (response == "no") {
-    message("Merge operation canceled.")
-    return(NULL)
-  }
-  
   
   # Fetch tables and merge incrementally
   merged_table <- NULL
