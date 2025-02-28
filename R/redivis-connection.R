@@ -66,7 +66,7 @@
 .initialize_datasource <- function() {
   if (!exists("datasource", envir = .irw_env) || is.null(.irw_env$datasource)) {
     .irw_env$datasource <- .retry_with_backoff(function() {
-      datasource <- redivis::user("datapages")$dataset("item_response_warehouse")
+      datasource <- redivis::user("datapages")$dataset("item_response_warehouse:as2e")
       datasource$get()
       datasource
     })
@@ -210,13 +210,3 @@
   return(.irw_env$biblio_tibble)
 }
 
-#' @title Check if Redivis Package is Installed
-#' @description Internal helper function to check if the `redivis` package is installed.
-#' If not, it stops with an informative error message.
-#' @details This function checks if the `redivis` package is available. If not, it advises the user to install it.
-#' @noRd
-.check_redivis <- function() {
-  if (!requireNamespace("redivis", quietly = TRUE)) {
-    stop("The 'redivis' package is required but not installed. Please install it with devtools::install_github('redivis/redivis-r', ref='main').")
-  }
-}

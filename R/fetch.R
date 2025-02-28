@@ -18,7 +18,6 @@
 #' }
 #' @export
 irw_fetch <- function(name) {
-  .check_redivis()
   # Helper function to fetch a single dataset
   fetch_single_data <- function(table) {
     tryCatch(
@@ -58,6 +57,5 @@ irw_fetch <- function(name) {
 #' @return A tibble containing metadata information.
 #' @export
 irw_metadata <- function() {
-  .check_redivis()
   return(.fetch_metadata_table())
 }

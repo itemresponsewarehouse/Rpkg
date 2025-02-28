@@ -21,8 +21,6 @@
 #' @importFrom stats aggregate median na.omit reshape
 #' @export
 irw_long2resp <- function(df, wave = NULL, id_density_threshold = 0.1, agg_method = "mean") {
-  .check_redivis()
-
   # Ensure required columns exist
   required_cols <- c("id", "item", "resp")
   missing_cols <- setdiff(required_cols, names(df))

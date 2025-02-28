@@ -196,7 +196,6 @@ check_ids_and_items <- function(all_tables) {
 #' @return A merged data frame containing all tables with the same DOI or BibTex, or NULL if no merge candidates are found.
 #' @export
 irw_merge <- function(table_name, add_source_column = TRUE) {
-  .check_redivis()
   # Fetch bibliography table
   bib <- .fetch_biblio_table()
 
