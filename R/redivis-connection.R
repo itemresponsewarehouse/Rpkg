@@ -92,7 +92,15 @@
   tryCatch(
     {
       table_data <- ds$table(name)
-      table_data$get() # try to fetch table
+      # Suppress the specific warning about missing reference id
+      withCallingHandlers(
+        table_data$get(),
+        warning = function(w) {
+          if (grepl("No reference id was provided for the dataset", conditionMessage(w))) {
+            invokeRestart("muffleWarning")
+          }
+        }
+      )
       table_data
     },
     error = function(e) {
@@ -114,7 +122,15 @@
       if (grepl("could not find function \"stream_callback\"", error_message, ignore.case = TRUE)) {
         .retry_with_backoff(function() {
           table_data <- ds$table(name)
-          table_data$get()
+          # Suppress the specific warning about missing reference id in the retry as well
+          withCallingHandlers(
+            table_data$get(),
+            warning = function(w) {
+              if (grepl("No reference id was provided for the dataset", conditionMessage(w))) {
+                invokeRestart("muffleWarning")
+              }
+            }
+          )
           table_data
         })
       } else {
@@ -133,7 +149,7 @@
 #' @return A cached or newly fetched tibble containing metadata information.
 #' @keywords internal
 .fetch_metadata_table <- function() {
-  dataset <- redivis::user("bdomingu")$dataset("irw_meta")
+  dataset <- redivis::user("bdomingu")$dataset("irw_meta:bdxt")
 
   # Ensure we have the latest dataset metadata
   .retry_with_backoff(function() {
@@ -182,7 +198,7 @@
   table_name_list <- vapply(tables, function(table) table$name, character(1)) # List of available table names in IRW
 
   # Fetch the biblio table from the Redivis dataset
-  dataset <- redivis::user("bdomingu")$dataset("irw_meta")
+  dataset <- redivis::user("bdomingu")$dataset("irw_meta:bdxt")
   .retry_with_backoff(function() {
     dataset$get()
   })
@@ -209,4 +225,5 @@
 
   return(.irw_env$biblio_tibble)
 }
+
 

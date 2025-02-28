@@ -16,7 +16,6 @@
 irw_download <- function(table_name,
                          path = NULL,
                          overwrite = FALSE) {
-  .check_redivis()
   table <- .fetch_redivis_table(table_name)
   # Check if the table object has the download method
   if (!is.function(table$download)) {
@@ -48,7 +47,6 @@ irw_download <- function(table_name,
 #' @export
 irw_save_bibtex <- function(table_names, output_file = "refs.bib") {
   # Initialize lists for valid BibTeX entries and invalid table names
-  .check_redivis()
   valid_entries <- character()
   missing_tables <- character()
   missing_doi_tables <- character()
