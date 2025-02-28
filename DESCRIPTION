@@ -16,12 +16,12 @@ Depends: R (>= 4.0.0)
 Imports:
     R.utils,
     glue,
-    httr
+    httr,
+    redivis
 Suggests: 
     testthat (>= 3.0.0),
-    evaluate,
-    redivis,
-    mockery
+    evaluate
+Remotes: redivis/redivis-r
 License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: true

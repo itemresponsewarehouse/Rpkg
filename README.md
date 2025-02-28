@@ -1,9 +1,3 @@
-<!-- badges: start -->
-
-[![CRAN Status](https://www.r-pkg.org/badges/version/irwpkg)](https://CRAN.R-project.org/package=irwpkg) [![R-CMD-check](https://github.com/hansorlee/irwpkg/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/hansorlee/irwpkg/actions/workflows/R-CMD-check.yaml) [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](https://opensource.org/licenses/MIT)
-
-<!-- badges: end -->
-
 # irwpkg
 
 `irwpkg` makes it easy to access and work with datasets from the [Item Response Warehouse (IRW)](https://datapages.github.io/irw/).
@@ -13,29 +7,13 @@
 You can install `irwpkg` from CRAN using:
 
 ``` r
-install.packages("irwpkg")
+# Install the development version of irwpkg from GitHub
+devtools::install_github("hansorlee/irwpkg")
 ```
 
-## Required Dependency: redivis
+## IMPORTANT: Redivis Authentication
 
-`irwpkg` depends on the `redivis` package to access datasets hosted on [Redivis](https://redivis.com). Before using any `irwpkg` functions, you must:
-
-1.  Install the `redivis` package
-2.  Authenticate with your Redivis account
-
-Follow the steps below to set up `redivis` and start using `irwpkg`.
-
-### Installing redivis
-
-Since `redivis` is not available on CRAN, you can install it directly from its GitHub repository:
-
-``` r
-devtools::install_github('redivis/redivis-r', ref='main')
-```
-
-### Redivis Authentication
-
-After installing `redivis`, follow these steps to authenticate your Redivis account:
+The IRW datasets are hosted on [Redivis](https://redivis.com), a data management platform. To access these datasets, you'll need to:
 
 1.  Have a Redivis account (create one at <https://redivis.com/?createAccount> if you don't have one).
 

@@ -18,7 +18,7 @@ number of rows, and variable count, sorted alphabetically by table name.
 }
 \examples{
 \dontrun{
-  tables <- irw_list_tables()
-  print(tables)
+tables <- irw_list_tables()
+print(tables)
 }
 }

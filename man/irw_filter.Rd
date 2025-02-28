@@ -54,19 +54,19 @@ Users can then apply \code{irw_filter()} to select datasets matching their crite
 }
 \examples{
 \dontrun{
-  # Example 1: Filter datasets with at least 1,000 responses and contain "rt"
-  irw_filter(n_responses = c(1000, Inf), var = "rt")
+# Example 1: Filter datasets with at least 1,000 responses and contain "rt"
+irw_filter(n_responses = c(1000, Inf), var = "rt")
 
-  # Example 2: Disable density filtering and return datasets with "wave"
-  irw_filter(var = "wave", density = NULL)
+# Example 2: Disable density filtering and return datasets with "wave"
+irw_filter(var = "wave", density = NULL)
 
-  # Example 3: Find datasets with at least 500 participants and response density 0.3-0.8
-  irw_filter(n_participants = c(500, Inf), density = c(0.3, 0.8))
+# Example 3: Find datasets with at least 500 participants and response density 0.3-0.8
+irw_filter(n_participants = c(500, Inf), density = c(0.3, 0.8))
 
-  # Example 4: Retrieve datasets that contain **all** of "treat", "rt", and any "cov_*" variables
-  irw_filter(var = c("treat", "rt", "cov_"))
+# Example 4: Retrieve datasets that contain **all** of "treat", "rt", and any "cov_*" variables
+irw_filter(var = c("treat", "rt", "cov_"))
 
-  # Example 5: Retrieve datasets that contain any variable starting with "Qmatrix_"
-  irw_filter(var = c("Qmatrix_"))
+# Example 5: Retrieve datasets that contain any variable starting with "Qmatrix_"
+irw_filter(var = c("Qmatrix_"))
 }
 }

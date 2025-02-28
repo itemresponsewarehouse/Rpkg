@@ -19,12 +19,12 @@ The datasets are fetched as data frames (tibbles) and can be accessed programmat
 }
 \examples{
 \dontrun{
-  # Fetch a single dataset
-  df <- irw_fetch("example_dataset")
-  print(df)
+# Fetch a single dataset
+df <- irw_fetch("example_dataset")
+print(df)
 
-  # Fetch multiple datasets
-  datasets <- irw_fetch(c("dataset1", "dataset2"))
-  print(names(datasets))  # Outputs: "dataset1" and "dataset2"
+# Fetch multiple datasets
+datasets <- irw_fetch(c("dataset1", "dataset2"))
+print(names(datasets)) # Outputs: "dataset1" and "dataset2"
 }
 }

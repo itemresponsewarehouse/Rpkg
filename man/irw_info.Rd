@@ -16,7 +16,7 @@ If a table name is provided, it returns detailed information about that table.
 }
 \examples{
 \dontrun{
-  irw_info()  # Prints database information
-  irw_info("abortion")  # Prints table-specific information
+irw_info() # Prints database information
+irw_info("abortion") # Prints table-specific information
 }
 }
