@@ -11,7 +11,6 @@ Maintainer: Hansol Lee <hansol@stanford.edu>
 URL: https://hansorlee.github.io/irwpkg/
 Contact: mailto:itemresponsewarehouse@stanford.edu
 Description: Functions to manage data from the Item Response Warehouse. 
-Additional_repositories: https://github.com/redivis/redivis-r
 Depends: R (>= 4.0.0)
 Imports:
     R.utils,

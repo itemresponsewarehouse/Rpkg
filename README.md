@@ -1,10 +1,8 @@
 # irwpkg
 
-`irwpkg` makes it easy to access and work with datasets from the [Item Response Warehouse (IRW)](https://datapages.github.io/irw/), 
-a comprehensive repository of harmonized item response datasets. 
+`irwpkg` makes it easy to access and work with datasets from the [Item Response Warehouse (IRW)](https://datapages.github.io/irw/), a comprehensive repository of harmonized item response datasets.
 
-Visit the [irwpkg package website](https://hansorlee.github.io/irwpkg/index.html) for
-more information on getting started and a list of available functions.
+Visit the [irwpkg package website](https://hansorlee.github.io/irwpkg/index.html) for more information on getting started and a list of available functions.
 
 ## Installation
 
@@ -40,12 +38,21 @@ library(irwpkg)
 ```
 
 ### Example
-``` r
-# Check IRW metadata
-irw_info()
 
-# fetch IRW table
-x = irw_fetch("swmd_mokken")
+``` r
+# Get information about the IRW
+irw_info() 
+
+# View list of available tables in IRW
+irw_list_tables()
+
+# Filter tables with `rt` variable
+irw_filter(var = "rt")
+```
+
+``` r
+# fetch IRW tables
+x = irw_fetch("4thgrade_math_sirt") 
 ```
 
 ## Troubleshooting

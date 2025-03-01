@@ -96,7 +96,7 @@
         table_data <- ds$table(name)
         table_data$get()},
         warning = function(w) {
-          if (grepl("No reference id was provided for the dataset", conditionMessage(w))) {
+          if (grepl("No reference id was provided for the table", conditionMessage(w))) {
             invokeRestart("muffleWarning")
           }
         }
@@ -126,7 +126,7 @@
             table_data <- ds$table(name)
             table_data$get()},
             warning = function(w) {
-              if (grepl("No reference id was provided for the dataset", conditionMessage(w))) {
+              if (grepl("No reference id was provided for the table", conditionMessage(w))) {
                 invokeRestart("muffleWarning")
               }
             }
