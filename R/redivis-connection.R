@@ -91,10 +91,10 @@
 
   tryCatch(
     {
-      table_data <- ds$table(name)
       # Suppress the specific warning about missing reference id
-      withCallingHandlers(
-        table_data$get(),
+      withCallingHandlers({
+        table_data <- ds$table(name)
+        table_data$get()},
         warning = function(w) {
           if (grepl("No reference id was provided for the dataset", conditionMessage(w))) {
             invokeRestart("muffleWarning")
@@ -121,10 +121,10 @@
       # If the specific error is the 'stream_callback' function error, retry with backoff
       if (grepl("could not find function \"stream_callback\"", error_message, ignore.case = TRUE)) {
         .retry_with_backoff(function() {
-          table_data <- ds$table(name)
           # Suppress the specific warning about missing reference id in the retry as well
-          withCallingHandlers(
-            table_data$get(),
+          withCallingHandlers({
+            table_data <- ds$table(name)
+            table_data$get()},
             warning = function(w) {
               if (grepl("No reference id was provided for the dataset", conditionMessage(w))) {
                 invokeRestart("muffleWarning")
@@ -168,7 +168,7 @@
   }
 
   # Fetch new metadata table and convert it to a tibble
-  table <- dataset$table("metadata")
+  table <- dataset$table("metadata:h5gs")
 
   .irw_env$metadata_tibble <- .retry_with_backoff(function() {
     table$to_tibble()
@@ -213,7 +213,7 @@
   }
 
   # Fetch new biblio table and convert it to a tibble
-  table <- dataset$table("biblio")
+  table <- dataset$table("biblio:qahg")
   biblio_tibble <- .retry_with_backoff(function() {
     table$to_tibble()
   })
