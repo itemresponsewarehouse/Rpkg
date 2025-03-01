@@ -1,12 +1,10 @@
 # irwpkg
 
-`irwpkg` makes it easy to access and work with datasets from the [Item Response Warehouse (IRW)](https://datapages.github.io/irw/), a comprehensive repository of harmonized item response datasets.
+`irwpkg` makes it easy to access and work with tables from the [Item Response Warehouse (IRW)](https://datapages.github.io/irw/), an open repository of harmonized item response data.
 
-Visit the [irwpkg package website](https://hansorlee.github.io/irwpkg/index.html) for more information on getting started and a list of available functions.
+Visit the [irwpkg package website](https://hansorlee.github.io/irwpkg/index.html) for more information on getting started and a complete list of available functions.
 
 ## Installation
-
-You can install `irwpkg` from CRAN using:
 
 ``` r
 # Install the development version of irwpkg from GitHub
@@ -15,7 +13,7 @@ devtools::install_github("hansorlee/irwpkg")
 
 ## IMPORTANT: Redivis Authentication
 
-The IRW datasets are hosted on [Redivis](https://redivis.com), a data management platform. To access these datasets, you'll need to:
+The IRW tables are hosted on [Redivis](https://redivis.com), a data management platform. To access these datasets, you'll need to:
 
 1.  Have a Redivis account (create one at <https://redivis.com/?createAccount> if you don't have one).
 
@@ -46,12 +44,12 @@ irw_info()
 # View list of available tables in IRW
 irw_list_tables()
 
-# Filter tables with `rt` variable
+# Filter tables containing the variable `rt`
 irw_filter(var = "rt")
 ```
 
 ``` r
-# fetch IRW tables
+# fetch an IRW table
 x = irw_fetch("4thgrade_math_sirt") 
 ```
 
