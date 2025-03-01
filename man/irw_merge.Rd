@@ -9,7 +9,8 @@ irw_merge(table_name, add_source_column = TRUE)
 \arguments{
 \item{table_name}{A character string specifying the name of the table to find merge candidates for.}
 
-\item{add_source_column}{A boolean value indicating whether to add the \code{source_table} column (default is TRUE).}
+\item{add_source_column}{A boolean value indicating whether to add the \code{source_table} column
+to the merged table (default is TRUE). This column keeps track of the original source of each row.}
 }
 \value{
 A merged data frame containing all tables with the same DOI or BibTex, or NULL if no merge candidates are found.
@@ -17,4 +18,44 @@ A merged data frame containing all tables with the same DOI or BibTex, or NULL i
 \description{
 Identifies and merges tables that share the same DOI or, if DOI is missing, the same BibTex entry.
 If tables do not have the same structure, only those with identical structures will be merged.
+This function performs several consistency checks before merging,
+and prompts the user for confirmation if inconsistencies are found.
+}
+\details{
+\code{irw_merge()} performs the following checks before proceeding with the merge:
+\enumerate{
+\item \strong{Number of Respondents Check:}
+\itemize{
+\item The function checks if the number of respondents is consistent across all tables.
+\item If the number of respondents is consistent, the merge proceeds.
+\item If the number of respondents is inconsistent across tables, a \strong{WARNING} message is displayed:
+
+\if{html}{\out{<div class="sourceCode">}}\preformatted{=== WARNING ===
+The number of respondents (N) is not consistent across tables.
+Merging tables with inconsistent N respondents may require human judgment.
+}\if{html}{\out{</div>}}
+}
+\item \strong{ID Consistency Check:}
+\itemize{
+\item Checks if all tables share the same set of IDs.
+\item Checks if the IDs form a strict sequence (e.g., 1, 2, 3, ...).
+\item If IDs are not consistent across tables, a \strong{NOTE} message is displayed:
+
+\if{html}{\out{<div class="sourceCode">}}\preformatted{=== NOTE: ===
+- IDs do not match across tables.
+- IDs are sequential (1...n). You may need to manually verify the IDs, 
+  as there could be multiple studies with different subjects, where IDs 
+  are the same in both studies.
+}\if{html}{\out{</div>}}
+}
+\item \strong{Item Column Overlap Check:}
+\itemize{
+\item Verifies that there is no overlap of item columns across tables.
+\item If overlapping items are found, a \strong{NOTE} message is displayed:
+
+\if{html}{\out{<div class="sourceCode">}}\preformatted{=== NOTE: ===
+- There are items that overlap across tables.
+}\if{html}{\out{</div>}}
+}
+}
 }

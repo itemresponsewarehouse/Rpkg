@@ -90,17 +90,19 @@ check_n_respondents <- function(table_names) {
   unique_n <- unique(n_values)
 
   # Display N respondents for each table
-  message("\nFound ", length(table_names), " tables to merge: ")
+  message("\033[1m\n=== Found ", length(table_names), " Tables to Merge ===\033[0m")
   for (tbl in table_names) {
-    message(sprintf("   %s (N = %d)", tbl, n_respondents[tbl]))
+    message(sprintf("%s (N = %d)", tbl, n_respondents[tbl]))
   }
 
   # Check if all N respondents are equal
   if (length(unique_n) == 1) {
     message("\nAll tables have the same number of respondents (N = ", unique_n, ").")
   } else {
-    message("\nWARNING: The number of respondents (N) is not consistent across tables.")
-    message("Merging tables with inconsistent N respondents may require human judgment.")
+    # Display bold-faced warning if N respondents are not consistent
+    message("\033[1m\n=== WARNING ===\033[0m")
+    message("\033[1mThe number of respondents (N) is not consistent across tables.\033[0m")
+    message("\033[1mMerging tables with inconsistent N respondents may require human judgment.\033[0m")
   }
 
   # Ask user if they want to proceed
@@ -178,9 +180,9 @@ check_ids_and_items <- function(all_tables) {
 
   # Print all messages at the end
   if (length(messages) > 0) {
-    message("\nNOTE:\n- ", paste(messages, collapse = "\n- "))
+    message("\033[1m\n=== NOTE ===\033[0m") 
+    message("\033[1m- ", paste(messages, collapse = "\n- "), "\033[0m")
   }
-
   # Return TRUE only if none of the warning messages were triggered
   return(length(messages) == 0)
 }
@@ -190,9 +192,46 @@ check_ids_and_items <- function(all_tables) {
 #'
 #' Identifies and merges tables that share the same DOI or, if DOI is missing, the same BibTex entry.
 #' If tables do not have the same structure, only those with identical structures will be merged.
+#' This function performs several consistency checks before merging, 
+#' and prompts the user for confirmation if inconsistencies are found.
 #'
 #' @param table_name A character string specifying the name of the table to find merge candidates for.
-#' @param add_source_column A boolean value indicating whether to add the `source_table` column (default is TRUE).
+#' @param add_source_column A boolean value indicating whether to add the `source_table` column 
+#' to the merged table (default is TRUE). This column keeps track of the original source of each row.
+#' 
+#' @details 
+#' `irw_merge()` performs the following checks before proceeding with the merge:
+#' 
+#' 1. **Number of Respondents Check:**
+#'    - The function checks if the number of respondents is consistent across all tables.
+#'    - If the number of respondents is consistent, the merge proceeds.
+#'    - If the number of respondents is inconsistent across tables, a **WARNING** message is displayed:
+#'      ```
+#'      === WARNING ===
+#'      The number of respondents (N) is not consistent across tables.
+#'      Merging tables with inconsistent N respondents may require human judgment.
+#'      ```
+#' 
+#' 2. **ID Consistency Check:**
+#'    - Checks if all tables share the same set of IDs.
+#'    - Checks if the IDs form a strict sequence (e.g., 1, 2, 3, ...).
+#'    - If IDs are not consistent across tables, a **NOTE** message is displayed:
+#'      ```
+#'      === NOTE: ===
+#'      - IDs do not match across tables.
+#'      - IDs are sequential (1...n). You may need to manually verify the IDs, 
+#'        as there could be multiple studies with different subjects, where IDs 
+#'        are the same in both studies.
+#'      ```
+#'
+#' 3. **Item Column Overlap Check:**
+#'    - Verifies that there is no overlap of item columns across tables.
+#'    - If overlapping items are found, a **NOTE** message is displayed:
+#'      ```
+#'      === NOTE: ===
+#'      - There are items that overlap across tables.
+#'      ```
+#'   
 #' @return A merged data frame containing all tables with the same DOI or BibTex, or NULL if no merge candidates are found.
 #' @export
 irw_merge <- function(table_name, add_source_column = TRUE) {
@@ -219,10 +258,11 @@ irw_merge <- function(table_name, add_source_column = TRUE) {
   all_tables <- list() # Keep track of successfully merged tables
   skipped_tables <- list() # Keep track of tables that fail to merge
 
+  message("\033[1m\n=== Fetching Tables ===\033[0m")
   for (tbl_name in merge_candidates) {
     data <- irw_fetch(tbl_name)
 
-    message(sprintf("Fetching table: %s (Rows: %d, Columns: %d)...", tbl_name, nrow(data), ncol(data)))
+    message(sprintf("- Fetching table: %s (Rows: %d, Columns: %d)...", tbl_name, nrow(data), ncol(data)))
 
     # Add source column before merging if requested
     if (add_source_column) data$source_table <- tbl_name
@@ -242,7 +282,7 @@ irw_merge <- function(table_name, add_source_column = TRUE) {
       error = function(e) {
         # If rbind fails, add the table to the skipped list and continue merging
         skipped_tables[[tbl_name]] <<- e$message
-        message(sprintf("- Skipping table '%s' due to structural mismatch: %s", tbl_name, e$message))
+        message(sprintf("  - Skipping table '%s' due to column mismatch.", tbl_name))
       }
     )
   }
@@ -278,13 +318,8 @@ irw_merge <- function(table_name, add_source_column = TRUE) {
 
 
   # Print final processing message
-  message(
-    sprintf(
-      "\nProcessing done. Merged table dimension: (Rows: %d, Columns: %d).",
-      nrow(merged_table),
-      ncol(merged_table)
-    )
-  )
+  message("\033[1m\n=== Processing Summary ===\033[0m")
+  message(sprintf("- Merged table dimension: (Rows: %d, Columns: %d).", nrow(merged_table), ncol(merged_table)))
 
   if (add_source_column) {
     message("- The merged table includes a 'source_table' column indicating the source of each row.")
@@ -292,9 +327,10 @@ irw_merge <- function(table_name, add_source_column = TRUE) {
 
   # Print summary of skipped tables (if any)
   if (length(skipped_tables) > 0) {
-    message("- The following tables were skipped due to structural issues:")
+    message("\033[1m\n=== Skipped Tables ===\033[0m")
+    message("The following tables were skipped due to column mismatch:")
     for (tbl in names(skipped_tables)) {
-      message(sprintf("  - %s", tbl))
+      message(sprintf("- %s", tbl))
     }
   }
 
