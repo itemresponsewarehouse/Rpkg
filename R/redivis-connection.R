@@ -190,13 +190,6 @@
 #' @return A tibble containing filtered biblio information, with only the tables that exist in the IRW database.
 #' @keywords internal
 .fetch_biblio_table <- function() {
-  # Initialize the datasource
-  ds <- .initialize_datasource()
-
-  # Retrieve the list of tables from the datasource
-  tables <- ds$list_tables()
-  table_name_list <- vapply(tables, function(table) table$name, character(1)) # List of available table names in IRW
-
   # Fetch the biblio table from the Redivis dataset
   dataset <- redivis::user("bdomingu")$dataset("irw_meta:bdxt")
   .retry_with_backoff(function() {
@@ -218,12 +211,69 @@
     table$to_tibble()
   })
 
-  # Store the new version tag
-  .irw_env$biblio_version <- latest_version_tag
-  # Filter biblio table to only include tables that exist in the IRW database
-  .irw_env$biblio_tibble <- biblio_tibble[biblio_tibble$table %in% table_name_list, ]
 
-  return(.irw_env$biblio_tibble)
+  # Filter biblio table to only include tables that exist in the IRW database
+  ds <- .initialize_datasource()
+  tables <- ds$list_tables()
+  table_name_list <- tolower(vapply(tables, function(table) table$name, character(1))) # Lowercased IRW table names
+  
+  # Filter using lowercase table names
+  biblio_tibble$table_lower <- tolower(biblio_tibble$table)
+  filtered_biblio <- biblio_tibble[biblio_tibble$table_lower %in% table_name_list, ]
+  filtered_biblio$table_lower <- NULL  # drop helper column
+  
+  # Cache results
+  .irw_env$biblio_version <- latest_version_tag
+  .irw_env$biblio_tibble <- filtered_biblio
+  
+  return(filtered_biblio)
 }
 
+#' Fetch Tags Metadata Table
+#'
+#' Retrieves the tags metadata table from Redivis user("bdomingu")$dataset("irw_meta")$table("tags").
+#' Only fetches new data if the table version tag has changed.
+#' Filters out any tags referring to tables that do not exist in the IRW database.
+#'
+#' @return A tibble containing filtered tags information.
+#' @keywords internal
+.fetch_tags_table <- function() {
+  dataset <- redivis::user("bdomingu")$dataset("irw_meta:bdxt")
+  .retry_with_backoff(function() {
+    dataset$get()
+  })
+  latest_version_tag <- dataset$properties$version$tag
+  
+  # Return cached tags tibble if version tag hasn't changed
+  if (!is.null(latest_version_tag) &&
+      exists("tags_tibble", envir = .irw_env) &&
+      exists("tags_version", envir = .irw_env) &&
+      identical(.irw_env$tags_version, latest_version_tag)) {
+    return(.irw_env$tags_tibble)
+  }
+  
+  # Fetch and convert tags table
+  table <- dataset$table("tags:7nkh")
+  tags_tibble <- .retry_with_backoff(function() {
+    table$to_tibble()
+  })
+  
+  # Normalize both tags and IRW table names to lowercase for matching
+  ds <- .initialize_datasource()
+  tables <- ds$list_tables()
+  table_name_list <- tolower(vapply(tables, function(table) table$name, character(1)))
+  tags_tibble$table_lower <- tolower(tags_tibble$table)
+  
+  # Filter tags to only include those whose lowercased name exists in IRW tables
+  filtered_tags <- tags_tibble[tags_tibble$table_lower %in% table_name_list, ]
+  
+  # Drop helper column
+  filtered_tags$table_lower <- NULL
+  
+  # Cache results
+  .irw_env$tags_version <- latest_version_tag
+  .irw_env$tags_tibble <- filtered_tags
+  
+  return(filtered_tags)
+}
 
