@@ -9,8 +9,9 @@ reference:
 - contents:
   - irw_info
   - irw_list_tables
-  - irw_metadata
   - irw_filter
+  - irw_metadata
+  - irw_tags
 - title: Fetch
   desc: Functions for fetching IRW data.
 - contents:

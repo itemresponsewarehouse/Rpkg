@@ -59,3 +59,14 @@ irw_fetch <- function(name) {
 irw_metadata <- function() {
   return(.fetch_metadata_table())
 }
+
+#' Retrieve IRW Tags Table
+#'
+#' Fetches the tags table from Redivis and returns it as a tibble.
+#' Automatically checks for updates and refreshes only when needed.
+#'
+#' @return A tibble containing tags information.
+#' @export
+irw_tags <- function() {
+  return(.fetch_tags_table())
+}
