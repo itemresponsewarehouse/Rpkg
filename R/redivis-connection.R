@@ -258,6 +258,16 @@
     table$to_tibble()
   })
   
+  # Convert "NA" strings to actual NA values
+  tags_tibble <- as.data.frame(tags_tibble)
+  tags_tibble[] <- lapply(tags_tibble, function(col) {
+    if (is.character(col)) {
+      col[col == "NA"] <- NA
+    }
+    col
+  })
+  tags_tibble <- tibble::as_tibble(tags_tibble)
+  
   # Normalize both tags and IRW table names to lowercase for matching
   ds <- .initialize_datasource()
   tables <- ds$list_tables()

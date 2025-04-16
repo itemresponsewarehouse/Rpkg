@@ -16,7 +16,8 @@ Imports:
     R.utils,
     glue,
     httr,
-    redivis
+    redivis, 
+    tibble
 Suggests: 
     testthat (>= 3.0.0),
     evaluate
