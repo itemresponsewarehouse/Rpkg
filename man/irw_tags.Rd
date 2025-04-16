@@ -11,5 +11,6 @@ A tibble containing tags information.
 }
 \description{
 Fetches the tags table from Redivis and returns it as a tibble.
+Link to Redivis table: https://redivis.com/datasets/bdxt-4fqe5tyf4/tables/7nkh-6m7wq01yv
 Automatically checks for updates and refreshes only when needed.
 }

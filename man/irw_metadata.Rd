@@ -11,5 +11,6 @@ A tibble containing metadata information.
 }
 \description{
 Fetches the metadata table from Redivis and returns it as a tibble.
+Link to Redivis table: https://redivis.com/datasets/bdxt-4fqe5tyf4/tables/h5gs-04agty3j1
 Automatically checks for updates and refreshes only when needed.
 }
