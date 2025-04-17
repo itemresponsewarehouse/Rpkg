@@ -83,8 +83,10 @@ irw_tags <- function() {
 #' @param column Character string specifying the tag column name (e.g., "age_range", "sample").
 #' @return A character vector of unique values found in the specified tag column.
 #' @examples
+#' \dontrun{
 #' irw_tag_options("age_range")
 #' irw_tag_options("construct_type")
+#' }
 #' @export
 irw_tag_options <- function(column) {
   tags <- .fetch_tags_table()

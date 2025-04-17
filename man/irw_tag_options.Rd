@@ -18,6 +18,8 @@ Useful for discovering valid filter options when working with tag-based metadata
 (e.g., \code{age_range}, \code{construct_type}, \code{sample}).
 }
 \examples{
+\dontrun{
 irw_tag_options("age_range")
 irw_tag_options("construct_type")
+}
 }
