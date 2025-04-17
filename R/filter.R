@@ -2,43 +2,41 @@
 #'
 #' Identifies datasets in the Item Response Warehouse (IRW) based on user-defined criteria.
 #' This function filters datasets using **precomputed metadata**, which contains summary statistics
-#' for each dataset (e.g., number of responses, number of participants, density scores, etc.).
+#' for each dataset (e.g., number of responses, number of participants, density scores, etc.),
+#' as well as tag-based metadata (e.g., age range, construct type, sample type, etc.).
 #'
 #' ## Exploring Metadata
 #' To understand available dataset properties before filtering, run `summary(irw_metadata())`.
-#' This provides an overview of key characteristics such as response counts, participant numbers, and density.
-#' Users can then apply `irw_filter()` to select datasets matching their criteria.
+#' Use `irw_tags()` to explore available tag-based metadata.
 #'
-#' @param n_responses A numeric vector of length 2 specifying the range for total responses.
-#' @param n_categories A numeric vector of length 2 specifying the range for unique response categories.
-#' @param n_participants A numeric vector of length 2 specifying the range for the number of participants.
-#' @param n_items A numeric vector of length 2 specifying the range for the number of items.
-#' @param responses_per_participant A numeric vector of length 2 specifying the range for average responses per participant.
-#' @param responses_per_item A numeric vector of length 2 specifying the range for average responses per item.
-#' @param density A numeric vector of length 2 specifying the range for data density.
-#'                Defaults to `c(0.5, 1)`. To disable this filter, set `density = NULL`.
+#' @param n_responses Numeric vector of length 2 specifying range for total responses.
+#' @param n_categories Numeric vector of length 2 specifying range for unique response categories.
+#' @param n_participants Numeric vector of length 2 specifying range for number of participants.
+#' @param n_items Numeric vector of length 2 specifying range for number of items.
+#' @param responses_per_participant Numeric vector of length 2 specifying range for avg responses per participant.
+#' @param responses_per_item Numeric vector of length 2 specifying range for avg responses per item.
+#' @param density Numeric vector of length 2 specifying range for data density. Default `c(0.5, 1)`; disable with `NULL`.
 #' @param var A character vector specifying one or more variables.
 #'            - If **exact variable names** are provided, only datasets containing **all specified variables** will be returned.
 #'            - If a variable name **contains an underscore** (e.g., `"cov_"`, `"Qmatrix_"`), the function will match all datasets that
 #'              contain **at least one variable** that starts with that prefix.
-#' @return A sorted character vector of dataset names matching **all specified criteria** or an empty result if no matches are found.
+#' @param age_range Character value specifying the age group of participants (e.g., "Adult (18+)", "Child").
+#' @param child_age__for_child_focused_studies_ Character value indicating the age group for child-focused studies (e.g., "6-10", "11-14").
+#' @param construct_type Character value specifying the psychological or educational construct being measured.
+#' @param sample Character value specifying the sample type or recruitment method (e.g., "Internet-based", "Lab-based").
+#' @param measurement_tool Character value specifying the type of instrument used for measurement (e.g., "Survey/questionnaire").
+#' @param item_format Character value describing the format of the items (e.g., "Likert Scale/selected response").
+#' @param primary_language_s_ Character value indicating the primary language(s) used in the instrument.
+#'
+#' @return Sorted character vector of dataset names matching **all specified criteria** or empty if none found.
 #'
 #' @examples
 #' \dontrun{
-#' # Example 1: Filter datasets with at least 1,000 responses and contain "rt"
 #' irw_filter(n_responses = c(1000, Inf), var = "rt")
-#'
-#' # Example 2: Disable density filtering and return datasets with "wave"
 #' irw_filter(var = "wave", density = NULL)
-#'
-#' # Example 3: Find datasets with at least 500 participants and response density 0.3-0.8
 #' irw_filter(n_participants = c(500, Inf), density = c(0.3, 0.8))
-#'
-#' # Example 4: Retrieve datasets that contain **all** of "treat", "rt", and any "cov_*" variables
-#' irw_filter(var = c("treat", "rt", "cov_"))
-#'
-#' # Example 5: Retrieve datasets that contain any variable starting with "Qmatrix_"
-#' irw_filter(var = c("Qmatrix_"))
+#' irw_filter(var = c("treat", "rt", "cov_"), density= NULL)
+#' irw_filter(age_range = "Adult (18+)", var = "rt")
 #' }
 #' @export
 irw_filter <- function(n_responses = NULL,
@@ -48,41 +46,71 @@ irw_filter <- function(n_responses = NULL,
                        responses_per_participant = NULL,
                        responses_per_item = NULL,
                        density = c(0.5, 1),
-                       var = NULL) {
-  metadata <- irw_metadata() # Load latest metadata
-
-  # Store initial dataset count
-  initial_count <- nrow(metadata)
-
-  # Convert "variables" column from "|"-separated string to list
+                       var = NULL,
+                       age_range = NULL,
+                       child_age__for_child_focused_studies_ = NULL,
+                       construct_type = NULL,
+                       sample = NULL,
+                       measurement_tool = NULL,
+                       item_format = NULL,
+                       primary_language_s_ = NULL) {
+  
+  metadata <- irw_metadata()
+  
+  # --- TAG FILTERING ---
+  tag_filters <- list(
+    age_range = age_range,
+    child_age__for_child_focused_studies_ = child_age__for_child_focused_studies_,
+    construct_type = construct_type,
+    sample = sample,
+    measurement_tool = measurement_tool,
+    item_format = item_format,
+    primary_language_s_ = primary_language_s_
+  )
+  
+  # Remove NULL filters
+  tag_filters <- tag_filters[vapply(tag_filters, Negate(is.null), logical(1))]
+  
+  if (length(tag_filters) > 0) {
+    tags <- .fetch_tags_table()
+    
+    for (colname in names(tag_filters)) {
+      value <- tag_filters[[colname]]
+      if (!is.null(value) && colname %in% colnames(tags)) {
+        tags <- tags[tags[[colname]] %in% value, ]
+      } else {
+        warning(sprintf("Column '%s' not found in tags table. Ignored.", colname))
+      }
+    }
+    
+    if (nrow(tags) == 0) {
+      return(character(0))
+    }
+    
+    metadata <- metadata[tolower(metadata$table) %in% tolower(tags$table), ]
+  }
+  
+  # Convert variables column to list for filtering
   metadata$variables_list <- strsplit(metadata$variables, "\\| ")
-
-  # Apply variable filtering
+  
+  # --- VARIABLE FILTERING ---
   if (!is.null(var)) {
     metadata <- metadata[vapply(metadata$variables_list, function(vars) {
       all(vapply(var, function(v) {
-        # Prefix Matching for variables containing "_"
         if (grepl("_", v)) {
           any(grepl(paste0("^", v), vars))
         } else {
-          # Exact Match
           v %in% vars
         }
       }, logical(1)))
     }, logical(1)), ]
   }
-
-  # If no datasets remain after filtering, return empty result
-  if (nrow(metadata) == 0) {
-    return(character(0))
-  }
-
-
-  # Store dataset count before applying density filtering
+  
+  if (nrow(metadata) == 0) return(character(0))
+  
+  # --- NUMERIC FILTERING ---
   count_before_density <- nrow(metadata)
-
-  # Numeric filters
-  filters <- list(
+  numeric_filters <- list(
     n_responses = n_responses,
     n_categories = n_categories,
     n_participants = n_participants,
@@ -91,37 +119,23 @@ irw_filter <- function(n_responses = NULL,
     responses_per_item = responses_per_item,
     density = density
   )
-
-  # Remove NULL filters (unused parameters)
-  filters <- filters[vapply(filters, Negate(is.null), logical(1))]
-
-  # Check if the user explicitly set density
+  
+  numeric_filters <- numeric_filters[vapply(numeric_filters, Negate(is.null), logical(1))]
   user_specified_density <- !missing(density)
-
-  # Apply numeric range filters dynamically
-  for (filter_name in names(filters)) {
-    filter_value <- filters[[filter_name]]
-
-    if (is.numeric(filter_value) && length(filter_value) == 2) {
-      metadata <- metadata[metadata[[filter_name]] >= filter_value[1] &
-        metadata[[filter_name]] <= filter_value[2], ]
-    } else {
-      metadata <- metadata[metadata[[filter_name]] %in% filter_value, ]
-    }
+  
+  for (filter_name in names(numeric_filters)) {
+    filter_value <- numeric_filters[[filter_name]]
+    metadata <- metadata[metadata[[filter_name]] >= filter_value[1] &
+                           metadata[[filter_name]] <= filter_value[2], ]
   }
-
-  # Check if the default density filter was applied **and** actually removed some datasets
+  
   num_removed_by_density <- count_before_density - nrow(metadata)
-  if (!user_specified_density &&
-    identical(density, c(0.5, 1)) && num_removed_by_density > 0) {
-    message(
-      sprintf(
-        "Note: The default density filter (0.5 to 1) was applied and removed %d dataset(s). To disable it, set density = NULL.",
-        num_removed_by_density
-      )
-    )
+  if (!user_specified_density && identical(density, c(0.5, 1)) && num_removed_by_density > 0) {
+    message(sprintf(
+      "Note: Default density filter (0.5-1) removed %d dataset(s). Set density = NULL to disable.",
+      num_removed_by_density
+    ))
   }
-
-  # Sort final dataset names in alphabetical order before returning
+  
   return(sort(metadata$table))
 }

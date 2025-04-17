@@ -12,61 +12,72 @@ irw_filter(
   responses_per_participant = NULL,
   responses_per_item = NULL,
   density = c(0.5, 1),
-  var = NULL
+  var = NULL,
+  age_range = NULL,
+  child_age__for_child_focused_studies_ = NULL,
+  construct_type = NULL,
+  sample = NULL,
+  measurement_tool = NULL,
+  item_format = NULL,
+  primary_language_s_ = NULL
 )
 }
 \arguments{
-\item{n_responses}{A numeric vector of length 2 specifying the range for total responses.}
+\item{n_responses}{Numeric vector of length 2 specifying range for total responses.}
 
-\item{n_categories}{A numeric vector of length 2 specifying the range for unique response categories.}
+\item{n_categories}{Numeric vector of length 2 specifying range for unique response categories.}
 
-\item{n_participants}{A numeric vector of length 2 specifying the range for the number of participants.}
+\item{n_participants}{Numeric vector of length 2 specifying range for number of participants.}
 
-\item{n_items}{A numeric vector of length 2 specifying the range for the number of items.}
+\item{n_items}{Numeric vector of length 2 specifying range for number of items.}
 
-\item{responses_per_participant}{A numeric vector of length 2 specifying the range for average responses per participant.}
+\item{responses_per_participant}{Numeric vector of length 2 specifying range for avg responses per participant.}
 
-\item{responses_per_item}{A numeric vector of length 2 specifying the range for average responses per item.}
+\item{responses_per_item}{Numeric vector of length 2 specifying range for avg responses per item.}
 
-\item{density}{A numeric vector of length 2 specifying the range for data density.
-Defaults to \code{c(0.5, 1)}. To disable this filter, set \code{density = NULL}.}
+\item{density}{Numeric vector of length 2 specifying range for data density. Default \code{c(0.5, 1)}; disable with \code{NULL}.}
 
 \item{var}{A character vector specifying one or more variables.
 - If \strong{exact variable names} are provided, only datasets containing \strong{all specified variables} will be returned.
 - If a variable name \strong{contains an underscore} (e.g., \code{"cov_"}, \code{"Qmatrix_"}), the function will match all datasets that
 contain \strong{at least one variable} that starts with that prefix.}
+
+\item{age_range}{Character value specifying the age group of participants (e.g., "Adult (18+)", "Child").}
+
+\item{child_age__for_child_focused_studies_}{Character value indicating the age group for child-focused studies (e.g., "6-10", "11-14").}
+
+\item{construct_type}{Character value specifying the psychological or educational construct being measured.}
+
+\item{sample}{Character value specifying the sample type or recruitment method (e.g., "Internet-based", "Lab-based").}
+
+\item{measurement_tool}{Character value specifying the type of instrument used for measurement (e.g., "Survey/questionnaire").}
+
+\item{item_format}{Character value describing the format of the items (e.g., "Likert Scale/selected response").}
+
+\item{primary_language_s_}{Character value indicating the primary language(s) used in the instrument.}
 }
 \value{
-A sorted character vector of dataset names matching \strong{all specified criteria} or an empty result if no matches are found.
+Sorted character vector of dataset names matching \strong{all specified criteria} or empty if none found.
 }
 \description{
 Identifies datasets in the Item Response Warehouse (IRW) based on user-defined criteria.
 This function filters datasets using \strong{precomputed metadata}, which contains summary statistics
-for each dataset (e.g., number of responses, number of participants, density scores, etc.).
+for each dataset (e.g., number of responses, number of participants, density scores, etc.),
+as well as tag-based metadata (e.g., age range, construct type, sample type, etc.).
 }
 \details{
 \subsection{Exploring Metadata}{
 
 To understand available dataset properties before filtering, run \code{summary(irw_metadata())}.
-This provides an overview of key characteristics such as response counts, participant numbers, and density.
-Users can then apply \code{irw_filter()} to select datasets matching their criteria.
+Use \code{irw_tags()} to explore available tag-based metadata.
 }
 }
 \examples{
 \dontrun{
-# Example 1: Filter datasets with at least 1,000 responses and contain "rt"
 irw_filter(n_responses = c(1000, Inf), var = "rt")
-
-# Example 2: Disable density filtering and return datasets with "wave"
 irw_filter(var = "wave", density = NULL)
-
-# Example 3: Find datasets with at least 500 participants and response density 0.3-0.8
 irw_filter(n_participants = c(500, Inf), density = c(0.3, 0.8))
-
-# Example 4: Retrieve datasets that contain **all** of "treat", "rt", and any "cov_*" variables
-irw_filter(var = c("treat", "rt", "cov_"))
-
-# Example 5: Retrieve datasets that contain any variable starting with "Qmatrix_"
-irw_filter(var = c("Qmatrix_"))
+irw_filter(var = c("treat", "rt", "cov_"), density= NULL)
+irw_filter(age_range = "Adult (18+)", var = "rt")
 }
 }
