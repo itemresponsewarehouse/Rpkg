@@ -5,8 +5,12 @@
 #' for each dataset (e.g., number of responses, number of participants, density scores, etc.),
 #' as well as tag-based metadata (e.g., age range, construct type, sample type, etc.).
 #' 
+#' ## Exploring Metadata and Tags
 #' To understand available dataset properties before filtering, run `summary(irw_metadata())`.
-#' Use `irw_tags()` to explore available tag-based metadata.
+#' To explore tag-based metadata, use `irw_tags()` to view the full tags table.
+#'
+#' To see the valid values for a specific tag column (e.g., "age_range"), use:
+#' `irw_tag_options("column_name")`
 #'
 #' @param n_responses Numeric vector of length 2 specifying range for total responses.
 #' @param n_categories Numeric vector of length 2 specifying range for unique response categories.

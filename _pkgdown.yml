@@ -12,6 +12,7 @@ reference:
   - irw_filter
   - irw_metadata
   - irw_tags
+  - irw_tags_options
 - title: Fetch
   desc: Functions for fetching IRW data.
 - contents:

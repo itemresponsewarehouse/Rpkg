@@ -73,3 +73,27 @@ irw_metadata <- function() {
 irw_tags <- function() {
   return(.fetch_tags_table())
 }
+
+#' View Available Tag Values
+#'
+#' Returns all unique values for a given tag metadata column used in `irw_filter()`.
+#' Useful for discovering valid filter options when working with tag-based metadata
+#' (e.g., `age_range`, `construct_type`, `sample`).
+#'
+#' @param column Character string specifying the tag column name (e.g., "age_range", "sample").
+#' @return A character vector of unique values found in the specified tag column.
+#' @examples
+#' irw_tag_options("age_range")
+#' irw_tag_options("construct_type")
+#' @export
+irw_tag_options <- function(column) {
+  tags <- .fetch_tags_table()
+  
+  if (!column %in% colnames(tags)) {
+    stop(sprintf("'%s' is not a valid column in the tags table. Use names(irw_tags()) to see available options.", column))
+  }
+  
+  unique_vals <- unique(tags[[column]])
+  sort(unique_vals[!is.na(unique_vals)])
+}
+
