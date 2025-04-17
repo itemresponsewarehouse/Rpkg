@@ -81,6 +81,10 @@ irw_filter(n_responses = c(1000, Inf), var = "rt")
 irw_filter(var = "wave", density = NULL)
 irw_filter(n_participants = c(500, Inf), density = c(0.3, 0.8))
 irw_filter(var = c("treat", "rt", "cov_"), density= NULL)
-irw_filter(age_range = "Adult (18+)", var = "rt")
+
+# View valid options for a tag column
+irw_tag_options("construct_type")
+
+irw_filter(construct_type = "Affective/mental health")
 }
 }
