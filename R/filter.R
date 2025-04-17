@@ -4,8 +4,7 @@
 #' This function filters datasets using **precomputed metadata**, which contains summary statistics
 #' for each dataset (e.g., number of responses, number of participants, density scores, etc.),
 #' as well as tag-based metadata (e.g., age range, construct type, sample type, etc.).
-#'
-#' ## Exploring Metadata
+#' 
 #' To understand available dataset properties before filtering, run `summary(irw_metadata())`.
 #' Use `irw_tags()` to explore available tag-based metadata.
 #'

@@ -66,11 +66,8 @@ for each dataset (e.g., number of responses, number of participants, density sco
 as well as tag-based metadata (e.g., age range, construct type, sample type, etc.).
 }
 \details{
-\subsection{Exploring Metadata}{
-
 To understand available dataset properties before filtering, run \code{summary(irw_metadata())}.
 Use \code{irw_tags()} to explore available tag-based metadata.
-}
 }
 \examples{
 \dontrun{
