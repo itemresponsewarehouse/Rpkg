@@ -96,8 +96,8 @@ irw_tag_options <- function(column) {
   # Split multi-tag strings into individual tags
   all_values <- tags[[column]]
   all_values <- all_values[!is.na(all_values)]
-  individual_tags <- unique(unlist(strsplit(all_values, ",")))
-  individual_tags <- trimws(individual_tags)
+  individual_tags <- trimws(unlist(strsplit(all_values, ",")))
+  individual_tags <- sort(unique(individual_tags))
   
   sort(individual_tags)
 }
