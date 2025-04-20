@@ -84,7 +84,13 @@ irw_filter <- function(n_responses = NULL,
     for (colname in names(tag_filters)) {
       value <- tag_filters[[colname]]
       if (!is.null(value) && colname %in% colnames(tags)) {
-        tags <- tags[tags[[colname]] %in% value, ]
+        tags <- tags[
+          !is.na(tags[[colname]]) &
+            sapply(tags[[colname]], function(x) {
+              tag_list <- trimws(unlist(strsplit(x, ",")))
+              any(tag_list %in% value)
+            }),
+        ]
       } else {
         warning(sprintf("Column '%s' not found in tags table. Ignored.", colname))
       }

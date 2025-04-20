@@ -7,19 +7,17 @@
 irw_tag_options(column)
 }
 \arguments{
-\item{column}{Character string specifying the tag column name (e.g., "age_range", "sample").}
+\item{column}{A character string specifying the tag column name.}
 }
 \value{
-A character vector of unique values found in the specified tag column.
+A sorted character vector of unique tag values (with whitespace trimmed).
 }
 \description{
-Returns all unique values for a given tag metadata column used in \code{irw_filter()}.
-Useful for discovering valid filter options when working with tag-based metadata
-(e.g., \code{age_range}, \code{construct_type}, \code{sample}).
+Returns all unique individual tag values from a given tag metadata column
+(e.g., "age_range", "construct_type"). Handles multi-tag fields by splitting
+comma-separated entries.
 }
 \examples{
-\dontrun{
-irw_tag_options("age_range")
 irw_tag_options("construct_type")
-}
+irw_tag_options("age_range")
 }
