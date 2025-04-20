@@ -18,6 +18,8 @@ Returns all unique individual tag values from a given tag metadata column
 comma-separated entries.
 }
 \examples{
+\dontrun{
 irw_tag_options("construct_type")
 irw_tag_options("age_range")
+}
 }
