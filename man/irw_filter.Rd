@@ -42,13 +42,13 @@ irw_filter(
 - If a variable name \strong{contains an underscore} (e.g., \code{"cov_"}, \code{"Qmatrix_"}), the function will match all datasets that
 contain \strong{at least one variable} that starts with that prefix.}
 
-\item{age_range}{Character value specifying the age group of participants (e.g., "Adult (18+)", "Child").}
+\item{age_range}{Character value specifying the age group of participants (e.g., "Adult (18+)", "Child (<18y)").}
 
-\item{child_age__for_child_focused_studies_}{Character value indicating the age group for child-focused studies (e.g., "6-10", "11-14").}
+\item{child_age__for_child_focused_studies_}{Character value indicating the age group for child-focused studies (e.g., "Early (<6y)").}
 
 \item{construct_type}{Character value specifying the psychological or educational construct being measured.}
 
-\item{sample}{Character value specifying the sample type or recruitment method (e.g., "Internet-based", "Lab-based").}
+\item{sample}{Character value specifying the sample type or recruitment method (e.g., "Educational", "Clinical").}
 
 \item{measurement_tool}{Character value specifying the type of instrument used for measurement (e.g., "Survey/questionnaire").}
 

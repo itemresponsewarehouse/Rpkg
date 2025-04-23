@@ -74,33 +74,4 @@ irw_tags <- function() {
   return(.fetch_tags_table())
 }
 
-#' View Available Tag Values
-#'
-#' Returns all unique individual tag values from a given tag metadata column
-#' (e.g., "age_range", "construct_type"). Handles multi-tag fields by splitting
-#' comma-separated entries.
-#'
-#' @param column A character string specifying the tag column name.
-#' @return A sorted character vector of unique tag values (with whitespace trimmed).
-#' @examples
-#' \dontrun{
-#' irw_tag_options("construct_type")
-#' irw_tag_options("age_range")
-#' }
-#' @export
-irw_tag_options <- function(column) {
-  tags <- .fetch_tags_table()
-  
-  if (!column %in% colnames(tags)) {
-    stop(sprintf("'%s' is not a valid column in the tags table. Use names(irw_tags()) to see available options.", column))
-  }
-  
-  # Split multi-tag strings into individual tags
-  all_values <- tags[[column]]
-  all_values <- all_values[!is.na(all_values)]
-  individual_tags <- trimws(unlist(strsplit(all_values, ",")))
-  individual_tags <- sort(unique(individual_tags))
-  
-  sort(individual_tags)
-}
 

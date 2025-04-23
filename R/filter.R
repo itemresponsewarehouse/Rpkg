@@ -1,3 +1,68 @@
+#' View Available Tag Values
+#'
+#' Returns all unique individual tag values from a given tag metadata column
+#' (e.g., "age_range", "construct_type"). Handles multi-tag fields that may include
+#' commas inside quoted strings.
+#'
+#' @param column A character string specifying the tag column name.
+#' @return A sorted character vector of unique tag values
+#' @examples
+#' \dontrun{
+#' irw_tag_options("construct_type")
+#' irw_tag_options("sample")
+#' }
+#' @export
+irw_tag_options <- function(column) {
+  tags <- .fetch_tags_table()
+  
+  if (!column %in% colnames(tags)) {
+    stop(sprintf("'%s' is not a valid column in the tags table. Use names(irw_tags()) to see available options.", column))
+  }
+  
+  all_values <- tags[[column]]
+  all_values <- all_values[!is.na(all_values)]
+  
+  parse_mixed_quoted_tags <- function(x) {
+    # Step 1: Replace escaped quotes with real quotes
+    x <- gsub('\\"', '"', x)
+    
+    # Step 2: If string has no quote and is a known atomic tag, treat it as a whole
+    if (!grepl('"', x) && grepl("^Internet-based \\(Mturkers, etc\\)$", x)) {
+      return("Internet-based (Mturkers, etc)")
+    }
+    
+    # Step 3: Normal quote-aware parsing
+    chars <- strsplit(x, "")[[1]]
+    in_quotes <- FALSE
+    buffer <- ""
+    parts <- character()
+    
+    for (ch in chars) {
+      if (ch == '"') {
+        in_quotes <- !in_quotes
+      } else if (ch == "," && !in_quotes) {
+        parts <- c(parts, trimws(buffer))
+        buffer <- ""
+      } else {
+        buffer <- paste0(buffer, ch)
+      }
+    }
+    parts <- c(parts, trimws(buffer))
+    parts <- gsub('^"|"$', '', parts)
+    parts[nzchar(parts)]
+  }
+  
+  parsed_list <- lapply(all_values, function(x) {
+    result <- tryCatch(parse_mixed_quoted_tags(x), error = function(e) character(0))
+    if (length(result) > 0 && all(nzchar(result))) result else NULL
+  })
+  
+  parsed_flat <- unlist(parsed_list, use.names = FALSE)
+  parsed_clean <- sort(unique(parsed_flat[nzchar(parsed_flat)]))
+  parsed_clean
+}
+
+
 #' Filter Available Datasets in IRW
 #'
 #' Identifies datasets in the Item Response Warehouse (IRW) based on user-defined criteria.
@@ -23,10 +88,10 @@
 #'            - If **exact variable names** are provided, only datasets containing **all specified variables** will be returned.
 #'            - If a variable name **contains an underscore** (e.g., `"cov_"`, `"Qmatrix_"`), the function will match all datasets that
 #'              contain **at least one variable** that starts with that prefix.
-#' @param age_range Character value specifying the age group of participants (e.g., "Adult (18+)", "Child").
-#' @param child_age__for_child_focused_studies_ Character value indicating the age group for child-focused studies (e.g., "6-10", "11-14").
+#' @param age_range Character value specifying the age group of participants (e.g., "Adult (18+)", "Child (<18y)").
+#' @param child_age__for_child_focused_studies_ Character value indicating the age group for child-focused studies (e.g., "Early (<6y)").
 #' @param construct_type Character value specifying the psychological or educational construct being measured.
-#' @param sample Character value specifying the sample type or recruitment method (e.g., "Internet-based", "Lab-based").
+#' @param sample Character value specifying the sample type or recruitment method (e.g., "Educational", "Clinical").
 #' @param measurement_tool Character value specifying the type of instrument used for measurement (e.g., "Survey/questionnaire").
 #' @param item_format Character value describing the format of the items (e.g., "Likert Scale/selected response").
 #' @param primary_language_s_ Character value indicating the primary language(s) used in the instrument.
