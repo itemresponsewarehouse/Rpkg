@@ -2,29 +2,25 @@
 % Please edit documentation in R/fetch.R
 \name{irw_fetch}
 \alias{irw_fetch}
-\title{Fetch Data from the IRW Database}
+\title{Fetch Dataset(s) from the Item Response Warehouse}
 \usage{
 irw_fetch(name)
 }
 \arguments{
-\item{name}{A character vector specifying one or more dataset names to fetch.}
+\item{name}{Character vector of one or more dataset names (IRW table IDs).}
 }
 \value{
-If a single dataset is fetched, returns a tibble. If multiple datasets are fetched,
-returns a named list of tibbles or error messages for datasets that failed to load.
+If a single name is provided, returns a tibble. If multiple, returns a named list
+of tibbles (or error messages, if retrieval failed).
 }
 \description{
-Retrieves one or more datasets from the Item Response Warehouse (IRW) database by their names.
-The datasets are fetched as data frames (tibbles) and can be accessed programmatically for analysis.
+Retrieves one or more datasets from IRW and returns them as tibbles.
+If the dataset includes a character \code{resp} column, the function attempts to
+coerce it into numeric. Strings like \code{"NA"}, \code{""}, and \code{NA} are treated as missing values.
+A warning is issued only if other non-numeric values are encountered.
 }
 \examples{
 \dontrun{
-# Fetch a single dataset
-df <- irw_fetch("example_dataset")
-print(df)
-
-# Fetch multiple datasets
-datasets <- irw_fetch(c("dataset1", "dataset2"))
-print(names(datasets)) # Outputs: "dataset1" and "dataset2"
+irw_fetch("alcoholresearch_sumscore")
 }
 }

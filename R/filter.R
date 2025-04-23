@@ -84,7 +84,7 @@ irw_tag_options <- function(column) {
 #' @param responses_per_participant Numeric vector of length 2 specifying range for avg responses per participant.
 #' @param responses_per_item Numeric vector of length 2 specifying range for avg responses per item.
 #' @param density Numeric vector of length 2 specifying range for data density. Default `c(0.5, 1)`; disable with `NULL`.
-#' @param var A character vector specifying one or more variables.
+#' @param var A character vector specifying one or more variables. For a list of available variables, see: https://datapages.github.io/irw/standard.html
 #'            - If **exact variable names** are provided, only datasets containing **all specified variables** will be returned.
 #'            - If a variable name **contains an underscore** (e.g., `"cov_"`, `"Qmatrix_"`), the function will match all datasets that
 #'              contain **at least one variable** that starts with that prefix.
@@ -95,8 +95,12 @@ irw_tag_options <- function(column) {
 #' @param measurement_tool Character value specifying the type of instrument used for measurement (e.g., "Survey/questionnaire").
 #' @param item_format Character value describing the format of the items (e.g., "Likert Scale/selected response").
 #' @param primary_language_s_ Character value indicating the primary language(s) used in the instrument.
-#'
+#' @param longitudinal Logical or NULL. If TRUE, returns only longitudinal datasets 
+#'        (i.e., those with variables like 'wave' or 'date'). 
+#'        If FALSE, excludes those datasets. If NULL (default), includes all datasets.
+#'        
 #' @return Sorted character vector of dataset names matching **all specified criteria** or empty if none found.
+#' 
 #'
 #' @examples
 #' \dontrun{
@@ -125,7 +129,8 @@ irw_filter <- function(n_responses = NULL,
                        sample = NULL,
                        measurement_tool = NULL,
                        item_format = NULL,
-                       primary_language_s_ = NULL) {
+                       primary_language_s_ = NULL,
+                       longitudinal = NULL) {
   
   metadata <- irw_metadata()
   
@@ -171,6 +176,25 @@ irw_filter <- function(n_responses = NULL,
   # Convert variables column to list for filtering
   metadata$variables_list <- strsplit(metadata$variables, "\\| ")
   
+  longitudinal_vars <- c("wave", "date")
+  
+  if (!is.null(longitudinal)) {
+    has_longitudinal <- vapply(metadata$variables_list, function(vars) {
+      any(tolower(vars) %in% longitudinal_vars)
+    }, logical(1))
+    
+    if (isTRUE(longitudinal)) {
+      metadata <- metadata[has_longitudinal, ]
+    } else if (isFALSE(longitudinal)) {
+      metadata <- metadata[!has_longitudinal, ]
+      
+      # Optional: helpful message
+      if (!is.null(var) && any(tolower(var) %in% longitudinal_vars)) {
+        message("Note: datasets with longitudinal variables like 'wave' or 'date' were excluded. Set longitudinal = NULL or TRUE to include them.")
+      }
+    }
+  }
+  
   # --- VARIABLE FILTERING ---
   if (!is.null(var)) {
     metadata <- metadata[vapply(metadata$variables_list, function(vars) {
@@ -203,6 +227,7 @@ irw_filter <- function(n_responses = NULL,
   
   for (filter_name in names(numeric_filters)) {
     filter_value <- numeric_filters[[filter_name]]
+    if (length(filter_value) == 1) filter_value <- rep(filter_value, 2)
     metadata <- metadata[metadata[[filter_name]] >= filter_value[1] &
                            metadata[[filter_name]] <= filter_value[2], ]
   }

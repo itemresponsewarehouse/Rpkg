@@ -1,53 +1,71 @@
-#' Fetch Data from the IRW Database
+#' Fetch Dataset(s) from the Item Response Warehouse
 #'
-#' Retrieves one or more datasets from the Item Response Warehouse (IRW) database by their names.
-#' The datasets are fetched as data frames (tibbles) and can be accessed programmatically for analysis.
+#' Retrieves one or more datasets from IRW and returns them as tibbles.
+#' If the dataset includes a character `resp` column, the function attempts to
+#' coerce it into numeric. Strings like `"NA"`, `""`, and `NA` are treated as missing values.
+#' A warning is issued only if other non-numeric values are encountered.
 #'
-#' @param name A character vector specifying one or more dataset names to fetch.
-#' @return If a single dataset is fetched, returns a tibble. If multiple datasets are fetched,
-#'         returns a named list of tibbles or error messages for datasets that failed to load.
+#' @param name Character vector of one or more dataset names (IRW table IDs).
+#'
+#' @return If a single name is provided, returns a tibble. If multiple, returns a named list
+#'         of tibbles (or error messages, if retrieval failed).
+#'
 #' @examples
 #' \dontrun{
-#' # Fetch a single dataset
-#' df <- irw_fetch("example_dataset")
-#' print(df)
-#'
-#' # Fetch multiple datasets
-#' datasets <- irw_fetch(c("dataset1", "dataset2"))
-#' print(names(datasets)) # Outputs: "dataset1" and "dataset2"
+#' irw_fetch("alcoholresearch_sumscore")
 #' }
 #' @export
 irw_fetch <- function(name) {
-  # Helper function to fetch a single dataset
-  fetch_single_data <- function(table) {
+  # Helper to fetch one dataset and recode 'resp' if needed
+  fetch_single_data <- function(table_id) {
     tryCatch(
       {
-        table <- suppressMessages(.fetch_redivis_table(table))
-        table$to_tibble()
+        table_obj <- suppressMessages(.fetch_redivis_table(table_id))
+        df <- table_obj$to_tibble()
+        
+        # Recode 'resp' from character to numeric if needed
+        if ("resp" %in% names(df) && is.character(df$resp)) {
+          suppressWarnings({
+            new_resp <- as.numeric(df$resp)
+          })
+          
+          # Identify truly problematic entries (not NA, "", or "NA")
+          non_numeric_values <- is.na(new_resp) & !(tolower(trimws(df$resp)) %in% c("na", "", NA))
+          
+          if (any(non_numeric_values)) {
+            warning(sprintf(
+              "In dataset '%s': 'resp' column contained non-numeric values that could not be coerced. Some NAs were introduced.",
+              table_id
+            ))
+          }
+          
+          df$resp <- new_resp
+        }
+        
+        return(df)
       },
       error = function(e) {
         error_message <- paste(
           "Error fetching dataset",
-          shQuote(table),
+          shQuote(table_id),
           ":",
           e$message
         )
-        message(error_message) # print error immediately
-        return(error_message) # save error message in list output
+        message(error_message)
+        return(error_message)
       }
     )
   }
-
-  # Check if fetching a single or multiple datasets
-  if (length(name) == 1) {
-    return(fetch_single_data(name)) # Return a single tibble or error message
+  
+  # Decide single vs multiple
+  if (length(name) == 1 && is.character(name)) {
+    return(fetch_single_data(name))
   } else {
     dataset_list <- lapply(name, fetch_single_data)
     names(dataset_list) <- name
-    return(dataset_list) # Return a named list of tibbles/errors
+    return(dataset_list)
   }
 }
-
 
 #' Retrieve IRW Metadata Table
 #'

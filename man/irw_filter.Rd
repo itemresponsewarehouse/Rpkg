@@ -19,7 +19,8 @@ irw_filter(
   sample = NULL,
   measurement_tool = NULL,
   item_format = NULL,
-  primary_language_s_ = NULL
+  primary_language_s_ = NULL,
+  longitudinal = NULL
 )
 }
 \arguments{
@@ -37,7 +38,7 @@ irw_filter(
 
 \item{density}{Numeric vector of length 2 specifying range for data density. Default \code{c(0.5, 1)}; disable with \code{NULL}.}
 
-\item{var}{A character vector specifying one or more variables.
+\item{var}{A character vector specifying one or more variables. For a list of available variables, see: https://datapages.github.io/irw/standard.html
 - If \strong{exact variable names} are provided, only datasets containing \strong{all specified variables} will be returned.
 - If a variable name \strong{contains an underscore} (e.g., \code{"cov_"}, \code{"Qmatrix_"}), the function will match all datasets that
 contain \strong{at least one variable} that starts with that prefix.}
@@ -55,6 +56,10 @@ contain \strong{at least one variable} that starts with that prefix.}
 \item{item_format}{Character value describing the format of the items (e.g., "Likert Scale/selected response").}
 
 \item{primary_language_s_}{Character value indicating the primary language(s) used in the instrument.}
+
+\item{longitudinal}{Logical or NULL. If TRUE, returns only longitudinal datasets
+(i.e., those with variables like 'wave' or 'date').
+If FALSE, excludes those datasets. If NULL (default), includes all datasets.}
 }
 \value{
 Sorted character vector of dataset names matching \strong{all specified criteria} or empty if none found.
