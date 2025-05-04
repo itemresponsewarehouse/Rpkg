@@ -102,7 +102,14 @@ irw_info <- function(table_name = NULL) {
     table <- .fetch_redivis_table(table_name)
     bib <- .fetch_biblio_table()
     thisbib <- bib[bib$table == table_name, ]
-
+    
+    tags <- .fetch_tags_table()
+    construct <- tags$construct_name[tags$table == table_name]
+    
+    if (length(construct) == 0 || is.na(construct)) {
+      construct <- "No construct specified"
+    }
+    
     name <- table$properties$name
     num_rows <- table$properties$numRows
     data_size <- table$properties$numBytes / 1024 # Convert bytes to KB
@@ -118,6 +125,7 @@ irw_info <- function(table_name = NULL) {
     message("Table Information for: ", table_name)
     message(strrep("-", 50))
     message(sprintf("%-25s %s", "Description:", description))
+    message(sprintf("%-25s %s", "Construct:", construct))
     message(sprintf("%-25s %d", "Number of Rows:", num_rows))
     message(sprintf("%-25s %d", "Variable Count:", variable_count))
     message(sprintf("%-25s %.2f KB", "Data Size (KB):", data_size))
