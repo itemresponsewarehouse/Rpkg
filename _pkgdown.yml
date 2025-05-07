@@ -1,4 +1,4 @@
-url: https://hansorlee.github.io/irw
+url: https://itemresponsewarehouse.github.io/Rpkg
 
 template:
   bootstrap: 5
@@ -21,7 +21,7 @@ reference:
   - irw_download
   - irw_save_bibtex
 - title: Process
-  dec: Functions for processing IRW data for psychometric analysis.
+  desc: Functions for processing IRW data for psychometric analysis.
 - contents:
   - irw_long2resp
 - title: Example IRW data

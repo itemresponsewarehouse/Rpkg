@@ -1,8 +1,6 @@
-# irw
+# Rpkg `irw`
 
-`irw` makes it easy to access and work with tables from the [Item Response Warehouse (IRW)](https://datapages.github.io/irw/), an open repository of harmonized item response data.
-
-Visit the [irw package website](https://hansorlee.github.io/irw/index.html) for more information on getting started and a complete list of available functions.
+This repository hosts the R package `irw`, which provides programmatic access to the [Item Response Warehouse (IRW)](https://datapages.github.io/irw/), an open repository of harmonized item response data.
 
 ## Installation
 
