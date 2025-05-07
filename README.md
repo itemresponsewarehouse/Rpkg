@@ -7,6 +7,9 @@ This repository hosts the R package `irw`, which provides programmatic access to
 ``` r
 # Install the development version of irw from GitHub
 devtools::install_github("itemresponsewarehouse/Rpkg")
+
+# After installation, load the `irw` in your R session:
+library(irw)
 ```
 
 ## IMPORTANT: Redivis Authentication
@@ -25,15 +28,7 @@ The IRW tables are hosted on [Redivis](https://redivis.com), a data management p
 
 **Note:** You only need to authenticate once per session. For detailed instructions, refer to the [Redivis R Client documentation](https://apidocs.redivis.com/client-libraries/redivis-r/getting-started).
 
-## Usage
-
-After installation, load the `irw` in your R session:
-
-``` r
-library(irw)
-```
-
-### Example
+## Usage Examples
 
 ``` r
 # Get information about the IRW
