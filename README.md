@@ -8,7 +8,7 @@ This repository hosts the R package `irw`, which provides programmatic access to
 # Install the development version of irw from GitHub
 devtools::install_github("itemresponsewarehouse/Rpkg")
 
-# After installation, load the `irw` in your R session:
+# Load the package
 library(irw)
 ```
 
