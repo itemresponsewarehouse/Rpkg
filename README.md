@@ -8,7 +8,7 @@ Visit the [irw package website](https://hansorlee.github.io/irw/index.html) for 
 
 ``` r
 # Install the development version of irw from GitHub
-devtools::install_github("hansorlee/irw-r")
+devtools::install_github("hansorlee/irw")
 ```
 
 ## IMPORTANT: Redivis Authentication
