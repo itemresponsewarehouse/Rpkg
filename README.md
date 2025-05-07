@@ -6,7 +6,7 @@ This repository hosts the R package `irw`, which provides programmatic access to
 
 ``` r
 # Install the development version of irw from GitHub
-devtools::install_github("hansorlee/irw")
+devtools::install_github("itemresponsewarehouse/Rpkg")
 ```
 
 ## IMPORTANT: Redivis Authentication
