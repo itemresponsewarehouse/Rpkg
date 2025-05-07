@@ -7,6 +7,6 @@
 # * https://testthat.r-lib.org/articles/special-files.html
 
 library(testthat)
-library(irwpkg)
+library(irw)
 
-test_check("irwpkg")
+test_check("irw")

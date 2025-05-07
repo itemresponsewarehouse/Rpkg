@@ -1,5 +1,5 @@
 ---
-title: "Getting Started with irwpkg"
+title: "Getting Started with irw"
 ---
 
 ```{r, include = FALSE}
@@ -11,10 +11,10 @@ knitr::opts_chunk$set(
 
 
 ## 📌 Overview
-`irwpkg` provides an interface to access datasets from the [Item Response Warehouse (IRW)](https://datapages.github.io/irw/). 
+`irw` provides an interface to access datasets from the [Item Response Warehouse (IRW)](https://datapages.github.io/irw/). 
 
 ```{r setup, echo=FALSE}
-library(irwpkg)
+library(irw)
 ```
 
 ---

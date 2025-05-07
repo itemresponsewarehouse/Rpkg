@@ -1,14 +1,14 @@
-# irwpkg
+# irw
 
-`irwpkg` makes it easy to access and work with tables from the [Item Response Warehouse (IRW)](https://datapages.github.io/irw/), an open repository of harmonized item response data.
+`irw` makes it easy to access and work with tables from the [Item Response Warehouse (IRW)](https://datapages.github.io/irw/), an open repository of harmonized item response data.
 
-Visit the [irwpkg package website](https://hansorlee.github.io/irwpkg/index.html) for more information on getting started and a complete list of available functions.
+Visit the [irw package website](https://hansorlee.github.io/irw/index.html) for more information on getting started and a complete list of available functions.
 
 ## Installation
 
 ``` r
-# Install the development version of irwpkg from GitHub
-devtools::install_github("hansorlee/irwpkg")
+# Install the development version of irw from GitHub
+devtools::install_github("hansorlee/irw")
 ```
 
 ## IMPORTANT: Redivis Authentication
@@ -19,7 +19,7 @@ The IRW tables are hosted on [Redivis](https://redivis.com), a data management p
 
 2.  Authenticate using the Redivis R Client:
 
-    1.  When you first use a function in `irwpkg` that connects to Redivis (e.g. `irw_info()`), a browser window will open, prompting you to sign in to your Redivis account.
+    1.  When you first use a function in `irw` that connects to Redivis (e.g. `irw_info()`), a browser window will open, prompting you to sign in to your Redivis account.
 
     2.  After signing in, click **Allow** to grant access for the Redivis R Client.
 
@@ -29,10 +29,10 @@ The IRW tables are hosted on [Redivis](https://redivis.com), a data management p
 
 ## Usage
 
-After installation, load the `irwpkg` in your R session:
+After installation, load the `irw` in your R session:
 
 ``` r
-library(irwpkg)
+library(irw)
 ```
 
 ### Example
@@ -63,4 +63,4 @@ x = irw_fetch("4thgrade_math_sirt")
 
 ## Feedback and Contributions
 
-If you encounter issues or have suggestions for improving `irwpkg`, please submit them on the [GitHub Issues page](https://github.com/hansorlee/irwpkg/issues). Contributions are welcome!
+If you encounter issues or have suggestions for improving `irw`, please submit them on the [GitHub Issues page](https://github.com/hansorlee/irw/issues). Contributions are welcome!

@@ -23,13 +23,13 @@
         withTimeout(expr(), timeout = timeout_sec, onTimeout = "error")
       },
       TimeoutException = function(e) {
-        if (getOption("irwpkg.verbose", FALSE)) {
+        if (getOption("irw.verbose", FALSE)) {
           message("Attempt ", attempt, " timed out after ", timeout_sec, " seconds.")
         }
         NULL
       },
       error = function(e) {
-        if (getOption("irwpkg.verbose", FALSE)) {
+        if (getOption("irw.verbose", FALSE)) {
           message("Attempt ", attempt, " failed: ", e$message)
         }
         NULL
@@ -45,7 +45,7 @@
     }
 
     delay <- base_delay * (2^(attempt - 1))
-    if (getOption("irwpkg.verbose", FALSE)) {
+    if (getOption("irw.verbose", FALSE)) {
       message("Retrying in ", delay, " seconds...")
     }
 
