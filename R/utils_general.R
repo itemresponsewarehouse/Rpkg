@@ -35,7 +35,6 @@ irw_download <- function(table_name,
 }
 
 
-
 #' Save BibTeX Entries for IRW Tables
 #'
 #' Saves BibTeX entries for one or more IRW tables to a specified output file.
@@ -46,103 +45,101 @@ irw_download <- function(table_name,
 #' @return Invisibly returns BibTeX entries as a character vector.
 #' @export
 irw_save_bibtex <- function(table_names, output_file = "refs.bib") {
-  # Initialize lists for valid BibTeX entries and invalid table names
+  # Initialize lists
   valid_entries <- character()
   missing_tables <- character()
   missing_doi_tables <- character()
-
+  
+  # Fetch the full biblio table once
+  biblio <- .fetch_biblio_table()
+  
   # Process each table name
   for (table_name in table_names) {
-    # Check if the table exists in IRW by attempting to fetch it
-    tryCatch(
-      {
-        # If the table exists in IRW, this will succeed
-        irw_table <- .fetch_redivis_table(table_name)
-      },
-      error = function(e) {
-        # If an error occurs, the table is missing from IRW
-        missing_tables <<- c(missing_tables, table_name)
-        return(NULL) # Skip processing for this table
-      }
-    )
-
-    # If the table is missing from IRW, skip further processing and just report it
-    if (table_name %in% missing_tables) {
+    # Try to confirm the table exists in IRW
+    exists <- tryCatch({
+      .fetch_redivis_table(table_name)
+      TRUE
+    }, error = function(e) {
+      FALSE
+    })
+    
+    if (!exists) {
+      missing_tables <- c(missing_tables, table_name)
       next
     }
-
-    # Now that the table exists in IRW, fetch the biblio table
-    biblio <- .fetch_biblio_table()
-
-    # Check if the table is in biblio
-    if (!table_name %in% biblio$table) {
+    
+    # Get the corresponding row from biblio
+    biblio_entry <- biblio[biblio$table == table_name, ]
+    if (nrow(biblio_entry) == 0) {
       missing_doi_tables <- c(missing_doi_tables, table_name)
       next
     }
-
-    # Retrieve DOI from "DOI__for_paper_"
-    doi <- biblio[biblio$table == table_name, "DOI__for_paper_", drop = TRUE]
-
-    # Attempt to fetch BibTeX from the DOI
-    bibtex <- NULL
-    if (!is.null(doi) && nzchar(doi)) {
-      response <- tryCatch(
-        httr::GET(
-          glue::glue("https://doi.org/{doi}"),
-          httr::add_headers(Accept = "application/x-bibtex")
-        ),
-        error = function(e) {
-          NULL
+    
+    # --- Step 1: Try manual BibTeX ---
+    bibtex <- trimws(biblio_entry$BibTex)
+    
+    if (is.null(bibtex) || is.na(bibtex) || !nzchar(bibtex) || !grepl("@", bibtex)) {
+      # --- Step 2: Try DOI-based BibTeX ---
+      bibtex <- NULL  # Reset
+      doi <- biblio_entry$DOI__for_paper_
+      
+      if (!is.na(doi) && nzchar(doi)) {
+        response <- tryCatch(
+          httr::GET(
+            glue::glue("https://doi.org/{doi}"),
+            httr::add_headers(Accept = "application/x-bibtex")
+          ),
+          error = function(e) NULL
+        )
+        if (!is.null(response) && httr::status_code(response) == 200) {
+          fetched_bibtex <- trimws(httr::content(response, as = "text", encoding = "UTF-8"))
+          if (nzchar(fetched_bibtex) && grepl("@", fetched_bibtex)) {
+            bibtex <- fetched_bibtex
+          }
         }
-      )
-      if (!is.null(response) &&
-        httr::status_code(response) == 200) {
-        bibtex <- httr::content(response, as = "text", encoding = "UTF-8")
       }
     }
-
-    # If DOI-based retrieval fails, use the manual BibTeX entry in biblio
-    if (is.null(bibtex)) {
-      manual_bibtex <- biblio[biblio$table == table_name, "BibTex", drop = TRUE]
-      if (length(manual_bibtex) > 0 && nzchar(manual_bibtex)) {
-        bibtex <- manual_bibtex
-      } else {
-        missing_doi_tables <- c(missing_doi_tables, table_name)
-        next
-      }
+    
+    # --- Step 3: If all else fails ---
+    if (is.null(bibtex) || is.na(bibtex) || !nzchar(bibtex) || !grepl("@", bibtex)) {
+      missing_doi_tables <- c(missing_doi_tables, table_name)
+      next
     }
-
-    # Update the BibTeX key while preserving the entry type
-    if (!is.null(bibtex) && grepl("^@", bibtex)) {
-      bibtex <- sub(
-        "@(\\w+)\\{[^,]+,",
-        paste0("@\\1{", table_name, ","),
-        bibtex
-      )
-      valid_entries <- c(valid_entries, bibtex)
-    }
+    
+    # --- Step 4: Replace BibTeX key with table name ---
+    bibtex <- sub(
+      "@(\\w+)\\{[^,]+,",
+      paste0("@\\1{", table_name, ","),
+      bibtex
+    )
+    valid_entries <- c(valid_entries, bibtex)
   }
-
-  # Save valid entries to file
+  
+  # Write BibTeX entries to file
   if (length(valid_entries) > 0) {
-    writeLines(unique(valid_entries), con = output_file)
+    writeLines(paste0(unique(valid_entries), "\n"), con = output_file)
     message("BibTeX entries saved to: ", output_file)
   }
-
-  # Messages for missing tables and missing DOIs
+  
+  # Final summary
+  message(length(table_names), " table(s) requested; ",
+          length(valid_entries), " BibTeX entry(ies) saved.")
+  
+  # Show messages for skipped tables
   if (length(missing_tables) > 0) {
     message(
-      "NOTE: These tables were not processed because they do not exist in the IRW database. Please check the names:\n",
+      "NOTE: These tables were not processed because they do not exist in the IRW database:\n",
       paste(missing_tables, collapse = ", ")
     )
   }
-
+  
   if (length(missing_doi_tables) > 0) {
     message(
-      "NOTE: These tables exist in the IRW database but were missing valid DOI information, and no manual BibTeX entry was found:\n",
+      "NOTE: These tables exist in the IRW database but were missing valid BibTeX entries (manual or via DOI):\n",
       paste(missing_doi_tables, collapse = ", ")
     )
   }
 
+  
   invisible(valid_entries)
 }
