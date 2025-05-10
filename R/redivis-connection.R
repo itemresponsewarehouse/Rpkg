@@ -66,7 +66,7 @@
 .initialize_datasource <- function() {
   if (!exists("datasource", envir = .irw_env) || is.null(.irw_env$datasource)) {
     .irw_env$datasource <- .retry_with_backoff(function() {
-      datasource <- redivis::user("datapages")$dataset("item_response_warehouse:as2e")
+      datasource <- redivis::redivis$user("datapages")$dataset("item_response_warehouse:as2e")
       datasource$get()
       datasource
     })
@@ -149,7 +149,7 @@
 #' @return A cached or newly fetched tibble containing metadata information.
 #' @keywords internal
 .fetch_metadata_table <- function() {
-  dataset <- redivis::user("bdomingu")$dataset("irw_meta:bdxt")
+  dataset <- redivis::redivis$user("bdomingu")$dataset("irw_meta:bdxt")
 
   # Ensure we have the latest dataset metadata
   .retry_with_backoff(function() {
@@ -191,7 +191,7 @@
 #' @keywords internal
 .fetch_biblio_table <- function() {
   # Fetch the biblio table from the Redivis dataset
-  dataset <- redivis::user("bdomingu")$dataset("irw_meta:bdxt")
+  dataset <- redivis::redivis$user("bdomingu")$dataset("irw_meta:bdxt")
   .retry_with_backoff(function() {
     dataset$get()
   })
@@ -238,7 +238,7 @@
 #' @return A tibble containing filtered tags information.
 #' @keywords internal
 .fetch_tags_table <- function() {
-  dataset <- redivis::user("bdomingu")$dataset("irw_meta:bdxt")
+  dataset <- redivis::redivis$user("bdomingu")$dataset("irw_meta:bdxt")
   .retry_with_backoff(function() {
     dataset$get()
   })
