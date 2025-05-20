@@ -4,13 +4,17 @@
 \alias{.initialize_datasource}
 \title{Initialize Datasource}
 \usage{
-.initialize_datasource()
+.initialize_datasource(sim = FALSE)
+}
+\arguments{
+\item{sim}{Logical. If TRUE, connects to the simulation dataset (\code{irw_simsyn}).}
 }
 \value{
 A Redivis dataset object representing the connected datasource.
 }
 \description{
-Establishes a connection to the Redivis datasource. Ensures \code{get()} is called
-to properly retrieve the dataset.
+Establishes a connection to the Redivis datasource. If \code{sim = FALSE}, connects
+to the main IRW dataset. If \code{sim = TRUE}, connects to the simulation dataset.
+Ensures \code{get()} is called to properly retrieve the dataset and caches the result.
 }
 \keyword{internal}

@@ -4,10 +4,12 @@
 \alias{.fetch_redivis_table}
 \title{Fetch Table Data}
 \usage{
-.fetch_redivis_table(name)
+.fetch_redivis_table(name, sim = FALSE)
 }
 \arguments{
 \item{name}{A character string specifying the table name.}
+
+\item{sim}{Logical. If TRUE, fetches from the IRW simulation dataset (\code{irw_simsyn}).}
 }
 \value{
 A Redivis table object.

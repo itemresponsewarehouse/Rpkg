@@ -4,7 +4,10 @@
 \alias{irw_list_tables}
 \title{List Available Tables}
 \usage{
-irw_list_tables()
+irw_list_tables(sim = FALSE)
+}
+\arguments{
+\item{sim}{Logical. If TRUE, lists tables from the IRW simulation dataset (\code{irw_simsyn}).}
 }
 \value{
 A data frame with the following columns:
@@ -18,7 +21,7 @@ number of rows, and variable count, sorted alphabetically by table name.
 }
 \examples{
 \dontrun{
-tables <- irw_list_tables()
-print(tables)
+irw_list_tables()            # IRW database
+irw_list_tables(sim = TRUE) # Simulated datasets
 }
 }

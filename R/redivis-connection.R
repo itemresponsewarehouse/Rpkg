@@ -58,21 +58,40 @@
 
 #' Initialize Datasource
 #'
-#' Establishes a connection to the Redivis datasource. Ensures `get()` is called
-#' to properly retrieve the dataset.
+#' Establishes a connection to the Redivis datasource. If `sim = FALSE`, connects
+#' to the main IRW dataset. If `sim = TRUE`, connects to the simulation dataset.
+#' Ensures `get()` is called to properly retrieve the dataset and caches the result.
 #'
+#' @param sim Logical. If TRUE, connects to the simulation dataset (`irw_simsyn`).
 #' @return A Redivis dataset object representing the connected datasource.
 #' @keywords internal
-.initialize_datasource <- function() {
-  if (!exists("datasource", envir = .irw_env) || is.null(.irw_env$datasource)) {
-    .irw_env$datasource <- .retry_with_backoff(function() {
-      datasource <- redivis::redivis$user("datapages")$dataset("item_response_warehouse:as2e")
-      datasource$get()
-      datasource
-    })
+.initialize_datasource <- function(sim = FALSE) {
+  if (!is.logical(sim) || length(sim) != 1) {
+    stop("'sim' must be a single TRUE or FALSE value.")
   }
-  return(.irw_env$datasource)
+  
+  if (isFALSE(sim)) {
+    if (!exists("datasource", envir = .irw_env) || is.null(.irw_env$datasource)) {
+      .irw_env$datasource <- .retry_with_backoff(function() {
+        ds <- redivis::redivis$user("datapages")$dataset("item_response_warehouse:as2e")
+        ds$get()
+        ds
+      })
+    }
+    return(.irw_env$datasource)
+  } else {
+    if (!exists("sim_datasource", envir = .irw_env) || is.null(.irw_env$sim_datasource)) {
+      .irw_env$sim_datasource <- .retry_with_backoff(function() {
+        ds <- redivis::redivis$user("bdomingu")$dataset("irw_simsyn:0btg")
+        ds$get()
+        ds
+      })
+    }
+    return(.irw_env$sim_datasource)
+  }
 }
+
+
 
 #' Fetch Table Data
 #'
@@ -80,14 +99,15 @@
 #' This function returns a Redivis table object, which can later be converted to a tibble.
 #'
 #' @param name A character string specifying the table name.
+#' @param sim Logical. If TRUE, fetches from the IRW simulation dataset (`irw_simsyn`).
 #' @return A Redivis table object.
 #' @keywords internal
-.fetch_redivis_table <- function(name) {
+.fetch_redivis_table <- function(name, sim = FALSE) {
   if (!is.character(name) || length(name) != 1) {
     stop("The 'name' parameter must be a single character string.")
   }
 
-  ds <- .initialize_datasource()
+  ds <- .initialize_datasource(sim = sim)
 
   tryCatch(
     {
@@ -140,6 +160,8 @@
     }
   )
 }
+
+
 
 #' Fetch Metadata Table
 #'

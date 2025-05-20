@@ -6,21 +6,23 @@
 #' A warning is issued only if other non-numeric values are encountered.
 #'
 #' @param name Character vector of one or more dataset names (IRW table IDs).
+#' @param sim Logical. If TRUE, fetch from the IRW simulation dataset. Defaults to FALSE.
 #'
 #' @return If a single name is provided, returns a tibble. If multiple, returns a named list
 #'         of tibbles (or error messages, if retrieval failed).
 #'
 #' @examples
 #' \dontrun{
-#' irw_fetch("alcoholresearch_sumscore")
+#' irw_fetch("environment_ltm")
+#' irw_fetch("gilbert_meta_3", sim = TRUE)
 #' }
 #' @export
-irw_fetch <- function(name) {
+irw_fetch <- function(name, sim = FALSE) {
   # Helper to fetch one dataset and recode 'resp' if needed
-  fetch_single_data <- function(table_id) {
+  fetch_single_data <- function(table_id, sim=FALSE) {
     tryCatch(
       {
-        table_obj <- suppressMessages(.fetch_redivis_table(table_id))
+        table_obj <- suppressMessages(.fetch_redivis_table(table_id, sim))
         df <- table_obj$to_tibble()
         
         # Recode 'resp' from character to numeric if needed
@@ -52,16 +54,16 @@ irw_fetch <- function(name) {
           e$message
         )
         message(error_message)
-        return(error_message)
+        return(invisible(NULL))
       }
     )
   }
   
   # Decide single vs multiple
   if (length(name) == 1 && is.character(name)) {
-    return(fetch_single_data(name))
+    return(fetch_single_data(name, sim))
   } else {
-    dataset_list <- lapply(name, fetch_single_data)
+    dataset_list <- lapply(name, function(nm) fetch_single_data(nm, sim = sim))
     names(dataset_list) <- name
     return(dataset_list)
   }

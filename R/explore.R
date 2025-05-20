@@ -3,19 +3,20 @@
 #' Retrieves a summary of available tables in the IRW database, including their name,
 #' number of rows, and variable count, sorted alphabetically by table name.
 #'
+#' @param sim Logical. If TRUE, lists tables from the IRW simulation dataset (`irw_simsyn`).
 #' @return A data frame with the following columns:
 #'   \item{name}{The name of the table, sorted alphabetically.}
 #'   \item{numRows}{The number of rows in the table.}
 #'   \item{variableCount}{The number of variables in the table.}
 #' @examples
 #' \dontrun{
-#' tables <- irw_list_tables()
-#' print(tables)
+#' irw_list_tables()            # IRW database
+#' irw_list_tables(sim = TRUE) # Simulated datasets
 #' }
 #' @export
-irw_list_tables <- function() {
+irw_list_tables <- function(sim=FALSE) {
   # Initialize the datasource if not already set
-  ds <- .initialize_datasource()
+  ds <- .initialize_datasource(sim=sim)
 
   # Retrieve the list of tables from the datasource
   tables <- .retry_with_backoff(function() {

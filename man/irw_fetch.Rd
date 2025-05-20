@@ -4,10 +4,12 @@
 \alias{irw_fetch}
 \title{Fetch Dataset(s) from the Item Response Warehouse}
 \usage{
-irw_fetch(name)
+irw_fetch(name, sim = FALSE)
 }
 \arguments{
 \item{name}{Character vector of one or more dataset names (IRW table IDs).}
+
+\item{sim}{Logical. If TRUE, fetch from the IRW simulation dataset. Defaults to FALSE.}
 }
 \value{
 If a single name is provided, returns a tibble. If multiple, returns a named list
@@ -21,6 +23,7 @@ A warning is issued only if other non-numeric values are encountered.
 }
 \examples{
 \dontrun{
-irw_fetch("alcoholresearch_sumscore")
+irw_fetch("environment_ltm")
+irw_fetch("gilbert_meta_3", sim = TRUE)
 }
 }
