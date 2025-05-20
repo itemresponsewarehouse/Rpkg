@@ -51,8 +51,7 @@ jobs:
         shell: Rscript {0}
 
       - name: Install irw
-        run: |
-          if (!requireNamespace("irw", quietly = TRUE)) remotes::install_local(dependencies = TRUE)
+        run: remotes::install_local("Rpkg", dependencies = TRUE)
         shell: Rscript {0}
 
       - name: Build site
