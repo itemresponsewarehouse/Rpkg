@@ -29,14 +29,14 @@ jobs:
         with:
           use-public-rspm: true
 
-      # Disabled cache step
-      # - name: Cache R packages
-      #   uses: actions/cache@v4
-      #   with:
-      #     path: ${{ env.R_LIBS_USER }}
-      #     key: r-packages-${{ runner.os }}-${{ hashFiles('DESCRIPTION') }}
-      #     restore-keys: |
-      #       r-packages-${{ runner.os }}-
+      - name: Install system dependencies for sf
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libgdal-dev \
+            libgeos-dev \
+            libproj-dev \
+            libudunits2-dev
 
       - name: Install dependencies
         run: |

@@ -5,10 +5,10 @@
 #'
 #' @param n_id Number of respondents. Ignored if `theta` is provided. Default is 1000.
 #' @param n_item Number of items. Default is 20.
-#' @param model Character, one of `"1PL"`, `"2PL"`, or `"3PL"` (default: `"1PL"`).
+#' @param model Character string: one of `"1PL"`, `"2PL"`, or `"3PL"`. Default is `"1PL"`.
 #' @param a Optional vector of item discriminations. If `NULL`, sampled from lognormal(0.2, 0.2) (ignored for 1PL).
 #' @param d Optional vector of item difficulties. If `NULL`, sampled from N(0, 1).
-#' @param g Optional vector of guessing parameters. If `NULL` for 3PL, sampled from Beta(5, 17).
+#' @param g Optional vector of guessing parameters. Required for 3PL; if `NULL`, sampled from Beta(5, 17).
 #' @param theta Optional vector of person abilities. If provided, overrides `n_id`, `theta_mean`, and `theta_sd`.
 #' @param theta_mean Mean of theta distribution (if `theta` not supplied). Default is 0.
 #' @param theta_sd Standard deviation of theta distribution. Default is 1.
@@ -19,18 +19,19 @@
 #'
 #' @examples
 #' \dontrun{
-#' dat <- irw_simdata(n_item = 10, model = "3PL", theta_mean = -0.5)
+#' # 1PL (default)
+#' dat <- irw_simdata(n_item = 5)
 #'
-#' sim <- irw_simdata(n_item = 5, model = "2PL", return_params = TRUE)
+#' # 3PL with latent traits drawn from N(-0.5, 1)
+#' sim <- irw_simdata(n_item = 5, model = "3PL", theta_mean = -0.5, return_params = TRUE)
 #' head(sim$data)
-#' sim$theta
 #' }
 #'
 #' @importFrom stats rnorm rlnorm rbeta rbinom
 #' @export
 irw_simdata <- function(n_id = 1000,
                         n_item = 20,
-                        model = c("1PL", "2PL", "3PL"),
+                        model = "1PL",
                         a = NULL,
                         d = NULL,
                         g = NULL,
@@ -39,7 +40,10 @@ irw_simdata <- function(n_id = 1000,
                         theta_sd = 1,
                         seed = NULL,
                         return_params = FALSE) {
-  model <- match.arg(model)
+  if (!model %in% c("1PL", "2PL", "3PL")) {
+    stop("model must be one of '1PL', '2PL', or '3PL'", call. = FALSE)
+  }
+  
   if (!is.null(seed)) set.seed(seed)
   
   if (!is.null(theta)) {
@@ -71,7 +75,7 @@ irw_simdata <- function(n_id = 1000,
   
   response_matrix <- matrix(NA, nrow = n_id, ncol = n_item)
   for (i in seq_len(n_item)) {
-    p <- prob_correct(theta, a[i], d[i], ifelse(model == "3PL", g[i], 0))
+    p <- prob_correct(theta, a[i], d[i], if (model == "3PL") g[i] else 0)
     response_matrix[, i] <- rbinom(n_id, 1, p)
   }
   

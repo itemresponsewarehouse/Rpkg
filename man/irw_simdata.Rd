@@ -7,7 +7,7 @@
 irw_simdata(
   n_id = 1000,
   n_item = 20,
-  model = c("1PL", "2PL", "3PL"),
+  model = "1PL",
   a = NULL,
   d = NULL,
   g = NULL,
@@ -23,13 +23,13 @@ irw_simdata(
 
 \item{n_item}{Number of items. Default is 20.}
 
-\item{model}{Character, one of \code{"1PL"}, \code{"2PL"}, or \code{"3PL"} (default: \code{"1PL"}).}
+\item{model}{Character string: one of \code{"1PL"}, \code{"2PL"}, or \code{"3PL"}. Default is \code{"1PL"}.}
 
 \item{a}{Optional vector of item discriminations. If \code{NULL}, sampled from lognormal(0.2, 0.2) (ignored for 1PL).}
 
 \item{d}{Optional vector of item difficulties. If \code{NULL}, sampled from N(0, 1).}
 
-\item{g}{Optional vector of guessing parameters. If \code{NULL} for 3PL, sampled from Beta(5, 17).}
+\item{g}{Optional vector of guessing parameters. Required for 3PL; if \code{NULL}, sampled from Beta(5, 17).}
 
 \item{theta}{Optional vector of person abilities. If provided, overrides \code{n_id}, \code{theta_mean}, and \code{theta_sd}.}
 
@@ -50,11 +50,12 @@ Returns a long-format data frame with \code{id}, \code{item}, and \code{resp} co
 }
 \examples{
 \dontrun{
-dat <- irw_simdata(n_item = 10, model = "3PL", theta_mean = -0.5)
+# 1PL (default)
+dat <- irw_simdata(n_item = 5)
 
-sim <- irw_simdata(n_item = 5, model = "2PL", return_params = TRUE)
+# 3PL with latent traits drawn from N(-0.5, 1)
+sim <- irw_simdata(n_item = 5, model = "3PL", theta_mean = -0.5, return_params = TRUE)
 head(sim$data)
-sim$theta
 }
 
 }
