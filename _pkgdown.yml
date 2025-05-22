@@ -20,6 +20,10 @@ reference:
   - irw_merge
   - irw_download
   - irw_save_bibtex
+- title: Simulate
+  desc: Functions for simulating IRW data.
+- contents:
+  - irw_simdata
 - title: Process
   desc: Functions for processing IRW data for psychometric analysis.
 - contents:
