@@ -9,7 +9,7 @@ irw_simdata(
   n_item = 20,
   model = "1PL",
   a = NULL,
-  d = NULL,
+  b = NULL,
   g = NULL,
   theta = NULL,
   theta_mean = 0,
@@ -27,7 +27,7 @@ irw_simdata(
 
 \item{a}{Optional vector of item discriminations. If \code{NULL}, sampled from lognormal(0.2, 0.2) (ignored for 1PL).}
 
-\item{d}{Optional vector of item difficulties. If \code{NULL}, sampled from N(0, 1).}
+\item{b}{Optional vector of item difficulties. If \code{NULL}, sampled from N(0, 1).}
 
 \item{g}{Optional vector of guessing parameters. Required for 3PL; if \code{NULL}, sampled from Beta(5, 17).}
 

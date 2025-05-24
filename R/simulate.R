@@ -7,7 +7,7 @@
 #' @param n_item Number of items. Default is 20.
 #' @param model Character string: one of `"1PL"`, `"2PL"`, or `"3PL"`. Default is `"1PL"`.
 #' @param a Optional vector of item discriminations. If `NULL`, sampled from lognormal(0.2, 0.2) (ignored for 1PL).
-#' @param d Optional vector of item difficulties. If `NULL`, sampled from N(0, 1).
+#' @param b Optional vector of item difficulties. If `NULL`, sampled from N(0, 1).
 #' @param g Optional vector of guessing parameters. Required for 3PL; if `NULL`, sampled from Beta(5, 17).
 #' @param theta Optional vector of person abilities. If provided, overrides `n_id`, `theta_mean`, and `theta_sd`.
 #' @param theta_mean Mean of theta distribution (if `theta` not supplied). Default is 0.
@@ -33,7 +33,7 @@ irw_simdata <- function(n_id = 1000,
                         n_item = 20,
                         model = "1PL",
                         a = NULL,
-                        d = NULL,
+                        b = NULL,
                         g = NULL,
                         theta = NULL,
                         theta_mean = 0,
@@ -60,22 +60,22 @@ irw_simdata <- function(n_id = 1000,
                 "3PL" = rlnorm(n_item, 0.2, 0.2))
   }
   
-  if (is.null(d)) {
-    d <- rnorm(n_item, 0, 1)
+  if (is.null(b)) {
+    b <- rnorm(n_item, 0, 1)
   }
   
   if (model == "3PL" && is.null(g)) {
     g <- rbeta(n_item, 5, 17)
   }
   
-  prob_correct <- function(th, a, d, g = 0) {
-    p <- 1 / (1 + exp(-a * (th - d)))
+  prob_correct <- function(th, a, b, g = 0) {
+    p <- 1 / (1 + exp(-a * (th - b)))
     g + (1 - g) * p
   }
   
   response_matrix <- matrix(NA, nrow = n_id, ncol = n_item)
   for (i in seq_len(n_item)) {
-    p <- prob_correct(theta, a[i], d[i], if (model == "3PL") g[i] else 0)
+    p <- prob_correct(theta, a[i], b[i], if (model == "3PL") g[i] else 0)
     response_matrix[, i] <- rbinom(n_id, 1, p)
   }
   
@@ -90,7 +90,7 @@ irw_simdata <- function(n_id = 1000,
       data = df_long,
       theta = theta,
       a = a,
-      d = d,
+      b = b,
       g = if (model == "3PL") g else NULL
     ))
   } else {
