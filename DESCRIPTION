@@ -17,7 +17,8 @@ Imports:
     glue,
     httr,
     redivis, 
-    tibble
+    tibble,
+    stats
 Suggests: 
     testthat (>= 3.0.0),
     evaluate
