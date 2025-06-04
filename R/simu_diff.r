@@ -26,7 +26,7 @@
 #' irw_simu_diff(num_items = 5)
 #'
 #' # Filter to specific IRW datasets
-#' irw_simu_diff(num_items = 5, irw_names = c("gilbert_meta_22", "gilbert_meta_23"))
+#' irw_simu_diff(num_items = 5, irw_names = c("psychtools_epi", "psychtools_blot"))
 #'
 #' # Use custom difficulty pool
 #' pool <- data.frame(dataset = "x", difficulty = c(-0.2, 0.1), SE = c(0.1, 0.2))
