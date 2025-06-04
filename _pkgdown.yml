@@ -23,6 +23,7 @@ reference:
 - title: Simulate
   desc: Functions for simulating IRW data.
 - contents:
+  - simu_diff
   - irw_simdata
 - title: Process
   desc: Functions for processing IRW data for psychometric analysis.
@@ -31,6 +32,7 @@ reference:
 - title: Example IRW data
 - contents:
   - swmd_mokken
+  - diff_long
 
 
 
