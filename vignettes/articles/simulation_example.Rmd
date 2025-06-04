@@ -1,0 +1,16 @@
+---
+title: "Simulating Item Response Data with `irw`"
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup, echo=FALSE}
+library(irw)
+```
+
+# Coming soon!

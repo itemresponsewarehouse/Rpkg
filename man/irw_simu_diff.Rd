@@ -2,50 +2,56 @@
 % Please edit documentation in R/simu_diff.r
 \name{irw_simu_diff}
 \alias{irw_simu_diff}
-\title{Simulate Item Difficulties Based on IRW or Custom Distributions}
+\title{Simulate Item Difficulties from IRW or Custom Pools}
 \usage{
 irw_simu_diff(
   num_items = 10,
   num_replications = 1,
-  from_irw = TRUE,
-  difficulty_data = NULL
+  irw_names = NULL,
+  difficulty_pool = NULL
 )
 }
 \arguments{
 \item{num_items}{Number of item difficulties to simulate per replication.}
 
 \item{num_replications}{Number of independent sets of item difficulties to generate.
-If \code{num_replications = 1}, a numeric vector is returned.
-If \code{num_replications > 1}, a data frame with \code{replication} and \code{difficulty} columns is returned.}
+If \code{num_replications = 1}, a numeric vector is returned. Otherwise, a data frame with
+\code{replication} and \code{difficulty} columns is returned.}
 
-\item{from_irw}{Logical. If \code{TRUE} (default), uses the built-in IRW dataset \code{diff_long}.}
+\item{irw_names}{Optional. Character vector of dataset names from the IRW difficulty pool to include.}
 
-\item{difficulty_data}{Optional. A data frame with columns \code{dataset}, \code{difficulty}, and \code{SE}.
-Overrides \code{from_irw} if provided.}
+\item{difficulty_pool}{Optional. A custom data frame with columns \code{dataset}, \code{difficulty}, and \code{SE}.
+Overrides \code{irw_names} and defaults if provided.}
 }
 \value{
 A numeric vector (if one replication) or a data frame (if multiple replications).
 }
 \description{
-Generates simulated item difficulties by drawing from uncertainty distributions
-based on real IRW data (\code{diff_long}) or a user-provided dataset of difficulty estimates and standard errors.
-This method is based on Zhang et al. (2025), which models realistic difficulty distributions
-by constructing a mixture of normals and sampling via inverse CDF.
+Simulates item difficulties by sampling from distributions based on estimated
+difficulties and standard errors. By default, this function uses a built-in pool
+of item difficulties estimated from the Item Response Warehouse (IRW).
+}
+\details{
+Users can (1) use the full IRW pool, (2) filter to specific IRW datasets via \code{irw_names},
+or (3) supply a custom difficulty pool with columns \code{dataset}, \code{difficulty}, and \code{SE}.
+
+This method is based on Zhang et al. (2025), which constructs mixture distributions
+for each dataset and samples from the empirical uncertainty via inverse CDF sampling.
 }
 \examples{
 \dontrun{
-# Default usage with IRW data
-b <- irw_simu_diff(num_items = 5)
+# Use all IRW data (default)
+irw_simu_diff(num_items = 5)
 
-# Multiple replications
-reps <- irw_simu_diff(num_items = 5, num_replications = 3)
+# Filter to specific IRW datasets
+irw_simu_diff(num_items = 5, irw_names = c("gilbert_meta_22", "gilbert_meta_23"))
 
-# Custom difficulty pool
-my_pool <- data.frame(dataset = "custom", difficulty = c(-0.2, 0.3), SE = c(0.1, 0.15))
-b_custom <- irw_simu_diff(num_items = 5, from_irw = FALSE, difficulty_data = my_pool)
+# Use custom difficulty pool
+pool <- data.frame(dataset = "x", difficulty = c(-0.2, 0.1), SE = c(0.1, 0.2))
+irw_simu_diff(num_items = 5, difficulty_pool = pool)
 }
 
 }
 \references{
-Zhang, L., Liu, Y., Molenaar, D., & Domingue, B. (2025, March 11). \emph{Realistic Simulation of Item Difficulties}. https://doi.org/10.31234/osf.io/jbhxy_v1
+Zhang, L., Liu, Y., Molenaar, D., & Domingue, B. (2025). \emph{Realistic Simulation of Item Difficulties}. https://doi.org/10.31234/osf.io/jbhxy_v1
 }
