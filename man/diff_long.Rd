@@ -3,24 +3,29 @@
 \docType{data}
 \name{diff_long}
 \alias{diff_long}
-\title{Item Difficulties Extracted from IRW datasets (updated Feb, 2025)}
+\title{Simulated Item Difficulty Pool from IRW Datasets}
 \format{
-A data frame with N rows and 3 variables:
+A data frame with N rows and 4 variables:
 \describe{
-\item{dataset}{Factor or character. The dataset identifier.}
-\item{item}{Item label.}
-\item{difficulty}{Numeric. Estimated item difficulty.}
-\item{SE}{Numeric. Standard error of the item difficulty estimate.}
+\item{dataset}{Dataset identifier (character). Indicates the source dataset.}
+\item{item}{Item identifier (character). A label for each item.}
+\item{difficulty}{Estimated item difficulty (numeric).}
+\item{SE}{Standard error of the difficulty estimate (numeric).}
 }
 }
 \source{
-Simulated or real data compiled by the package author.
+Compiled from real or simulated IRW data by the package authors.
 }
 \usage{
 diff_long
 }
 \description{
-A dataset containing item difficulty estimates and standard errors
-from multiple datasets. This can be used as an example input for the \code{simu_diff()} function.
+A dataset of item difficulty estimates and associated standard errors compiled from multiple IRW datasets.
+Used internally by \code{irw_simu_diff()} to generate realistic item parameters for simulation.
+}
+\details{
+This dataset provides a pool of empirically estimated item difficulties and uncertainty
+from real or simulated IRW datasets. It is used as a default source by functions such as \code{irw_simu_diff()}
+to construct realistic simulation scenarios.
 }
 \keyword{datasets}

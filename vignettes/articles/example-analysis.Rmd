@@ -9,4 +9,5 @@ knitr::opts_chunk$set(
 )
 ```
 
-# Coming Soon!
+# Simulating item difficulties
+
