@@ -1,24 +1,30 @@
 #' Simulate Item Difficulties from IRW or Custom Pools
 #'
-#' Simulates item difficulties by sampling from distributions based on estimated
-#' difficulties and standard errors. By default, this function uses a built-in pool
-#' of item difficulties estimated from the Item Response Warehouse (IRW).
+#' This function generates simulated item difficulties by drawing from normal
+#' distributions centered around existing difficulty estimates and their associated
+#' standard errors. The result is a mixture distribution, from which new difficulties
+#' are sampled using inverse CDF sampling.
 #'
-#' Users can (1) use the full IRW pool, (2) filter to specific IRW datasets via `irw_names`,
-#' or (3) supply a custom difficulty pool with columns `dataset`, `difficulty`, and `SE`.
+#' By default, the function uses `diff_long`, a built-in dataset included in the `irw` package.
+#' This dataset contains item difficulty estimates and standard errors from a curated
+#' subset of IRW datasets. You can:
 #'
-#' This method is based on Zhang et al. (2025), which constructs mixture distributions
-#' for each dataset and samples from the empirical uncertainty via inverse CDF sampling.
+#' - Use the full IRW difficulty pool (`diff_long`)
+#' - Filter to specific IRW datasets via `irw_names`
+#' - Provide your own difficulty pool via `difficulty_pool`
+#'
+#' This method is based on Zhang et al. (2025), which constructs realistic
+#' empirical distributions by accounting for uncertainty around item difficulty estimates.
 #'
 #' @param num_items Number of item difficulties to simulate per replication.
-#' @param num_replications Number of independent sets of item difficulties to generate.
-#' If `num_replications = 1`, a numeric vector is returned. Otherwise, a data frame with
-#' `replication` and `difficulty` columns is returned.
-#' @param irw_names Optional. Character vector of dataset names from the IRW difficulty pool to include.
-#' @param difficulty_pool Optional. A custom data frame with columns `dataset`, `difficulty`, and `SE`.
-#' Overrides `irw_names` and defaults if provided.
+#' @param num_replications Number of replications to perform.
+#'   If 1, returns a numeric vector. If >1, returns a data frame.
+#' @param irw_names Optional character vector of IRW dataset names to filter from `diff_long`.
+#' @param difficulty_pool Optional custom data frame with columns `dataset`, `difficulty`, and `SE`.
+#'   If provided, overrides the default IRW difficulty pool (`diff_long`).
 #'
-#' @return A numeric vector (if one replication) or a data frame (if multiple replications).
+#' @return A numeric vector of difficulties (if `num_replications = 1`), or a data frame
+#' with `replication` and `difficulty` columns (if `num_replications > 1`).
 #'
 #' @examples
 #' \dontrun{
@@ -28,13 +34,20 @@
 #' # Filter to specific IRW datasets
 #' irw_simu_diff(num_items = 5, irw_names = c("psychtools_epi", "psychtools_blot"))
 #'
-#' # Use custom difficulty pool
-#' pool <- data.frame(dataset = "x", difficulty = c(-0.2, 0.1), SE = c(0.1, 0.2))
-#' irw_simu_diff(num_items = 5, difficulty_pool = pool)
+#' # Use a custom difficulty pool
+#' my_pool <- data.frame(dataset = "x",
+#'                       difficulty = c(-0.2, 0.1),
+#'                       SE = c(0.1, 0.2))
+#' irw_simu_diff(num_items = 5, difficulty_pool = my_pool)
+#'
+#' # Explore built-in IRW difficulty pool
+#' head(diff_long)
+#' unique(diff_long$dataset)
 #' }
 #'
 #' @references
-#' Zhang, L., Liu, Y., Molenaar, D., & Domingue, B. (2025). *Realistic Simulation of Item Difficulties*. https://doi.org/10.31234/osf.io/jbhxy_v1
+#' Zhang, L., Liu, Y., Molenaar, D., & Domingue, B. (2025). *Realistic Simulation of Item Difficulties*.
+#' https://doi.org/10.31234/osf.io/jbhxy_v1
 #'
 #' @importFrom stats approxfun density runif rnorm
 #' @importFrom utils data

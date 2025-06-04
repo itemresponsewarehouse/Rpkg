@@ -7,25 +7,25 @@
 \format{
 A data frame with N rows and 4 variables:
 \describe{
-\item{dataset}{Dataset identifier (character). Indicates the source dataset.}
+\item{dataset}{Dataset identifier (character). Indicates the source dataset in IRW.}
 \item{item}{Item identifier (character). A label for each item.}
 \item{difficulty}{Estimated item difficulty (numeric).}
 \item{SE}{Standard error of the difficulty estimate (numeric).}
 }
 }
 \source{
-Compiled from real or simulated IRW data by the package authors.
+Curated and compiled by the IRW package authors from selected datasets in the IRW repository.
 }
 \usage{
 diff_long
 }
 \description{
-A dataset of item difficulty estimates and associated standard errors compiled from multiple IRW datasets.
-Used internally by \code{irw_simu_diff()} to generate realistic item parameters for simulation.
+A dataset of item difficulty estimates and associated standard errors compiled from a curated subset of IRW datasets.
+Used internally by \code{irw_simu_diff()} to generate empirically grounded item parameters for simulation.
 }
 \details{
-This dataset provides a pool of empirically estimated item difficulties and uncertainty
-from real or simulated IRW datasets. It is used as a default source by functions such as \code{irw_simu_diff()}
-to construct realistic simulation scenarios.
+This pool includes binary-response items from IRW datasets that passed basic quality checks—
+specifically, datasets with less than 50\% missing data and without repeated or duplicate responses.
+It is accessible to users and is used as the default source in \code{irw_simu_diff()}.
 }
 \keyword{datasets}
