@@ -98,8 +98,3 @@ irw_filter(n_categories=c(3,5),density = NULL) ##all tables with responses in 3-
 irw_filter(n_categories=c(10,Inf),density = NULL) ##all tables with relatively large numbers of response categories
 }
 }
-
-
-
-
-
