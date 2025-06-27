@@ -1,19 +1,19 @@
-#' View Available Tag Values
+#' View Available Tag Values with Frequencies
 #'
-#' Returns all unique individual tag values from a given tag metadata column
-#' (e.g., "age_range", "construct_type"). Handles multi-tag fields that may include
-#' commas inside quoted strings.
+#' Returns a data frame of unique tag values from a given tag metadata column,
+#' along with the number of datasets each tag appears in. Handles multi-tag fields
+#' with quoted values containing commas.
 #'
 #' @param column A character string specifying the tag column name.
-#' @return A sorted character vector of unique tag values
-#' @examples
-#' \dontrun{
-#' irw_tag_options("construct_type")
-#' irw_tag_options("sample")
-#' }
+#' @return A data.frame with columns: `tag` and `count`, sorted by descending frequency.
 #' @export
 irw_tag_options <- function(column) {
   tags <- .fetch_tags_table()
+  
+  if (missing(column)) {
+    message("Available tag columns:\n", paste(names(tags), collapse = ", "))
+    return(invisible(names(tags)))
+  }
   
   if (!column %in% colnames(tags)) {
     stop(sprintf("'%s' is not a valid column in the tags table. Use names(irw_tags()) to see available options.", column))
@@ -23,15 +23,11 @@ irw_tag_options <- function(column) {
   all_values <- all_values[!is.na(all_values)]
   
   parse_mixed_quoted_tags <- function(x) {
-    # Step 1: Replace escaped quotes with real quotes
     x <- gsub('\\"', '"', x)
-    
-    # Step 2: If string has no quote and is a known atomic tag, treat it as a whole
     if (!grepl('"', x) && grepl("^Internet-based \\(Mturkers, etc\\)$", x)) {
       return("Internet-based (Mturkers, etc)")
     }
     
-    # Step 3: Normal quote-aware parsing
     chars <- strsplit(x, "")[[1]]
     in_quotes <- FALSE
     buffer <- ""
@@ -58,69 +54,116 @@ irw_tag_options <- function(column) {
   })
   
   parsed_flat <- unlist(parsed_list, use.names = FALSE)
-  parsed_clean <- sort(unique(parsed_flat[nzchar(parsed_flat)]))
-  parsed_clean
+  parsed_clean <- parsed_flat[nzchar(parsed_flat)]
+  
+  freq_table <- sort(table(parsed_clean), decreasing = TRUE)
+  out <- data.frame(
+    tag = names(freq_table),
+    count = as.integer(freq_table),
+    row.names = NULL
+  )
+  
+  return(out)
 }
 
 
+#' View Unique License Options with Frequencies
+#'
+#' Returns a data frame showing the number of datasets associated with each license.
+#' @return A data.frame with 'license' and 'count' columns.
+#' @export
+irw_license_options <- function() {
+  bib <- .fetch_biblio_table()
+  freqs <- sort(table(bib$Derived_License), decreasing = TRUE)
+  data.frame(
+    license = names(freqs),
+    count = as.integer(freqs),
+    row.names = NULL
+  )
+}
+
 #' Filter Available Datasets in IRW
 #'
-#' Identifies datasets in the Item Response Warehouse (IRW) based on user-defined criteria.
-#' This function filters datasets using **precomputed metadata**, which contains summary statistics
-#' for each dataset (e.g., number of responses, number of participants, density scores, etc.),
-#' as well as tag-based metadata (e.g., age range, construct type, sample type, etc.).
-#' 
-#' ## Exploring Metadata and Tags
-#' To understand available dataset properties before filtering, run `summary(irw_metadata())`.
-#' To explore tag-based metadata, use `irw_tags()` to view the full tags table.
+#' Returns the names of datasets in the Item Response Warehouse (IRW) that match user-specified
+#' metadata, tag values, variable presence, and license criteria.
 #'
-#' To see the valid values for a specific tag column (e.g., "age_range"), use:
-#' `irw_tag_options("column_name")`
+#' Filtering is based on:
+#' - **Numeric metadata**: number of responses, participants, items, etc.
+#' - **Tag metadata**: e.g., construct type, sample, measurement tool
+#' - **Variable presence**: e.g., `rt`, `wave`, `cov_`
+#' - **License type**: e.g., `"CC BY 4.0"`, `"CC0 1.0"`
 #'
-#' @param n_responses Numeric vector of length 2 specifying range for total responses.
-#' @param n_categories Numeric vector of length 2 specifying range for unique response categories.
-#' @param n_participants Numeric vector of length 2 specifying range for number of participants.
-#' @param n_items Numeric vector of length 2 specifying range for number of items.
-#' @param responses_per_participant Numeric vector of length 2 specifying range for avg responses per participant.
-#' @param responses_per_item Numeric vector of length 2 specifying range for avg responses per item.
-#' @param density Numeric vector of length 2 specifying range for data density. Default `c(0.5, 1)`; disable with `NULL`.
-#' @param var A character vector specifying one or more variables. For a list of available variables, see: https://datapages.github.io/irw/standard.html
-#'            - If **exact variable names** are provided, only datasets containing **all specified variables** will be returned.
-#'            - If a variable name **contains an underscore** (e.g., `"cov_"`, `"Qmatrix_"`), the function will match all datasets that
-#'              contain **at least one variable** that starts with that prefix.
-#' @param age_range Character value specifying the age group of participants (e.g., "Adult (18+)", "Child (<18y)").
-#' @param child_age__for_child_focused_studies_ Character value indicating the age group for child-focused studies (e.g., "Early (<6y)").
-#' @param construct_type Character value specifying the psychological or educational construct being measured.
-#' @param sample Character value specifying the sample type or recruitment method (e.g., "Educational", "Clinical").
-#' @param measurement_tool Character value specifying the type of instrument used for measurement (e.g., "Survey/questionnaire").
-#' @param item_format Character value describing the format of the items (e.g., "Likert Scale/selected response").
-#' @param primary_language_s_ Character value indicating the primary language(s) used in the instrument.
-#' @param longitudinal Logical or NULL. If TRUE, returns only longitudinal datasets 
-#'        (i.e., those with variables like 'wave' or 'date'). 
-#'        If FALSE, excludes those datasets. If NULL (default), includes all datasets.
-#'        
-#' @return Sorted character vector of dataset names matching **all specified criteria** or empty if none found.
-#' 
+#' ## Metadata and Tag-Based Filtering
+#'
+#' To explore available metadata:
+#' - `summary(irw_metadata())` — numeric summaries (e.g., `n_responses`, `density`)
+#' - `irw_tags()` — full tag metadata table (1 row per dataset)
+#' - `irw_tag_options("column_name")` — valid values (with counts) for any tag column
+#' - `irw_license_options()` — available license values with frequencies
+#'
+#' Tag-based metadata (e.g., `construct_type`, `sample`, `item_format`) can be passed
+#' directly as named arguments. See the parameter list below for supported tag columns.
+#'
+#' @param n_responses Numeric vector of length 1 or 2. Filters datasets by total number of responses.
+#'   - Length 1: exact value (e.g., `n_responses = 1000`)
+#'   - Length 2: range (e.g., `n_responses = c(1000, Inf)`)
+#' @param n_categories Numeric vector of length 1 or 2. Filters by number of unique response categories.
+#' @param n_participants Numeric vector of length 1 or 2. Filters by number of unique participants (`id`).
+#' @param n_items Numeric vector of length 1 or 2. Filters by number of unique items.
+#' @param responses_per_participant Numeric vector of length 1 or 2. Filters by average responses per participant.
+#' @param responses_per_item Numeric vector of length 1 or 2. Filters by average responses per item.
+#' @param density Numeric vector of length 1 or 2, or `NULL`. Filters by matrix density.
+#'   - Default is `c(0.5, 1)` to exclude sparse matrices.
+#'   - Use `NULL` to disable this filter.
+#' @param var Character vector. Filters datasets by presence of variables.
+#'   - Use exact names (e.g., `"rt"`, `"wave"`), or
+#'   - Use a prefix (e.g., `"cov_"`) to match any variable starting with that prefix.
+#' @param longitudinal Logical or `NULL`. Filters based on presence of longitudinal structure.
+#'   - `TRUE`: include only datasets with variables like `wave` or `date`
+#'   - `FALSE`: exclude datasets with those variables
+#'   - `NULL` (default): no filter
+#' @param age_range Character vector. Filters by participant age group (e.g., `"Adult (18+)"`).
+#'   See `irw_tag_options("age_range")` for values.
+#' @param child_age__for_child_focused_studies_ Character vector. Filters by child age subgroup.
+#'   See `irw_tag_options("child_age__for_child_focused_studies_")` for values.
+#' @param construct_type Character vector. Filters by high-level construct category
+#'   (e.g., `"Affective/mental health"`). See `irw_tag_options("construct_type")`.
+#' @param construct_name Character vector. Filters by specific construct (e.g., `"Big Five"`).
+#'   See `irw_tag_options("construct_name")`.
+#' @param sample Character vector. Filters by sample type or recruitment method
+#'   (e.g., `"Educational"`, `"Clinical"`). See `irw_tag_options("sample")`.
+#' @param measurement_tool Character vector. Filters by instrument type (e.g., `"Survey/questionnaire"`).
+#'   See `irw_tag_options("measurement_tool")`.
+#' @param item_format Character vector. Filters by item format (e.g., `"Likert Scale/selected response"`).
+#'   See `irw_tag_options("item_format")`.
+#' @param primary_language_s_ Character vector. Filters by language used (e.g., `"eng"`).
+#'   See `irw_tag_options("primary_language_s_")`.
+#' @param license Character vector. Filters datasets by license (e.g., `"CC BY 4.0"`).
+#'   See `irw_license_options()` for available values.
+#' @return A sorted character vector of dataset names that match all specified filters, or `character(0)` if no match is found.
 #'
 #' @examples
 #' \dontrun{
-#' irw_filter(n_responses = c(1000, Inf), var = "rt")
-#' irw_filter(var = "wave", density = NULL)
-#' irw_filter(n_participants = c(500, Inf), density = c(0.3, 0.8))
-#' irw_filter(var = c("treat", "rt", "cov_"), density= NULL)
-#' 
-#' # View valid options for a tag column
-#' irw_tag_options("construct_type")
-#' 
-#' irw_filter(construct_type = "Affective/mental health")
-#' 
-#' # IRW tables based on response categories
-#' # all tables with purely dichotomous responses
-#' irw_filter(n_categories=2,density = NULL) 
-#' # all tables with responses in 3-5 categories
-#' irw_filter(n_categories=c(3,5),density = NULL)
-#' # all tables with relatively large numbers of response categories
-#' irw_filter(n_categories=c(10,Inf),density = NULL) 
+#' # Numeric filters
+#' irw_filter(n_responses = c(1000, Inf), n_items = c(10, 50))
+#' irw_filter(n_participants = c(500, Inf), density = c(0.3, 0.9))
+#'
+#' # Variable presence
+#' irw_filter(var = "rt")
+#' irw_filter(var = c("wave", "cov_"), density = NULL)
+#'
+#' # Tag metadata filtering
+#' irw_filter(construct_type = "Affective/mental health", sample = "Educational")
+#' irw_tag_options("construct_type")  # view tag values
+#'
+#' # License filtering
+#' irw_license_options()
+#' irw_filter(license = "CC BY 4.0")
+#'
+#' # Filter by response category complexity
+#' irw_filter(n_categories = 2, density = NULL)           # binary
+#' irw_filter(n_categories = c(3, 5), density = NULL)     # small multi-category
+#' irw_filter(n_categories = c(10, Inf), density = NULL)  # large category sets
 #' }
 #' @export
 irw_filter <- function(n_responses = NULL,
@@ -134,11 +177,13 @@ irw_filter <- function(n_responses = NULL,
                        age_range = NULL,
                        child_age__for_child_focused_studies_ = NULL,
                        construct_type = NULL,
+                       construct_name = NULL,
                        sample = NULL,
                        measurement_tool = NULL,
                        item_format = NULL,
                        primary_language_s_ = NULL,
-                       longitudinal = NULL) {
+                       longitudinal = NULL,
+                       license = NULL) {
   
   metadata <- irw_metadata()
   
@@ -181,6 +226,20 @@ irw_filter <- function(n_responses = NULL,
     metadata <- metadata[tolower(metadata$table) %in% tolower(tags$table), ]
   }
   
+  # --- LICENSE FILTERING ---
+  if (!is.null(license)) {
+    biblio <- .fetch_biblio_table()
+    
+    if (!"Derived_License" %in% names(biblio)) {
+      warning("No license information found in bibliography table. Skipping license filter.")
+    } else {
+      keep_rows <- !is.na(biblio[["Derived_License"]]) & biblio[["Derived_License"]] %in% license
+      matched <- biblio[keep_rows, "table"]
+      metadata <- metadata[tolower(metadata$table) %in% tolower(matched$table), ]
+    }
+  }
+  
+  # --- VARIABLE FILTERING ---
   # Convert variables column to list for filtering
   metadata$variables_list <- strsplit(metadata$variables, "\\| ")
   

@@ -2,7 +2,7 @@
 % Please edit documentation in R/filter.R
 \name{irw_tag_options}
 \alias{irw_tag_options}
-\title{View Available Tag Values}
+\title{View Available Tag Values with Frequencies}
 \usage{
 irw_tag_options(column)
 }
@@ -10,16 +10,10 @@ irw_tag_options(column)
 \item{column}{A character string specifying the tag column name.}
 }
 \value{
-A sorted character vector of unique tag values
+A data.frame with columns: \code{tag} and \code{count}, sorted by descending frequency.
 }
 \description{
-Returns all unique individual tag values from a given tag metadata column
-(e.g., "age_range", "construct_type"). Handles multi-tag fields that may include
-commas inside quoted strings.
-}
-\examples{
-\dontrun{
-irw_tag_options("construct_type")
-irw_tag_options("sample")
-}
+Returns a data frame of unique tag values from a given tag metadata column,
+along with the number of datasets each tag appears in. Handles multi-tag fields
+with quoted values containing commas.
 }

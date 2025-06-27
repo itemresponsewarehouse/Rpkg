@@ -16,88 +16,128 @@ irw_filter(
   age_range = NULL,
   child_age__for_child_focused_studies_ = NULL,
   construct_type = NULL,
+  construct_name = NULL,
   sample = NULL,
   measurement_tool = NULL,
   item_format = NULL,
   primary_language_s_ = NULL,
-  longitudinal = NULL
+  longitudinal = NULL,
+  license = NULL
 )
 }
 \arguments{
-\item{n_responses}{Numeric vector of length 2 specifying range for total responses.}
+\item{n_responses}{Numeric vector of length 1 or 2. Filters datasets by total number of responses.
+\itemize{
+\item Length 1: exact value (e.g., \code{n_responses = 1000})
+\item Length 2: range (e.g., \code{n_responses = c(1000, Inf)})
+}}
 
-\item{n_categories}{Numeric vector of length 2 specifying range for unique response categories.}
+\item{n_categories}{Numeric vector of length 1 or 2. Filters by number of unique response categories.}
 
-\item{n_participants}{Numeric vector of length 2 specifying range for number of participants.}
+\item{n_participants}{Numeric vector of length 1 or 2. Filters by number of unique participants (\code{id}).}
 
-\item{n_items}{Numeric vector of length 2 specifying range for number of items.}
+\item{n_items}{Numeric vector of length 1 or 2. Filters by number of unique items.}
 
-\item{responses_per_participant}{Numeric vector of length 2 specifying range for avg responses per participant.}
+\item{responses_per_participant}{Numeric vector of length 1 or 2. Filters by average responses per participant.}
 
-\item{responses_per_item}{Numeric vector of length 2 specifying range for avg responses per item.}
+\item{responses_per_item}{Numeric vector of length 1 or 2. Filters by average responses per item.}
 
-\item{density}{Numeric vector of length 2 specifying range for data density. Default \code{c(0.5, 1)}; disable with \code{NULL}.}
+\item{density}{Numeric vector of length 1 or 2, or \code{NULL}. Filters by matrix density.
+\itemize{
+\item Default is \code{c(0.5, 1)} to exclude sparse matrices.
+\item Use \code{NULL} to disable this filter.
+}}
 
-\item{var}{A character vector specifying one or more variables. For a list of available variables, see: https://datapages.github.io/irw/standard.html
-- If \strong{exact variable names} are provided, only datasets containing \strong{all specified variables} will be returned.
-- If a variable name \strong{contains an underscore} (e.g., \code{"cov_"}, \code{"Qmatrix_"}), the function will match all datasets that
-contain \strong{at least one variable} that starts with that prefix.}
+\item{var}{Character vector. Filters datasets by presence of variables.
+\itemize{
+\item Use exact names (e.g., \code{"rt"}, \code{"wave"}), or
+\item Use a prefix (e.g., \code{"cov_"}) to match any variable starting with that prefix.
+}}
 
-\item{age_range}{Character value specifying the age group of participants (e.g., "Adult (18+)", "Child (<18y)").}
+\item{age_range}{Character vector. Filters by participant age group (e.g., \code{"Adult (18+)"}).
+See \code{irw_tag_options("age_range")} for values.}
 
-\item{child_age__for_child_focused_studies_}{Character value indicating the age group for child-focused studies (e.g., "Early (<6y)").}
+\item{child_age__for_child_focused_studies_}{Character vector. Filters by child age subgroup.
+See \code{irw_tag_options("child_age__for_child_focused_studies_")} for values.}
 
-\item{construct_type}{Character value specifying the psychological or educational construct being measured.}
+\item{construct_type}{Character vector. Filters by high-level construct category
+(e.g., \code{"Affective/mental health"}). See \code{irw_tag_options("construct_type")}.}
 
-\item{sample}{Character value specifying the sample type or recruitment method (e.g., "Educational", "Clinical").}
+\item{construct_name}{Character vector. Filters by specific construct (e.g., \code{"Big Five"}).
+See \code{irw_tag_options("construct_name")}.}
 
-\item{measurement_tool}{Character value specifying the type of instrument used for measurement (e.g., "Survey/questionnaire").}
+\item{sample}{Character vector. Filters by sample type or recruitment method
+(e.g., \code{"Educational"}, \code{"Clinical"}). See \code{irw_tag_options("sample")}.}
 
-\item{item_format}{Character value describing the format of the items (e.g., "Likert Scale/selected response").}
+\item{measurement_tool}{Character vector. Filters by instrument type (e.g., \code{"Survey/questionnaire"}).
+See \code{irw_tag_options("measurement_tool")}.}
 
-\item{primary_language_s_}{Character value indicating the primary language(s) used in the instrument.}
+\item{item_format}{Character vector. Filters by item format (e.g., \code{"Likert Scale/selected response"}).
+See \code{irw_tag_options("item_format")}.}
 
-\item{longitudinal}{Logical or NULL. If TRUE, returns only longitudinal datasets
-(i.e., those with variables like 'wave' or 'date').
-If FALSE, excludes those datasets. If NULL (default), includes all datasets.}
+\item{primary_language_s_}{Character vector. Filters by language used (e.g., \code{"eng"}).
+See \code{irw_tag_options("primary_language_s_")}.}
+
+\item{longitudinal}{Logical or \code{NULL}. Filters based on presence of longitudinal structure.
+\itemize{
+\item \code{TRUE}: include only datasets with variables like \code{wave} or \code{date}
+\item \code{FALSE}: exclude datasets with those variables
+\item \code{NULL} (default): no filter
+}}
+
+\item{license}{Character vector. Filters datasets by license (e.g., \code{"CC BY 4.0"}).
+See \code{irw_license_options()} for available values.}
 }
 \value{
-Sorted character vector of dataset names matching \strong{all specified criteria} or empty if none found.
+A sorted character vector of dataset names that match all specified filters, or \code{character(0)} if no match is found.
 }
 \description{
-Identifies datasets in the Item Response Warehouse (IRW) based on user-defined criteria.
-This function filters datasets using \strong{precomputed metadata}, which contains summary statistics
-for each dataset (e.g., number of responses, number of participants, density scores, etc.),
-as well as tag-based metadata (e.g., age range, construct type, sample type, etc.).
+Returns the names of datasets in the Item Response Warehouse (IRW) that match user-specified
+metadata, tag values, variable presence, and license criteria.
 }
 \details{
-\subsection{Exploring Metadata and Tags}{
+Filtering is based on:
+\itemize{
+\item \strong{Numeric metadata}: number of responses, participants, items, etc.
+\item \strong{Tag metadata}: e.g., construct type, sample, measurement tool
+\item \strong{Variable presence}: e.g., \code{rt}, \code{wave}, \code{cov_}
+\item \strong{License type}: e.g., \code{"CC BY 4.0"}, \code{"CC0 1.0"}
+}
+\subsection{Metadata and Tag-Based Filtering}{
 
-To understand available dataset properties before filtering, run \code{summary(irw_metadata())}.
-To explore tag-based metadata, use \code{irw_tags()} to view the full tags table.
+To explore available metadata:
+\itemize{
+\item \code{summary(irw_metadata())} — numeric summaries (e.g., \code{n_responses}, \code{density})
+\item \code{irw_tags()} — full tag metadata table (1 row per dataset)
+\item \code{irw_tag_options("column_name")} — valid values (with counts) for any tag column
+\item \code{irw_license_options()} — available license values with frequencies
+}
 
-To see the valid values for a specific tag column (e.g., "age_range"), use:
-\code{irw_tag_options("column_name")}
+Tag-based metadata (e.g., \code{construct_type}, \code{sample}, \code{item_format}) can be passed
+directly as named arguments. See the parameter list below for supported tag columns.
 }
 }
 \examples{
 \dontrun{
-irw_filter(n_responses = c(1000, Inf), var = "rt")
-irw_filter(var = "wave", density = NULL)
-irw_filter(n_participants = c(500, Inf), density = c(0.3, 0.8))
-irw_filter(var = c("treat", "rt", "cov_"), density= NULL)
+# Numeric filters
+irw_filter(n_responses = c(1000, Inf), n_items = c(10, 50))
+irw_filter(n_participants = c(500, Inf), density = c(0.3, 0.9))
 
-# View valid options for a tag column
-irw_tag_options("construct_type")
+# Variable presence
+irw_filter(var = "rt")
+irw_filter(var = c("wave", "cov_"), density = NULL)
 
-irw_filter(construct_type = "Affective/mental health")
+# Tag metadata filtering
+irw_filter(construct_type = "Affective/mental health", sample = "Educational")
+irw_tag_options("construct_type")  # view tag values
 
-# IRW tables based on response categories
-# all tables with purely dichotomous responses
-irw_filter(n_categories=2,density = NULL) 
-# all tables with responses in 3-5 categories
-irw_filter(n_categories=c(3,5),density = NULL)
-# all tables with relatively large numbers of response categories
-irw_filter(n_categories=c(10,Inf),density = NULL) 
+# License filtering
+irw_license_options()
+irw_filter(license = "CC BY 4.0")
+
+# Filter by response category complexity
+irw_filter(n_categories = 2, density = NULL)           # binary
+irw_filter(n_categories = c(3, 5), density = NULL)     # small multi-category
+irw_filter(n_categories = c(10, Inf), density = NULL)  # large category sets
 }
 }
