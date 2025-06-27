@@ -115,9 +115,12 @@ irw_tag_options <- function(column) {
 #' irw_filter(construct_type = "Affective/mental health")
 #' 
 #' # IRW tables based on response categories
-#' irw_filter(n_categories=2,density = NULL) ##all tables with purely dichotomous responses
-#' irw_filter(n_categories=c(3,5),density = NULL) ##all tables with responses in 3-5 categories
-#' irw_filter(n_categories=c(10,Inf),density = NULL) ##all tables with relatively large numbers of response categories
+#' # all tables with purely dichotomous responses
+#' irw_filter(n_categories=2,density = NULL) 
+#' # all tables with responses in 3-5 categories
+#' irw_filter(n_categories=c(3,5),density = NULL)
+#' # all tables with relatively large numbers of response categories
+#' irw_filter(n_categories=c(10,Inf),density = NULL) 
 #' }
 #' @export
 irw_filter <- function(n_responses = NULL,
@@ -216,19 +219,16 @@ irw_filter <- function(n_responses = NULL,
   if (nrow(metadata) == 0) return(character(0))
   
   # --- NUMERIC FILTERING ---
-  count_before_density <- nrow(metadata)
   numeric_filters <- list(
     n_responses = n_responses,
     n_categories = n_categories,
     n_participants = n_participants,
     n_items = n_items,
     responses_per_participant = responses_per_participant,
-    responses_per_item = responses_per_item,
-    density = density
+    responses_per_item = responses_per_item
   )
   
   numeric_filters <- numeric_filters[vapply(numeric_filters, Negate(is.null), logical(1))]
-  user_specified_density <- !missing(density)
   
   for (filter_name in names(numeric_filters)) {
     filter_value <- numeric_filters[[filter_name]]
@@ -237,12 +237,24 @@ irw_filter <- function(n_responses = NULL,
                            metadata[[filter_name]] <= filter_value[2], ]
   }
   
-  num_removed_by_density <- count_before_density - nrow(metadata)
-  if (!user_specified_density && identical(density, c(0.5, 1)) && num_removed_by_density > 0) {
-    message(sprintf(
-      "Note: Default density filter (0.5-1) removed %d dataset(s). Set density = NULL to disable.",
-      num_removed_by_density
-    ))
+  user_specified_density <- !missing(density)
+  if (!is.null(density)) {
+    if (length(density) == 1) density <- rep(density, 2)
+    
+    metadata_before_density <- metadata
+    metadata <- metadata[metadata$density >= density[1] &
+                           metadata$density <= density[2], ]
+    
+    num_removed_by_density <- nrow(metadata_before_density) - nrow(metadata)
+    
+    if (!user_specified_density &&
+        identical(density, c(0.5, 1)) &&
+        num_removed_by_density > 0) {
+      message(sprintf(
+        "Note: Default density filter (0.5-1) removed %d dataset(s). Set density = NULL to disable.",
+        num_removed_by_density
+      ))
+    }
   }
   
   return(sort(metadata$table))

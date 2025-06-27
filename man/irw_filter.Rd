@@ -93,8 +93,11 @@ irw_tag_options("construct_type")
 irw_filter(construct_type = "Affective/mental health")
 
 # IRW tables based on response categories
-irw_filter(n_categories=2,density = NULL) ##all tables with purely dichotomous responses
-irw_filter(n_categories=c(3,5),density = NULL) ##all tables with responses in 3-5 categories
-irw_filter(n_categories=c(10,Inf),density = NULL) ##all tables with relatively large numbers of response categories
+# all tables with purely dichotomous responses
+irw_filter(n_categories=2,density = NULL) 
+# all tables with responses in 3-5 categories
+irw_filter(n_categories=c(3,5),density = NULL)
+# all tables with relatively large numbers of response categories
+irw_filter(n_categories=c(10,Inf),density = NULL) 
 }
 }
