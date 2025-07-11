@@ -4,12 +4,19 @@
 \alias{irw_fetch}
 \title{Fetch Dataset(s) from the Item Response Warehouse}
 \usage{
-irw_fetch(name, sim = FALSE)
+irw_fetch(name, sim = FALSE, dedup = FALSE)
 }
 \arguments{
 \item{name}{Character vector of one or more dataset names (IRW table IDs).}
 
-\item{sim}{Logical. If TRUE, fetch from the IRW simulation dataset. Defaults to FALSE.}
+\item{sim}{Logical, optional. If TRUE, fetches from the IRW simulation dataset. Defaults to FALSE.}
+
+\item{dedup}{Logical, optional. If TRUE, deduplicates responses based on timing variables. Defaults to FALSE.
+\itemize{
+\item If a 'date' column is present, no deduplication is performed.
+\item If only a 'wave' column is present, one random response is retained per (id, item) pair within each wave.
+\item If neither 'date' nor 'wave' is present, one random response is retained per (id, item) pair.
+}}
 }
 \value{
 If a single name is provided, returns a tibble. If multiple, returns a named list
@@ -25,5 +32,6 @@ A warning is issued only if other non-numeric values are encountered.
 \dontrun{
 irw_fetch("environment_ltm")
 irw_fetch("gilbert_meta_3", sim = TRUE)
+irw_fetch("pks_probability", dedup = TRUE)
 }
 }
