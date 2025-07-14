@@ -309,3 +309,30 @@
   return(filtered_tags)
 }
 
+
+
+#' Fetch item text table from IRW Redivis dataset (internal)
+#'
+#' This internal function retrieves an item text table from the IRW Redivis text dataset,
+#' given a known base table name. If not available, it returns `NULL` with a message.
+#'
+#' @param table_name Character. The base table name (e.g., "gilbert_meta_49").
+#' @return A tibble with item text metadata or `NULL`.
+#' @keywords internal
+.fetch_itemtext_table <- function(table_name) {
+  dataset <- redivis::redivis$user("bdomingu")$dataset("irw_text:07b6")
+  .retry_with_backoff(function() dataset$get())
+  
+  tables <- dataset$list_tables()
+  available_tables <- sort(sub("__items$", "", vapply(tables, function(table) table$properties$name, character(1))))
+  
+  if (!(table_name %in% available_tables)) {
+    message(glue::glue("Item text not available for table: '{table_name}'"))
+    return(NULL)
+  }
+  
+  full_name <- paste0(table_name, "__items")
+  
+  table <- suppressWarnings(dataset$table(full_name))
+  .retry_with_backoff(function() table$to_tibble())
+}
