@@ -139,23 +139,4 @@ irw_tags <- function() {
 }
 
 
-#' Retrieve item text metadata for an IRW table
-#'
-#' Returns item-level text metadata for a given IRW table, if available.
-#' If no item text table is available for the specified table, the function returns \code{NULL} 
-#' and prints a message.
-#'
-#' @param table_name Character. The name of the IRW table to look up (e.g., \code{"gilbert_meta_49"}).
-#'
-#' @return A tibble containing item text metadata, or \code{NULL} if unavailable.
-#'
-#' @examples
-#' \dontrun{
-#'   irw_itemtext("gilbert_meta_49")
-#' }
-#'
-#' @export
-irw_itemtext <- function(table_name) {
-  return(.fetch_itemtext_table(table_name))
-}
 

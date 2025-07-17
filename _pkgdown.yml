@@ -7,14 +7,18 @@ reference:
 - title: Explore
   desc: Functions for exploring IRW database.
 - contents:
-  - irw_info
   - irw_list_tables
   - irw_filter
+- title: Metadata
+  desc: Functions for viewing IRW metadata
+- contents:  
+  - irw_info
   - irw_metadata
   - irw_tags
   - irw_tag_options
   - irw_license_options
   - irw_itemtext
+  - irw_list_itemtext_tables
 - title: Fetch
   desc: Functions for fetching IRW data.
 - contents:

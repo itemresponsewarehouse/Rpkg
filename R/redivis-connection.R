@@ -310,29 +310,43 @@
 }
 
 
-
-#' Fetch item text table from IRW Redivis dataset (internal)
+#' Access the IRW item text dataset object
 #'
-#' This internal function retrieves an item text table from the IRW Redivis text dataset,
+#' Returns the Redivis dataset object for IRW item text metadata,
+#' and ensures metadata is loaded via \code{get()}.
+#'
+#' @return A Redivis dataset object.
+#' @keywords internal
+.get_irw_itemtext_dataset <- function() {
+  if (!exists("itemtext_dataset", envir = .irw_env) || is.null(.irw_env$itemtext_dataset)) {
+    dataset <- redivis::redivis$user("bdomingu")$dataset("irw_text:07b6")
+    .retry_with_backoff(function() dataset$get())
+    .irw_env$itemtext_dataset <- dataset
+  }
+  .irw_env$itemtext_dataset
+}
+
+
+#' Fetch item text table from IRW Redivis dataset 
+#'
+#' Retrieves an item text table from the IRW Redivis text dataset,
 #' given a known base table name. If not available, it returns `NULL` with a message.
 #'
 #' @param table_name Character. The base table name (e.g., "gilbert_meta_49").
 #' @return A tibble with item text metadata or `NULL`.
 #' @keywords internal
 .fetch_itemtext_table <- function(table_name) {
-  dataset <- redivis::redivis$user("bdomingu")$dataset("irw_text:07b6")
-  .retry_with_backoff(function() dataset$get())
-  
-  tables <- dataset$list_tables()
-  available_tables <- sort(sub("__items$", "", vapply(tables, function(table) table$properties$name, character(1))))
+  available_tables <- irw_list_itemtext_tables()
   
   if (!(table_name %in% available_tables)) {
     message(glue::glue("Item text not available for table: '{table_name}'"))
     return(NULL)
   }
   
+  dataset <- .get_irw_itemtext_dataset()
   full_name <- paste0(table_name, "__items")
   
-  table <- suppressWarnings(dataset$table(full_name))
-  .retry_with_backoff(function() table$to_tibble())
+  table <- dataset$table(full_name)
+  suppressWarnings(.retry_with_backoff(function() table$to_tibble()))
 }
+

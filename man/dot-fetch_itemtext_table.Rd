@@ -2,7 +2,7 @@
 % Please edit documentation in R/redivis-connection.R
 \name{.fetch_itemtext_table}
 \alias{.fetch_itemtext_table}
-\title{Fetch item text table from IRW Redivis dataset (internal)}
+\title{Fetch item text table from IRW Redivis dataset}
 \usage{
 .fetch_itemtext_table(table_name)
 }
@@ -13,7 +13,7 @@
 A tibble with item text metadata or \code{NULL}.
 }
 \description{
-This internal function retrieves an item text table from the IRW Redivis text dataset,
+Retrieves an item text table from the IRW Redivis text dataset,
 given a known base table name. If not available, it returns \code{NULL} with a message.
 }
 \keyword{internal}
