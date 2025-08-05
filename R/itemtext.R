@@ -37,5 +37,12 @@ irw_list_itemtext_tables <- function() {
 #'
 #' @export
 irw_itemtext <- function(table_name) {
-  return(.fetch_itemtext_table(table_name))
+  if (missing(table_name)) {
+    stop(
+      "Please provide the IRW table name to look up.\n",
+      "Tip: Use `irw_list_itemtext_tables()` to see available tables.",
+      call. = FALSE
+    )
+  }
+  .fetch_itemtext_table(table_name)
 }

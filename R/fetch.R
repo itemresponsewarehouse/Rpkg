@@ -1,12 +1,12 @@
-#' Fetch Dataset(s) from the Item Response Warehouse
+#' Fetch Tables(s) from the Item Response Warehouse
 #'
-#' Retrieves one or more datasets from IRW and returns them as tibbles.
-#' If the dataset includes a character `resp` column, the function attempts to
+#' Retrieves one or more tables from IRW and returns them as tibbles.
+#' If the table includes a character `resp` column, the function attempts to
 #' coerce it into numeric. Strings like `"NA"`, `""`, and `NA` are treated as missing values.
 #' A warning is issued only if other non-numeric values are encountered.
 #'
-#' @param name Character vector of one or more dataset names (IRW table IDs).
-#' @param sim Logical, optional. If TRUE, fetches from the IRW simulation dataset. Defaults to FALSE.
+#' @param name Character vector of one or more table names (IRW table IDs).
+#' @param sim Logical, optional. If TRUE, fetches from the IRW simulation table. Defaults to FALSE.
 #' @param dedup Logical, optional. If TRUE, deduplicates responses based on timing variables. Defaults to FALSE.
 #'   - If a 'date' column is present, no deduplication is performed.
 #'   - If only a 'wave' column is present, one random response is retained per (id, item) pair within each wave.
@@ -23,6 +23,15 @@
 #' }
 #' @export
 irw_fetch <- function(name, sim = FALSE, dedup = FALSE) {
+  # Fail fast if no table name is given
+  if (missing(name)) {
+    stop(
+      "Please provide the IRW table name(s) to fetch.\n",
+      "Tip: Use `irw_list_tables()` to see available tables.",
+      call. = FALSE
+    )
+  }
+  
   # Helper to fetch one dataset and recode 'resp' if needed
   fetch_single_data <- function(table_id, sim = FALSE) {
     tryCatch(

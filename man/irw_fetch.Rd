@@ -2,14 +2,14 @@
 % Please edit documentation in R/fetch.R
 \name{irw_fetch}
 \alias{irw_fetch}
-\title{Fetch Dataset(s) from the Item Response Warehouse}
+\title{Fetch Tables(s) from the Item Response Warehouse}
 \usage{
 irw_fetch(name, sim = FALSE, dedup = FALSE)
 }
 \arguments{
-\item{name}{Character vector of one or more dataset names (IRW table IDs).}
+\item{name}{Character vector of one or more table names (IRW table IDs).}
 
-\item{sim}{Logical, optional. If TRUE, fetches from the IRW simulation dataset. Defaults to FALSE.}
+\item{sim}{Logical, optional. If TRUE, fetches from the IRW simulation table. Defaults to FALSE.}
 
 \item{dedup}{Logical, optional. If TRUE, deduplicates responses based on timing variables. Defaults to FALSE.
 \itemize{
@@ -23,8 +23,8 @@ If a single name is provided, returns a tibble. If multiple, returns a named lis
 of tibbles (or error messages, if retrieval failed).
 }
 \description{
-Retrieves one or more datasets from IRW and returns them as tibbles.
-If the dataset includes a character \code{resp} column, the function attempts to
+Retrieves one or more tables from IRW and returns them as tibbles.
+If the table includes a character \code{resp} column, the function attempts to
 coerce it into numeric. Strings like \code{"NA"}, \code{""}, and \code{NA} are treated as missing values.
 A warning is issued only if other non-numeric values are encountered.
 }
