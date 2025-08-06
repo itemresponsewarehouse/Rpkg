@@ -14,106 +14,120 @@
 #' irw_list_tables(sim = TRUE) # Simulated datasets
 #' }
 #' @export
-irw_list_tables <- function(sim=FALSE) {
-  # Initialize the datasource if not already set
-  ds <- .initialize_datasource(sim=sim)
-
-  # Retrieve the list of tables from the datasource
-  tables <- .retry_with_backoff(function() {
-    ds$list_tables()
+irw_list_tables <- function(sim = FALSE) {
+  ds_list <- .initialize_datasource(sim = sim)
+  
+  tables_info_list <- lapply(ds_list, function(ds) {
+    tables <- .retry_with_backoff(function() ds$list_tables())
+    data.frame(
+      name = vapply(tables, function(tbl) tbl$name, character(1)),
+      numRows = vapply(tables, function(tbl) tbl$properties$numRows, numeric(1)),
+      variableCount = vapply(tables, function(tbl) tbl$properties$variableCount, numeric(1)),
+      stringsAsFactors = FALSE
+    )
   })
-
-  # Extract metadata to create a data frame
-  tables_info <- data.frame(
-    name = vapply(tables, function(table) {
-      table$name
-    }, character(1)),
-    numRows = vapply(tables, function(table) {
-      table$properties$numRows
-    }, numeric(1)),
-    variableCount = vapply(tables, function(table) {
-      table$properties$variableCount
-    }, numeric(1)),
-    stringsAsFactors = FALSE
-  )
-
-  # Sort tables_info by the name column in alphabetical order
+  
+  tables_info <- do.call(rbind, tables_info_list)
   tables_info <- tables_info[order(tables_info$name), ]
-
+  rownames(tables_info) <- NULL
+  
   return(tables_info)
 }
 
 
 #' Retrieve and Print IRW Database or Table Information
 #'
-#' Fetches and displays information for the IRW database or a specified table.
-#' If no table name is provided, it returns general database information.
-#' If a table name is provided, it returns detailed information about that table.
+#' Prints information about the IRW datasets or a specific table.
 #'
-#' @param table_name Optional. A character string specifying the name of the table to retrieve information for.
+#' If \code{table_name} is \code{NULL}, shows combined totals across all IRW datasets.
+#' Use \code{details = TRUE} to also print a per‑dataset breakdown.
+#' If a table name is provided, shows details for that table, automatically fetching
+#' from the dataset where it resides.
+#'
+#' @param table_name Optional. Table name to describe; if \code{NULL}, prints database‑level info.
+#' @param details Logical. When \code{TRUE} and \code{table_name} is \code{NULL}, also
+#'   prints a breakdown by dataset. Defaults to \code{FALSE}.
+#'
+#' @return Invisibly returns \code{NULL}.
 #' @examples
 #' \dontrun{
-#' irw_info() # Prints database information
-#' irw_info("abortion") # Prints table-specific information
+#' irw_info()                 # Combined totals
+#' irw_info(details = TRUE)   # Combined + per-dataset breakdown
+#' irw_info("frac20")      # Specific table
 #' }
 #' @export
-irw_info <- function(table_name = NULL) {
+irw_info <- function(table_name = NULL, details = FALSE) {
   if (is.null(table_name)) {
-    # Fetch database information
-    ds <- .initialize_datasource()
-    version <- ds$properties$version$tag
-    table_count <- ds$properties$tableCount
-    created_at <- ds$properties$createdAt / 1000 # Convert from milliseconds to seconds
-    updated_at <- ds$properties$updatedAt / 1000 # Convert from milliseconds to seconds
-    total_size <- ds$properties$totalNumBytes / (1024^3) # Convert bytes to GB
-    dataset_url <- ds$properties$url
-    documentation_link <- if (!is.null(ds$properties$links[[1]]$url)) {
-      ds$properties$links[[1]]$url
-    } else {
-      "N/A"
+    # --- Combined totals ---
+    ds_list <- .initialize_datasource(sim = FALSE)
+    
+    total_table_count <- 0
+    total_size_gb <- 0
+    created_at_all <- c()
+    updated_at_all <- c()
+    
+    for (ds in ds_list) {
+      total_table_count <- total_table_count + ds$properties$tableCount
+      total_size_gb <- total_size_gb + ds$properties$totalNumBytes / (1024^3)
+      created_at_all <- c(created_at_all, ds$properties$createdAt / 1000)
+      updated_at_all <- c(updated_at_all, ds$properties$updatedAt / 1000)
     }
-    methodology_link <- "Tables have been harmonized as per details given here: (https://datapages.github.io/irw/standard.html)."
-    usage_link <- "Please find information about data licenses and citation info here: (https://datapages.github.io/irw/docs.html)."
-
-    formatted_created_at <- format(
-      as.POSIXct(created_at, origin = "1970-01-01", tz = "UTC"),
-      "%Y-%m-%d %H:%M:%S"
-    )
-    formatted_updated_at <- format(
-      as.POSIXct(updated_at, origin = "1970-01-01", tz = "UTC"),
-      "%Y-%m-%d %H:%M:%S"
-    )
-
+    
     message(strrep("-", 50))
-    message("IRW Database Information")
+    message("IRW Database Information (Combined)")
     message(strrep("-", 50))
-    message(sprintf("%-25s %s", "Version:", version))
-    message(sprintf("%-25s %d", "Table Count:", table_count))
-    message(sprintf("%-25s %.2f GB", "Total Data Size:", total_size))
-    message(sprintf("%-25s %s", "Created At:", formatted_created_at))
-    message(sprintf("%-25s %s", "Last Updated At:", formatted_updated_at))
+    message(sprintf("%-25s %d", "Total Table Count:", total_table_count))
+    message(sprintf("%-25s %.2f GB", "Total Data Size:", total_size_gb))
+    message(sprintf("%-25s %s", "Earliest Created At:",
+                    format(as.POSIXct(min(created_at_all), origin = "1970-01-01", tz = "UTC"),
+                           "%Y-%m-%d %H:%M:%S")))
+    message(sprintf("%-25s %s", "Latest Updated At:",
+                    format(as.POSIXct(max(updated_at_all), origin = "1970-01-01", tz = "UTC"),
+                           "%Y-%m-%d %H:%M:%S")))
     message(strrep("-", 50))
-    message(sprintf("%-25s %s", "Redivis URL:", dataset_url))
-    message(sprintf("%-25s %s", "Data Website:", documentation_link))
-    message(sprintf("%-25s %s", "Methodology:", methodology_link))
-    message(sprintf("%-25s %s", "Usage Information:", usage_link))
+    message(sprintf("%-25s %s", "Data Website:", "https://datapages.github.io/irw/"))
+    message(sprintf("%-25s %s", "Methodology:",
+                    "Tables harmonized as per https://datapages.github.io/irw/standard.html"))
+    message(sprintf("%-25s %s", "Usage Information:",
+                    "License & citation info: https://datapages.github.io/irw/docs.html"))
     message(strrep("-", 50))
+    
+    # --- Optional per-dataset details ---
+    if (details) {
+      for (i in seq_along(ds_list)) {
+        ds <- ds_list[[i]]
+        message(sprintf("Dataset %d:", i))
+        message(sprintf("  %-22s %s", "Version:", ds$properties$version$tag))
+        message(sprintf("  %-22s %d", "Table Count:", ds$properties$tableCount))
+        message(sprintf("  %-22s %.2f GB", "Total Data Size:",
+                        ds$properties$totalNumBytes / (1024^3)))
+        message(sprintf("  %-22s %s", "Created At:",
+                        format(as.POSIXct(ds$properties$createdAt / 1000,
+                                          origin = "1970-01-01", tz = "UTC"),
+                               "%Y-%m-%d %H:%M:%S")))
+        message(sprintf("  %-22s %s", "Last Updated At:",
+                        format(as.POSIXct(ds$properties$updatedAt / 1000,
+                                          origin = "1970-01-01", tz = "UTC"),
+                               "%Y-%m-%d %H:%M:%S")))
+        message(sprintf("  %-22s %s", "Redivis URL:", ds$properties$url))
+        message(strrep("-", 50))
+      }
+    }
   } else {
-    # Fetch table-specific information
+    # --- Table-specific info (unchanged) ---
     table <- .fetch_redivis_table(table_name)
     bib <- .fetch_biblio_table()
     thisbib <- bib[bib$table == table_name, ]
     
     tags <- .fetch_tags_table()
     construct <- tags$construct_name[tags$table == table_name]
-    
     if (length(construct) == 0 || is.na(construct)) {
       construct <- "No construct specified"
     }
     
     name <- table$properties$name
     num_rows <- table$properties$numRows
-    data_size <- table$properties$numBytes / 1024 # Convert bytes to KB
+    data_size <- table$properties$numBytes / 1024
     variable_count <- table$properties$variableCount
     table_url <- table$properties$url
     doi <- thisbib$DOI__for_paper_
@@ -121,7 +135,7 @@ irw_info <- function(table_name = NULL) {
     licence <- thisbib$Derived_License
     description <- thisbib$Description
     reference <- thisbib$Reference_x
-
+    
     message(strrep("-", 50))
     message("Table Information for: ", table_name)
     message(strrep("-", 50))
@@ -139,6 +153,6 @@ irw_info <- function(table_name = NULL) {
     message(sprintf("%s%s", "Reference:\n", reference))
     message(strrep("-", 50))
   }
-
+  
   invisible(NULL)
 }

@@ -56,14 +56,27 @@
   stop("Redivis request failed after ", max_attempts, " attempts.")
 }
 
-#' Initialize Datasource
+# helper for multiple redivis datasets
+.get_all_irw_datasets <- function() {
+  if (!exists("irw_datasets", envir = .irw_env) || is.null(.irw_env$irw_datasets)) {
+    .irw_env$irw_datasets <- list(
+      redivis::redivis$user("datapages")$dataset("item_response_warehouse:as2e"),
+      redivis::redivis$user("datapages")$dataset("item_response_warehouse_2:epbx")
+    )
+    # Call get() for each dataset
+    lapply(.irw_env$irw_datasets, function(ds) .retry_with_backoff(function() ds$get()))
+  }
+  .irw_env$irw_datasets
+}
+
+#' Initialize Datasource(s)
 #'
-#' Establishes a connection to the Redivis datasource. If `sim = FALSE`, connects
-#' to the main IRW dataset. If `sim = TRUE`, connects to the simulation dataset.
-#' Ensures `get()` is called to properly retrieve the dataset and caches the result.
+#' Returns a list of Redivis dataset objects for the IRW data sources.
+#' If sim = FALSE, returns both main IRW datasets (dataset1 first, dataset2 second).
+#' If sim = TRUE, returns the simulation dataset only.
 #'
-#' @param sim Logical. If TRUE, connects to the simulation dataset (`irw_simsyn`).
-#' @return A Redivis dataset object representing the connected datasource.
+#' @param sim Logical. If TRUE, connects to the IRW simulation dataset (`irw_simsyn`).
+#' @return A list of one or more Redivis dataset objects.
 #' @keywords internal
 .initialize_datasource <- function(sim = FALSE) {
   if (!is.logical(sim) || length(sim) != 1) {
@@ -71,14 +84,15 @@
   }
   
   if (isFALSE(sim)) {
-    if (!exists("datasource", envir = .irw_env) || is.null(.irw_env$datasource)) {
-      .irw_env$datasource <- .retry_with_backoff(function() {
-        ds <- redivis::redivis$user("datapages")$dataset("item_response_warehouse:as2e")
-        ds$get()
-        ds
-      })
+    if (!exists("datasource_list", envir = .irw_env) || is.null(.irw_env$datasource_list)) {
+      .irw_env$datasource_list <- list(
+        redivis::redivis$user("datapages")$dataset("item_response_warehouse:as2e"),
+        redivis::redivis$user("datapages")$dataset("item_response_warehouse_2:epbx")
+      )
+      # Ensure metadata loaded for each dataset
+      lapply(.irw_env$datasource_list, function(ds) .retry_with_backoff(function() ds$get()))
     }
-    return(.irw_env$datasource)
+    return(.irw_env$datasource_list)
   } else {
     if (!exists("sim_datasource", envir = .irw_env) || is.null(.irw_env$sim_datasource)) {
       .irw_env$sim_datasource <- .retry_with_backoff(function() {
@@ -87,7 +101,7 @@
         ds
       })
     }
-    return(.irw_env$sim_datasource)
+    return(list(.irw_env$sim_datasource))
   }
 }
 
@@ -106,61 +120,65 @@
   if (!is.character(name) || length(name) != 1) {
     stop("The 'name' parameter must be a single character string.")
   }
-
-  ds <- .initialize_datasource(sim = sim)
-
-  tryCatch(
-    {
-      # Suppress the specific warning about missing reference id
-      withCallingHandlers({
-        table_data <- ds$table(name)
-        table_data$get()},
+  ds_list <- .initialize_datasource(sim = sim)
+  
+  for (ds in ds_list) {
+    result <- tryCatch(
+      {
+        # Suppress the specific warning about missing reference id
+        withCallingHandlers({
+          table_data <- ds$table(name)
+          table_data$get()
+        },
         warning = function(w) {
           if (grepl("No reference id was provided for the table", conditionMessage(w))) {
             invokeRestart("muffleWarning")
           }
+        })
+        table_data
+      },
+      error = function(e) {
+        error_message <- e$message
+        
+        # Try next dataset if table not found
+        if (grepl("not_found_error", error_message, ignore.case = TRUE)) {
+          return(NULL)
         }
-      )
-      table_data
-    },
-    error = function(e) {
-      error_message <- e$message
-
-      # If table does not exist, stop immediately (don't retry)
-      if (grepl("not_found_error", error_message, ignore.case = TRUE)) {
-        stop(paste("\nTable", shQuote(name), "does not exist in the IRW database."), call. = FALSE)
-      }
-
-      # If table cannot be fetched due to an invalid format, stop immediately (don't retry)
-      if (grepl("invalid_request_error", error_message, ignore.case = TRUE)) {
-        stop(paste("\nTable", shQuote(name), "cannot be fetched due to an invalid format."),
-          call. = FALSE
-        )
-      }
-
-      # If the specific error is the 'stream_callback' function error, retry with backoff
-      if (grepl("could not find function \"stream_callback\"", error_message, ignore.case = TRUE)) {
-        .retry_with_backoff(function() {
-          # Suppress the specific warning about missing reference id in the retry as well
-          withCallingHandlers({
-            table_data <- ds$table(name)
-            table_data$get()},
+        
+        # Stop immediately for invalid format
+        if (grepl("invalid_request_error", error_message, ignore.case = TRUE)) {
+          stop(paste("\nTable", shQuote(name), "cannot be fetched due to an invalid format."),
+               call. = FALSE)
+        }
+        
+        # Retry if stream_callback error
+        if (grepl("could not find function \"stream_callback\"", error_message, ignore.case = TRUE)) {
+          return(.retry_with_backoff(function() {
+            withCallingHandlers({
+              table_data <- ds$table(name)
+              table_data$get()
+            },
             warning = function(w) {
               if (grepl("No reference id was provided for the table", conditionMessage(w))) {
                 invokeRestart("muffleWarning")
               }
-            }
-          )
-          table_data
-        })
-      } else {
-        # For all other errors, stop with the error message
+            })
+            table_data
+          }))
+        }
+        
+        # All other errors → stop
         stop(paste("\nAn unknown error occurred:", error_message), call. = FALSE)
       }
+    )
+    
+    if (!is.null(result)) {
+      return(result) # Found table → return immediately
     }
-  )
+  }
+  
+  stop(paste("\nTable", shQuote(name), "does not exist in the IRW database."), call. = FALSE)
 }
-
 
 
 #' Fetch Metadata Table
@@ -212,39 +230,33 @@
 #' @return A tibble containing filtered biblio information, with only the tables that exist in the IRW database.
 #' @keywords internal
 .fetch_biblio_table <- function() {
-  # Fetch the biblio table from the Redivis dataset
   dataset <- redivis::redivis$user("bdomingu")$dataset("irw_meta:bdxt")
-  .retry_with_backoff(function() {
-    dataset$get()
-  })
+  .retry_with_backoff(function() dataset$get())
   latest_version_tag <- dataset$properties$version$tag
-
-  # If biblio exists in cache and the version tag is the same, return cached tibble
-  if (!is.null(latest_version_tag) &&
-    exists("biblio_tibble", envir = .irw_env) &&
-    exists("biblio_version", envir = .irw_env) &&
-    identical(.irw_env$biblio_version, latest_version_tag)) {
-    return(.irw_env$biblio_tibble) # Return cached biblio tibble
-  }
-
-  # Fetch new biblio table and convert it to a tibble
-  table <- dataset$table("biblio:qahg")
-  biblio_tibble <- .retry_with_backoff(function() {
-    table$to_tibble()
-  })
-
-
-  # Filter biblio table to only include tables that exist in the IRW database
-  ds <- .initialize_datasource()
-  tables <- ds$list_tables()
-  table_name_list <- tolower(vapply(tables, function(table) table$name, character(1))) # Lowercased IRW table names
   
-  # Filter using lowercase table names
+  # Return cached if version unchanged
+  if (!is.null(latest_version_tag) &&
+      exists("biblio_tibble", envir = .irw_env) &&
+      identical(.irw_env$biblio_version, latest_version_tag)) {
+    return(.irw_env$biblio_tibble)
+  }
+  
+  # Fetch fresh biblio table
+  table <- dataset$table("biblio:qahg")
+  biblio_tibble <- .retry_with_backoff(function() table$to_tibble())
+  
+  # Get all table names from all datasets
+  ds_list <- .initialize_datasource(sim = FALSE)
+  table_name_list <- tolower(unlist(lapply(ds_list, function(ds) {
+    vapply(ds$list_tables(), function(tbl) tbl$name, character(1))
+  })))
+  
+  # Filter biblio table
   biblio_tibble$table_lower <- tolower(biblio_tibble$table)
   filtered_biblio <- biblio_tibble[biblio_tibble$table_lower %in% table_name_list, ]
-  filtered_biblio$table_lower <- NULL  # drop helper column
+  filtered_biblio$table_lower <- NULL
   
-  # Cache results
+  # Cache
   .irw_env$biblio_version <- latest_version_tag
   .irw_env$biblio_tibble <- filtered_biblio
   
@@ -261,48 +273,39 @@
 #' @keywords internal
 .fetch_tags_table <- function() {
   dataset <- redivis::redivis$user("bdomingu")$dataset("irw_meta:bdxt")
-  .retry_with_backoff(function() {
-    dataset$get()
-  })
+  .retry_with_backoff(function() dataset$get())
   latest_version_tag <- dataset$properties$version$tag
   
-  # Return cached tags tibble if version tag hasn't changed
+  # Return cached if version unchanged
   if (!is.null(latest_version_tag) &&
       exists("tags_tibble", envir = .irw_env) &&
-      exists("tags_version", envir = .irw_env) &&
       identical(.irw_env$tags_version, latest_version_tag)) {
     return(.irw_env$tags_tibble)
   }
   
-  # Fetch and convert tags table
+  # Fetch and clean tags table
   table <- dataset$table("tags:7nkh")
-  tags_tibble <- .retry_with_backoff(function() {
-    table$to_tibble()
-  })
+  tags_tibble <- .retry_with_backoff(function() table$to_tibble())
   
-  # Convert "NA" strings to actual NA values
   tags_tibble <- as.data.frame(tags_tibble)
   tags_tibble[] <- lapply(tags_tibble, function(col) {
-    if (is.character(col)) {
-      col[col == "NA"] <- NA
-    }
+    if (is.character(col)) col[col == "NA"] <- NA
     col
   })
   tags_tibble <- tibble::as_tibble(tags_tibble)
   
-  # Normalize both tags and IRW table names to lowercase for matching
-  ds <- .initialize_datasource()
-  tables <- ds$list_tables()
-  table_name_list <- tolower(vapply(tables, function(table) table$name, character(1)))
+  # Get all table names from all datasets
+  ds_list <- .initialize_datasource(sim = FALSE)
+  table_name_list <- tolower(unlist(lapply(ds_list, function(ds) {
+    vapply(ds$list_tables(), function(tbl) tbl$name, character(1))
+  })))
+  
+  # Filter tags table
   tags_tibble$table_lower <- tolower(tags_tibble$table)
-  
-  # Filter tags to only include those whose lowercased name exists in IRW tables
   filtered_tags <- tags_tibble[tags_tibble$table_lower %in% table_name_list, ]
-  
-  # Drop helper column
   filtered_tags$table_lower <- NULL
   
-  # Cache results
+  # Cache
   .irw_env$tags_version <- latest_version_tag
   .irw_env$tags_tibble <- filtered_tags
   

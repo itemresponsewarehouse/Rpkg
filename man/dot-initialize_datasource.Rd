@@ -2,19 +2,19 @@
 % Please edit documentation in R/redivis-connection.R
 \name{.initialize_datasource}
 \alias{.initialize_datasource}
-\title{Initialize Datasource}
+\title{Initialize Datasource(s)}
 \usage{
 .initialize_datasource(sim = FALSE)
 }
 \arguments{
-\item{sim}{Logical. If TRUE, connects to the simulation dataset (\code{irw_simsyn}).}
+\item{sim}{Logical. If TRUE, connects to the IRW simulation dataset (\code{irw_simsyn}).}
 }
 \value{
-A Redivis dataset object representing the connected datasource.
+A list of one or more Redivis dataset objects.
 }
 \description{
-Establishes a connection to the Redivis datasource. If \code{sim = FALSE}, connects
-to the main IRW dataset. If \code{sim = TRUE}, connects to the simulation dataset.
-Ensures \code{get()} is called to properly retrieve the dataset and caches the result.
+Returns a list of Redivis dataset objects for the IRW data sources.
+If sim = FALSE, returns both main IRW datasets (dataset1 first, dataset2 second).
+If sim = TRUE, returns the simulation dataset only.
 }
 \keyword{internal}

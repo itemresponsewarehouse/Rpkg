@@ -4,19 +4,30 @@
 \alias{irw_info}
 \title{Retrieve and Print IRW Database or Table Information}
 \usage{
-irw_info(table_name = NULL)
+irw_info(table_name = NULL, details = FALSE)
 }
 \arguments{
-\item{table_name}{Optional. A character string specifying the name of the table to retrieve information for.}
+\item{table_name}{Optional. Table name to describe; if \code{NULL}, prints database‑level info.}
+
+\item{details}{Logical. When \code{TRUE} and \code{table_name} is \code{NULL}, also
+prints a breakdown by dataset. Defaults to \code{FALSE}.}
+}
+\value{
+Invisibly returns \code{NULL}.
 }
 \description{
-Fetches and displays information for the IRW database or a specified table.
-If no table name is provided, it returns general database information.
-If a table name is provided, it returns detailed information about that table.
+Prints information about the IRW datasets or a specific table.
+}
+\details{
+If \code{table_name} is \code{NULL}, shows combined totals across all IRW datasets.
+Use \code{details = TRUE} to also print a per‑dataset breakdown.
+If a table name is provided, shows details for that table, automatically fetching
+from the dataset where it resides.
 }
 \examples{
 \dontrun{
-irw_info() # Prints database information
-irw_info("abortion") # Prints table-specific information
+irw_info()                 # Combined totals
+irw_info(details = TRUE)   # Combined + per-dataset breakdown
+irw_info("frac20")      # Specific table
 }
 }
