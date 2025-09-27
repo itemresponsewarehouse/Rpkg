@@ -56,4 +56,4 @@ x = irw_fetch("4thgrade_math_sirt")
 
 ## Feedback and Contributions
 
-If you encounter issues or have suggestions for improving `irw`, please submit them on the [GitHub Issues page](https://github.com/hansorlee/irw/issues). Contributions are welcome!
+If you encounter issues or have suggestions for improving `irw`, please submit them on the [GitHub Issues page](https://github.com/itemresponsewarehouse/Rpkg/issues). Contributions are welcome!
