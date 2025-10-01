@@ -1,6 +1,7 @@
 # Define a package environment to store global variables
 .irw_env <- new.env(parent = emptyenv())
 
+
 #' Retry with Exponential Backoff
 #'
 #' Automatically retries an API call if it fails due to transient issues.
@@ -16,44 +17,24 @@
 .retry_with_backoff <- function(expr, max_attempts = 5, base_delay = 1, timeout_sec = 10) {
   attempt <- 1
   result <- NULL
-
   while (attempt <= max_attempts) {
     result <- tryCatch(
       {
-        withTimeout(expr(), timeout = timeout_sec, onTimeout = "error")
-      },
-      TimeoutException = function(e) {
-        if (getOption("irw.verbose", FALSE)) {
-          message("Attempt ", attempt, " timed out after ", timeout_sec, " seconds.")
+        if (is.null(timeout_sec)) {
+          expr()
+        } else {
+          R.utils::withTimeout(expr(), timeout = timeout_sec, onTimeout = "error")
         }
-        NULL
       },
-      error = function(e) {
-        if (getOption("irw.verbose", FALSE)) {
-          message("Attempt ", attempt, " failed: ", e$message)
-        }
-        NULL
-      }
+      TimeoutException = function(e) NULL,
+      error = function(e) NULL
     )
-
-    if (!is.null(result)) {
-      return(result)
-    }
-
-    if (attempt == max_attempts) {
-      stop("Redivis request failed after ", max_attempts, " attempts.")
-    }
-
-    delay <- base_delay * (2^(attempt - 1))
-    if (getOption("irw.verbose", FALSE)) {
-      message("Retrying in ", delay, " seconds...")
-    }
-
-    Sys.sleep(delay)
+    if (!is.null(result)) return(result)
+    if (attempt == max_attempts) break
+    Sys.sleep(base_delay * (2^(attempt - 1)))
     attempt <- attempt + 1
   }
-
-  stop("Redivis request failed after ", max_attempts, " attempts.")
+  stop("Request failed after ", max_attempts, " attempts.", call. = FALSE)
 }
 
 # helper for multiple redivis datasets
@@ -79,27 +60,21 @@
 #' @return A list of one or more Redivis dataset objects.
 #' @keywords internal
 .initialize_datasource <- function(sim = FALSE) {
-  if (!is.logical(sim) || length(sim) != 1) {
-    stop("'sim' must be a single TRUE or FALSE value.")
-  }
-  
+  if (!is.logical(sim) || length(sim) != 1) stop("'sim' must be a single TRUE or FALSE value.")
   if (isFALSE(sim)) {
     if (!exists("datasource_list", envir = .irw_env) || is.null(.irw_env$datasource_list)) {
       .irw_env$datasource_list <- list(
         redivis::redivis$user("datapages")$dataset("item_response_warehouse:as2e"),
         redivis::redivis$user("datapages")$dataset("item_response_warehouse_2:epbx")
       )
-      # Ensure metadata loaded for each dataset
-      lapply(.irw_env$datasource_list, function(ds) .retry_with_backoff(function() ds$get()))
+      lapply(.irw_env$datasource_list, function(ds) ds$get())
     }
     return(.irw_env$datasource_list)
   } else {
     if (!exists("sim_datasource", envir = .irw_env) || is.null(.irw_env$sim_datasource)) {
-      .irw_env$sim_datasource <- .retry_with_backoff(function() {
-        ds <- redivis::redivis$user("bdomingu")$dataset("irw_simsyn:0btg")
-        ds$get()
-        ds
-      })
+      ds <- redivis::redivis$user("bdomingu")$dataset("irw_simsyn:0btg")
+      ds$get()
+      .irw_env$sim_datasource <- ds
     }
     return(list(.irw_env$sim_datasource))
   }
@@ -117,64 +92,51 @@
 #' @return A Redivis table object.
 #' @keywords internal
 .fetch_redivis_table <- function(name, sim = FALSE) {
-  if (!is.character(name) || length(name) != 1) {
-    stop("The 'name' parameter must be a single character string.")
-  }
+  if (!is.character(name) || length(name) != 1) stop("The 'name' parameter must be a single character string.")
   ds_list <- .initialize_datasource(sim = sim)
   
   for (ds in ds_list) {
+    ds$get()
+    
     result <- tryCatch(
       {
-        # Suppress the specific warning about missing reference id
         withCallingHandlers({
-          table_data <- ds$table(name)
-          table_data$get()
+          tbl <- ds$table(name)
+          tbl$get()
+          tbl
         },
         warning = function(w) {
           if (grepl("No reference id was provided for the table", conditionMessage(w))) {
             invokeRestart("muffleWarning")
           }
         })
-        table_data
       },
       error = function(e) {
-        error_message <- e$message
-        
-        # Try next dataset if table not found
-        if (grepl("not_found_error", error_message, ignore.case = TRUE)) {
-          return(NULL)
+        msg <- e$message
+        if (grepl("not_found_error", msg, ignore.case = TRUE)) {
+          return(NULL)  # try next dataset
         }
-        
-        # Stop immediately for invalid format
-        if (grepl("invalid_request_error", error_message, ignore.case = TRUE)) {
-          stop(paste("\nTable", shQuote(name), "cannot be fetched due to an invalid format."),
-               call. = FALSE)
+        if (grepl("invalid_request_error", msg, ignore.case = TRUE)) {
+          stop(paste("\nTable", shQuote(name), "cannot be fetched due to an invalid format."), call. = FALSE)
         }
-        
-        # Retry if stream_callback error
-        if (grepl("could not find function \"stream_callback\"", error_message, ignore.case = TRUE)) {
+        if (grepl("could not find function \"stream_callback\"", msg, ignore.case = TRUE)) {
           return(.retry_with_backoff(function() {
             withCallingHandlers({
-              table_data <- ds$table(name)
-              table_data$get()
+              tbl <- ds$table(name)
+              tbl$get()
+              tbl
             },
             warning = function(w) {
               if (grepl("No reference id was provided for the table", conditionMessage(w))) {
                 invokeRestart("muffleWarning")
               }
             })
-            table_data
-          }))
+          }, max_attempts = 3, timeout_sec = NULL))
         }
-        
-        # All other errors → stop
-        stop(paste("\nAn unknown error occurred:", error_message), call. = FALSE)
+        stop(paste("\nAn unknown error occurred:", msg), call. = FALSE)
       }
     )
-    
-    if (!is.null(result)) {
-      return(result) # Found table → return immediately
-    }
+    if (!is.null(result)) return(result)
   }
   
   stop(paste("\nTable", shQuote(name), "does not exist in the IRW database."), call. = FALSE)
@@ -190,12 +152,7 @@
 #' @keywords internal
 .fetch_metadata_table <- function() {
   dataset <- redivis::redivis$user("bdomingu")$dataset("irw_meta:bdxt")
-
-  # Ensure we have the latest dataset metadata
-  .retry_with_backoff(function() {
-    dataset$get()
-  })
-
+  dataset$get()
   # Retrieve version tag
   latest_version_tag <- dataset$properties$version$tag
 
@@ -231,7 +188,7 @@
 #' @keywords internal
 .fetch_biblio_table <- function() {
   dataset <- redivis::redivis$user("bdomingu")$dataset("irw_meta:bdxt")
-  .retry_with_backoff(function() dataset$get())
+  dataset$get() 
   latest_version_tag <- dataset$properties$version$tag
   
   # Return cached if version unchanged
@@ -248,6 +205,7 @@
   # Get all table names from all datasets
   ds_list <- .initialize_datasource(sim = FALSE)
   table_name_list <- tolower(unlist(lapply(ds_list, function(ds) {
+    ds$get()  
     vapply(ds$list_tables(), function(tbl) tbl$name, character(1))
   })))
   
@@ -273,7 +231,7 @@
 #' @keywords internal
 .fetch_tags_table <- function() {
   dataset <- redivis::redivis$user("bdomingu")$dataset("irw_meta:bdxt")
-  .retry_with_backoff(function() dataset$get())
+  dataset$get()
   latest_version_tag <- dataset$properties$version$tag
   
   # Return cached if version unchanged
@@ -297,6 +255,7 @@
   # Get all table names from all datasets
   ds_list <- .initialize_datasource(sim = FALSE)
   table_name_list <- tolower(unlist(lapply(ds_list, function(ds) {
+    ds$get()  
     vapply(ds$list_tables(), function(tbl) tbl$name, character(1))
   })))
   
@@ -323,7 +282,7 @@
 .get_irw_itemtext_dataset <- function() {
   if (!exists("itemtext_dataset", envir = .irw_env) || is.null(.irw_env$itemtext_dataset)) {
     dataset <- redivis::redivis$user("bdomingu")$dataset("irw_text:07b6")
-    .retry_with_backoff(function() dataset$get())
+    dataset$get() 
     .irw_env$itemtext_dataset <- dataset
   }
   .irw_env$itemtext_dataset

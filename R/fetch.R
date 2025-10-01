@@ -3,7 +3,7 @@ fetch_single_data <- function(table_id, sim = FALSE, dedup = FALSE) {
   tryCatch(
     {
       table_obj <- suppressMessages(.fetch_redivis_table(table_id, sim))
-      df <- table_obj$to_tibble()
+      df <- .retry_with_backoff(function() table_obj$to_tibble())
       
       # Recode 'resp' from character to numeric if needed
       if ("resp" %in% names(df) && is.character(df$resp)) {
