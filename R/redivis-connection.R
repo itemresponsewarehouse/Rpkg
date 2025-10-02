@@ -50,18 +50,40 @@
   .irw_env$irw_datasets
 }
 
-#' Initialize Datasource(s)
+#' Initialize Redivis Datasource(s)
 #'
-#' Returns a list of Redivis dataset objects for the IRW data sources.
-#' If sim = FALSE, returns both main IRW datasets (dataset1 first, dataset2 second).
-#' If sim = TRUE, returns the simulation dataset only.
+#' Returns a list of Redivis dataset objects based on the selected source:
+#' - If `sim = TRUE`, returns the IRW simulation dataset (`irw_simsyn:0btg`)
+#' - If `comp = TRUE`, returns the IRW competition dataset (`irw_competitions:cmd7`)
+#' - Otherwise, returns the main IRW production datasets
 #'
-#' @param sim Logical. If TRUE, connects to the IRW simulation dataset (`irw_simsyn`).
+#' Note: `sim` and `comp` are mutually exclusive. Setting both to TRUE will raise an error.
+#'
+#' @param sim Logical. If TRUE, connects to the IRW simulation dataset.
+#' @param comp Logical. If TRUE, connects to the IRW competition dataset.
+#'
 #' @return A list of one or more Redivis dataset objects.
 #' @keywords internal
-.initialize_datasource <- function(sim = FALSE) {
+.initialize_datasource <- function(sim = FALSE, comp = FALSE) {
   if (!is.logical(sim) || length(sim) != 1) stop("'sim' must be a single TRUE or FALSE value.")
-  if (isFALSE(sim)) {
+  if (!is.logical(comp) || length(comp) != 1) stop("'comp' must be a single TRUE or FALSE value.")
+  if (sim && comp) stop("Cannot set both 'sim = TRUE' and 'comp = TRUE'. Please choose one data source.")
+  
+  if (sim) {
+    if (!exists("sim_datasource", envir = .irw_env) || is.null(.irw_env$sim_datasource)) {
+      ds <- redivis::redivis$user("bdomingu")$dataset("irw_simsyn:0btg")
+      ds$get()
+      .irw_env$sim_datasource <- ds
+    }
+    return(list(.irw_env$sim_datasource))
+  } else if (comp) {
+    if (!exists("comp_datasource", envir = .irw_env) || is.null(.irw_env$comp_datasource)) {
+      ds <- redivis::redivis$user("bdomingu")$dataset("irw_competitions:cmd7")
+      ds$get()
+      .irw_env$comp_datasource <- ds
+    }
+    return(list(.irw_env$comp_datasource))
+  } else {
     if (!exists("datasource_list", envir = .irw_env) || is.null(.irw_env$datasource_list)) {
       .irw_env$datasource_list <- list(
         redivis::redivis$user("datapages")$dataset("item_response_warehouse:as2e"),
@@ -70,34 +92,28 @@
       lapply(.irw_env$datasource_list, function(ds) ds$get())
     }
     return(.irw_env$datasource_list)
-  } else {
-    if (!exists("sim_datasource", envir = .irw_env) || is.null(.irw_env$sim_datasource)) {
-      ds <- redivis::redivis$user("bdomingu")$dataset("irw_simsyn:0btg")
-      ds$get()
-      .irw_env$sim_datasource <- ds
-    }
-    return(list(.irw_env$sim_datasource))
   }
 }
 
 
 
-#' Fetch Table Data
+#' Fetch Table from Redivis
 #'
 #' Retrieves a specified table from Redivis with automatic retry logic.
-#' This function returns a Redivis table object, which can later be converted to a tibble.
+#' Used internally to obtain a Redivis table object, which can later be converted to a tibble.
 #'
 #' @param name A character string specifying the table name.
-#' @param sim Logical. If TRUE, fetches from the IRW simulation dataset (`irw_simsyn`).
-#' @return A Redivis table object.
+#' @param sim Logical. If TRUE, fetches from the IRW simulation dataset.
+#' @param comp Logical. If TRUE, fetches from the IRW competition dataset.
+#'
+#' @return A Redivis table object (not yet loaded into memory).
 #' @keywords internal
-.fetch_redivis_table <- function(name, sim = FALSE) {
+.fetch_redivis_table <- function(name, sim = FALSE, comp = FALSE) {
   if (!is.character(name) || length(name) != 1) stop("The 'name' parameter must be a single character string.")
-  ds_list <- .initialize_datasource(sim = sim)
+  ds_list <- .initialize_datasource(sim = sim, comp = comp)
   
   for (ds in ds_list) {
     ds$get()
-    
     result <- tryCatch(
       {
         withCallingHandlers({
@@ -113,25 +129,9 @@
       },
       error = function(e) {
         msg <- e$message
-        if (grepl("not_found_error", msg, ignore.case = TRUE)) {
-          return(NULL)  # try next dataset
-        }
+        if (grepl("not_found_error", msg, ignore.case = TRUE)) return(NULL)
         if (grepl("invalid_request_error", msg, ignore.case = TRUE)) {
           stop(paste("\nTable", shQuote(name), "cannot be fetched due to an invalid format."), call. = FALSE)
-        }
-        if (grepl("could not find function \"stream_callback\"", msg, ignore.case = TRUE)) {
-          return(.retry_with_backoff(function() {
-            withCallingHandlers({
-              tbl <- ds$table(name)
-              tbl$get()
-              tbl
-            },
-            warning = function(w) {
-              if (grepl("No reference id was provided for the table", conditionMessage(w))) {
-                invokeRestart("muffleWarning")
-              }
-            })
-          }, max_attempts = 3, timeout_sec = NULL))
         }
         stop(paste("\nAn unknown error occurred:", msg), call. = FALSE)
       }

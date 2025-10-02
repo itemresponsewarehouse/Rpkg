@@ -2,20 +2,22 @@
 % Please edit documentation in R/redivis-connection.R
 \name{.fetch_redivis_table}
 \alias{.fetch_redivis_table}
-\title{Fetch Table Data}
+\title{Fetch Table from Redivis}
 \usage{
-.fetch_redivis_table(name, sim = FALSE)
+.fetch_redivis_table(name, sim = FALSE, comp = FALSE)
 }
 \arguments{
 \item{name}{A character string specifying the table name.}
 
-\item{sim}{Logical. If TRUE, fetches from the IRW simulation dataset (\code{irw_simsyn}).}
+\item{sim}{Logical. If TRUE, fetches from the IRW simulation dataset.}
+
+\item{comp}{Logical. If TRUE, fetches from the IRW competition dataset.}
 }
 \value{
-A Redivis table object.
+A Redivis table object (not yet loaded into memory).
 }
 \description{
 Retrieves a specified table from Redivis with automatic retry logic.
-This function returns a Redivis table object, which can later be converted to a tibble.
+Used internally to obtain a Redivis table object, which can later be converted to a tibble.
 }
 \keyword{internal}

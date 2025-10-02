@@ -1,8 +1,19 @@
-# Helper to fetch one dataset and recode 'resp' if needed
-fetch_single_data <- function(table_id, sim = FALSE, dedup = FALSE) {
+#' Fetch a Single IRW Table
+#'
+#' Internal helper that fetches a single dataset from IRW, simulation, or competition datasets,
+#' converts it to a tibble, and applies response recoding and optional deduplication.
+#'
+#' @param table_id Character. Name of the table.
+#' @param sim Logical. If TRUE, fetch from the IRW simulation dataset.
+#' @param dedup Logical. If TRUE, apply deduplication logic to responses.
+#' @param comp Logical. If TRUE, fetch from the IRW competition dataset.
+#'
+#' @return A tibble representing the dataset.
+#' @keywords internal
+fetch_single_data <- function(table_id, sim = FALSE, dedup = FALSE, comp = FALSE) {
   tryCatch(
     {
-      table_obj <- suppressMessages(.fetch_redivis_table(table_id, sim))
+      table_obj <- suppressMessages(.fetch_redivis_table(table_id, sim = sim, comp = comp))
       df <- .retry_with_backoff(function() table_obj$to_tibble())
       
       # Recode 'resp' from character to numeric if needed
@@ -10,16 +21,13 @@ fetch_single_data <- function(table_id, sim = FALSE, dedup = FALSE) {
         suppressWarnings({
           new_resp <- as.numeric(df$resp)
         })
-        
         non_numeric_values <- is.na(new_resp) & !(tolower(trimws(df$resp)) %in% c("na", "", NA))
-        
         if (any(non_numeric_values)) {
           warning(sprintf(
             "In dataset '%s': 'resp' column contained non-numeric values that could not be coerced. Some NAs were introduced.",
             table_id
           ))
         }
-        
         df$resp <- new_resp
       }
       
@@ -31,9 +39,7 @@ fetch_single_data <- function(table_id, sim = FALSE, dedup = FALSE) {
           message(sprintf(
             "Deduplication skipped for dataset '%s': 'date' column detected (timestamped responses).", table_id
           ))
-          
         } else {
-          # Determine grouping keys
           if ("wave" %in% names(df)) {
             grouping_keys <- list(df$id, df$item, df$wave)
             success_msg <- sprintf(
@@ -46,12 +52,10 @@ fetch_single_data <- function(table_id, sim = FALSE, dedup = FALSE) {
             )
           }
           
-          # Perform deduplication
           split_df <- split(df, grouping_keys, drop = TRUE)
           df <- do.call(rbind, lapply(split_df, function(g) g[sample(nrow(g), 1), , drop = FALSE]))
           rownames(df) <- NULL
           
-          # Compare before/after
           n_after <- nrow(df)
           if (n_after < n_before) {
             message(success_msg)
@@ -66,19 +70,13 @@ fetch_single_data <- function(table_id, sim = FALSE, dedup = FALSE) {
       return(df)
     },
     error = function(e) {
-      error_message <- paste(
-        "Error fetching dataset",
-        shQuote(table_id),
-        ":",
-        e$message
-      )
-      message(error_message)
+      message(paste("Error fetching dataset", shQuote(table_id), ":", e$message))
       return(invisible(NULL))
     }
   )
 }
 
-#' Fetch Tables(s) from the Item Response Warehouse
+#' Fetch Table(s) from the Item Response Warehouse
 #'
 #' Retrieves one or more tables from IRW and returns them as tibbles.
 #' If the table includes a character `resp` column, the function attempts to
@@ -86,24 +84,33 @@ fetch_single_data <- function(table_id, sim = FALSE, dedup = FALSE) {
 #' A warning is issued only if other non-numeric values are encountered.
 #'
 #' @param name Character vector of one or more table names (IRW table IDs).
-#' @param sim Logical, optional. If TRUE, fetches from the IRW simulation table. Defaults to FALSE.
+#' @param sim Logical, optional. If TRUE, fetches from the IRW simulation dataset (`irw_simsyn:0btg`). Defaults to FALSE.
 #' @param dedup Logical, optional. If TRUE, deduplicates responses based on timing variables. Defaults to FALSE.
 #'   - If a 'date' column is present, no deduplication is performed.
-#'   - If only a 'wave' column is present, one random response is retained per (id, item) pair within each wave.
+#'   - If only a 'wave' column is present, one random response is retained per (id, item) group within each wave.
 #'   - If neither 'date' nor 'wave' is present, one random response is retained per (id, item) pair.
+#' @param comp Logical, optional. If TRUE, fetches from the IRW competition dataset (`irw_competitions:cmd7`). Defaults to FALSE.
 #'
 #' @return If a single name is provided, returns a tibble. If multiple, returns a named list
 #'         of tibbles (or error messages, if retrieval failed).
 #'
 #' @examples
 #' \dontrun{
+#' # Main IRW data
 #' irw_fetch("environment_ltm")
-#' irw_fetch("gilbert_meta_3", sim = TRUE)
+#'
+#' # Deduplicated
 #' irw_fetch("pks_probability", dedup = TRUE)
+#'
+#' # Simulation data
+#' irw_fetch("gilbert_meta_3", sim = TRUE)
+#'
+#' # Competition data
+#' irw_fetch("collegefb_2021and2022", comp = TRUE)
 #' }
+#'
 #' @export
-irw_fetch <- function(name, sim = FALSE, dedup = FALSE) {
-  # Fail fast if no table name is given
+irw_fetch <- function(name, sim = FALSE, dedup = FALSE, comp = FALSE) {
   if (missing(name)) {
     stop(
       "Please provide the IRW table name(s) to fetch.\n",
@@ -111,12 +118,13 @@ irw_fetch <- function(name, sim = FALSE, dedup = FALSE) {
       call. = FALSE
     )
   }
-
-  # Decide single vs multiple
+  
+  if (sim && comp) stop("Cannot set both 'sim = TRUE' and 'comp = TRUE'. Please choose one source.")
+  
   if (length(name) == 1 && is.character(name)) {
-    return(fetch_single_data(name, sim=sim, dedup=dedup))
+    return(fetch_single_data(name, sim = sim, dedup = dedup, comp = comp))
   } else {
-    dataset_list <- lapply(name, function(nm) fetch_single_data(nm, sim = sim, dedup = dedup))
+    dataset_list <- lapply(name, function(nm) fetch_single_data(nm, sim = sim, dedup = dedup, comp = comp))
     names(dataset_list) <- name
     return(dataset_list)
   }

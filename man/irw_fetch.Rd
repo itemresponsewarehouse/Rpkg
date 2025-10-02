@@ -2,21 +2,23 @@
 % Please edit documentation in R/fetch.R
 \name{irw_fetch}
 \alias{irw_fetch}
-\title{Fetch Tables(s) from the Item Response Warehouse}
+\title{Fetch Table(s) from the Item Response Warehouse}
 \usage{
-irw_fetch(name, sim = FALSE, dedup = FALSE)
+irw_fetch(name, sim = FALSE, dedup = FALSE, comp = FALSE)
 }
 \arguments{
 \item{name}{Character vector of one or more table names (IRW table IDs).}
 
-\item{sim}{Logical, optional. If TRUE, fetches from the IRW simulation table. Defaults to FALSE.}
+\item{sim}{Logical, optional. If TRUE, fetches from the IRW simulation dataset (\verb{irw_simsyn:0btg}). Defaults to FALSE.}
 
 \item{dedup}{Logical, optional. If TRUE, deduplicates responses based on timing variables. Defaults to FALSE.
 \itemize{
 \item If a 'date' column is present, no deduplication is performed.
-\item If only a 'wave' column is present, one random response is retained per (id, item) pair within each wave.
+\item If only a 'wave' column is present, one random response is retained per (id, item) group within each wave.
 \item If neither 'date' nor 'wave' is present, one random response is retained per (id, item) pair.
 }}
+
+\item{comp}{Logical, optional. If TRUE, fetches from the IRW competition dataset (\code{irw_competitions:cmd7}). Defaults to FALSE.}
 }
 \value{
 If a single name is provided, returns a tibble. If multiple, returns a named list
@@ -30,8 +32,17 @@ A warning is issued only if other non-numeric values are encountered.
 }
 \examples{
 \dontrun{
+# Main IRW data
 irw_fetch("environment_ltm")
-irw_fetch("gilbert_meta_3", sim = TRUE)
+
+# Deduplicated
 irw_fetch("pks_probability", dedup = TRUE)
+
+# Simulation data
+irw_fetch("gilbert_meta_3", sim = TRUE)
+
+# Competition data
+irw_fetch("collegefb_2021and2022", comp = TRUE)
 }
+
 }

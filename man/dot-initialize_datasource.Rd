@@ -2,19 +2,27 @@
 % Please edit documentation in R/redivis-connection.R
 \name{.initialize_datasource}
 \alias{.initialize_datasource}
-\title{Initialize Datasource(s)}
+\title{Initialize Redivis Datasource(s)}
 \usage{
-.initialize_datasource(sim = FALSE)
+.initialize_datasource(sim = FALSE, comp = FALSE)
 }
 \arguments{
-\item{sim}{Logical. If TRUE, connects to the IRW simulation dataset (\code{irw_simsyn}).}
+\item{sim}{Logical. If TRUE, connects to the IRW simulation dataset.}
+
+\item{comp}{Logical. If TRUE, connects to the IRW competition dataset.}
 }
 \value{
 A list of one or more Redivis dataset objects.
 }
 \description{
-Returns a list of Redivis dataset objects for the IRW data sources.
-If sim = FALSE, returns both main IRW datasets (dataset1 first, dataset2 second).
-If sim = TRUE, returns the simulation dataset only.
+Returns a list of Redivis dataset objects based on the selected source:
+\itemize{
+\item If \code{sim = TRUE}, returns the IRW simulation dataset (\verb{irw_simsyn:0btg})
+\item If \code{comp = TRUE}, returns the IRW competition dataset (\code{irw_competitions:cmd7})
+\item Otherwise, returns the main IRW production datasets
+}
+}
+\details{
+Note: \code{sim} and \code{comp} are mutually exclusive. Setting both to TRUE will raise an error.
 }
 \keyword{internal}
