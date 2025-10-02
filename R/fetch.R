@@ -84,12 +84,13 @@ fetch_single_data <- function(table_id, sim = FALSE, dedup = FALSE, comp = FALSE
 #' A warning is issued only if other non-numeric values are encountered.
 #'
 #' @param name Character vector of one or more table names (IRW table IDs).
-#' @param sim Logical, optional. If TRUE, fetches from the IRW simulation dataset (`irw_simsyn:0btg`). Defaults to FALSE.
+#' @param sim Logical, optional. If TRUE, fetches from the IRW simulation dataset (`irw_simsyn`). Defaults to FALSE.
 #' @param dedup Logical, optional. If TRUE, deduplicates responses based on timing variables. Defaults to FALSE.
 #'   - If a 'date' column is present, no deduplication is performed.
 #'   - If only a 'wave' column is present, one random response is retained per (id, item) group within each wave.
 #'   - If neither 'date' nor 'wave' is present, one random response is retained per (id, item) pair.
-#' @param comp Logical, optional. If TRUE, fetches from the IRW competition dataset (`irw_competitions:cmd7`). Defaults to FALSE.
+#' @param comp Logical, optional. If TRUE, fetches from the IRW competition dataset (`irw_competitions`). Defaults to FALSE.
+#' @param resp Logical, optional. If TRUE, returns response matrix via `irw_long2resp()`. Defaults to FALSE.
 #'
 #' @return If a single name is provided, returns a tibble. If multiple, returns a named list
 #'         of tibbles (or error messages, if retrieval failed).
@@ -110,7 +111,7 @@ fetch_single_data <- function(table_id, sim = FALSE, dedup = FALSE, comp = FALSE
 #' }
 #'
 #' @export
-irw_fetch <- function(name, sim = FALSE, dedup = FALSE, comp = FALSE) {
+irw_fetch <- function(name, sim = FALSE, dedup = FALSE, comp = FALSE, resp = FALSE) {
   if (missing(name)) {
     stop(
       "Please provide the IRW table name(s) to fetch.\n",
@@ -119,12 +120,28 @@ irw_fetch <- function(name, sim = FALSE, dedup = FALSE, comp = FALSE) {
     )
   }
   
-  if (sim && comp) stop("Cannot set both 'sim = TRUE' and 'comp = TRUE'. Please choose one source.")
+  if (sim && comp) {
+    stop("Cannot set both 'sim = TRUE' and 'comp = TRUE'. Please choose one source.")
+  }
+  
+  process_one <- function(nm) {
+    dat <- fetch_single_data(nm, sim = sim, dedup = dedup, comp = comp)
+    if (resp) {
+      dat <- tryCatch(
+        irw_long2resp(dat),
+        error = function(e) {
+          warning(sprintf("Could not convert '%s' to response matrix: %s", nm, e$message))
+          return(dat)
+        }
+      )
+    }
+    return(dat)
+  }
   
   if (length(name) == 1 && is.character(name)) {
-    return(fetch_single_data(name, sim = sim, dedup = dedup, comp = comp))
+    return(process_one(name))
   } else {
-    dataset_list <- lapply(name, function(nm) fetch_single_data(nm, sim = sim, dedup = dedup, comp = comp))
+    dataset_list <- lapply(name, process_one)
     names(dataset_list) <- name
     return(dataset_list)
   }

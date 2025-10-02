@@ -4,12 +4,12 @@
 \alias{irw_fetch}
 \title{Fetch Table(s) from the Item Response Warehouse}
 \usage{
-irw_fetch(name, sim = FALSE, dedup = FALSE, comp = FALSE)
+irw_fetch(name, sim = FALSE, dedup = FALSE, comp = FALSE, resp = FALSE)
 }
 \arguments{
 \item{name}{Character vector of one or more table names (IRW table IDs).}
 
-\item{sim}{Logical, optional. If TRUE, fetches from the IRW simulation dataset (\verb{irw_simsyn:0btg}). Defaults to FALSE.}
+\item{sim}{Logical, optional. If TRUE, fetches from the IRW simulation dataset (\code{irw_simsyn}). Defaults to FALSE.}
 
 \item{dedup}{Logical, optional. If TRUE, deduplicates responses based on timing variables. Defaults to FALSE.
 \itemize{
@@ -18,7 +18,9 @@ irw_fetch(name, sim = FALSE, dedup = FALSE, comp = FALSE)
 \item If neither 'date' nor 'wave' is present, one random response is retained per (id, item) pair.
 }}
 
-\item{comp}{Logical, optional. If TRUE, fetches from the IRW competition dataset (\code{irw_competitions:cmd7}). Defaults to FALSE.}
+\item{comp}{Logical, optional. If TRUE, fetches from the IRW competition dataset (\code{irw_competitions}). Defaults to FALSE.}
+
+\item{resp}{Logical, optional. If TRUE, returns response matrix via \code{irw_long2resp()}. Defaults to FALSE.}
 }
 \value{
 If a single name is provided, returns a tibble. If multiple, returns a named list
