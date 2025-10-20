@@ -130,13 +130,48 @@ irw_simdata <- function(n_id = 1000,
 #'
 #' @examples
 #' \dontrun{
-#' # Default: 100 agents, 10k random pairs, Davidson ties with nu=0
+#' # --- Basic usage ---
 #' d <- irw_simdata_comp(n_agent = 100, n_pairs = 10000, nu = 0)
 #' head(d)
 #'
-#' # Return params for model recovery & set seed for reproducibility
-#' sim2 <- irw_simdata_comp(n_agent = 50, n_pairs = 5000, nu = -0.5, seed = 123, return_params = TRUE)
-#' table(sim2$data$winner)
+#' # Simulate pairwise comparison data and recover abilities with a Davidson model
+#'
+#' th <- rnorm(n = 50, mean = 0.5, sd = 3)
+#' pairs <- irw_simdata_comp(
+#'   n_agent = 50, n_pairs = 3000, nu = 0.1,
+#'   theta = th, seed = 1, return_params = TRUE
+#' )
+#'
+#' x <- pairs$data
+#' x$winner <- ifelse(x$winner == "agent_b", -1, 1)
+#' x$winner <- ifelse(x$winner == "draw", 0, x$winner)
+#' x$agent_a <- as.factor(x$agent_a)
+#' x$agent_b <- as.factor(x$agent_b)
+#' x$pair <- seq_len(nrow(x))  # add pair id for expandCategorical
+#'
+#' library(gnm)
+#' library(BradleyTerry2)
+#'
+#' pairs.tri <- expandCategorical(x, "winner", idvar = "pair")
+#'
+#' dav <- gnm(
+#'   count ~ GenDavidson(
+#'     winner == 1, winner == 0, winner == -1,
+#'     player1 = agent_a,
+#'     player2 = agent_b
+#'   ) - 1,
+#'   eliminate = pair,
+#'   family = poisson,
+#'   data = pairs.tri
+#' )
+#'
+#' plot(
+#'   pairs$theta, coef(dav)[-1],
+#'   xlab = "True theta",
+#'   ylab = "Estimated ability (shifted)",
+#'   main = "Davidson recovery using gnm"
+#' )
+#' abline(lm(coef(dav)[-1] ~ pairs$theta), lty = 2)
 #' }
 #'
 #' @importFrom stats rnorm rmultinom
