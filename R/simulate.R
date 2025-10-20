@@ -131,17 +131,17 @@ irw_simdata <- function(n_id = 1000,
 #' @examples
 #' \dontrun{
 #' # Default: 100 agents, 10k random pairs, Davidson ties with nu=0
-#' d <- irw_sim_comp(n_agent = 100, n_pairs = 10000, nu = 0)
+#' d <- irw_simdata_comp(n_agent = 100, n_pairs = 10000, nu = 0)
 #' head(d)
 #'
 #' # Return params for model recovery & set seed for reproducibility
-#' sim2 <- irw_sim_comp(n_agent = 50, n_pairs = 5000, nu = -0.5, seed = 123, return_params = TRUE)
+#' sim2 <- irw_simdata_comp(n_agent = 50, n_pairs = 5000, nu = -0.5, seed = 123, return_params = TRUE)
 #' table(sim2$data$winner)
 #' }
 #'
 #' @importFrom stats rnorm rmultinom
 #' @export
-irw_sim_comp <- function(n_agent = 100,
+irw_simdata_comp <- function(n_agent = 100,
                           n_pairs = 10000,
                           nu = 0,
                           theta = NULL,

@@ -30,6 +30,7 @@ reference:
   desc: Functions for simulating IRW data.
 - contents:
   - irw_simdata
+  - irw_simdata_comp
   - irw_simu_diff
 - title: Process
   desc: Functions for processing IRW data for psychometric analysis.
