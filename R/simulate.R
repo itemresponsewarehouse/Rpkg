@@ -99,30 +99,107 @@ irw_simdata <- function(n_id = 1000,
 }
 
 
+#' Simulate IRW-compliant pairwise-comparison data
+#'
+#' Generates pairwise outcomes among `n_agent` agents using the Davidson model with ties.
+#' (See https://link.springer.com/article/10.3758/s13428-021-01714-2).
+#' Returns one row per comparison with `agent_a`, `agent_b`, and `winner`.
+#'
+#' @param n_agent Integer. Number of agents (ignored if `theta` provided). Default 100.
+#' @param n_pairs Integer. Number of pairwise comparisons to sample. Default 10000.
+#' @param nu Numeric. Tie propensity in the Davidson model.
+#'           Larger values yield more ties. Default 0.
+#' @param theta Optional numeric vector of length `n_agent` with agent abilities.
+#'              If provided, overrides `n_agent`. If NULL, sampled from N(0,1).
+#' @param theta_mean Mean of the theta distribution (used if `theta` is NULL). Default 0.
+#' @param theta_sd   SD of the theta distribution (used if `theta` is NULL). Default 1.
+#' @param seed Optional integer for reproducibility.
+#' @param return_params Logical. If TRUE, return a list with `data`, `theta`, and `nu`.
+#'                      Default FALSE.
+#'
+#' @return
+#' A `data.frame` with columns:
+#' - `agent_a` (int): index of first agent
+#' - `agent_b` (int): index of second agent
+#' - `winner`  (chr): one of "agent_a","agent_b", or "draw".
+#'
+#' If `return_params = TRUE`, returns a list with:
+#' - `data`: the simulated data frame.
+#' - `theta`: vector of simulated thetas used
+#' - `nu`: tie parameter
+#'
+#' @examples
+#' \dontrun{
+#' # Default: 100 agents, 10k random pairs, Davidson ties with nu=0
+#' d <- irw_sim_comp(n_agent = 100, n_pairs = 10000, nu = 0)
+#' head(d)
+#'
+#' # Return params for model recovery & set seed for reproducibility
+#' sim2 <- irw_sim_comp(n_agent = 50, n_pairs = 5000, nu = -0.5, seed = 123, return_params = TRUE)
+#' table(sim2$data$winner)
+#' }
+#'
+#' @importFrom stats rnorm rmultinom
+#' @export
+irw_sim_comp <- function(n_agent = 100,
+                          n_pairs = 10000,
+                          nu = 0,
+                          theta = NULL,
+                          theta_mean = 0,
+                          theta_sd = 1,
+                          seed = NULL,
+                          return_params = FALSE) {
+  if (!is.null(seed)) set.seed(seed)
+  
+  # simulate theta
+  if (is.null(theta)) {
+    theta <- rnorm(n_agent, mean = theta_mean, sd = theta_sd)
+  } else {
+    theta <- as.numeric(theta)
+    n_agent <- length(theta)
+  }
+  
+  # Sample random pairs (exclude self-matches)
+  agent_a <- sample.int(n_agent, n_pairs, replace = TRUE)
+  agent_b <- sample.int(n_agent, n_pairs, replace = TRUE)
+  same <- which(agent_a == agent_b)
+  while (length(same)) {
+    agent_b[same] <- sample.int(n_agent, length(same), replace = TRUE)
+    same <- which(agent_a == agent_b)
+  }
+  
+  # Davidson model
+  draw_one <- function(t1, t2, nu) {
+    K      <- exp(t1) + exp(t2) + exp(nu + (t1 + t2)/2)
+    p_draw <- exp(nu + (t1 + t2)/2) / K
+    p_a    <- exp(t1) / K
+    p_b    <- exp(t2) / K
+    x <- rmultinom(1, 1, c(p_draw, p_a, p_b))[, 1]
+    c("draw", "agent_a", "agent_b")[which(x == 1)]
+  }
+  
+  # Simulate outcomes
+  winner <- character(n_pairs)
+  for (k in seq_len(n_pairs)) {
+    winner[k] <- draw_one(theta[agent_a[k]], theta[agent_b[k]], nu)
+  }
+  
+  df <- data.frame(
+    agent_a = agent_a,
+    agent_b = agent_b,
+    winner  = winner,
+    stringsAsFactors = FALSE
+  )
+  
+  if (return_params) {
+    return(list(
+      data  = df,
+      theta = theta,
+      nu    = nu
+    ))
+  } else {
+    return(df)
+  }
+}
 
-# gen.pair<-function(N=100,N_pairs=10000,nu= 0) {
-#   pr.pair<-function(th1,th2,nu=nu) { ##based on davidson model, https://link.springer.com/article/10.3758/s13428-021-01714-2
-#     K<-(exp(th1)+exp(th2)+exp(nu+(th1+th2)/2))
-#     ##pr tie, ##see eqn 8
-#     pr.tie<-exp(nu+(th1+th2)/2)/K
-#     ##see eqn 7
-#     pr.12<-exp(th1)/K
-#     pr.21<-exp(th2)/K
-#     x<-rmultinom(1,1,c(pr.tie,pr.12,pr.21))[,1]
-#     ii<-which(x==1)
-#     ii-1 ##0-draw, 1 1>2, 2 2>1
-#   }
-#   th<-rnorm(N)
-#   pairs<-list()
-#   for (i in 1:N_pairs) {
-#     ii<-sample(1:length(th),2)
-#     pairs[[i]]<-c(ii,pr.pair(th[ii[1]],th[ii[2]],nu=nu))
-#   }
-#   pairs<-do.call("rbind",pairs)
-#   pairs<-data.frame(pairs)
-#   names(pairs)<-c("agent_a","agent_b","winner")
-#   tmp<-pairs$winner
-#   pairs$winner<-ifelse(tmp==0,'draw','agent_a')
-#   pairs$winner<-ifelse(tmp==2,'agent_b',pairs$winner)
-#   pairs
-# }
+
