@@ -4,18 +4,26 @@
 #' number of rows, and variable count, sorted alphabetically by table name.
 #'
 #' @param sim Logical. If TRUE, lists tables from the IRW simulation dataset (`irw_simsyn`).
+#' @param comp Logical. If TRUE, lists tables from the IRW competition dataset (`irw_comp`).
+#'   If both `sim` and `comp` are FALSE (default), lists tables from the main IRW database.
+#'   Only one of `sim` or `comp` should be TRUE at a time.
 #' @return A data frame with the following columns:
 #'   \item{name}{The name of the table, sorted alphabetically.}
 #'   \item{numRows}{The number of rows in the table.}
 #'   \item{variableCount}{The number of variables in the table.}
 #' @examples
 #' \dontrun{
-#' irw_list_tables()            # IRW database
-#' irw_list_tables(sim = TRUE) # Simulated datasets
+#' irw_list_tables()             # Main IRW database
+#' irw_list_tables(sim = TRUE)   # Simulation dataset
+#' irw_list_tables(comp = TRUE)  # Competition dataset
 #' }
 #' @export
-irw_list_tables <- function(sim = FALSE) {
-  ds_list <- .initialize_datasource(sim = sim)
+irw_list_tables <- function(sim = FALSE, comp=FALSE) {
+  if (sim && comp) {
+    stop("Only one of 'sim' or 'comp' can be TRUE at a time.")
+  }
+  
+  ds_list <- .initialize_datasource(sim = sim, comp=comp)
   
   tables_info_list <- lapply(ds_list, function(ds) {
     tables <- .retry_with_backoff(function() ds$list_tables())
