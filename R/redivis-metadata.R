@@ -16,25 +16,25 @@
   dataset$get()
   # Retrieve version tag
   latest_version_tag <- dataset$properties$version$tag
-
+  
   # If metadata exists in cache and the version tag is the same, return cached tibble
   if (!is.null(latest_version_tag) &&
-    exists("metadata_tibble", envir = .irw_env) &&
-    exists("metadata_version", envir = .irw_env) &&
-    identical(.irw_env$metadata_version, latest_version_tag)) {
+      exists("metadata_tibble", envir = .irw_env) &&
+      exists("metadata_version", envir = .irw_env) &&
+      identical(.irw_env$metadata_version, latest_version_tag)) {
     return(.irw_env$metadata_tibble) # Return cached metadata tibble
   }
-
+  
   # Fetch new metadata table and convert it to a tibble
   table <- dataset$table("metadata:h5gs")
-
+  
   .irw_env$metadata_tibble <- .retry_with_backoff(function() {
     table$to_tibble()
   })
-
+  
   # Store the new version tag
   .irw_env$metadata_version <- latest_version_tag
-
+  
   return(.irw_env$metadata_tibble)
 }
 
