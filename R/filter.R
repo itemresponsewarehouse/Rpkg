@@ -118,9 +118,9 @@ irw_license_options <- function() {
 #' @param var Character vector. Filters datasets by presence of variables.
 #'   - Use exact names (e.g., `"rt"`, `"wave"`), or
 #'   - Use a prefix (e.g., `"cov_"`) to match any variable starting with that prefix.
-#' @param longitudinal Logical or `NULL`. Filters based on presence of longitudinal structure.
-#'   - `TRUE`: include only datasets with variables like `wave` or `date`
-#'   - `FALSE`: exclude datasets with those variables
+#' @param longitudinal Logical or `NULL`. Filters longitudinal datasets with variables `wave` or `date`.
+#'   - `TRUE`: include only datasets flagged as longitudinal
+#'   - `FALSE`: exclude datasets flagged as longitudinal
 #'   - `NULL` (default): no filter
 #' @param age_range Character vector. Filters by participant age group (e.g., `"Adult (18+)"`).
 #'   See `irw_tag_options("age_range")` for values.
@@ -239,33 +239,26 @@ irw_filter <- function(n_responses = NULL,
     }
   }
   
-  # --- VARIABLE FILTERING ---
-  # Convert variables column to list for filtering
-  metadata$variables_list <- strsplit(metadata$variables, "\\| ")
-  
-  longitudinal_vars <- c("wave", "date")
-  
+  # --- LONGITUDINAL FILTERING ---
   if (!is.null(longitudinal)) {
-    has_longitudinal <- vapply(metadata$variables_list, function(vars) {
-      any(tolower(vars) %in% longitudinal_vars)
-    }, logical(1))
-    
-    if (isTRUE(longitudinal)) {
-      metadata <- metadata[has_longitudinal, ]
-    } else if (isFALSE(longitudinal)) {
-      metadata <- metadata[!has_longitudinal, ]
-      
-      # Optional: helpful message
-      if (!is.null(var) && any(tolower(var) %in% longitudinal_vars)) {
-        message("Note: datasets with longitudinal variables like 'wave' or 'date' were excluded. Set longitudinal = NULL or TRUE to include them.")
-      }
+    if (!"longitudinal" %in% names(metadata)) {
+      warning("No 'longitudinal' column in irw_metadata(); skipping longitudinal filter.")
+    } else {
+      keep_flag <- isTRUE(longitudinal)
+      metadata <- metadata[!is.na(metadata$longitudinal) & metadata$longitudinal == keep_flag, ]
     }
   }
   
+  
   # --- VARIABLE FILTERING ---
   if (!is.null(var)) {
+    # build lazily here
+    metadata$variables_list <- strsplit(tolower(metadata$variables), "\\|\\s*")
+    var_lc <- tolower(var)
+    
     metadata <- metadata[vapply(metadata$variables_list, function(vars) {
-      all(vapply(var, function(v) {
+      all(vapply(var_lc, function(v) {
+        # treat any string with "_" as a prefix indicator (as before)
         if (grepl("_", v)) {
           any(grepl(paste0("^", v), vars))
         } else {

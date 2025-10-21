@@ -78,10 +78,10 @@ See \code{irw_tag_options("item_format")}.}
 \item{primary_language_s_}{Character vector. Filters by language used (e.g., \code{"eng"}).
 See \code{irw_tag_options("primary_language_s_")}.}
 
-\item{longitudinal}{Logical or \code{NULL}. Filters based on presence of longitudinal structure.
+\item{longitudinal}{Logical or \code{NULL}. Filters longitudinal datasets with variables \code{wave} or \code{date}.
 \itemize{
-\item \code{TRUE}: include only datasets with variables like \code{wave} or \code{date}
-\item \code{FALSE}: exclude datasets with those variables
+\item \code{TRUE}: include only datasets flagged as longitudinal
+\item \code{FALSE}: exclude datasets flagged as longitudinal
 \item \code{NULL} (default): no filter
 }}
 
