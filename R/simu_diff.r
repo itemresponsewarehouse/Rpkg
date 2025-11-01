@@ -104,7 +104,7 @@ irw_simu_diff <- function(num_items = 10,
     cdf_values <- cumsum(density_obj$y) / sum(density_obj$y)
     
     # Create inverse CDF function
-    inverse_cdf <- approxfun(cdf_values, density_obj$x)
+    inverse_cdf <- approxfun(cdf_values, density_obj$x, ties = "ordered")
     
     # Sample from the continuous density distribution using inverse CDF
     sampled_final_difficulties <- inverse_cdf(runif(num_items))
