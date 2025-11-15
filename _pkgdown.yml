@@ -36,6 +36,7 @@ reference:
   desc: Functions for processing IRW data for psychometric analysis.
 - contents:
   - irw_long2resp
+  - irw_check_resp
 - title: Example IRW data
 - contents:
   - swmd_mokken

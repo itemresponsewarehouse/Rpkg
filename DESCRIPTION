@@ -13,7 +13,6 @@ Contact: mailto:itemresponsewarehouse@stanford.edu
 Description: Functions to manage data from the Item Response Warehouse. 
 Depends: R (>= 4.0.0)
 Imports:
-    R.utils,
     glue,
     httr,
     redivis, 
@@ -27,7 +26,7 @@ License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: true
 Roxygen: list(markdown = TRUE)
-RoxygenNote: 7.3.2
+RoxygenNote: 7.3.3
 Config/testthat/edition: 3
 Config/build/clean-inst-doc: FALSE
 Config/Needs/website: rmarkdown
