@@ -365,7 +365,7 @@ irw_long2resp <- function(df,
   df_wide <- df[, c("id", "item", "resp"), drop = FALSE]
   
   wide_df <- stats::reshape(
-    df_wide,
+    as.data.frame(df_wide),
     idvar   = "id",
     timevar = "item",
     v.names = "resp",
