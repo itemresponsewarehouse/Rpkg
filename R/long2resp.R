@@ -158,7 +158,7 @@ irw_long2resp <- function(df,
   }
   
   # Store messages to print at the end
-  messages <- c()
+  messages <- character(0)
   
   # Check for "rater" column and count unique raters
   if ("rater" %in% names(df)) {
@@ -201,29 +201,144 @@ irw_long2resp <- function(df,
   if (any(is.na(df$resp))) {
     messages <- c(
       messages,
-      "Some responses could not be converted to numeric. These have been set to NA."
+      "Some responses were either missing or could not be converted to numeric; these have been recorded as NA."
     )
   }
   
-  # Compute total id count before filtering
-  total_ids <- length(unique(df$id))
+  # ---- Duplicate handling ----
+  # Count duplicate id-item responses
+  dup_summary <- stats::aggregate(
+    x  = seq_len(nrow(df)),                # just row indices
+    by = list(id = df$id, item = df$item),
+    FUN = length
+  )
+  names(dup_summary)[3] <- "n"
   
-  filtering_occurred <- FALSE # Track if filtering was applied
+  total_unique_pairs <- nrow(dup_summary)
+  affected_pairs <- dup_summary[dup_summary$n > 1L, , drop = FALSE]
+  num_affected_pairs <- nrow(affected_pairs)
   
-  # Apply filtering for sparse ids
+  num_duplicate_responses <- if (num_affected_pairs > 0L) {
+    sum(affected_pairs$n) - num_affected_pairs
+  } else 0L
+  
+  avg_duplicates_per_pair <- if (num_affected_pairs > 0L) {
+    round(num_duplicate_responses / num_affected_pairs, 2)
+  } else 0
+  
+  prop_dup_pairs <- if (total_unique_pairs > 0L) {
+    round((num_affected_pairs / total_unique_pairs) * 100, 2)
+  } else 0
+  
+  if (num_affected_pairs > 0L) {
+    messages <- c(
+      messages,
+      paste0(
+        "Found ", num_duplicate_responses, " responses across ",
+        num_affected_pairs, " unique id-item pairs (", prop_dup_pairs, "% of total). ",
+        "\nAverage responses per pair: ", avg_duplicates_per_pair, ". ",
+        "\nAggregating responses based on agg_method='", agg_method, "'."
+      )
+    )
+    
+    # Aggregation based on user input (only if duplicates exist)
+    if (agg_method == "mode") {
+      mode_fn <- function(x) {
+        x <- x[!is.na(x)]
+        if (length(x) == 0L) return(NA_real_)
+        ux <- unique(x)
+        ux[which.max(tabulate(match(x, ux)))]
+      }
+      agg <- stats::aggregate(
+        x  = df$resp,
+        by = list(id = df$id, item = df$item),
+        FUN = mode_fn
+      )
+      
+    } else if (agg_method == "mean") {
+      mean_fn <- function(x) {
+        if (all(is.na(x))) return(NA_real_)
+        mean(x, na.rm = TRUE)
+      }
+      agg <- stats::aggregate(
+        x  = df$resp,
+        by = list(id = df$id, item = df$item),
+        FUN = mean_fn
+      )
+      
+    } else if (agg_method == "median") {
+      median_fn <- function(x) {
+        if (all(is.na(x))) return(NA_real_)
+        stats::median(x, na.rm = TRUE)
+      }
+      agg <- stats::aggregate(
+        x  = df$resp,
+        by = list(id = df$id, item = df$item),
+        FUN = median_fn
+      )
+      
+    } else if (agg_method == "first") {
+      df <- df[!duplicated(df[, c("id", "item")]), , drop = FALSE]
+      agg <- df[, c("id", "item", "resp")]
+    } else {
+      stop("Invalid `agg_method`. Choose from 'mode', 'mean', 'median', or 'first'.")
+    }
+    
+    if (agg_method %in% c("mode", "mean", "median")) {
+      names(agg) <- c("id", "item", "resp")
+      df <- agg
+    }
+  }
+  # If no duplicates, df stays as-is
+  
+  # ---- Optional response checks (on the deduped/numeric df) ----
+  resp_checks <- NULL
+  if (check_resp) {
+    resp_checks <- .irw_check_resp(df, min_count = 5L, min_prop = 0.01)
+    
+    total_items_chk <- length(unique(df$item))
+    n_single <- length(resp_checks$single_category_items)
+    n_sparse <- length(resp_checks$sparse_category_items)
+    
+    if (n_single + n_sparse > 0L) {
+      messages <- c(
+        messages,
+        paste0(
+          "NOTE (check_resp): potential response issues detected.\n",
+          "  - Single-category items: ", n_single, " out of ", total_items_chk, "\n",
+          "  - Items with sparse categories: ", n_sparse, " out of ", total_items_chk, "\n",
+          "For a summary or custom thresholds, call irw_check_resp() on your data."
+        )
+      )
+    } else {
+      messages <- c(
+        messages,
+        paste0(
+          "NOTE (check_resp): no response issues detected with default thresholds.\n",
+          "You can still run irw_check_resp() for a diagnostic list."
+        )
+      )
+    }
+  }
+  
+  # ---- Density filtering ----
+  ids_all <- sort(unique(df$id))
+  total_ids <- length(ids_all)
+  filtering_occurred <- FALSE
+  
   if (!is.null(id_density_threshold)) {
-    # Compute response density per id
-    id_resp_counts <- aggregate(!is.na(df$resp) ~ id, data = df, FUN = sum)
-    colnames(id_resp_counts)[2] <- "response_count"
+    id_resp_counts <- stats::aggregate(
+      x  = !is.na(df$resp),
+      by = list(id = df$id),
+      FUN = sum
+    )
+    names(id_resp_counts) <- c("id", "response_count")
     
     total_items <- length(unique(df$item))
-    
-    # Compute density per id
     id_resp_counts$density <- id_resp_counts$response_count / total_items
     
-    # Filter ids based on density threshold
     ids_to_keep <- id_resp_counts$id[id_resp_counts$density >= id_density_threshold]
-    filtered_ids <- setdiff(unique(df$id), ids_to_keep)
+    filtered_ids <- setdiff(ids_all, ids_to_keep)
     
     if (length(filtered_ids) > 0L) {
       percent_removed <- round((length(filtered_ids) / total_ids) * 100, 2)
@@ -242,89 +357,20 @@ irw_long2resp <- function(df,
     df <- df[df$id %in% ids_to_keep, , drop = FALSE]
   }
   
-  # Provide message on how to disable filtering if it occurred
   if (filtering_occurred) {
     messages <- c(messages, "To disable filtering, set `id_density_threshold = NULL`.")
   }
   
-  # Optional response checks (on the filtered/numeric df)
-  resp_checks <- NULL
-  if (check_resp) {
-    # default thresholds used here; for customization, user calls irw_check_resp()
-    resp_checks <- .irw_check_resp(df, min_count = 5L, min_prop = 0.01)
-    
-    total_items <- length(unique(df$item))
-    n_single <- length(resp_checks$single_category_items)
-    n_sparse <- length(resp_checks$sparse_category_items)
-    
-    if (n_single + n_sparse > 0L) {
-      messages <- c(
-        messages,
-        paste0(
-          "NOTE (check_resp): potential response issues detected.\n",
-          "  - Single-category items: ", n_single, " out of ", total_items, "\n",
-          "  - Items with sparse categories: ", n_sparse, " out of ", total_items, "\n",
-          "For a summary or custom thresholds, call irw_check_resp() on your data."
-        )
-      )
-    } else {
-      messages <- c(
-        messages,
-        paste0(
-          "NOTE (check_resp): no response issues detected with default thresholds.\n",
-          "You can still run irw_check_resp() for a diagnostic list."
-        )
-      )
-    }
-  }
+  # ---- Convert to wide format (force id/item/resp shape) ----
+  df_wide <- df[, c("id", "item", "resp"), drop = FALSE]
   
-  # Count duplicate id-item responses properly
-  dup_summary <- aggregate(resp ~ id + item, data = df, length)
-  total_unique_pairs <- nrow(dup_summary)
-  
-  # Find only pairs with duplicates (more than 1 response)
-  affected_pairs <- dup_summary[dup_summary$resp > 1, ]
-  num_affected_pairs <- nrow(affected_pairs)
-  num_duplicate_responses <- sum(affected_pairs$resp) - num_affected_pairs # Extra responses
-  avg_duplicates_per_pair <- ifelse(
-    num_affected_pairs > 0L,
-    round(num_duplicate_responses / num_affected_pairs, 2),
-    0
+  wide_df <- stats::reshape(
+    df_wide,
+    idvar   = "id",
+    timevar = "item",
+    v.names = "resp",
+    direction = "wide"
   )
-  prop_dup_pairs <- round((num_affected_pairs / total_unique_pairs) * 100, 2)
-  
-  if (num_affected_pairs > 0L) {
-    messages <- c(
-      messages,
-      paste0(
-        "Found ", num_duplicate_responses, " responses across ",
-        num_affected_pairs, " unique id-item pairs (", prop_dup_pairs, "% of total). ",
-        "\nAverage responses per pair: ", avg_duplicates_per_pair, ". ",
-        "\nAggregating responses based on agg_method='", agg_method, "'."
-      )
-    )
-  }
-  
-  # Aggregation based on user input
-  if (agg_method == "mode") {
-    mode_fn <- function(x) {
-      x <- na.omit(x)
-      ux <- unique(x)
-      ux[which.max(tabulate(match(x, ux)))] # Mode function
-    }
-    df <- aggregate(resp ~ id + item, data = df, FUN = mode_fn)
-  } else if (agg_method == "mean") {
-    df <- aggregate(resp ~ id + item, data = df, FUN = mean, na.rm = TRUE)
-  } else if (agg_method == "median") {
-    df <- aggregate(resp ~ id + item, data = df, FUN = median, na.rm = TRUE)
-  } else if (agg_method == "first") {
-    df <- df[!duplicated(df[, c("id", "item")]), ]
-  } else {
-    stop("Invalid `agg_method`. Choose from 'mode', 'mean', 'median', or 'first'.")
-  }
-  
-  # Convert to wide format
-  wide_df <- reshape(df, idvar = "id", timevar = "item", direction = "wide")
   
   # Remove "resp." prefix from column names
   colnames(wide_df) <- sub("^resp\\.", "", colnames(wide_df))
