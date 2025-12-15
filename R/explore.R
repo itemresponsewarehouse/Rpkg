@@ -124,6 +124,7 @@ irw_info <- function(table_name = NULL, details = FALSE) {
   } else {
     # --- Table-specific info (unchanged) ---
     table <- .fetch_redivis_table(table_name)
+    ds_version <- attr(table, "dataset_version")
     bib <- .fetch_biblio_table()
     thisbib <- bib[bib$table == table_name, ]
     
@@ -153,6 +154,9 @@ irw_info <- function(table_name = NULL, details = FALSE) {
     message(sprintf("%-25s %d", "Variable Count:", variable_count))
     message(sprintf("%-25s %.2f KB", "Data Size (KB):", data_size))
     message(strrep("-", 50))
+    if (!is.null(ds_version) && !is.na(ds_version) && nzchar(ds_version)) {
+      message(sprintf("%-25s %s", "Dataset Version:", ds_version))
+    }
     message(sprintf("%-25s %s", "Redivis URL:", table_url))
     message(sprintf("%-25s %s", "Data URL:", url_data))
     message(sprintf("%-25s %s", "DOI:", doi))

@@ -14,7 +14,7 @@
 \item{comp}{Logical. If TRUE, fetches from the IRW competition dataset.}
 }
 \value{
-A Redivis table object (not yet loaded into memory).
+A Redivis table object. The returned object has attribute \code{dataset_version} attached.
 }
 \description{
 Retrieves a specified table from Redivis with automatic retry logic.
