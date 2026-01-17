@@ -2,38 +2,71 @@
 
 #' Download a Dataset
 #'
-#' This function downloads a specified dataset from the IRW datasource.
+#' Downloads a specified dataset table from the IRW datasource.
 #'
 #' @param table_name A character string specifying the name of the Redivis table
-#'        from which data should be downloaded. This should be the exact name
-#'        of the table as listed in the IRW Redivis database.
+#'        to download.
 #' @param path A string specifying the file path where the data should be saved.
-#' If `NULL`, the dataset will be saved in the current working directory with the table's name as the file name.
-#' @param overwrite A logical indicating whether to overwrite an existing file at the specified path.
-#' Default is `FALSE`.
+#'        If `NULL`, the dataset will be saved in the current working directory
+#'        with the table's name as the file name.
+#' @param overwrite Logical. Whether to overwrite an existing file.
+#' @param sim Logical. If TRUE, download from the simulation dataset.
+#' @param comp Logical. If TRUE, download from the competition dataset.
+#'
 #' @return A message confirming the file download location.
 #' @export
 irw_download <- function(table_name,
                          path = NULL,
-                         overwrite = FALSE) {
-  table <- .fetch_redivis_table(table_name)
-  # Check if the table object has the download method
+                         overwrite = FALSE,
+                         sim = FALSE,
+                         comp = FALSE) {
+  if (!is.character(table_name) || length(table_name) != 1) {
+    stop("'table_name' must be a single character string.")
+  }
+  if (!is.logical(overwrite) || length(overwrite) != 1) {
+    stop("'overwrite' must be a single TRUE or FALSE value.")
+  }
+  if (!is.logical(sim) || length(sim) != 1) {
+    stop("'sim' must be a single TRUE or FALSE value.")
+  }
+  if (!is.logical(comp) || length(comp) != 1) {
+    stop("'comp' must be a single TRUE or FALSE value.")
+  }
+  if (isTRUE(sim) && isTRUE(comp)) {
+    stop("Cannot set both sim = TRUE and comp = TRUE.")
+  }
+  
+  table <- tryCatch(
+    .fetch_redivis_table(table_name, sim = isTRUE(sim), comp = isTRUE(comp)),
+    error = function(e) {
+      msg <- paste0(
+        "Table '", table_name, "' not found in the selected dataset."
+      )
+      if (!isTRUE(sim) && !isTRUE(comp)) {
+        msg <- paste0(
+          msg,
+          "\nHint: If this is a simulation or competition table, try sim = TRUE or comp = TRUE."
+        )
+      }
+      stop(msg, call. = FALSE)
+    }
+  )
+  
   if (!is.function(table$download)) {
     stop(
-      "The provided object does not support downloading. Ensure it is a valid Redivis data table."
+      "The provided object does not support downloading. ",
+      "Ensure it is a valid Redivis data table."
     )
   }
-
-  # Attempt to download the file
+  
   table$download(path = path, overwrite = overwrite)
-
-  # Notify user of the download location
+  
   if (is.null(path)) {
-    path <- paste0(getwd(), "/", table$name)
+    path <- file.path(getwd(), table$name)
   }
+  
   message("Dataset downloaded to: ", path)
 }
-
 
 #' Save BibTeX Entries for IRW Tables
 #'
@@ -42,36 +75,47 @@ irw_download <- function(table_name,
 #'
 #' @param table_names A character vector of table names for which BibTeX entries are generated.
 #' @param output_file A character string specifying the file path to save BibTeX entries. Default is "refs.bib".
+#' @param comp Logical. If TRUE, uses competition bibliography and validates tables against the competition dataset.
 #' @return Invisibly returns BibTeX entries as a character vector.
 #' @export
-irw_save_bibtex <- function(table_names, output_file = "refs.bib") {
+irw_save_bibtex <- function(table_names, output_file = "refs.bib", comp = FALSE) {
+  if (!is.character(table_names) || length(table_names) < 1) {
+    stop("'table_names' must be a non-empty character vector.")
+  }
+  if (!is.character(output_file) || length(output_file) != 1) {
+    stop("'output_file' must be a single character string.")
+  }
+  if (!is.logical(comp) || length(comp) != 1) {
+    stop("'comp' must be a single TRUE or FALSE value.")
+  }
+  
   # Initialize lists
   valid_entries <- character()
   missing_tables <- character()
+  missing_bib_tables <- character()
   missing_doi_tables <- character()
   
   # Fetch the full biblio table once
-  biblio <- .fetch_biblio_table()
+  biblio <- if (isTRUE(comp)) .fetch_comps_biblio_table() else .fetch_biblio_table()
   
-  # Process each table name
-  for (table_name in table_names) {
-    # Try to confirm the table exists in IRW
-    exists <- tryCatch({
-      .fetch_redivis_table(table_name)
+  table_exists <- function(tbl_name) {
+    tryCatch({
+      .fetch_redivis_table(tbl_name, comp = isTRUE(comp))
       TRUE
-    }, error = function(e) {
-      FALSE
-    })
-    
-    if (!exists) {
+    }, error = function(e) FALSE)
+  }
+  
+  table_names <- unique(table_names)
+  
+  for (table_name in table_names) {
+    if (!table_exists(table_name)) {
       missing_tables <- c(missing_tables, table_name)
       next
     }
     
-    # Get the corresponding row from biblio
-    biblio_entry <- biblio[biblio$table == table_name, ]
+    biblio_entry <- biblio[biblio$table == table_name, , drop = FALSE]
     if (nrow(biblio_entry) == 0) {
-      missing_doi_tables <- c(missing_doi_tables, table_name)
+      missing_bib_tables <- c(missing_bib_tables, table_name)
       next
     }
     
@@ -128,8 +172,18 @@ irw_save_bibtex <- function(table_names, output_file = "refs.bib") {
   # Show messages for skipped tables
   if (length(missing_tables) > 0) {
     message(
-      "NOTE: These tables were not processed because they do not exist in the IRW database:\n",
-      paste(missing_tables, collapse = ", ")
+      "NOTE: These tables were not processed because they do not exist in the selected IRW dataset:\n",
+      paste(missing_tables, collapse = ", "),
+      if (!isTRUE(comp))
+        "\nHint: If these are competition tables, try calling with comp = TRUE."
+    )
+  }
+  
+  
+  if (length(missing_bib_tables) > 0) {
+    message(
+      "NOTE: These tables exist in the IRW database but have no row in the bibliography table:\n",
+      paste(missing_bib_tables, collapse = ", ")
     )
   }
   
@@ -139,7 +193,6 @@ irw_save_bibtex <- function(table_names, output_file = "refs.bib") {
       paste(missing_doi_tables, collapse = ", ")
     )
   }
-
   
   invisible(valid_entries)
 }

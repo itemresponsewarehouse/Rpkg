@@ -48,26 +48,54 @@ irw_list_tables <- function(sim = FALSE, comp=FALSE) {
 #' Prints information about the IRW datasets or a specific table.
 #'
 #' If \code{table_name} is \code{NULL}, shows combined totals across all IRW datasets.
-#' Use \code{details = TRUE} to also print a per‑dataset breakdown.
-#' If a table name is provided, shows details for that table, automatically fetching
-#' from the dataset where it resides.
+#' Use \code{details = TRUE} to also print a per-dataset breakdown (main IRW only).
+#' If a table name is provided, shows details for that table.
 #'
 #' @param table_name Optional. Table name to describe; if \code{NULL}, prints database‑level info.
 #' @param details Logical. When \code{TRUE} and \code{table_name} is \code{NULL}, also
 #'   prints a breakdown by dataset. Defaults to \code{FALSE}.
+#' @param comp Logical. If TRUE, uses the competition datasource.
+#' @param sim Logical. If TRUE, uses the simulation datasource.
 #'
 #' @return Invisibly returns \code{NULL}.
 #' @examples
 #' \dontrun{
 #' irw_info()                 # Combined totals
 #' irw_info(details = TRUE)   # Combined + per-dataset breakdown
-#' irw_info("frac20")      # Specific table
+#' irw_info("frac20")      # Specific IRW table
+#' irw_info("t20_hyper", comp = TRUE)  # Competition table
+#' irw_info("gilbert_meta_3", sim=TRUE)
+#' 
 #' }
 #' @export
-irw_info <- function(table_name = NULL, details = FALSE) {
+irw_info <- function(table_name = NULL, details = FALSE, comp=FALSE, sim=FALSE) {
+  if (!is.logical(details) || length(details) != 1) {
+    stop("'details' must be a single TRUE or FALSE value.")
+  }
+  if (!is.logical(sim) || length(sim) != 1) {
+    stop("'sim' must be a single TRUE or FALSE value.")
+  }
+  if (!is.logical(comp) || length(comp) != 1) {
+    stop("'comp' must be a single TRUE or FALSE value.")
+  }
+  if (isTRUE(sim) && isTRUE(comp)) {
+    stop("Cannot set both sim = TRUE and comp = TRUE.")
+  }
+  if (isTRUE(details) && (isTRUE(sim) || isTRUE(comp))) {
+    stop("details = TRUE is only available for the main IRW datasource.")
+  }
+  
+  # label for messages
+  db_label <- if (isTRUE(sim)) {
+    "IRW Simulation Database Information"
+  } else if (isTRUE(comp)) {
+    "IRW Competition Database Information"
+  } else {
+    "IRW Database Information (Combined)"
+  }
+  
   if (is.null(table_name)) {
-    # --- Combined totals ---
-    ds_list <- .initialize_datasource(sim = FALSE)
+    ds_list <- .initialize_datasource(sim = isTRUE(sim), comp = isTRUE(comp))
     
     total_table_count <- 0
     total_size_gb <- 0
@@ -82,7 +110,7 @@ irw_info <- function(table_name = NULL, details = FALSE) {
     }
     
     message(strrep("-", 50))
-    message("IRW Database Information (Combined)")
+    message(db_label)
     message(strrep("-", 50))
     message(sprintf("%-25s %d", "Total Table Count:", total_table_count))
     message(sprintf("%-25s %.2f GB", "Total Data Size:", total_size_gb))
@@ -122,31 +150,52 @@ irw_info <- function(table_name = NULL, details = FALSE) {
       }
     }
   } else {
-    # --- Table-specific info (unchanged) ---
-    table <- .fetch_redivis_table(table_name)
+    # --- Table-specific info ---
+    table <- .fetch_redivis_table(table_name, sim = isTRUE(sim), comp = isTRUE(comp))
     ds_version <- attr(table, "dataset_version")
-    bib <- .fetch_biblio_table()
-    thisbib <- bib[bib$table == table_name, ]
     
-    tags <- .fetch_tags_table()
-    construct <- tags$construct_name[tags$table == table_name]
-    if (length(construct) == 0 || is.na(construct)) {
+    # Tags: only main
+    construct <- "Not available for this datasource"
+    if (!isTRUE(sim) && !isTRUE(comp)) {
       construct <- "No construct specified"
+      tags <- .fetch_tags_table()
+      cvec <- tags$construct_name[tags$table == table_name]
+      if (length(cvec) > 0 && !is.na(cvec[1]) && nzchar(cvec[1])) {
+        construct <- cvec[1]
+      }
     }
     
-    name <- table$properties$name
+    # Biblio: main + comp only (sim has none)
+    description <- NA
+    doi <- NA
+    url_data <- NA
+    licence <- NA
+    reference <- NA
+    bib_found <- FALSE
+    
+    if (!isTRUE(sim)) {
+      bib <- if (isTRUE(comp)) .fetch_comps_biblio_table() else .fetch_biblio_table()
+      thisbib <- bib[bib$table == table_name, , drop = FALSE]
+      bib_found <- nrow(thisbib) > 0
+      
+      if (bib_found) {
+        doi <- thisbib$DOI__for_paper_
+        url_data <- thisbib$URL__for_data_
+        licence <- thisbib$Derived_License
+        description <- thisbib$Description
+        reference <- thisbib$Reference_x
+      }
+    }
+    
     num_rows <- table$properties$numRows
     data_size <- table$properties$numBytes / 1024
     variable_count <- table$properties$variableCount
     table_url <- table$properties$url
-    doi <- thisbib$DOI__for_paper_
-    url_data <- thisbib$URL__for_data_
-    licence <- thisbib$Derived_License
-    description <- thisbib$Description
-    reference <- thisbib$Reference_x
     
     message(strrep("-", 50))
-    message("Table Information for: ", table_name)
+    message("Table Information for: ", table_name,
+            if (isTRUE(sim)) " (simulation)" else if (isTRUE(comp)) " (competition)" else "")
+    message(strrep("-", 50))
     message(strrep("-", 50))
     message(sprintf("%-25s %s", "Description:", description))
     message(sprintf("%-25s %s", "Construct:", construct))
@@ -164,6 +213,11 @@ irw_info <- function(table_name = NULL, details = FALSE) {
     message(strrep("-", 50))
     message(sprintf("%s%s", "Reference:\n", reference))
     message(strrep("-", 50))
+    
+    if (!isTRUE(sim) && !bib_found) {
+      message("NOTE: No bibliography row found for this table in the selected source.")
+      if (!isTRUE(comp)) message("Hint: If this is a competition table, try comp = TRUE.")
+    }
   }
   
   invisible(NULL)

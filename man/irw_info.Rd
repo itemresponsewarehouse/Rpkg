@@ -4,13 +4,17 @@
 \alias{irw_info}
 \title{Retrieve and Print IRW Database or Table Information}
 \usage{
-irw_info(table_name = NULL, details = FALSE)
+irw_info(table_name = NULL, details = FALSE, comp = FALSE, sim = FALSE)
 }
 \arguments{
 \item{table_name}{Optional. Table name to describe; if \code{NULL}, prints database‑level info.}
 
 \item{details}{Logical. When \code{TRUE} and \code{table_name} is \code{NULL}, also
 prints a breakdown by dataset. Defaults to \code{FALSE}.}
+
+\item{comp}{Logical. If TRUE, uses the competition datasource.}
+
+\item{sim}{Logical. If TRUE, uses the simulation datasource.}
 }
 \value{
 Invisibly returns \code{NULL}.
@@ -20,14 +24,16 @@ Prints information about the IRW datasets or a specific table.
 }
 \details{
 If \code{table_name} is \code{NULL}, shows combined totals across all IRW datasets.
-Use \code{details = TRUE} to also print a per‑dataset breakdown.
-If a table name is provided, shows details for that table, automatically fetching
-from the dataset where it resides.
+Use \code{details = TRUE} to also print a per-dataset breakdown (main IRW only).
+If a table name is provided, shows details for that table.
 }
 \examples{
 \dontrun{
 irw_info()                 # Combined totals
 irw_info(details = TRUE)   # Combined + per-dataset breakdown
-irw_info("frac20")      # Specific table
+irw_info("frac20")      # Specific IRW table
+irw_info("t20_hyper", comp = TRUE)  # Competition table
+irw_info("gilbert_meta_3", sim=TRUE)
+
 }
 }

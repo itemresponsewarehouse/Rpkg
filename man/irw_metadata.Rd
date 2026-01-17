@@ -4,7 +4,10 @@
 \alias{irw_metadata}
 \title{Retrieve IRW Metadata Table}
 \usage{
-irw_metadata()
+irw_metadata(comp = FALSE)
+}
+\arguments{
+\item{comp}{Logical. If TRUE, returns competition metadata (comps_metadata).}
 }
 \value{
 A tibble containing metadata information.

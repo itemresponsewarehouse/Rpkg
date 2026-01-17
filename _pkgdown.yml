@@ -9,6 +9,7 @@ reference:
 - contents:
   - irw_list_tables
   - irw_filter
+  - irw_filter_comp
 - title: Metadata
   desc: Functions for viewing IRW metadata
 - contents:  

@@ -4,12 +4,14 @@
 \alias{irw_save_bibtex}
 \title{Save BibTeX Entries for IRW Tables}
 \usage{
-irw_save_bibtex(table_names, output_file = "refs.bib")
+irw_save_bibtex(table_names, output_file = "refs.bib", comp = FALSE)
 }
 \arguments{
 \item{table_names}{A character vector of table names for which BibTeX entries are generated.}
 
 \item{output_file}{A character string specifying the file path to save BibTeX entries. Default is "refs.bib".}
+
+\item{comp}{Logical. If TRUE, uses competition bibliography and validates tables against the competition dataset.}
 }
 \value{
 Invisibly returns BibTeX entries as a character vector.

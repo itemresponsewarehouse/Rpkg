@@ -4,7 +4,10 @@
 \alias{irw_license_options}
 \title{View Unique License Options with Frequencies}
 \usage{
-irw_license_options()
+irw_license_options(comp = FALSE)
+}
+\arguments{
+\item{comp}{Logical. If TRUE, use competition bibliography.}
 }
 \value{
 A data.frame with 'license' and 'count' columns.

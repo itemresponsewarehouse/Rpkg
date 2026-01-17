@@ -4,22 +4,31 @@
 \alias{irw_download}
 \title{Download a Dataset}
 \usage{
-irw_download(table_name, path = NULL, overwrite = FALSE)
+irw_download(
+  table_name,
+  path = NULL,
+  overwrite = FALSE,
+  sim = FALSE,
+  comp = FALSE
+)
 }
 \arguments{
 \item{table_name}{A character string specifying the name of the Redivis table
-from which data should be downloaded. This should be the exact name
-of the table as listed in the IRW Redivis database.}
+to download.}
 
 \item{path}{A string specifying the file path where the data should be saved.
-If \code{NULL}, the dataset will be saved in the current working directory with the table's name as the file name.}
+If \code{NULL}, the dataset will be saved in the current working directory
+with the table's name as the file name.}
 
-\item{overwrite}{A logical indicating whether to overwrite an existing file at the specified path.
-Default is \code{FALSE}.}
+\item{overwrite}{Logical. Whether to overwrite an existing file.}
+
+\item{sim}{Logical. If TRUE, download from the simulation dataset.}
+
+\item{comp}{Logical. If TRUE, download from the competition dataset.}
 }
 \value{
 A message confirming the file download location.
 }
 \description{
-This function downloads a specified dataset from the IRW datasource.
+Downloads a specified dataset table from the IRW datasource.
 }

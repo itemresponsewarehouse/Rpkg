@@ -2,6 +2,75 @@
 # 2. table fetching (getting specific tables)
 # 3. metadata operations (metadata, biblio, tags, itemtext)
 
+#' Fetch Competition Metadata Table
+#'
+#' Retrieves the comps_metadata table from Redivis user("bdomingu")$dataset("irw_meta").
+#' Only fetches new data if the dataset version tag has changed.
+#'
+#' @return A cached or newly fetched tibble containing competition metadata information.
+#' @keywords internal
+.fetch_comps_metadata_table <- function() {
+  dataset <- redivis::redivis$user("bdomingu")$dataset("irw_meta:bdxt")
+  dataset$get()
+  latest_version_tag <- dataset$properties$version$tag
+  
+  if (!is.null(latest_version_tag) &&
+      exists("comps_metadata_tibble", envir = .irw_env) &&
+      exists("comps_metadata_version", envir = .irw_env) &&
+      identical(.irw_env$comps_metadata_version, latest_version_tag)) {
+    return(.irw_env$comps_metadata_tibble)
+  }
+  
+  table <- dataset$table("comps_metadata:2kz3")
+  
+  .irw_env$comps_metadata_tibble <- .retry_with_backoff(function() {
+    table$to_tibble()
+  })
+  
+  .irw_env$comps_metadata_version <- latest_version_tag
+  .irw_env$comps_metadata_tibble
+}
+
+
+#' Fetch Competition Bibliography Table
+#'
+#' Retrieves the comps_biblio table from Redivis user("bdomingu")$dataset("irw_meta").
+#' Only fetches new data if the dataset version tag has changed.
+#' This version filters out any tables that do not exist in the IRW competitions database.
+#'
+#' @return A tibble containing filtered comps biblio information.
+#' @keywords internal
+.fetch_comps_biblio_table <- function() {
+  dataset <- redivis::redivis$user("bdomingu")$dataset("irw_meta:bdxt")
+  dataset$get()
+  latest_version_tag <- dataset$properties$version$tag
+  
+  if (!is.null(latest_version_tag) &&
+      exists("comps_biblio_tibble", envir = .irw_env) &&
+      exists("comps_biblio_version", envir = .irw_env) &&
+      identical(.irw_env$comps_biblio_version, latest_version_tag)) {
+    return(.irw_env$comps_biblio_tibble)
+  }
+  
+  table <- dataset$table("comps_biblio:w8pz")
+  biblio_tibble <- .retry_with_backoff(function() table$to_tibble())
+  
+  # Get all table names from the competition dataset
+  ds_list <- .initialize_datasource(comp = TRUE)
+  table_name_list <- tolower(unlist(lapply(ds_list, function(ds) {
+    ds$get()
+    vapply(ds$list_tables(), function(tbl) tbl$name, character(1))
+  })))
+  
+  # Filter comps_biblio table
+  biblio_tibble$table_lower <- tolower(biblio_tibble$table)
+  filtered_biblio <- biblio_tibble[biblio_tibble$table_lower %in% table_name_list, ]
+  filtered_biblio$table_lower <- NULL
+  
+  .irw_env$comps_biblio_version <- latest_version_tag
+  .irw_env$comps_biblio_tibble <- filtered_biblio
+  filtered_biblio
+}
 
 
 #' Fetch Metadata Table

@@ -66,15 +66,26 @@ irw_tag_options <- function(column) {
   return(out)
 }
 
-
 #' View Unique License Options with Frequencies
 #'
 #' Returns a data frame showing the number of datasets associated with each license.
+#'
+#' @param comp Logical. If TRUE, use competition bibliography.
 #' @return A data.frame with 'license' and 'count' columns.
 #' @export
-irw_license_options <- function() {
-  bib <- .fetch_biblio_table()
+irw_license_options <- function(comp = FALSE) {
+  if (!is.logical(comp) || length(comp) != 1) {
+    stop("'comp' must be a single TRUE or FALSE value.")
+  }
+  
+  bib <- if (isTRUE(comp)) {
+    .fetch_comps_biblio_table()
+  } else {
+    .fetch_biblio_table()
+  }
+  
   freqs <- sort(table(bib$Derived_License), decreasing = TRUE)
+  
   data.frame(
     license = names(freqs),
     count = as.integer(freqs),
@@ -310,6 +321,75 @@ irw_filter <- function(n_responses = NULL,
   }
   
   return(sort(metadata$table))
+}
+
+
+
+#' Filter Available Competition Datasets in IRW
+#'
+#' Returns the names of competition tables that match user-specified criteria.
+#' Competition filtering uses:
+#' - Numeric metadata: `n_responses`, `n_actors`
+#' - License: via `comp_biblio` (`Derived_License`)
+#'
+#' Notes:
+#' - Competition datasets do not have tags or item text metadata.
+#' - Competition metadata table names are stored in lowercase.
+#'
+#' @param n_responses Numeric vector length 1 or 2. Filters by number of responses.
+#'   - Length 1: exact value (e.g., `n_responses = 300`)
+#'   - Length 2: range (e.g., `n_responses = c(300, Inf)`)
+#' @param n_actors Numeric vector length 1 or 2. Filters by number of actors.
+#' @param license Character vector. Filters by license (e.g., "CC BY 4.0").
+#'   See `irw_license_options(comp = TRUE)` for available values.
+#'
+#' @return A sorted character vector of competition table names (lowercase),
+#'   or `character(0)` if no match is found.
+#' @export
+irw_filter_comp <- function(n_responses = NULL,
+                            n_actors = NULL,
+                            license = NULL) {
+  meta <- .fetch_comps_metadata_table()
+  
+  if (!all(c("table", "n_responses", "n_actors") %in% names(meta))) {
+    stop("Competition metadata table must contain columns: 'table', 'n_responses', 'n_actors'.")
+  }
+  
+  # --- LICENSE FILTERING ---
+  if (!is.null(license)) {
+    bib <- .fetch_comps_biblio_table()
+    
+    if (!"Derived_License" %in% names(bib)) {
+      warning("No 'Derived_License' column found in competition bibliography table. Skipping license filter.")
+    } else {
+      keep <- !is.na(bib$Derived_License) & bib$Derived_License %in% license
+      matched_tables <- bib$table[keep]
+      meta <- meta[meta$table %in% matched_tables, , drop = FALSE]
+    }
+  }
+  
+  if (nrow(meta) == 0) return(character(0))
+  
+  # --- NUMERIC FILTERING ---
+  numeric_filters <- list(
+    n_responses = n_responses,
+    n_actors = n_actors
+  )
+  numeric_filters <- numeric_filters[vapply(numeric_filters, Negate(is.null), logical(1))]
+  
+  for (nm in names(numeric_filters)) {
+    rng <- numeric_filters[[nm]]
+    if (!is.numeric(rng)) stop(sprintf("'%s' must be numeric.", nm))
+    if (length(rng) == 1) rng <- rep(rng, 2)
+    if (length(rng) != 2) stop(sprintf("'%s' must be length 1 or 2.", nm))
+    
+    meta <- meta[!is.na(meta[[nm]]) &
+                   meta[[nm]] >= rng[1] &
+                   meta[[nm]] <= rng[2], , drop = FALSE]
+    if (nrow(meta) == 0) return(character(0))
+  }
+  
+  sort(unique(meta$table))
 }
 
 

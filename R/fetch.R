@@ -153,10 +153,17 @@ irw_fetch <- function(name, sim = FALSE, dedup = FALSE, comp = FALSE, resp = FAL
 #' Link to Redivis table: https://redivis.com/datasets/bdxt-4fqe5tyf4/tables/h5gs-04agty3j1
 #' Automatically checks for updates and refreshes only when needed.
 #'
+#' @param comp Logical. If TRUE, returns competition metadata (comps_metadata).
 #' @return A tibble containing metadata information.
 #' @export
-irw_metadata <- function() {
-  return(.fetch_metadata_table())
+irw_metadata <- function(comp = FALSE) {
+  if (!is.logical(comp) || length(comp) != 1) {
+    stop("'comp' must be a single TRUE or FALSE value.")
+  }
+  if (comp) {
+    return(.fetch_comps_metadata_table())
+  }
+  .fetch_metadata_table()
 }
 
 #' Retrieve IRW Tags Table
