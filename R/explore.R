@@ -154,6 +154,17 @@ irw_info <- function(table_name = NULL, details = FALSE, comp=FALSE, sim=FALSE) 
     table <- .fetch_redivis_table(table_name, sim = isTRUE(sim), comp = isTRUE(comp))
     ds_version <- attr(table, "dataset_version")
     
+    # Variable names
+    vars <- NA
+    if (!isTRUE(sim) && !isTRUE(comp)) {
+      m <- .fetch_metadata_table()
+      v <- m$variables[m$table == table_name]
+      vars <- if (length(v) > 0 && !is.na(v[1]) && nzchar(v[1])) v[1] else NA
+    } else {
+      # sim / comp: infer from table itself
+      vars <- paste(names(table$to_tibble()), collapse = " | ")
+    }
+    
     # Tags: only main
     construct <- "Not available for this datasource"
     if (!isTRUE(sim) && !isTRUE(comp)) {
@@ -201,6 +212,7 @@ irw_info <- function(table_name = NULL, details = FALSE, comp=FALSE, sim=FALSE) 
     message(sprintf("%-25s %s", "Construct:", construct))
     message(sprintf("%-25s %d", "Number of Rows:", num_rows))
     message(sprintf("%-25s %d", "Variable Count:", variable_count))
+    message(sprintf("%-25s %s", "Variables:", vars))
     message(sprintf("%-25s %.2f KB", "Data Size (KB):", data_size))
     message(strrep("-", 50))
     if (!is.null(ds_version) && !is.na(ds_version) && nzchar(ds_version)) {
