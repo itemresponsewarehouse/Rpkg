@@ -387,3 +387,43 @@ irw_long2resp <- function(df,
   
   wide_df
 }
+
+
+
+#' Convert Wide IRW Response Matrix Back to Long Format
+#'
+#' @description
+#' Inverse of \code{irw_long2resp()} for the standard case: takes the wide
+#' response data.frame (with an \code{id} column and item columns) and returns
+#' IRW long format with columns \code{id}, \code{item}, \code{resp}.
+#'
+#' @param x A data.frame returned by \code{irw_long2resp()} 
+#'
+#' @return A long-format data.frame with columns \code{id}, \code{item}, \code{resp}.
+#' @export
+irw_resp2long <- function(x) {
+  if (!is.data.frame(x)) {
+    stop("`x` must be a data.frame returned by irw_long2resp().")
+  }
+  if (!"id" %in% names(x)) {
+    stop("`x` must contain an 'id' column.")
+  }
+  
+  item_cols <- setdiff(names(x), "id")
+  if (length(item_cols) == 0L) {
+    stop("No item columns found.")
+  }
+  
+  resp_mat <- as.matrix(x[, item_cols, drop = FALSE])
+  
+  out <- data.frame(
+    id   = rep(x$id, times = length(item_cols)),
+    item = rep(item_cols, each = nrow(x)),
+    resp = as.vector(resp_mat),
+    stringsAsFactors = FALSE
+  )
+  
+  rownames(out) <- NULL
+  out
+}
+
