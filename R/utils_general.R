@@ -21,7 +21,7 @@ irw_download <- function(table_name,
                          overwrite = FALSE,
                          sim = FALSE,
                          comp = FALSE,
-                         nom=FALSe) {
+                         nom=FALSE) {
   if (!is.character(table_name) || length(table_name) != 1) {
     stop("'table_name' must be a single character string.")
   }

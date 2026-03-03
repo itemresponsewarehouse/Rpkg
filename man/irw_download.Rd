@@ -10,7 +10,7 @@ irw_download(
   overwrite = FALSE,
   sim = FALSE,
   comp = FALSE,
-  nom = FALSe
+  nom = FALSE
 )
 }
 \arguments{
