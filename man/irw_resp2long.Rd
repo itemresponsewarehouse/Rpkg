@@ -2,18 +2,21 @@
 % Please edit documentation in R/long2resp.R
 \name{irw_resp2long}
 \alias{irw_resp2long}
-\title{Convert Wide IRW Response Matrix Back to Long Format}
+\title{Convert Wide-Format Response Matrix to IRW Long Format}
 \usage{
-irw_resp2long(x)
+irw_resp2long(x, id = TRUE)
 }
 \arguments{
-\item{x}{A data.frame returned by \code{irw_long2resp()}}
+\item{x}{A wide response object (data.frame or matrix). If produced by
+\code{irw_long2resp()}, it will typically include an \code{id} column.}
+
+\item{id}{Logical. If TRUE (default), expects an \code{id} column in \code{x}.
+If FALSE, creates \code{id = 1:nrow(x)} and treats all columns as item columns.}
 }
 \value{
-A long-format data.frame with columns \code{id}, \code{item}, \code{resp}.
+A data.frame with columns \code{id}, \code{item}, \code{resp}.
 }
 \description{
-Inverse of \code{irw_long2resp()} for the standard case: takes the wide
-response data.frame (with an \code{id} column and item columns) and returns
-IRW long format with columns \code{id}, \code{item}, \code{resp}.
+Inverse of \code{irw_long2resp()}: converts a wide response data frame/matrix
+into long format with columns \code{id}, \code{item}, \code{resp}.
 }

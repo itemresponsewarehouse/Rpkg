@@ -390,37 +390,59 @@ irw_long2resp <- function(df,
 
 
 
-#' Convert Wide IRW Response Matrix Back to Long Format
+#' Convert Wide-Format Response Matrix to IRW Long Format
 #'
-#' @description
-#' Inverse of \code{irw_long2resp()} for the standard case: takes the wide
-#' response data.frame (with an \code{id} column and item columns) and returns
-#' IRW long format with columns \code{id}, \code{item}, \code{resp}.
+#' Inverse of \code{irw_long2resp()}: converts a wide response data frame/matrix
+#' into long format with columns \code{id}, \code{item}, \code{resp}.
 #'
-#' @param x A data.frame returned by \code{irw_long2resp()} 
+#' @param x A wide response object (data.frame or matrix). If produced by
+#'   \code{irw_long2resp()}, it will typically include an \code{id} column.
+#' @param id Logical. If TRUE (default), expects an \code{id} column in \code{x}.
+#'   If FALSE, creates \code{id = 1:nrow(x)} and treats all columns as item columns.
 #'
-#' @return A long-format data.frame with columns \code{id}, \code{item}, \code{resp}.
+#' @return A data.frame with columns \code{id}, \code{item}, \code{resp}.
 #' @export
-irw_resp2long <- function(x) {
-  if (!is.data.frame(x)) {
-    stop("`x` must be a data.frame returned by irw_long2resp().")
-  }
-  if (!"id" %in% names(x)) {
-    stop("`x` must contain an 'id' column.")
+irw_resp2long <- function(x, id = TRUE) {
+  
+  if (!(is.data.frame(x) || is.matrix(x))) {
+    stop("`x` must be a data.frame or matrix.")
   }
   
-  item_cols <- setdiff(names(x), "id")
+  x_df <- as.data.frame(x, stringsAsFactors = FALSE)
+  has_id_col <- "id" %in% names(x_df)
+  
+  if (isTRUE(id)) {
+    if (!has_id_col) {
+      stop("`id = TRUE` requires an `id` column in `x`.")
+    }
+    id_vec <- x_df$id
+    item_cols <- setdiff(names(x_df), "id")
+    
+  } else {
+    if (has_id_col) {
+      message("`id = FALSE` ignored because `id` column already exists; using existing ids.")
+      id_vec <- x_df$id
+      item_cols <- setdiff(names(x_df), "id")
+    } else {
+      id_vec <- seq_len(nrow(x_df))
+      item_cols <- names(x_df)
+    }
+  }
+  
   if (length(item_cols) == 0L) {
-    stop("No item columns found.")
+    stop("No item columns found to convert.")
   }
   
-  resp_mat <- as.matrix(x[, item_cols, drop = FALSE])
-  
-  out <- data.frame(
-    id   = rep(x$id, times = length(item_cols)),
-    item = rep(item_cols, each = nrow(x)),
-    resp = as.vector(resp_mat),
-    stringsAsFactors = FALSE
+  out <- do.call(
+    rbind,
+    lapply(item_cols, function(it) {
+      data.frame(
+        id   = id_vec,
+        item = it,
+        resp = x_df[[it]],
+        stringsAsFactors = FALSE
+      )
+    })
   )
   
   rownames(out) <- NULL
