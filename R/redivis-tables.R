@@ -7,12 +7,13 @@
 #' @param name A character string specifying the table name.
 #' @param sim Logical. If TRUE, fetches from the IRW simulation dataset.
 #' @param comp Logical. If TRUE, fetches from the IRW competition dataset.
+#' @param nom Logical. If TRUE, fetches from the IRW nominal dataset.
 #'
 #' @return A Redivis table object. The returned object has attribute `dataset_version` attached.
 #' @keywords internal
-.fetch_redivis_table <- function(name, sim = FALSE, comp = FALSE) {
+.fetch_redivis_table <- function(name, sim = FALSE, comp = FALSE, nom=FALSE) {
   if (!is.character(name) || length(name) != 1) stop("The 'name' parameter must be a single character string.")
-  ds_list <- .initialize_datasource(sim = sim, comp = comp)
+  ds_list <- .initialize_datasource(sim = sim, comp = comp, nom=nom)
   
   for (ds in ds_list) {
     ds$get()

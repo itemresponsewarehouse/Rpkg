@@ -4,7 +4,7 @@
 \alias{.fetch_redivis_table}
 \title{Fetch Table from Redivis}
 \usage{
-.fetch_redivis_table(name, sim = FALSE, comp = FALSE)
+.fetch_redivis_table(name, sim = FALSE, comp = FALSE, nom = FALSE)
 }
 \arguments{
 \item{name}{A character string specifying the table name.}
@@ -12,6 +12,8 @@
 \item{sim}{Logical. If TRUE, fetches from the IRW simulation dataset.}
 
 \item{comp}{Logical. If TRUE, fetches from the IRW competition dataset.}
+
+\item{nom}{Logical. If TRUE, fetches from the IRW nominal dataset.}
 }
 \value{
 A Redivis table object. The returned object has attribute \code{dataset_version} attached.

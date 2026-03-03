@@ -4,12 +4,14 @@
 \alias{.initialize_datasource}
 \title{Initialize Redivis Datasource(s)}
 \usage{
-.initialize_datasource(sim = FALSE, comp = FALSE)
+.initialize_datasource(sim = FALSE, comp = FALSE, nom = FALSE)
 }
 \arguments{
 \item{sim}{Logical. If TRUE, connects to the IRW simulation dataset.}
 
 \item{comp}{Logical. If TRUE, connects to the IRW competition dataset.}
+
+\item{nom}{Logical. If TRUE, connects to the IRW nominal dataset.}
 }
 \value{
 A list of one or more Redivis dataset objects.
@@ -19,10 +21,11 @@ Returns a list of Redivis dataset objects based on the selected source:
 \itemize{
 \item If \code{sim = TRUE}, returns the IRW simulation dataset (\verb{irw_simsyn:0btg})
 \item If \code{comp = TRUE}, returns the IRW competition dataset (\code{irw_competitions:cmd7})
+\item If \code{nom = TRUE}, returns the IRW nominal dataset (\verb{irw_nominal:614n})
 \item Otherwise, returns the main IRW production datasets
 }
 }
 \details{
-Note: \code{sim} and \code{comp} are mutually exclusive. Setting both to TRUE will raise an error.
+Note: \code{sim}, \code{comp}, and \code{nom} are mutually exclusive.
 }
 \keyword{internal}

@@ -5,8 +5,9 @@
 #'
 #' @param sim Logical. If TRUE, lists tables from the IRW simulation dataset (`irw_simsyn`).
 #' @param comp Logical. If TRUE, lists tables from the IRW competition dataset (`irw_comp`).
-#'   If both `sim` and `comp` are FALSE (default), lists tables from the main IRW database.
-#'   Only one of `sim` or `comp` should be TRUE at a time.
+#' @param nom Logical. If TRUE, lists tables from the IRW nominal dataset (`irw_nominal`).
+#'   If all of `sim`, `comp`, and `nom` are FALSE (default), lists tables from the main IRW database.
+#'   Only one of `sim`, `comp`, or `nom` should be TRUE at a time.
 #' @return A data frame with the following columns:
 #'   \item{name}{The name of the table, sorted alphabetically.}
 #'   \item{numRows}{The number of rows in the table.}
@@ -18,12 +19,13 @@
 #' irw_list_tables(comp = TRUE)  # Competition dataset
 #' }
 #' @export
-irw_list_tables <- function(sim = FALSE, comp=FALSE) {
-  if (sim && comp) {
-    stop("Only one of 'sim' or 'comp' can be TRUE at a time.")
+irw_list_tables <- function(sim = FALSE, comp=FALSE, nom=FALSE) {
+  n_sources <- sum(c(isTRUE(sim), isTRUE(comp), isTRUE(nom)))
+  if (n_sources > 1L) {
+    stop("Only one of 'sim', 'comp', or 'nom' can be TRUE at a time.")
   }
   
-  ds_list <- .initialize_datasource(sim = sim, comp=comp)
+  ds_list <- .initialize_datasource(sim = sim, comp = comp, nom = nom)
   
   tables_info_list <- lapply(ds_list, function(ds) {
     tables <- .retry_with_backoff(function() ds$list_tables())
@@ -56,6 +58,7 @@ irw_list_tables <- function(sim = FALSE, comp=FALSE) {
 #'   prints a breakdown by dataset. Defaults to \code{FALSE}.
 #' @param comp Logical. If TRUE, uses the competition datasource.
 #' @param sim Logical. If TRUE, uses the simulation datasource.
+#' @param nom Logical. If TRUE, uses the nominal datasource.
 #'
 #' @return Invisibly returns \code{NULL}.
 #' @examples
@@ -68,7 +71,7 @@ irw_list_tables <- function(sim = FALSE, comp=FALSE) {
 #' 
 #' }
 #' @export
-irw_info <- function(table_name = NULL, details = FALSE, comp=FALSE, sim=FALSE) {
+irw_info <- function(table_name = NULL, details = FALSE, comp=FALSE, sim=FALSE, nom=FALSE) {
   if (!is.logical(details) || length(details) != 1) {
     stop("'details' must be a single TRUE or FALSE value.")
   }
@@ -78,10 +81,12 @@ irw_info <- function(table_name = NULL, details = FALSE, comp=FALSE, sim=FALSE) 
   if (!is.logical(comp) || length(comp) != 1) {
     stop("'comp' must be a single TRUE or FALSE value.")
   }
-  if (isTRUE(sim) && isTRUE(comp)) {
-    stop("Cannot set both sim = TRUE and comp = TRUE.")
-  }
-  if (isTRUE(details) && (isTRUE(sim) || isTRUE(comp))) {
+  if (!is.logical(nom) || length(nom) != 1) stop("'nom' must be a single TRUE or FALSE value.")
+  
+  n_sources <- sum(c(isTRUE(sim), isTRUE(comp), isTRUE(nom)))
+  if (n_sources > 1L) stop("Cannot set more than one of sim = TRUE, comp = TRUE, nom = TRUE.")
+  
+  if (isTRUE(details) && (isTRUE(sim) || isTRUE(comp) || isTRUE(nom))) {
     stop("details = TRUE is only available for the main IRW datasource.")
   }
   
@@ -90,12 +95,14 @@ irw_info <- function(table_name = NULL, details = FALSE, comp=FALSE, sim=FALSE) 
     "IRW Simulation Database Information"
   } else if (isTRUE(comp)) {
     "IRW Competition Database Information"
+  } else if (isTRUE(nom)) {
+    "IRW Nominal Database Information"
   } else {
     "IRW Database Information (Combined)"
   }
   
   if (is.null(table_name)) {
-    ds_list <- .initialize_datasource(sim = isTRUE(sim), comp = isTRUE(comp))
+    ds_list <- .initialize_datasource(sim = isTRUE(sim), comp = isTRUE(comp), nom=isTRUE(nom))
     
     total_table_count <- 0
     total_size_gb <- 0
@@ -151,12 +158,12 @@ irw_info <- function(table_name = NULL, details = FALSE, comp=FALSE, sim=FALSE) 
     }
   } else {
     # --- Table-specific info ---
-    table <- .fetch_redivis_table(table_name, sim = isTRUE(sim), comp = isTRUE(comp))
+    table <- .fetch_redivis_table(table_name, sim = isTRUE(sim), comp = isTRUE(comp), nom = isTRUE(nom))
     ds_version <- attr(table, "dataset_version")
     
     # Variable names
     vars <- NA
-    if (!isTRUE(sim) && !isTRUE(comp)) {
+    if (!isTRUE(sim) && !isTRUE(comp) && !isTRUE(nom)) {
       m <- .fetch_metadata_table()
       v <- m$variables[m$table == table_name]
       vars <- if (length(v) > 0 && !is.na(v[1]) && nzchar(v[1])) v[1] else NA
@@ -167,7 +174,7 @@ irw_info <- function(table_name = NULL, details = FALSE, comp=FALSE, sim=FALSE) 
     
     # Tags: only main
     construct <- "Not available for this datasource"
-    if (!isTRUE(sim) && !isTRUE(comp)) {
+    if (!isTRUE(sim) && !isTRUE(comp) && !isTRUE(nom)) {
       construct <- "No construct specified"
       tags <- .fetch_tags_table()
       cvec <- tags$construct_name[tags$table == table_name]
@@ -184,18 +191,25 @@ irw_info <- function(table_name = NULL, details = FALSE, comp=FALSE, sim=FALSE) 
     reference <- NA
     bib_found <- FALSE
     
-    if (!isTRUE(sim)) {
-      bib <- if (isTRUE(comp)) .fetch_comps_biblio_table() else .fetch_biblio_table()
-      thisbib <- bib[bib$table == table_name, , drop = FALSE]
-      bib_found <- nrow(thisbib) > 0
-      
-      if (bib_found) {
-        doi <- thisbib$DOI__for_paper_
-        url_data <- thisbib$URL__for_data_
-        licence <- thisbib$Derived_License
-        description <- thisbib$Description
-        reference <- thisbib$Reference_x
-      }
+    bib <- if (isTRUE(comp)) {
+      .fetch_comps_biblio_table()
+    } else if (isTRUE(sim)) {
+      .fetch_simsyn_biblio_table()
+    } else if (isTRUE(nom)) {
+      .fetch_nominal_biblio_table()
+    } else {
+      .fetch_biblio_table()
+    }
+    
+    thisbib <- bib[bib$table == table_name, , drop = FALSE]
+    bib_found <- nrow(thisbib) > 0L
+    
+    if (bib_found) {
+      doi <- thisbib$DOI__for_paper_
+      url_data <- thisbib$URL__for_data_
+      licence <- thisbib$Derived_License
+      description <- thisbib$Description
+      reference <- thisbib$Reference_x
     }
     
     num_rows <- table$properties$numRows
@@ -205,7 +219,7 @@ irw_info <- function(table_name = NULL, details = FALSE, comp=FALSE, sim=FALSE) 
     
     message(strrep("-", 50))
     message("Table Information for: ", table_name,
-            if (isTRUE(sim)) " (simulation)" else if (isTRUE(comp)) " (competition)" else "")
+            if (isTRUE(sim)) " (simulation)" else if (isTRUE(comp)) " (competition)" else if (isTRUE(nom)) " (nominal)" else "")
     message(strrep("-", 50))
     message(strrep("-", 50))
     message(sprintf("%-25s %s", "Description:", description))
@@ -226,9 +240,11 @@ irw_info <- function(table_name = NULL, details = FALSE, comp=FALSE, sim=FALSE) 
     message(sprintf("%s%s", "Reference:\n", reference))
     message(strrep("-", 50))
     
-    if (!isTRUE(sim) && !bib_found) {
+    if (!bib_found) {
       message("NOTE: No bibliography row found for this table in the selected source.")
-      if (!isTRUE(comp)) message("Hint: If this is a competition table, try comp = TRUE.")
+      if (!isTRUE(comp) && !isTRUE(sim) && !isTRUE(nom)) {
+        message("Hint: If this is a competition / simulation / nominal table, try comp = TRUE, sim = TRUE, or nom = TRUE.")
+      }
     }
   }
   

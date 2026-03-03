@@ -12,6 +12,7 @@
 #' @param overwrite Logical. Whether to overwrite an existing file.
 #' @param sim Logical. If TRUE, download from the simulation dataset.
 #' @param comp Logical. If TRUE, download from the competition dataset.
+#' @param nom Logical. If TRUE, download from the nominal dataset.
 #'
 #' @return A message confirming the file download location.
 #' @export
@@ -19,7 +20,8 @@ irw_download <- function(table_name,
                          path = NULL,
                          overwrite = FALSE,
                          sim = FALSE,
-                         comp = FALSE) {
+                         comp = FALSE,
+                         nom=FALSe) {
   if (!is.character(table_name) || length(table_name) != 1) {
     stop("'table_name' must be a single character string.")
   }
@@ -32,20 +34,25 @@ irw_download <- function(table_name,
   if (!is.logical(comp) || length(comp) != 1) {
     stop("'comp' must be a single TRUE or FALSE value.")
   }
-  if (isTRUE(sim) && isTRUE(comp)) {
-    stop("Cannot set both sim = TRUE and comp = TRUE.")
+  if (!is.logical(nom) || length(nom) != 1) {
+    stop("'nom' must be a single TRUE or FALSE value.")
+  }
+  
+  n_sources <- sum(c(isTRUE(sim), isTRUE(comp), isTRUE(nom)))
+  if (n_sources > 1L) {
+    stop("Cannot set more than one of sim = TRUE, comp = TRUE, nom = TRUE.")
   }
   
   table <- tryCatch(
-    .fetch_redivis_table(table_name, sim = isTRUE(sim), comp = isTRUE(comp)),
+    .fetch_redivis_table(table_name, sim = isTRUE(sim), comp = isTRUE(comp), nom = isTRUE(nom)),
     error = function(e) {
       msg <- paste0(
         "Table '", table_name, "' not found in the selected dataset."
       )
-      if (!isTRUE(sim) && !isTRUE(comp)) {
+      if (!isTRUE(sim) && !isTRUE(comp) && !isTRUE(nom)) {
         msg <- paste0(
           msg,
-          "\nHint: If this is a simulation or competition table, try sim = TRUE or comp = TRUE."
+          "\nHint: If this is a simulation, competition, or nominal table, try sim = TRUE, comp = TRUE, or nom = TRUE."
         )
       }
       stop(msg, call. = FALSE)

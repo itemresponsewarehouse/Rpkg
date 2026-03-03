@@ -7,17 +7,18 @@
 #' @param sim Logical. If TRUE, fetch from the IRW simulation dataset.
 #' @param dedup Logical. If TRUE, apply deduplication logic to responses.
 #' @param comp Logical. If TRUE, fetch from the IRW competition dataset.
+#' @param nom Logical. If TRUE, fetch from the IRW nominal dataset.
 #'
 #' @return A tibble representing the dataset.
 #' @keywords internal
-fetch_single_data <- function(table_id, sim = FALSE, dedup = FALSE, comp = FALSE) {
+fetch_single_data <- function(table_id, sim = FALSE, dedup = FALSE, comp = FALSE, nom=FALSE) {
   tryCatch(
     {
-      table_obj <- suppressMessages(.fetch_redivis_table(table_id, sim = sim, comp = comp))
+      table_obj <- suppressMessages(.fetch_redivis_table(table_id, sim = sim, comp = comp, nom=nom))
       df <- .retry_with_backoff(function() table_obj$to_tibble())
       
       # Recode 'resp' from character to numeric if needed
-      if ("resp" %in% names(df) && is.character(df$resp)) {
+      if (!nom && "resp" %in% names(df) && is.character(df$resp)) {
         suppressWarnings({
           new_resp <- as.numeric(df$resp)
         })
@@ -90,6 +91,7 @@ fetch_single_data <- function(table_id, sim = FALSE, dedup = FALSE, comp = FALSE
 #'   - If only a 'wave' column is present, one random response is retained per (id, item) group within each wave.
 #'   - If neither 'date' nor 'wave' is present, one random response is retained per (id, item) pair.
 #' @param comp Logical, optional. If TRUE, fetches from the IRW competition dataset (`irw_competitions`). Defaults to FALSE.
+#' @param nom Logical, optional. If TRUE, fetches from the IRW nominal dataset (`irw_nominal`). Defaults to FALSE.
 #' @param resp Logical, optional. If TRUE, returns response matrix via `irw_long2resp()`. Defaults to FALSE.
 #'
 #' @return If a single name is provided, returns a tibble. If multiple, returns a named list
@@ -111,7 +113,7 @@ fetch_single_data <- function(table_id, sim = FALSE, dedup = FALSE, comp = FALSE
 #' }
 #'
 #' @export
-irw_fetch <- function(name, sim = FALSE, dedup = FALSE, comp = FALSE, resp = FALSE) {
+irw_fetch <- function(name, sim = FALSE, dedup = FALSE, comp = FALSE, nom=FALSE, resp = FALSE) {
   if (missing(name)) {
     stop(
       "Please provide the IRW table name(s) to fetch.\n",
@@ -120,12 +122,14 @@ irw_fetch <- function(name, sim = FALSE, dedup = FALSE, comp = FALSE, resp = FAL
     )
   }
   
-  if (sim && comp) {
-    stop("Cannot set both 'sim = TRUE' and 'comp = TRUE'. Please choose one source.")
+  # only one source at a time
+  n_sources <- sum(c(sim, comp, nom))
+  if (n_sources > 1L) {
+    stop("Cannot set more than one of 'sim', 'comp', 'nom' to TRUE. Please choose one source.")
   }
   
   process_one <- function(nm) {
-    dat <- fetch_single_data(nm, sim = sim, dedup = dedup, comp = comp)
+    dat <- fetch_single_data(nm, sim = sim, dedup = dedup, comp = comp, nom=nom)
     if (resp) {
       dat <- tryCatch(
         irw_long2resp(dat),
@@ -150,21 +154,33 @@ irw_fetch <- function(name, sim = FALSE, dedup = FALSE, comp = FALSE, resp = FAL
 #' Retrieve IRW Metadata Table
 #'
 #' Fetches the metadata table from Redivis and returns it as a tibble.
-#' Link to Redivis table: https://redivis.com/datasets/bdxt-4fqe5tyf4/tables/h5gs-04agty3j1
 #' Automatically checks for updates and refreshes only when needed.
 #'
+#' @param sim Logical. If TRUE, returns simulation metadata (simsyn_metadata).
 #' @param comp Logical. If TRUE, returns competition metadata (comps_metadata).
+#' @param nom Logical. If TRUE, returns nominal metadata (nominal_metadata).
+#'   Only one of \code{sim}, \code{comp}, or \code{nom} may be TRUE.
+#'
 #' @return A tibble containing metadata information.
 #' @export
-irw_metadata <- function(comp = FALSE) {
-  if (!is.logical(comp) || length(comp) != 1) {
-    stop("'comp' must be a single TRUE or FALSE value.")
+irw_metadata <- function(sim = FALSE, comp = FALSE, nom = FALSE) {
+  if (!is.logical(sim) || length(sim) != 1) stop("'sim' must be a single TRUE or FALSE value.")
+  if (!is.logical(comp) || length(comp) != 1) stop("'comp' must be a single TRUE or FALSE value.")
+  if (!is.logical(nom) || length(nom) != 1) stop("'nom' must be a single TRUE or FALSE value.")
+  
+  n_sources <- sum(c(isTRUE(sim), isTRUE(comp), isTRUE(nom)))
+  if (n_sources > 1L) {
+    stop("Only one of 'sim', 'comp', or 'nom' can be TRUE at a time.")
   }
-  if (comp) {
-    return(.fetch_comps_metadata_table())
-  }
+  
+  if (isTRUE(comp)) return(.fetch_comps_metadata_table())
+  if (isTRUE(sim))  return(.fetch_simsyn_metadata_table())
+  if (isTRUE(nom))  return(.fetch_nominal_metadata_table())
+  
   .fetch_metadata_table()
 }
+
+
 
 #' Retrieve IRW Tags Table
 #'

@@ -34,19 +34,26 @@
 #' Returns a list of Redivis dataset objects based on the selected source:
 #' - If `sim = TRUE`, returns the IRW simulation dataset (`irw_simsyn:0btg`)
 #' - If `comp = TRUE`, returns the IRW competition dataset (`irw_competitions:cmd7`)
+#' - If `nom = TRUE`, returns the IRW nominal dataset (`irw_nominal:614n`)
 #' - Otherwise, returns the main IRW production datasets
 #'
-#' Note: `sim` and `comp` are mutually exclusive. Setting both to TRUE will raise an error.
+#' Note: `sim`, `comp`, and `nom` are mutually exclusive.
 #'
 #' @param sim Logical. If TRUE, connects to the IRW simulation dataset.
 #' @param comp Logical. If TRUE, connects to the IRW competition dataset.
+#' @param nom Logical. If TRUE, connects to the IRW nominal dataset.
 #'
 #' @return A list of one or more Redivis dataset objects.
 #' @keywords internal
-.initialize_datasource <- function(sim = FALSE, comp = FALSE) {
+.initialize_datasource <- function(sim = FALSE, comp = FALSE, nom=FALSE) {
   if (!is.logical(sim) || length(sim) != 1) stop("'sim' must be a single TRUE or FALSE value.")
   if (!is.logical(comp) || length(comp) != 1) stop("'comp' must be a single TRUE or FALSE value.")
-  if (sim && comp) stop("Cannot set both 'sim = TRUE' and 'comp = TRUE'. Please choose one data source.")
+  if (!is.logical(nom) || length(nom) != 1) stop("'nom' must be a single TRUE or FALSE value.")
+  
+  n_sources <- sum(c(sim, comp, nom))
+  if (n_sources > 1L) {
+    stop("Cannot set more than one of 'sim', 'comp', 'nom' to TRUE. Please choose one data source.")
+  }
   
   if (sim) {
     if (!exists("sim_datasource", envir = .irw_env) || is.null(.irw_env$sim_datasource)) {
@@ -55,6 +62,7 @@
       .irw_env$sim_datasource <- ds
     }
     return(list(.irw_env$sim_datasource))
+    
   } else if (comp) {
     if (!exists("comp_datasource", envir = .irw_env) || is.null(.irw_env$comp_datasource)) {
       ds <- redivis::redivis$user("bdomingu")$dataset("irw_competitions:cmd7")
@@ -62,6 +70,15 @@
       .irw_env$comp_datasource <- ds
     }
     return(list(.irw_env$comp_datasource))
+  
+  } else if (nom) {
+    if (!exists("nom_datasource", envir = .irw_env) || is.null(.irw_env$nom_datasource)) {
+      ds <- redivis::redivis$user("bdomingu")$dataset("irw_nominal:614n")
+      ds$get()
+      .irw_env$nom_datasource <- ds
+    }
+    return(list(.irw_env$nom_datasource))
+    
   } else {
     if (!exists("datasource_list", envir = .irw_env) || is.null(.irw_env$datasource_list)) {
       .irw_env$datasource_list <- list(

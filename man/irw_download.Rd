@@ -9,7 +9,8 @@ irw_download(
   path = NULL,
   overwrite = FALSE,
   sim = FALSE,
-  comp = FALSE
+  comp = FALSE,
+  nom = FALSe
 )
 }
 \arguments{
@@ -25,6 +26,8 @@ with the table's name as the file name.}
 \item{sim}{Logical. If TRUE, download from the simulation dataset.}
 
 \item{comp}{Logical. If TRUE, download from the competition dataset.}
+
+\item{nom}{Logical. If TRUE, download from the nominal dataset.}
 }
 \value{
 A message confirming the file download location.

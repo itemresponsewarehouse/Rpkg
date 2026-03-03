@@ -4,16 +4,20 @@
 \alias{irw_metadata}
 \title{Retrieve IRW Metadata Table}
 \usage{
-irw_metadata(comp = FALSE)
+irw_metadata(sim = FALSE, comp = FALSE, nom = FALSE)
 }
 \arguments{
+\item{sim}{Logical. If TRUE, returns simulation metadata (simsyn_metadata).}
+
 \item{comp}{Logical. If TRUE, returns competition metadata (comps_metadata).}
+
+\item{nom}{Logical. If TRUE, returns nominal metadata (nominal_metadata).
+Only one of \code{sim}, \code{comp}, or \code{nom} may be TRUE.}
 }
 \value{
 A tibble containing metadata information.
 }
 \description{
 Fetches the metadata table from Redivis and returns it as a tibble.
-Link to Redivis table: https://redivis.com/datasets/bdxt-4fqe5tyf4/tables/h5gs-04agty3j1
 Automatically checks for updates and refreshes only when needed.
 }

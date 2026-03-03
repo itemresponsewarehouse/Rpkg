@@ -4,7 +4,14 @@
 \alias{irw_fetch}
 \title{Fetch Table(s) from the Item Response Warehouse}
 \usage{
-irw_fetch(name, sim = FALSE, dedup = FALSE, comp = FALSE, resp = FALSE)
+irw_fetch(
+  name,
+  sim = FALSE,
+  dedup = FALSE,
+  comp = FALSE,
+  nom = FALSE,
+  resp = FALSE
+)
 }
 \arguments{
 \item{name}{Character vector of one or more table names (IRW table IDs).}
@@ -19,6 +26,8 @@ irw_fetch(name, sim = FALSE, dedup = FALSE, comp = FALSE, resp = FALSE)
 }}
 
 \item{comp}{Logical, optional. If TRUE, fetches from the IRW competition dataset (\code{irw_competitions}). Defaults to FALSE.}
+
+\item{nom}{Logical, optional. If TRUE, fetches from the IRW nominal dataset (\code{irw_nominal}). Defaults to FALSE.}
 
 \item{resp}{Logical, optional. If TRUE, returns response matrix via \code{irw_long2resp()}. Defaults to FALSE.}
 }

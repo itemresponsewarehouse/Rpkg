@@ -4,7 +4,13 @@
 \alias{irw_info}
 \title{Retrieve and Print IRW Database or Table Information}
 \usage{
-irw_info(table_name = NULL, details = FALSE, comp = FALSE, sim = FALSE)
+irw_info(
+  table_name = NULL,
+  details = FALSE,
+  comp = FALSE,
+  sim = FALSE,
+  nom = FALSE
+)
 }
 \arguments{
 \item{table_name}{Optional. Table name to describe; if \code{NULL}, prints database‑level info.}
@@ -15,6 +21,8 @@ prints a breakdown by dataset. Defaults to \code{FALSE}.}
 \item{comp}{Logical. If TRUE, uses the competition datasource.}
 
 \item{sim}{Logical. If TRUE, uses the simulation datasource.}
+
+\item{nom}{Logical. If TRUE, uses the nominal datasource.}
 }
 \value{
 Invisibly returns \code{NULL}.

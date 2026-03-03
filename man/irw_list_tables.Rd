@@ -4,14 +4,16 @@
 \alias{irw_list_tables}
 \title{List Available Tables}
 \usage{
-irw_list_tables(sim = FALSE, comp = FALSE)
+irw_list_tables(sim = FALSE, comp = FALSE, nom = FALSE)
 }
 \arguments{
 \item{sim}{Logical. If TRUE, lists tables from the IRW simulation dataset (\code{irw_simsyn}).}
 
-\item{comp}{Logical. If TRUE, lists tables from the IRW competition dataset (\code{irw_comp}).
-If both \code{sim} and \code{comp} are FALSE (default), lists tables from the main IRW database.
-Only one of \code{sim} or \code{comp} should be TRUE at a time.}
+\item{comp}{Logical. If TRUE, lists tables from the IRW competition dataset (\code{irw_comp}).}
+
+\item{nom}{Logical. If TRUE, lists tables from the IRW nominal dataset (\code{irw_nominal}).
+If all of \code{sim}, \code{comp}, and \code{nom} are FALSE (default), lists tables from the main IRW database.
+Only one of \code{sim}, \code{comp}, or \code{nom} should be TRUE at a time.}
 }
 \value{
 A data frame with the following columns:

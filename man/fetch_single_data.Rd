@@ -4,7 +4,13 @@
 \alias{fetch_single_data}
 \title{Fetch a Single IRW Table}
 \usage{
-fetch_single_data(table_id, sim = FALSE, dedup = FALSE, comp = FALSE)
+fetch_single_data(
+  table_id,
+  sim = FALSE,
+  dedup = FALSE,
+  comp = FALSE,
+  nom = FALSE
+)
 }
 \arguments{
 \item{table_id}{Character. Name of the table.}
@@ -14,6 +20,8 @@ fetch_single_data(table_id, sim = FALSE, dedup = FALSE, comp = FALSE)
 \item{dedup}{Logical. If TRUE, apply deduplication logic to responses.}
 
 \item{comp}{Logical. If TRUE, fetch from the IRW competition dataset.}
+
+\item{nom}{Logical. If TRUE, fetch from the IRW nominal dataset.}
 }
 \value{
 A tibble representing the dataset.

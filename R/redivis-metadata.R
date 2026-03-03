@@ -2,6 +2,58 @@
 # 2. table fetching (getting specific tables)
 # 3. metadata operations (metadata, biblio, tags, itemtext)
 
+#' Fetch Simulation Metadata Table
+#'
+#' Retrieves the simsyn_metadata table from Redivis user("bdomingu")$dataset("irw_meta").
+#' Only fetches new data if the dataset version tag has changed.
+#'
+#' @return A cached or newly fetched tibble containing simulation metadata information.
+#' @keywords internal
+.fetch_simsyn_metadata_table <- function() {
+  dataset <- redivis::redivis$user("bdomingu")$dataset("irw_meta:bdxt")
+  dataset$get()
+  latest_version_tag <- dataset$properties$version$tag
+  
+  if (!is.null(latest_version_tag) &&
+      exists("simsyn_metadata_tibble", envir = .irw_env) &&
+      exists("simsyn_metadata_version", envir = .irw_env) &&
+      identical(.irw_env$simsyn_metadata_version, latest_version_tag)) {
+    return(.irw_env$simsyn_metadata_tibble)
+  }
+  
+  table <- dataset$table("simsyn_metadata:2mwn")
+  .irw_env$simsyn_metadata_tibble <- table$to_tibble()
+  .irw_env$simsyn_metadata_version <- latest_version_tag
+  
+  .irw_env$simsyn_metadata_tibble
+}
+
+#' Fetch Nominal Metadata Table
+#'
+#' Retrieves the nominal_metadata table from Redivis user("bdomingu")$dataset("irw_meta").
+#' Only fetches new data if the dataset version tag has changed.
+#'
+#' @return A cached or newly fetched tibble containing nominal metadata information.
+#' @keywords internal
+.fetch_nominal_metadata_table <- function() {
+  dataset <- redivis::redivis$user("bdomingu")$dataset("irw_meta:bdxt")
+  dataset$get()
+  latest_version_tag <- dataset$properties$version$tag
+  
+  if (!is.null(latest_version_tag) &&
+      exists("nominal_metadata_tibble", envir = .irw_env) &&
+      exists("nominal_metadata_version", envir = .irw_env) &&
+      identical(.irw_env$nominal_metadata_version, latest_version_tag)) {
+    return(.irw_env$nominal_metadata_tibble)
+  }
+  
+  table <- dataset$table("nominal_metadata:vnhc")
+  .irw_env$nominal_metadata_tibble <- table$to_tibble()
+  .irw_env$nominal_metadata_version <- latest_version_tag
+  
+  .irw_env$nominal_metadata_tibble
+}
+
 #' Fetch Competition Metadata Table
 #'
 #' Retrieves the comps_metadata table from Redivis user("bdomingu")$dataset("irw_meta").
@@ -23,9 +75,7 @@
   
   table <- dataset$table("comps_metadata:2kz3")
   
-  .irw_env$comps_metadata_tibble <- .retry_with_backoff(function() {
-    table$to_tibble()
-  })
+  .irw_env$comps_metadata_tibble <- table$to_tibble()
   
   .irw_env$comps_metadata_version <- latest_version_tag
   .irw_env$comps_metadata_tibble
@@ -69,6 +119,66 @@
   
   .irw_env$comps_biblio_version <- latest_version_tag
   .irw_env$comps_biblio_tibble <- filtered_biblio
+  filtered_biblio
+}
+
+.fetch_simsyn_biblio_table <- function() {
+  dataset <- redivis::redivis$user("bdomingu")$dataset("irw_meta:bdxt")
+  dataset$get()
+  latest_version_tag <- dataset$properties$version$tag
+  
+  if (!is.null(latest_version_tag) &&
+      exists("simsyn_biblio_tibble", envir = .irw_env) &&
+      exists("simsyn_biblio_version", envir = .irw_env) &&
+      identical(.irw_env$simsyn_biblio_version, latest_version_tag)) {
+    return(.irw_env$simsyn_biblio_tibble)
+  }
+  
+  table <- dataset$table("simsyn_biblio:pm9v")
+  biblio_tibble <- table$to_tibble()
+  
+  ds_list <- .initialize_datasource(sim = TRUE)
+  table_name_list <- tolower(unlist(lapply(ds_list, function(ds) {
+    ds$get()
+    vapply(ds$list_tables(), function(tbl) tbl$name, character(1))
+  })))
+  
+  biblio_tibble$table_lower <- tolower(biblio_tibble$table)
+  filtered_biblio <- biblio_tibble[biblio_tibble$table_lower %in% table_name_list, ]
+  filtered_biblio$table_lower <- NULL
+  
+  .irw_env$simsyn_biblio_version <- latest_version_tag
+  .irw_env$simsyn_biblio_tibble <- filtered_biblio
+  filtered_biblio
+}
+
+.fetch_nominal_biblio_table <- function() {
+  dataset <- redivis::redivis$user("bdomingu")$dataset("irw_meta:bdxt")
+  dataset$get()
+  latest_version_tag <- dataset$properties$version$tag
+  
+  if (!is.null(latest_version_tag) &&
+      exists("nominal_biblio_tibble", envir = .irw_env) &&
+      exists("nominal_biblio_version", envir = .irw_env) &&
+      identical(.irw_env$nominal_biblio_version, latest_version_tag)) {
+    return(.irw_env$nominal_biblio_tibble)
+  }
+  
+  table <- dataset$table("nominal_biblio:vphd")
+  biblio_tibble <- table$to_tibble()
+  
+  ds_list <- .initialize_datasource(nom = TRUE)
+  table_name_list <- tolower(unlist(lapply(ds_list, function(ds) {
+    ds$get()
+    vapply(ds$list_tables(), function(tbl) tbl$name, character(1))
+  })))
+  
+  biblio_tibble$table_lower <- tolower(biblio_tibble$table)
+  filtered_biblio <- biblio_tibble[biblio_tibble$table_lower %in% table_name_list, ]
+  filtered_biblio$table_lower <- NULL
+  
+  .irw_env$nominal_biblio_version <- latest_version_tag
+  .irw_env$nominal_biblio_tibble <- filtered_biblio
   filtered_biblio
 }
 
