@@ -4,7 +4,13 @@
 \alias{irw_save_bibtex}
 \title{Save BibTeX Entries for IRW Tables}
 \usage{
-irw_save_bibtex(table_names, output_file = "refs.bib", comp = FALSE)
+irw_save_bibtex(
+  table_names,
+  output_file = "refs.bib",
+  comp = FALSE,
+  sim = FALSE,
+  nom = FALSE
+)
 }
 \arguments{
 \item{table_names}{A character vector of table names for which BibTeX entries are generated.}
@@ -12,6 +18,11 @@ irw_save_bibtex(table_names, output_file = "refs.bib", comp = FALSE)
 \item{output_file}{A character string specifying the file path to save BibTeX entries. Default is "refs.bib".}
 
 \item{comp}{Logical. If TRUE, uses competition bibliography and validates tables against the competition dataset.}
+
+\item{sim}{Logical. If TRUE, uses simulation bibliography and validates tables against the simulation dataset.}
+
+\item{nom}{Logical. If TRUE, uses nominal bibliography and validates tables against the nominal dataset.
+Only one of comp/sim/nom may be TRUE.}
 }
 \value{
 Invisibly returns BibTeX entries as a character vector.

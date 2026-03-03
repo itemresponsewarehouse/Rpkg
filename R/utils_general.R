@@ -83,18 +83,27 @@ irw_download <- function(table_name,
 #' @param table_names A character vector of table names for which BibTeX entries are generated.
 #' @param output_file A character string specifying the file path to save BibTeX entries. Default is "refs.bib".
 #' @param comp Logical. If TRUE, uses competition bibliography and validates tables against the competition dataset.
+#' @param sim Logical. If TRUE, uses simulation bibliography and validates tables against the simulation dataset.
+#' @param nom Logical. If TRUE, uses nominal bibliography and validates tables against the nominal dataset.
+#'   Only one of comp/sim/nom may be TRUE.
 #' @return Invisibly returns BibTeX entries as a character vector.
 #' @export
-irw_save_bibtex <- function(table_names, output_file = "refs.bib", comp = FALSE) {
+irw_save_bibtex <- function(table_names,
+                            output_file = "refs.bib",
+                            comp = FALSE,
+                            sim = FALSE,
+                            nom = FALSE) {
   if (!is.character(table_names) || length(table_names) < 1) {
     stop("'table_names' must be a non-empty character vector.")
   }
   if (!is.character(output_file) || length(output_file) != 1) {
     stop("'output_file' must be a single character string.")
   }
-  if (!is.logical(comp) || length(comp) != 1) {
-    stop("'comp' must be a single TRUE or FALSE value.")
-  }
+  if (!is.logical(comp) || length(comp) != 1) stop("'comp' must be a single TRUE or FALSE value.")
+  if (!is.logical(sim)  || length(sim)  != 1) stop("'sim' must be a single TRUE or FALSE value.")
+  if (!is.logical(nom)  || length(nom)  != 1) stop("'nom' must be a single TRUE or FALSE value.")
+  n_sources <- sum(c(isTRUE(comp), isTRUE(sim), isTRUE(nom)))
+  if (n_sources > 1L) stop("Cannot set more than one of comp = TRUE, sim = TRUE, nom = TRUE.")
   
   # Initialize lists
   valid_entries <- character()
@@ -102,12 +111,25 @@ irw_save_bibtex <- function(table_names, output_file = "refs.bib", comp = FALSE)
   missing_bib_tables <- character()
   missing_doi_tables <- character()
   
-  # Fetch the full biblio table once
-  biblio <- if (isTRUE(comp)) .fetch_comps_biblio_table() else .fetch_biblio_table()
+  # Fetch the full biblio table once (by source)
+  biblio <- if (isTRUE(comp)) {
+    .fetch_comps_biblio_table()
+  } else if (isTRUE(sim)) {
+    .fetch_simsyn_biblio_table()
+  } else if (isTRUE(nom)) {
+    .fetch_nominal_biblio_table()
+  } else {
+    .fetch_biblio_table()
+  }
   
   table_exists <- function(tbl_name) {
     tryCatch({
-      .fetch_redivis_table(tbl_name, comp = isTRUE(comp))
+      .fetch_redivis_table(
+        tbl_name,
+        comp = isTRUE(comp),
+        sim  = isTRUE(sim),
+        nom  = isTRUE(nom)
+      )
       TRUE
     }, error = function(e) FALSE)
   }
