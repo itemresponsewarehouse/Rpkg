@@ -27,6 +27,7 @@
 #' @param nom Deprecated. Use \code{source = "nom"} instead.
 #' @return Single character string from \code{.irw_sources}.
 #' @keywords internal
+#' @noRd
 .irw_resolve_source <- function(source = "core", sim = FALSE, comp = FALSE, nom = FALSE) {
   if (isTRUE(sim) || isTRUE(comp) || isTRUE(nom)) {
     warning(

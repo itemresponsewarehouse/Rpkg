@@ -71,7 +71,7 @@ Fetch datasets that match specific filters:
 ```{r, eval=FALSE}
 matching_tables <- irw_filter(var = "rater", density = NULL)
 metadata <- irw_metadata()
-metadata[metadata$dataset_name %in% matching_tables, ]
+metadata[metadata$table %in% matching_tables, ]
 
 matching_tables <- irw_filter(var = "rater", density = NULL, responses_per_item = c(0, 1000))
 datasets <- irw_fetch(matching_tables)
