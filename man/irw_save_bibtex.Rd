@@ -7,6 +7,7 @@
 irw_save_bibtex(
   table_names,
   output_file = "refs.bib",
+  source = "core",
   comp = FALSE,
   sim = FALSE,
   nom = FALSE
@@ -17,11 +18,13 @@ irw_save_bibtex(
 
 \item{output_file}{A character string specifying the file path to save BibTeX entries. Default is "refs.bib".}
 
-\item{comp}{Logical. If TRUE, uses competition bibliography and validates tables against the competition dataset.}
+\item{source}{Character. Data source: \code{"core"} (default), \code{"nom"}, \code{"sim"}, or \code{"comp"}.}
 
-\item{sim}{Logical. If TRUE, uses simulation bibliography and validates tables against the simulation dataset.}
+\item{comp}{Deprecated. Use \code{source = "comp"} instead.}
 
-\item{nom}{Logical. If TRUE, uses nominal bibliography and validates tables against the nominal dataset.
+\item{sim}{Deprecated. Use \code{source = "sim"} instead.}
+
+\item{nom}{Deprecated. Use \code{source = "nom"} instead.
 Only one of comp/sim/nom may be TRUE.}
 }
 \value{

@@ -4,16 +4,16 @@
 \alias{irw_list_tables}
 \title{List Available Tables}
 \usage{
-irw_list_tables(sim = FALSE, comp = FALSE, nom = FALSE)
+irw_list_tables(source = "core", sim = FALSE, comp = FALSE, nom = FALSE)
 }
 \arguments{
-\item{sim}{Logical. If TRUE, lists tables from the IRW simulation dataset (\code{irw_simsyn}).}
+\item{source}{Character. Data source: \code{"core"} (default), \code{"nom"}, \code{"sim"}, or \code{"comp"}.}
 
-\item{comp}{Logical. If TRUE, lists tables from the IRW competition dataset (\code{irw_comp}).}
+\item{sim}{Deprecated. Use \code{source = "sim"} instead.}
 
-\item{nom}{Logical. If TRUE, lists tables from the IRW nominal dataset (\code{irw_nominal}).
-If all of \code{sim}, \code{comp}, and \code{nom} are FALSE (default), lists tables from the main IRW database.
-Only one of \code{sim}, \code{comp}, or \code{nom} should be TRUE at a time.}
+\item{comp}{Deprecated. Use \code{source = "comp"} instead.}
+
+\item{nom}{Deprecated. Use \code{source = "nom"} instead.}
 }
 \value{
 A data frame with the following columns:
@@ -27,8 +27,8 @@ number of rows, and variable count, sorted alphabetically by table name.
 }
 \examples{
 \dontrun{
-irw_list_tables()             # Main IRW database
-irw_list_tables(sim = TRUE)   # Simulation dataset
-irw_list_tables(comp = TRUE)  # Competition dataset
+irw_list_tables()               # Main IRW database
+irw_list_tables(source = "sim")   # Simulation dataset
+irw_list_tables(source = "comp")  # Competition dataset
 }
 }

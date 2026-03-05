@@ -3,29 +3,24 @@
 #' Retrieves a summary of available tables in the IRW database, including their name,
 #' number of rows, and variable count, sorted alphabetically by table name.
 #'
-#' @param sim Logical. If TRUE, lists tables from the IRW simulation dataset (`irw_simsyn`).
-#' @param comp Logical. If TRUE, lists tables from the IRW competition dataset (`irw_comp`).
-#' @param nom Logical. If TRUE, lists tables from the IRW nominal dataset (`irw_nominal`).
-#'   If all of `sim`, `comp`, and `nom` are FALSE (default), lists tables from the main IRW database.
-#'   Only one of `sim`, `comp`, or `nom` should be TRUE at a time.
+#' @param sim Deprecated. Use \code{source = "sim"} instead.
+#' @param comp Deprecated. Use \code{source = "comp"} instead.
+#' @param nom Deprecated. Use \code{source = "nom"} instead.
+#' @param source Character. Data source: \code{"core"} (default), \code{"nom"}, \code{"sim"}, or \code{"comp"}.
 #' @return A data frame with the following columns:
 #'   \item{name}{The name of the table, sorted alphabetically.}
 #'   \item{numRows}{The number of rows in the table.}
 #'   \item{variableCount}{The number of variables in the table.}
 #' @examples
 #' \dontrun{
-#' irw_list_tables()             # Main IRW database
-#' irw_list_tables(sim = TRUE)   # Simulation dataset
-#' irw_list_tables(comp = TRUE)  # Competition dataset
+#' irw_list_tables()               # Main IRW database
+#' irw_list_tables(source = "sim")   # Simulation dataset
+#' irw_list_tables(source = "comp")  # Competition dataset
 #' }
 #' @export
-irw_list_tables <- function(sim = FALSE, comp=FALSE, nom=FALSE) {
-  n_sources <- sum(c(isTRUE(sim), isTRUE(comp), isTRUE(nom)))
-  if (n_sources > 1L) {
-    stop("Only one of 'sim', 'comp', or 'nom' can be TRUE at a time.")
-  }
-  
-  ds_list <- .initialize_datasource(sim = sim, comp = comp, nom = nom)
+irw_list_tables <- function(source = "core", sim = FALSE, comp = FALSE, nom = FALSE) {
+  source <- .irw_resolve_source(source = source, sim = sim, comp = comp, nom = nom)
+  ds_list <- .initialize_datasource(source = source)
   
   tables_info_list <- lapply(ds_list, function(ds) {
     tables <- .retry_with_backoff(function() ds$list_tables())
@@ -56,9 +51,10 @@ irw_list_tables <- function(sim = FALSE, comp=FALSE, nom=FALSE) {
 #' @param table_name Optional. Table name to describe; if \code{NULL}, prints database‑level info.
 #' @param details Logical. When \code{TRUE} and \code{table_name} is \code{NULL}, also
 #'   prints a breakdown by dataset. Defaults to \code{FALSE}.
-#' @param comp Logical. If TRUE, uses the competition datasource.
-#' @param sim Logical. If TRUE, uses the simulation datasource.
-#' @param nom Logical. If TRUE, uses the nominal datasource.
+#' @param source Character. Data source: \code{"core"} (default), \code{"nom"}, \code{"sim"}, or \code{"comp"}.
+#' @param comp Deprecated. Use \code{source = "comp"} instead.
+#' @param sim Deprecated. Use \code{source = "sim"} instead.
+#' @param nom Deprecated. Use \code{source = "nom"} instead.
 #'
 #' @return Invisibly returns \code{NULL}.
 #' @examples
@@ -66,43 +62,34 @@ irw_list_tables <- function(sim = FALSE, comp=FALSE, nom=FALSE) {
 #' irw_info()                 # Combined totals
 #' irw_info(details = TRUE)   # Combined + per-dataset breakdown
 #' irw_info("frac20")      # Specific IRW table
-#' irw_info("t20_hyper", comp = TRUE)  # Competition table
-#' irw_info("gilbert_meta_3", sim=TRUE)
+#' irw_info("t20_hyper", source = "comp")  # Competition table
+#' irw_info("gilbert_meta_3", source = "sim")
 #' 
 #' }
 #' @export
-irw_info <- function(table_name = NULL, details = FALSE, comp=FALSE, sim=FALSE, nom=FALSE) {
+irw_info <- function(table_name = NULL, details = FALSE, source = "core", comp = FALSE, sim = FALSE, nom = FALSE) {
   if (!is.logical(details) || length(details) != 1) {
     stop("'details' must be a single TRUE or FALSE value.")
   }
-  if (!is.logical(sim) || length(sim) != 1) {
-    stop("'sim' must be a single TRUE or FALSE value.")
+  source <- .irw_resolve_source(source = source, sim = sim, comp = comp, nom = nom)
+
+  if (isTRUE(details) && source != "core") {
+    stop("details = TRUE is only available for the main IRW datasource (source = \"core\").")
   }
-  if (!is.logical(comp) || length(comp) != 1) {
-    stop("'comp' must be a single TRUE or FALSE value.")
-  }
-  if (!is.logical(nom) || length(nom) != 1) stop("'nom' must be a single TRUE or FALSE value.")
-  
-  n_sources <- sum(c(isTRUE(sim), isTRUE(comp), isTRUE(nom)))
-  if (n_sources > 1L) stop("Cannot set more than one of sim = TRUE, comp = TRUE, nom = TRUE.")
-  
-  if (isTRUE(details) && (isTRUE(sim) || isTRUE(comp) || isTRUE(nom))) {
-    stop("details = TRUE is only available for the main IRW datasource.")
-  }
-  
+
   # label for messages
-  db_label <- if (isTRUE(sim)) {
+  db_label <- if (source == "sim") {
     "IRW Simulation Database Information"
-  } else if (isTRUE(comp)) {
+  } else if (source == "comp") {
     "IRW Competition Database Information"
-  } else if (isTRUE(nom)) {
+  } else if (source == "nom") {
     "IRW Nominal Database Information"
   } else {
     "IRW Database Information (Combined)"
   }
-  
+
   if (is.null(table_name)) {
-    ds_list <- .initialize_datasource(sim = isTRUE(sim), comp = isTRUE(comp), nom=isTRUE(nom))
+    ds_list <- .initialize_datasource(source = source)
     
     total_table_count <- 0
     total_size_gb <- 0
@@ -158,23 +145,23 @@ irw_info <- function(table_name = NULL, details = FALSE, comp=FALSE, sim=FALSE, 
     }
   } else {
     # --- Table-specific info ---
-    table <- .fetch_redivis_table(table_name, sim = isTRUE(sim), comp = isTRUE(comp), nom = isTRUE(nom))
+    table <- .fetch_redivis_table(table_name, source = source)
     ds_version <- attr(table, "dataset_version")
     
     # Variable names
     vars <- NA
-    if (!isTRUE(sim) && !isTRUE(comp) && !isTRUE(nom)) {
+    if (source == "core") {
       m <- .fetch_metadata_table()
       v <- m$variables[m$table == table_name]
       vars <- if (length(v) > 0 && !is.na(v[1]) && nzchar(v[1])) v[1] else NA
     } else {
-      # sim / comp: infer from table itself
+      # sim / comp / nom: infer from table itself
       vars <- paste(names(table$to_tibble()), collapse = " | ")
     }
-    
+
     # Tags: only main
     construct <- "Not available for this datasource"
-    if (!isTRUE(sim) && !isTRUE(comp) && !isTRUE(nom)) {
+    if (source == "core") {
       construct <- "No construct specified"
       tags <- .fetch_tags_table()
       cvec <- tags$construct_name[tags$table == table_name]
@@ -191,11 +178,11 @@ irw_info <- function(table_name = NULL, details = FALSE, comp=FALSE, sim=FALSE, 
     reference <- NA
     bib_found <- FALSE
     
-    bib <- if (isTRUE(comp)) {
+    bib <- if (source == "comp") {
       .fetch_comps_biblio_table()
-    } else if (isTRUE(sim)) {
+    } else if (source == "sim") {
       .fetch_simsyn_biblio_table()
-    } else if (isTRUE(nom)) {
+    } else if (source == "nom") {
       .fetch_nominal_biblio_table()
     } else {
       .fetch_biblio_table()
@@ -219,7 +206,7 @@ irw_info <- function(table_name = NULL, details = FALSE, comp=FALSE, sim=FALSE, 
     
     message(strrep("-", 50))
     message("Table Information for: ", table_name,
-            if (isTRUE(sim)) " (simulation)" else if (isTRUE(comp)) " (competition)" else if (isTRUE(nom)) " (nominal)" else "")
+            if (source == "sim") " (simulation)" else if (source == "comp") " (competition)" else if (source == "nom") " (nominal)" else "")
     message(strrep("-", 50))
     message(strrep("-", 50))
     message(sprintf("%-25s %s", "Description:", description))
@@ -242,8 +229,8 @@ irw_info <- function(table_name = NULL, details = FALSE, comp=FALSE, sim=FALSE, 
     
     if (!bib_found) {
       message("NOTE: No bibliography row found for this table in the selected source.")
-      if (!isTRUE(comp) && !isTRUE(sim) && !isTRUE(nom)) {
-        message("Hint: If this is a competition / simulation / nominal table, try comp = TRUE, sim = TRUE, or nom = TRUE.")
+      if (source == "core") {
+        message("Hint: If this is a competition / simulation / nominal table, try source = \"comp\", source = \"sim\", or source = \"nom\".")
       }
     }
   }

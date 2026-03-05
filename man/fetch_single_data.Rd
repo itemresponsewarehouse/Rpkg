@@ -6,8 +6,9 @@
 \usage{
 fetch_single_data(
   table_id,
-  sim = FALSE,
+  source = "core",
   dedup = FALSE,
+  sim = FALSE,
   comp = FALSE,
   nom = FALSE
 )
@@ -15,13 +16,15 @@ fetch_single_data(
 \arguments{
 \item{table_id}{Character. Name of the table.}
 
-\item{sim}{Logical. If TRUE, fetch from the IRW simulation dataset.}
+\item{source}{Character. One of \code{"core"}, \code{"nom"}, \code{"sim"}, \code{"comp"}.}
 
 \item{dedup}{Logical. If TRUE, apply deduplication logic to responses.}
 
-\item{comp}{Logical. If TRUE, fetch from the IRW competition dataset.}
+\item{sim}{Deprecated. Use \code{source = "sim"} instead.}
 
-\item{nom}{Logical. If TRUE, fetch from the IRW nominal dataset.}
+\item{comp}{Deprecated. Use \code{source = "comp"} instead.}
+
+\item{nom}{Deprecated. Use \code{source = "nom"} instead.}
 }
 \value{
 A tibble representing the dataset.

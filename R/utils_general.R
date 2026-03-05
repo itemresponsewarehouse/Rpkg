@@ -10,49 +10,38 @@
 #'        If `NULL`, the dataset will be saved in the current working directory
 #'        with the table's name as the file name.
 #' @param overwrite Logical. Whether to overwrite an existing file.
-#' @param sim Logical. If TRUE, download from the simulation dataset.
-#' @param comp Logical. If TRUE, download from the competition dataset.
-#' @param nom Logical. If TRUE, download from the nominal dataset.
+#' @param source Character. Data source: \code{"core"} (default), \code{"nom"}, \code{"sim"}, or \code{"comp"}.
+#' @param sim Deprecated. Use \code{source = "sim"} instead.
+#' @param comp Deprecated. Use \code{source = "comp"} instead.
+#' @param nom Deprecated. Use \code{source = "nom"} instead.
 #'
 #' @return A message confirming the file download location.
 #' @export
 irw_download <- function(table_name,
                          path = NULL,
                          overwrite = FALSE,
+                         source = "core",
                          sim = FALSE,
                          comp = FALSE,
-                         nom=FALSE) {
+                         nom = FALSE) {
   if (!is.character(table_name) || length(table_name) != 1) {
     stop("'table_name' must be a single character string.")
   }
   if (!is.logical(overwrite) || length(overwrite) != 1) {
     stop("'overwrite' must be a single TRUE or FALSE value.")
   }
-  if (!is.logical(sim) || length(sim) != 1) {
-    stop("'sim' must be a single TRUE or FALSE value.")
-  }
-  if (!is.logical(comp) || length(comp) != 1) {
-    stop("'comp' must be a single TRUE or FALSE value.")
-  }
-  if (!is.logical(nom) || length(nom) != 1) {
-    stop("'nom' must be a single TRUE or FALSE value.")
-  }
-  
-  n_sources <- sum(c(isTRUE(sim), isTRUE(comp), isTRUE(nom)))
-  if (n_sources > 1L) {
-    stop("Cannot set more than one of sim = TRUE, comp = TRUE, nom = TRUE.")
-  }
-  
+  source <- .irw_resolve_source(source = source, sim = sim, comp = comp, nom = nom)
+
   table <- tryCatch(
-    .fetch_redivis_table(table_name, sim = isTRUE(sim), comp = isTRUE(comp), nom = isTRUE(nom)),
+    .fetch_redivis_table(table_name, source = source),
     error = function(e) {
       msg <- paste0(
         "Table '", table_name, "' not found in the selected dataset."
       )
-      if (!isTRUE(sim) && !isTRUE(comp) && !isTRUE(nom)) {
+      if (source == "core") {
         msg <- paste0(
           msg,
-          "\nHint: If this is a simulation, competition, or nominal table, try sim = TRUE, comp = TRUE, or nom = TRUE."
+          "\nHint: If this is a simulation, competition, or nominal table, try source = \"sim\", source = \"comp\", or source = \"nom\"."
         )
       }
       stop(msg, call. = FALSE)
@@ -82,14 +71,16 @@ irw_download <- function(table_name,
 #'
 #' @param table_names A character vector of table names for which BibTeX entries are generated.
 #' @param output_file A character string specifying the file path to save BibTeX entries. Default is "refs.bib".
-#' @param comp Logical. If TRUE, uses competition bibliography and validates tables against the competition dataset.
-#' @param sim Logical. If TRUE, uses simulation bibliography and validates tables against the simulation dataset.
-#' @param nom Logical. If TRUE, uses nominal bibliography and validates tables against the nominal dataset.
+#' @param source Character. Data source: \code{"core"} (default), \code{"nom"}, \code{"sim"}, or \code{"comp"}.
+#' @param comp Deprecated. Use \code{source = "comp"} instead.
+#' @param sim Deprecated. Use \code{source = "sim"} instead.
+#' @param nom Deprecated. Use \code{source = "nom"} instead.
 #'   Only one of comp/sim/nom may be TRUE.
 #' @return Invisibly returns BibTeX entries as a character vector.
 #' @export
 irw_save_bibtex <- function(table_names,
                             output_file = "refs.bib",
+                            source = "core",
                             comp = FALSE,
                             sim = FALSE,
                             nom = FALSE) {
@@ -99,12 +90,8 @@ irw_save_bibtex <- function(table_names,
   if (!is.character(output_file) || length(output_file) != 1) {
     stop("'output_file' must be a single character string.")
   }
-  if (!is.logical(comp) || length(comp) != 1) stop("'comp' must be a single TRUE or FALSE value.")
-  if (!is.logical(sim)  || length(sim)  != 1) stop("'sim' must be a single TRUE or FALSE value.")
-  if (!is.logical(nom)  || length(nom)  != 1) stop("'nom' must be a single TRUE or FALSE value.")
-  n_sources <- sum(c(isTRUE(comp), isTRUE(sim), isTRUE(nom)))
-  if (n_sources > 1L) stop("Cannot set more than one of comp = TRUE, sim = TRUE, nom = TRUE.")
-  
+  source <- .irw_resolve_source(source = source, sim = sim, comp = comp, nom = nom)
+
   # Initialize lists
   valid_entries <- character()
   missing_tables <- character()
@@ -112,24 +99,19 @@ irw_save_bibtex <- function(table_names,
   missing_doi_tables <- character()
   
   # Fetch the full biblio table once (by source)
-  biblio <- if (isTRUE(comp)) {
+  biblio <- if (source == "comp") {
     .fetch_comps_biblio_table()
-  } else if (isTRUE(sim)) {
+  } else if (source == "sim") {
     .fetch_simsyn_biblio_table()
-  } else if (isTRUE(nom)) {
+  } else if (source == "nom") {
     .fetch_nominal_biblio_table()
   } else {
     .fetch_biblio_table()
   }
-  
+
   table_exists <- function(tbl_name) {
     tryCatch({
-      .fetch_redivis_table(
-        tbl_name,
-        comp = isTRUE(comp),
-        sim  = isTRUE(sim),
-        nom  = isTRUE(nom)
-      )
+      .fetch_redivis_table(tbl_name, source = source)
       TRUE
     }, error = function(e) FALSE)
   }
@@ -203,8 +185,8 @@ irw_save_bibtex <- function(table_names,
     message(
       "NOTE: These tables were not processed because they do not exist in the selected IRW dataset:\n",
       paste(missing_tables, collapse = ", "),
-      if (!isTRUE(comp))
-        "\nHint: If these are competition tables, try calling with comp = TRUE."
+      if (source != "comp")
+        "\nHint: If these are competition tables, try calling with source = \"comp\"."
     )
   }
   

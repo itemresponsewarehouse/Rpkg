@@ -4,16 +4,24 @@
 \alias{.fetch_redivis_table}
 \title{Fetch Table from Redivis}
 \usage{
-.fetch_redivis_table(name, sim = FALSE, comp = FALSE, nom = FALSE)
+.fetch_redivis_table(
+  name,
+  source = "core",
+  sim = FALSE,
+  comp = FALSE,
+  nom = FALSE
+)
 }
 \arguments{
 \item{name}{A character string specifying the table name.}
 
-\item{sim}{Logical. If TRUE, fetches from the IRW simulation dataset.}
+\item{source}{Character. One of \code{"core"}, \code{"nom"}, \code{"sim"}, \code{"comp"}.}
 
-\item{comp}{Logical. If TRUE, fetches from the IRW competition dataset.}
+\item{sim}{Deprecated. Use \code{source = "sim"} instead.}
 
-\item{nom}{Logical. If TRUE, fetches from the IRW nominal dataset.}
+\item{comp}{Deprecated. Use \code{source = "comp"} instead.}
+
+\item{nom}{Deprecated. Use \code{source = "nom"} instead.}
 }
 \value{
 A Redivis table object. The returned object has attribute \code{dataset_version} attached.

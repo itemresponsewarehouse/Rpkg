@@ -70,15 +70,18 @@ irw_tag_options <- function(column) {
 #'
 #' Returns a data frame showing the number of datasets associated with each license.
 #'
-#' @param comp Logical. If TRUE, use competition bibliography.
+#' @param source Character. Data source: \code{"core"} (default) or \code{"comp"}.
+#'   Use \code{source = "comp"} for competition bibliography.
+#' @param comp Deprecated. Use \code{source = "comp"} instead.
 #' @return A data.frame with 'license' and 'count' columns.
 #' @export
-irw_license_options <- function(comp = FALSE) {
-  if (!is.logical(comp) || length(comp) != 1) {
-    stop("'comp' must be a single TRUE or FALSE value.")
+irw_license_options <- function(source = "core", comp = FALSE) {
+  source <- .irw_resolve_source(source = source, sim = FALSE, comp = comp, nom = FALSE)
+  if (!source %in% c("core", "comp")) {
+    stop("'source' for irw_license_options must be \"core\" or \"comp\".")
   }
-  
-  bib <- if (isTRUE(comp)) {
+
+  bib <- if (source == "comp") {
     .fetch_comps_biblio_table()
   } else {
     .fetch_biblio_table()

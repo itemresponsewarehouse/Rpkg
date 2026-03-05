@@ -30,15 +30,15 @@
     # Only care about polytomous items (3+ categories)
     if (length(unique(x)) < 3L) next
     
-    tab  <- table(x)
+    tab <- table(x)
     prop <- prop.table(tab)
     
     rare <- (tab < min_count) | (prop < min_prop)
     if (any(rare)) {
       sparse_category_items[[item_name]] <- data.frame(
-        resp  = as.numeric(names(tab)[rare]),
+        resp = as.numeric(names(tab)[rare]),
         count = as.integer(tab[rare]),
-        prop  = as.numeric(prop[rare]),
+        prop = as.numeric(prop[rare]),
         row.names = NULL
       )
     }
@@ -102,39 +102,48 @@ irw_check_resp <- function(x, min_count = 5L, min_prop = 0.01) {
 
 #' Convert IRW Long-Format Data to Wide-Format Response Matrix
 #'
-#' Converts an IRW-compliant dataset from long format to wide format while handling
-#' optional metadata elements, filtering by wave, and ensuring consistency.
+#' Converts an IRW-compliant dataset from long format to wide format
+#' while handling optional metadata elements and filtering by wave.
 #'
-#' This function applies a default sparsity filter with a threshold of \code{0.1} for \code{id} density
-#' to avoid excessive sparsity in the response matrix.
+#' This function applies a default sparsity filter with a threshold
+#' of \code{0.1} for \code{id} density to avoid excessive sparsity.
 #' Users can disable filtering by setting \code{id_density_threshold = NULL}.
 #'
-#' If \code{check_resp = TRUE}, the function will run a basic response diagnostic using
-#' default thresholds (\code{min_count = 5}, \code{min_prop = 0.01}), attach the results as
-#' an attribute \code{"resp_checks"} on the returned object, and add a short NOTE with
-#' counts of flagged items. A response category is considered sparse if it has fewer than
-#' \code{min_count} responses OR a within-item proportion smaller than \code{min_prop}.
-#' For more control, use \code{irw_check_resp()} directly.
+#' If \code{check_resp = TRUE}, the function will run a basic diagnostic
+#' using default thresholds (\code{min_count = 5}, \code{min_prop = 0.01}),
+#' attach the results as an attribute \code{"resp_checks"} on returned object,
+#' and add a short NOTE with counts of flagged items.
+#' A response category is considered sparse if it has fewer than
+#' \code{min_count} responses OR a within-item proportion smaller than
+#' \code{min_prop}. For more control, use \code{irw_check_resp()} directly.
 #'
-#' @param df A data frame containing IRW-compliant item response data in long format.
+#' @param df A data frame containing IRW-compliant item response data in long
+#' format.
 #' @param wave (Optional) A numeric value specifying which wave to filter.
-#'        If the dataset does not have a \code{wave} column, this input is ignored.
+#'        If the dataset does not have a \code{wave} column, this input is
+#'        ignored.
 #'        Defaults to the most frequent wave if \code{NULL}.
-#' @param id_density_threshold A numeric value between \code{0.0} and \code{1.0} specifying the
-#'        minimum response density required for an \code{id} to be included.
-#'        Default is \code{0.1}. Set to \code{NULL} to disable filtering.
-#' @param agg_method A string specifying how to handle multiple \code{id}-\code{item} pairs.
-#'        Options: \code{"mean"} (default), \code{"mode"}, \code{"median"}, \code{"first"}.
-#' @param check_resp Logical; if \code{TRUE}, perform basic response diagnostics on items
-#'        using default thresholds and attach results as an attribute. Default is \code{FALSE}.
+#' @param id_density_threshold A numeric value between \code{0.0} and
+#' \code{1.0} specifying the minimum response density required for an \code{id}
+#'  to be included. Default is \code{0.1}. Set to \code{NULL} to disable
+#'   filtering.
+#' @param agg_method A string specifying how to handle multiple
+#'  \code{id}-\code{item} pairs. Options: \code{"mean"} (default),
+#'  \code{"mode"}, \code{"median"}, \code{"first"}.
+#' @param check_resp Logical; if \code{TRUE}, perform basic response diagnostics
+#'    on items using default thresholds and attach results as an attribute.
+#'    Default is \code{FALSE}.
 #'
-#' @return A data frame in wide format where rows represent \code{id} values and columns
-#'         represent \code{item_*} responses.
-#'         If \code{check_resp = TRUE}, an attribute \code{"resp_checks"} is attached:
+#' @return A data frame in wide format where rows represent \code{id} values
+#' and columns represent \code{item_*} responses.
+#'         If \code{check_resp = TRUE}, an attribute \code{"resp_checks"}
+#'          is attached:
 #'         \itemize{
-#'           \item \code{single_category_items}: character vector of item IDs with only one observed category.
-#'           \item \code{sparse_category_items}: named list; each element is a data.frame
-#'                 with sparse categories for that item (columns: \code{resp}, \code{count}, \code{prop}).
+#'           \item \code{single_category_items}: character vector of item IDs
+#'            with only one observed category.
+#'           \item \code{sparse_category_items}: named list; each element is
+#'            a data.frame with sparse categories for that item
+#'            (columns: \code{resp}, \code{count}, \code{prop}).
 #'         }
 #'
 #' @importFrom stats aggregate median na.omit reshape
@@ -144,22 +153,18 @@ irw_long2resp <- function(df,
                           id_density_threshold = 0.1,
                           agg_method = "mean",
                           check_resp = FALSE) {
-  
   # Ensure required columns exist
   required_cols <- c("id", "item", "resp")
   missing_cols <- setdiff(required_cols, names(df))
   if (length(missing_cols) > 0L) {
     stop("Missing required IRW columns: ", paste(missing_cols, collapse = ", "))
   }
-  
   # Stop execution if 'date' exists
   if ("date" %in% names(df)) {
     stop("This function does not yet support data with 'date'.")
   }
-  
   # Store messages to print at the end
   messages <- character(0)
-  
   # Check for "rater" column and count unique raters
   if ("rater" %in% names(df)) {
     num_raters <- length(unique(df$rater))
@@ -169,11 +174,9 @@ irw_long2resp <- function(df,
              num_raters, " unique raters.\n")
     )
   }
-  
   # Drop non-essential columns except id, item, resp, and wave (if exists)
   essential_cols <- c("id", "item", "resp", "wave")
   df <- df[, intersect(names(df), essential_cols), drop = FALSE]
-  
   # Handle wave filtering
   if ("wave" %in% names(df)) {
     if (is.null(wave)) {
@@ -201,14 +204,17 @@ irw_long2resp <- function(df,
   if (any(is.na(df$resp))) {
     messages <- c(
       messages,
-      "Some responses were either missing or could not be converted to numeric; these have been recorded as NA."
+      paste0(
+        "Some responses were either missing or could not be converted to ",
+        "numeric; these have been recorded as NA."
+      )
     )
   }
   
   # ---- Duplicate handling ----
   # Count duplicate id-item responses
   dup_summary <- stats::aggregate(
-    x  = seq_len(nrow(df)),                # just row indices
+    x = seq_len(nrow(df)),                # just row indices
     by = list(id = df$id, item = df$item),
     FUN = length
   )
@@ -250,7 +256,7 @@ irw_long2resp <- function(df,
         ux[which.max(tabulate(match(x, ux)))]
       }
       agg <- stats::aggregate(
-        x  = df$resp,
+        x = df$resp,
         by = list(id = df$id, item = df$item),
         FUN = mode_fn
       )
@@ -261,7 +267,7 @@ irw_long2resp <- function(df,
         mean(x, na.rm = TRUE)
       }
       agg <- stats::aggregate(
-        x  = df$resp,
+        x = df$resp,
         by = list(id = df$id, item = df$item),
         FUN = mean_fn
       )
@@ -272,7 +278,7 @@ irw_long2resp <- function(df,
         stats::median(x, na.rm = TRUE)
       }
       agg <- stats::aggregate(
-        x  = df$resp,
+        x = df$resp,
         by = list(id = df$id, item = df$item),
         FUN = median_fn
       )
@@ -328,7 +334,7 @@ irw_long2resp <- function(df,
   
   if (!is.null(id_density_threshold)) {
     id_resp_counts <- stats::aggregate(
-      x  = !is.na(df$resp),
+      x = !is.na(df$resp),
       by = list(id = df$id),
       FUN = sum
     )
@@ -366,7 +372,7 @@ irw_long2resp <- function(df,
   
   wide_df <- stats::reshape(
     as.data.frame(df_wide),
-    idvar   = "id",
+    idvar = "id",
     timevar = "item",
     v.names = "resp",
     direction = "wide"
@@ -388,8 +394,6 @@ irw_long2resp <- function(df,
   wide_df
 }
 
-
-
 #' Convert Wide-Format Response Matrix to IRW Long Format
 #'
 #' Inverse of \code{irw_long2resp()}: converts a wide response data frame/matrix
@@ -403,7 +407,6 @@ irw_long2resp <- function(df,
 #' @return A data.frame with columns \code{id}, \code{item}, \code{resp}.
 #' @export
 irw_resp2long <- function(x, id = TRUE) {
-  
   if (!(is.data.frame(x) || is.matrix(x))) {
     stop("`x` must be a data.frame or matrix.")
   }
@@ -413,11 +416,14 @@ irw_resp2long <- function(x, id = TRUE) {
   
   if (isTRUE(id)) {
     if (!has_id_col) {
-      stop("`id = TRUE` requires an `id` column in `x`.")
+      stop(
+        "No `id` column found in `x`.\n",
+        "This function defaults to `id = TRUE` (expects the output of `irw_long2resp()`).\n",
+        "If your wide matrix does not include an id column, call `irw_resp2long(x, id = FALSE)`."
+      )
     }
     id_vec <- x_df$id
     item_cols <- setdiff(names(x_df), "id")
-    
   } else {
     if (has_id_col) {
       message("`id = FALSE` ignored because `id` column already exists; using existing ids.")

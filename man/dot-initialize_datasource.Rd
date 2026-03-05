@@ -4,14 +4,17 @@
 \alias{.initialize_datasource}
 \title{Initialize Redivis Datasource(s)}
 \usage{
-.initialize_datasource(sim = FALSE, comp = FALSE, nom = FALSE)
+.initialize_datasource(source = "core", sim = FALSE, comp = FALSE, nom = FALSE)
 }
 \arguments{
-\item{sim}{Logical. If TRUE, connects to the IRW simulation dataset.}
+\item{source}{Character. One of \code{"core"}, \code{"nom"}, \code{"sim"}, \code{"comp"}.
+Default is \code{"core"}.}
 
-\item{comp}{Logical. If TRUE, connects to the IRW competition dataset.}
+\item{sim}{Deprecated. Use \code{source = "sim"} instead.}
 
-\item{nom}{Logical. If TRUE, connects to the IRW nominal dataset.}
+\item{comp}{Deprecated. Use \code{source = "comp"} instead.}
+
+\item{nom}{Deprecated. Use \code{source = "nom"} instead.}
 }
 \value{
 A list of one or more Redivis dataset objects.
@@ -19,13 +22,10 @@ A list of one or more Redivis dataset objects.
 \description{
 Returns a list of Redivis dataset objects based on the selected source:
 \itemize{
-\item If \code{sim = TRUE}, returns the IRW simulation dataset (\verb{irw_simsyn:0btg})
-\item If \code{comp = TRUE}, returns the IRW competition dataset (\code{irw_competitions:cmd7})
-\item If \code{nom = TRUE}, returns the IRW nominal dataset (\verb{irw_nominal:614n})
-\item Otherwise, returns the main IRW production datasets
+\item If \code{source = "sim"}, returns the IRW simulation dataset (\code{irw_simsyn:0btg})
+\item If \code{source = "comp"}, returns the IRW competition dataset (\code{irw_competitions:cmd7})
+\item If \code{source = "nom"}, returns the IRW nominal dataset (\code{irw_nominal:614n})
+\item If \code{source = "core"} (default), returns the main IRW production datasets
 }
-}
-\details{
-Note: \code{sim}, \code{comp}, and \code{nom} are mutually exclusive.
 }
 \keyword{internal}

@@ -5,15 +5,17 @@
 #' Used internally to obtain a Redivis table object, which can later be converted to a tibble.
 #'
 #' @param name A character string specifying the table name.
-#' @param sim Logical. If TRUE, fetches from the IRW simulation dataset.
-#' @param comp Logical. If TRUE, fetches from the IRW competition dataset.
-#' @param nom Logical. If TRUE, fetches from the IRW nominal dataset.
+#' @param source Character. One of \code{"core"}, \code{"nom"}, \code{"sim"}, \code{"comp"}.
+#' @param sim Deprecated. Use \code{source = "sim"} instead.
+#' @param comp Deprecated. Use \code{source = "comp"} instead.
+#' @param nom Deprecated. Use \code{source = "nom"} instead.
 #'
-#' @return A Redivis table object. The returned object has attribute `dataset_version` attached.
+#' @return A Redivis table object. The returned object has attribute \code{dataset_version} attached.
 #' @keywords internal
-.fetch_redivis_table <- function(name, sim = FALSE, comp = FALSE, nom=FALSE) {
+.fetch_redivis_table <- function(name, source = "core", sim = FALSE, comp = FALSE, nom = FALSE) {
   if (!is.character(name) || length(name) != 1) stop("The 'name' parameter must be a single character string.")
-  ds_list <- .initialize_datasource(sim = sim, comp = comp, nom=nom)
+  source <- .irw_resolve_source(source = source, sim = sim, comp = comp, nom = nom)
+  ds_list <- .initialize_datasource(source = source)
   
   for (ds in ds_list) {
     ds$get()

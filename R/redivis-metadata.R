@@ -106,7 +106,7 @@
   biblio_tibble <- .retry_with_backoff(function() table$to_tibble())
   
   # Get all table names from the competition dataset
-  ds_list <- .initialize_datasource(comp = TRUE)
+  ds_list <- .initialize_datasource(source = "comp")
   table_name_list <- tolower(unlist(lapply(ds_list, function(ds) {
     ds$get()
     vapply(ds$list_tables(), function(tbl) tbl$name, character(1))
@@ -137,7 +137,7 @@
   table <- dataset$table("simsyn_biblio:pm9v")
   biblio_tibble <- table$to_tibble()
   
-  ds_list <- .initialize_datasource(sim = TRUE)
+  ds_list <- .initialize_datasource(source = "sim")
   table_name_list <- tolower(unlist(lapply(ds_list, function(ds) {
     ds$get()
     vapply(ds$list_tables(), function(tbl) tbl$name, character(1))
@@ -167,7 +167,7 @@
   table <- dataset$table("nominal_biblio:vphd")
   biblio_tibble <- table$to_tibble()
   
-  ds_list <- .initialize_datasource(nom = TRUE)
+  ds_list <- .initialize_datasource(source = "nom")
   table_name_list <- tolower(unlist(lapply(ds_list, function(ds) {
     ds$get()
     vapply(ds$list_tables(), function(tbl) tbl$name, character(1))
@@ -243,7 +243,7 @@
   biblio_tibble <- .retry_with_backoff(function() table$to_tibble())
   
   # Get all table names from all datasets
-  ds_list <- .initialize_datasource(sim = FALSE)
+  ds_list <- .initialize_datasource(source = "core")
   table_name_list <- tolower(unlist(lapply(ds_list, function(ds) {
     ds$get()  
     vapply(ds$list_tables(), function(tbl) tbl$name, character(1))
@@ -293,7 +293,7 @@
   tags_tibble <- tibble::as_tibble(tags_tibble)
   
   # Get all table names from all datasets
-  ds_list <- .initialize_datasource(sim = FALSE)
+  ds_list <- .initialize_datasource(source = "core")
   table_name_list <- tolower(unlist(lapply(ds_list, function(ds) {
     ds$get()  
     vapply(ds$list_tables(), function(tbl) tbl$name, character(1))

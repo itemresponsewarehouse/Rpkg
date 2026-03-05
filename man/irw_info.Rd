@@ -7,6 +7,7 @@
 irw_info(
   table_name = NULL,
   details = FALSE,
+  source = "core",
   comp = FALSE,
   sim = FALSE,
   nom = FALSE
@@ -18,11 +19,13 @@ irw_info(
 \item{details}{Logical. When \code{TRUE} and \code{table_name} is \code{NULL}, also
 prints a breakdown by dataset. Defaults to \code{FALSE}.}
 
-\item{comp}{Logical. If TRUE, uses the competition datasource.}
+\item{source}{Character. Data source: \code{"core"} (default), \code{"nom"}, \code{"sim"}, or \code{"comp"}.}
 
-\item{sim}{Logical. If TRUE, uses the simulation datasource.}
+\item{comp}{Deprecated. Use \code{source = "comp"} instead.}
 
-\item{nom}{Logical. If TRUE, uses the nominal datasource.}
+\item{sim}{Deprecated. Use \code{source = "sim"} instead.}
+
+\item{nom}{Deprecated. Use \code{source = "nom"} instead.}
 }
 \value{
 Invisibly returns \code{NULL}.
@@ -40,8 +43,8 @@ If a table name is provided, shows details for that table.
 irw_info()                 # Combined totals
 irw_info(details = TRUE)   # Combined + per-dataset breakdown
 irw_info("frac20")      # Specific IRW table
-irw_info("t20_hyper", comp = TRUE)  # Competition table
-irw_info("gilbert_meta_3", sim=TRUE)
+irw_info("t20_hyper", source = "comp")  # Competition table
+irw_info("gilbert_meta_3", source = "sim")
 
 }
 }

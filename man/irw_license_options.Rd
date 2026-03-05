@@ -4,10 +4,13 @@
 \alias{irw_license_options}
 \title{View Unique License Options with Frequencies}
 \usage{
-irw_license_options(comp = FALSE)
+irw_license_options(source = "core", comp = FALSE)
 }
 \arguments{
-\item{comp}{Logical. If TRUE, use competition bibliography.}
+\item{source}{Character. Data source: \code{"core"} (default) or \code{"comp"}.
+Use \code{source = "comp"} for competition bibliography.}
+
+\item{comp}{Deprecated. Use \code{source = "comp"} instead.}
 }
 \value{
 A data.frame with 'license' and 'count' columns.

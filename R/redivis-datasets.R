@@ -17,68 +17,73 @@
 
 
 # helper for multiple redivis datasets
-.get_all_irw_datasets <- function() {
-  if (!exists("irw_datasets", envir = .irw_env) || is.null(.irw_env$irw_datasets)) {
-    .irw_env$irw_datasets <- list(
-      redivis::redivis$user("datapages")$dataset("item_response_warehouse:as2e"),
-      redivis::redivis$user("datapages")$dataset("item_response_warehouse_2:epbx")
+.irw_sources <- c("core", "nom", "sim", "comp")
+
+#' Resolve data source from \code{source} or deprecated \code{nom}/\code{sim}/\code{comp}
+#'
+#' @param source Character. One of \code{"core"}, \code{"nom"}, \code{"sim"}, \code{"comp"}.
+#' @param sim Deprecated. Use \code{source = "sim"} instead.
+#' @param comp Deprecated. Use \code{source = "comp"} instead.
+#' @param nom Deprecated. Use \code{source = "nom"} instead.
+#' @return Single character string from \code{.irw_sources}.
+#' @keywords internal
+.irw_resolve_source <- function(source = "core", sim = FALSE, comp = FALSE, nom = FALSE) {
+  if (isTRUE(sim) || isTRUE(comp) || isTRUE(nom)) {
+    warning(
+      "Arguments 'sim', 'comp', and 'nom' are deprecated and will be removed in a future release. ",
+      "Use source = \"sim\", source = \"comp\", or source = \"nom\" instead.",
+      call. = FALSE
     )
-    # Call get() for each dataset
-    lapply(.irw_env$irw_datasets, function(ds) .retry_with_backoff(function() ds$get()))
+    if (isTRUE(sim)) source <- "sim"
+    else if (isTRUE(comp)) source <- "comp"
+    else source <- "nom"
   }
-  .irw_env$irw_datasets
+  match.arg(source, .irw_sources)
 }
 
 #' Initialize Redivis Datasource(s)
 #'
 #' Returns a list of Redivis dataset objects based on the selected source:
-#' - If `sim = TRUE`, returns the IRW simulation dataset (`irw_simsyn:0btg`)
-#' - If `comp = TRUE`, returns the IRW competition dataset (`irw_competitions:cmd7`)
-#' - If `nom = TRUE`, returns the IRW nominal dataset (`irw_nominal:614n`)
-#' - Otherwise, returns the main IRW production datasets
+#' - If \code{source = "sim"}, returns the IRW simulation dataset (\code{irw_simsyn:0btg})
+#' - If \code{source = "comp"}, returns the IRW competition dataset (\code{irw_competitions:cmd7})
+#' - If \code{source = "nom"}, returns the IRW nominal dataset (\code{irw_nominal:614n})
+#' - If \code{source = "core"} (default), returns the main IRW production datasets
 #'
-#' Note: `sim`, `comp`, and `nom` are mutually exclusive.
-#'
-#' @param sim Logical. If TRUE, connects to the IRW simulation dataset.
-#' @param comp Logical. If TRUE, connects to the IRW competition dataset.
-#' @param nom Logical. If TRUE, connects to the IRW nominal dataset.
+#' @param source Character. One of \code{"core"}, \code{"nom"}, \code{"sim"}, \code{"comp"}.
+#'   Default is \code{"core"}.
+#' @param sim Deprecated. Use \code{source = "sim"} instead.
+#' @param comp Deprecated. Use \code{source = "comp"} instead.
+#' @param nom Deprecated. Use \code{source = "nom"} instead.
 #'
 #' @return A list of one or more Redivis dataset objects.
 #' @keywords internal
-.initialize_datasource <- function(sim = FALSE, comp = FALSE, nom=FALSE) {
-  if (!is.logical(sim) || length(sim) != 1) stop("'sim' must be a single TRUE or FALSE value.")
-  if (!is.logical(comp) || length(comp) != 1) stop("'comp' must be a single TRUE or FALSE value.")
-  if (!is.logical(nom) || length(nom) != 1) stop("'nom' must be a single TRUE or FALSE value.")
-  
-  n_sources <- sum(c(sim, comp, nom))
-  if (n_sources > 1L) {
-    stop("Cannot set more than one of 'sim', 'comp', 'nom' to TRUE. Please choose one data source.")
-  }
-  
-  if (sim) {
+.initialize_datasource <- function(source = "core", sim = FALSE, comp = FALSE, nom = FALSE) {
+  source <- .irw_resolve_source(source = source, sim = sim, comp = comp, nom = nom)
+
+  if (source == "sim") {
     if (!exists("sim_datasource", envir = .irw_env) || is.null(.irw_env$sim_datasource)) {
       ds <- redivis::redivis$user("bdomingu")$dataset("irw_simsyn:0btg")
       ds$get()
       .irw_env$sim_datasource <- ds
     }
     return(list(.irw_env$sim_datasource))
-    
-  } else if (comp) {
+
+  } else if (source == "comp") {
     if (!exists("comp_datasource", envir = .irw_env) || is.null(.irw_env$comp_datasource)) {
       ds <- redivis::redivis$user("bdomingu")$dataset("irw_competitions:cmd7")
       ds$get()
       .irw_env$comp_datasource <- ds
     }
     return(list(.irw_env$comp_datasource))
-  
-  } else if (nom) {
+
+  } else if (source == "nom") {
     if (!exists("nom_datasource", envir = .irw_env) || is.null(.irw_env$nom_datasource)) {
       ds <- redivis::redivis$user("bdomingu")$dataset("irw_nominal:614n")
       ds$get()
       .irw_env$nom_datasource <- ds
     }
     return(list(.irw_env$nom_datasource))
-    
+
   } else {
     if (!exists("datasource_list", envir = .irw_env) || is.null(.irw_env$datasource_list)) {
       .irw_env$datasource_list <- list(

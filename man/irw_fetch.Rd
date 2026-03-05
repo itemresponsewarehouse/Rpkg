@@ -6,8 +6,9 @@
 \usage{
 irw_fetch(
   name,
-  sim = FALSE,
+  source = "core",
   dedup = FALSE,
+  sim = FALSE,
   comp = FALSE,
   nom = FALSE,
   resp = FALSE
@@ -16,18 +17,18 @@ irw_fetch(
 \arguments{
 \item{name}{Character vector of one or more table names (IRW table IDs).}
 
-\item{sim}{Logical, optional. If TRUE, fetches from the IRW simulation dataset (\code{irw_simsyn}). Defaults to FALSE.}
+\item{source}{Character. Data source: \code{"core"} (default), \code{"nom"}, \code{"sim"}, or \code{"comp"}.}
 
 \item{dedup}{Logical, optional. If TRUE, deduplicates responses based on timing variables. Defaults to FALSE.
-\itemize{
-\item If a 'date' column is present, no deduplication is performed.
-\item If only a 'wave' column is present, one random response is retained per (id, item) group within each wave.
-\item If neither 'date' nor 'wave' is present, one random response is retained per (id, item) pair.
-}}
+If a \code{date} column is present, no deduplication is performed.
+If only a \code{wave} column is present, one random response is retained per (id, item) group within each wave.
+If neither \code{date} nor \code{wave} is present, one random response is retained per (id, item) pair.}
 
-\item{comp}{Logical, optional. If TRUE, fetches from the IRW competition dataset (\code{irw_competitions}). Defaults to FALSE.}
+\item{sim}{Deprecated. Use \code{source = "sim"} instead.}
 
-\item{nom}{Logical, optional. If TRUE, fetches from the IRW nominal dataset (\code{irw_nominal}). Defaults to FALSE.}
+\item{comp}{Deprecated. Use \code{source = "comp"} instead.}
+
+\item{nom}{Deprecated. Use \code{source = "nom"} instead.}
 
 \item{resp}{Logical, optional. If TRUE, returns response matrix via \code{irw_long2resp()}. Defaults to FALSE.}
 }
@@ -50,10 +51,10 @@ irw_fetch("environment_ltm")
 irw_fetch("pks_probability", dedup = TRUE)
 
 # Simulation data
-irw_fetch("gilbert_meta_3", sim = TRUE)
+irw_fetch("gilbert_meta_3", source = "sim")
 
 # Competition data
-irw_fetch("collegefb_2021and2022", comp = TRUE)
+irw_fetch("collegefb_2021and2022", source = "comp")
 }
 
 }

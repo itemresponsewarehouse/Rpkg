@@ -13,45 +13,54 @@ irw_long2resp(
 )
 }
 \arguments{
-\item{df}{A data frame containing IRW-compliant item response data in long format.}
+\item{df}{A data frame containing IRW-compliant item response data in long
+format.}
 
 \item{wave}{(Optional) A numeric value specifying which wave to filter.
-If the dataset does not have a \code{wave} column, this input is ignored.
+If the dataset does not have a \code{wave} column, this input is
+ignored.
 Defaults to the most frequent wave if \code{NULL}.}
 
-\item{id_density_threshold}{A numeric value between \code{0.0} and \code{1.0} specifying the
-minimum response density required for an \code{id} to be included.
-Default is \code{0.1}. Set to \code{NULL} to disable filtering.}
+\item{id_density_threshold}{A numeric value between \code{0.0} and
+\code{1.0} specifying the minimum response density required for an \code{id}
+to be included. Default is \code{0.1}. Set to \code{NULL} to disable
+filtering.}
 
-\item{agg_method}{A string specifying how to handle multiple \code{id}-\code{item} pairs.
-Options: \code{"mean"} (default), \code{"mode"}, \code{"median"}, \code{"first"}.}
+\item{agg_method}{A string specifying how to handle multiple
+\code{id}-\code{item} pairs. Options: \code{"mean"} (default),
+\code{"mode"}, \code{"median"}, \code{"first"}.}
 
-\item{check_resp}{Logical; if \code{TRUE}, perform basic response diagnostics on items
-using default thresholds and attach results as an attribute. Default is \code{FALSE}.}
+\item{check_resp}{Logical; if \code{TRUE}, perform basic response diagnostics
+on items using default thresholds and attach results as an attribute.
+Default is \code{FALSE}.}
 }
 \value{
-A data frame in wide format where rows represent \code{id} values and columns
-represent \code{item_*} responses.
-If \code{check_resp = TRUE}, an attribute \code{"resp_checks"} is attached:
+A data frame in wide format where rows represent \code{id} values
+and columns represent \code{item_*} responses.
+If \code{check_resp = TRUE}, an attribute \code{"resp_checks"}
+is attached:
 \itemize{
-\item \code{single_category_items}: character vector of item IDs with only one observed category.
-\item \code{sparse_category_items}: named list; each element is a data.frame
-with sparse categories for that item (columns: \code{resp}, \code{count}, \code{prop}).
+\item \code{single_category_items}: character vector of item IDs
+with only one observed category.
+\item \code{sparse_category_items}: named list; each element is
+a data.frame with sparse categories for that item
+(columns: \code{resp}, \code{count}, \code{prop}).
 }
 }
 \description{
-Converts an IRW-compliant dataset from long format to wide format while handling
-optional metadata elements, filtering by wave, and ensuring consistency.
+Converts an IRW-compliant dataset from long format to wide format
+while handling optional metadata elements and filtering by wave.
 }
 \details{
-This function applies a default sparsity filter with a threshold of \code{0.1} for \code{id} density
-to avoid excessive sparsity in the response matrix.
+This function applies a default sparsity filter with a threshold
+of \code{0.1} for \code{id} density to avoid excessive sparsity.
 Users can disable filtering by setting \code{id_density_threshold = NULL}.
 
-If \code{check_resp = TRUE}, the function will run a basic response diagnostic using
-default thresholds (\code{min_count = 5}, \code{min_prop = 0.01}), attach the results as
-an attribute \code{"resp_checks"} on the returned object, and add a short NOTE with
-counts of flagged items. A response category is considered sparse if it has fewer than
-\code{min_count} responses OR a within-item proportion smaller than \code{min_prop}.
-For more control, use \code{irw_check_resp()} directly.
+If \code{check_resp = TRUE}, the function will run a basic diagnostic
+using default thresholds (\code{min_count = 5}, \code{min_prop = 0.01}),
+attach the results as an attribute \code{"resp_checks"} on returned object,
+and add a short NOTE with counts of flagged items.
+A response category is considered sparse if it has fewer than
+\code{min_count} responses OR a within-item proportion smaller than
+\code{min_prop}. For more control, use \code{irw_check_resp()} directly.
 }

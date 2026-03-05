@@ -8,6 +8,7 @@ irw_download(
   table_name,
   path = NULL,
   overwrite = FALSE,
+  source = "core",
   sim = FALSE,
   comp = FALSE,
   nom = FALSE
@@ -23,11 +24,13 @@ with the table's name as the file name.}
 
 \item{overwrite}{Logical. Whether to overwrite an existing file.}
 
-\item{sim}{Logical. If TRUE, download from the simulation dataset.}
+\item{source}{Character. Data source: \code{"core"} (default), \code{"nom"}, \code{"sim"}, or \code{"comp"}.}
 
-\item{comp}{Logical. If TRUE, download from the competition dataset.}
+\item{sim}{Deprecated. Use \code{source = "sim"} instead.}
 
-\item{nom}{Logical. If TRUE, download from the nominal dataset.}
+\item{comp}{Deprecated. Use \code{source = "comp"} instead.}
+
+\item{nom}{Deprecated. Use \code{source = "nom"} instead.}
 }
 \value{
 A message confirming the file download location.

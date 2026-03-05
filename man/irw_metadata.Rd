@@ -4,15 +4,16 @@
 \alias{irw_metadata}
 \title{Retrieve IRW Metadata Table}
 \usage{
-irw_metadata(sim = FALSE, comp = FALSE, nom = FALSE)
+irw_metadata(source = "core", sim = FALSE, comp = FALSE, nom = FALSE)
 }
 \arguments{
-\item{sim}{Logical. If TRUE, returns simulation metadata (simsyn_metadata).}
+\item{source}{Character. Data source: \code{"core"} (default), \code{"nom"}, \code{"sim"}, or \code{"comp"}.}
 
-\item{comp}{Logical. If TRUE, returns competition metadata (comps_metadata).}
+\item{sim}{Deprecated. Use \code{source = "sim"} instead.}
 
-\item{nom}{Logical. If TRUE, returns nominal metadata (nominal_metadata).
-Only one of \code{sim}, \code{comp}, or \code{nom} may be TRUE.}
+\item{comp}{Deprecated. Use \code{source = "comp"} instead.}
+
+\item{nom}{Deprecated. Use \code{source = "nom"} instead.}
 }
 \value{
 A tibble containing metadata information.
