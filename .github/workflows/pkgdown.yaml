@@ -29,7 +29,7 @@ jobs:
         with:
           use-public-rspm: true
 
-      - name: Install system dependencies for sf
+      - name: Install system dependencies for sf and redivis
         run: |
           sudo apt-get update
           sudo apt-get install -y \
@@ -39,7 +39,8 @@ jobs:
             libjpeg-dev \
             libharfbuzz-dev \
             libfribidi-dev \
-            libfontconfig1-dev
+            libfontconfig1-dev \
+            libcurl4-openssl-dev
 
       - name: Install dependencies
         run: |
