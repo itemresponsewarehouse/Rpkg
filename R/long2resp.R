@@ -152,8 +152,10 @@ irw_long2resp <- function(df,
                           wave = NULL,
                           id_density_threshold = 0.1,
                           agg_method = "mean",
-                          check_resp = FALSE) {
-  # Ensure required columns exist
+                          check_resp = FALSE,
+                          resp_col="resp") {
+    if (resp_col!="resp") df$resp<-df[[resp_col]]
+                                        # Ensure required columns exist
   required_cols <- c("id", "item", "resp")
   missing_cols <- setdiff(required_cols, names(df))
   if (length(missing_cols) > 0L) {
