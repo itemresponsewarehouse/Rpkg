@@ -35,8 +35,12 @@
     
     rare <- (tab < min_count) | (prop < min_prop)
     if (any(rare)) {
+      resp_vals <- names(tab)[rare]
+      if (all(!is.na(suppressWarnings(as.numeric(resp_vals))))) {
+        resp_vals <- as.numeric(resp_vals)
+      }
       sparse_category_items[[item_name]] <- data.frame(
-        resp = as.numeric(names(tab)[rare]),
+        resp = resp_vals,
         count = as.integer(tab[rare]),
         prop = as.numeric(prop[rare]),
         row.names = NULL
@@ -126,16 +130,22 @@ irw_check_resp <- function(x, min_count = 5L, min_prop = 0.01) {
 #' @param id_density_threshold A numeric value between \code{0.0} and
 #' \code{1.0} specifying the minimum response density required for an \code{id}
 #'  to be included. Default is \code{0.1}. Set to \code{NULL} to disable
-#'   filtering.
+#'   filtering. Density is the proportion of items with a non-missing value
+#'   in the column given by \code{resp_col}.
 #' @param agg_method A string specifying how to handle multiple
-#'  \code{id}-\code{item} pairs. Options: \code{"mean"} (default),
-#'  \code{"mode"}, \code{"median"}, \code{"first"}.
+#'  \code{id}-\code{item} pairs. Options: \code{"mean"}, \code{"mode"},
+#'  \code{"median"}, \code{"first"}. Default is \code{"mean"} for numeric
+#'  response columns and \code{"first"} for non-numeric (e.g. text).
 #' @param check_resp Logical; if \code{TRUE}, perform basic response diagnostics
 #'    on items using default thresholds and attach results as an attribute.
 #'    Default is \code{FALSE}.
+#' @param resp_col Character string giving the column in \code{df} to use as
+#'   the response value when building the wide matrix. Defaults to \code{"resp"}.
+#'   For nominal data stored in a text column, use e.g. \code{resp_col = "text"}.
 #'
 #' @return A data frame in wide format where rows represent \code{id} values
-#' and columns represent \code{item_*} responses.
+#' and columns represent \code{item_*} responses. The column used for
+#' response values is recorded in the \code{"resp_col"} attribute.
 #'         If \code{check_resp = TRUE}, an attribute \code{"resp_checks"}
 #'          is attached:
 #'         \itemize{
@@ -151,23 +161,41 @@ irw_check_resp <- function(x, min_count = 5L, min_prop = 0.01) {
 irw_long2resp <- function(df,
                           wave = NULL,
                           id_density_threshold = 0.1,
-                          agg_method = "mean",
+                          agg_method = NULL,
                           check_resp = FALSE,
-                          resp_col="resp") {
-    if (resp_col!="resp") df$resp<-df[[resp_col]]
-                                        # Ensure required columns exist
-  required_cols <- c("id", "item", "resp")
+                          resp_col = "resp") {
+
+  required_cols <- c("id", "item")
   missing_cols <- setdiff(required_cols, names(df))
   if (length(missing_cols) > 0L) {
     stop("Missing required IRW columns: ", paste(missing_cols, collapse = ", "))
   }
-  # Stop execution if 'date' exists
+  if (!resp_col %in% names(df)) {
+    stop("Column specified by `resp_col` not found in `df`: ", resp_col)
+  }
   if ("date" %in% names(df)) {
     stop("This function does not yet support data with 'date'.")
   }
-  # Store messages to print at the end
+
   messages <- character(0)
-  # Check for "rater" column and count unique raters
+  resp_raw <- df[[resp_col]]
+  is_numeric_resp <- is.numeric(resp_raw) || is.integer(resp_raw)
+
+  agg_method_defaulted <- is.null(agg_method)
+  if (is.null(agg_method)) {
+    agg_method <- if (is_numeric_resp) "mean" else "first"
+  }
+  valid_agg <- c("mean", "mode", "median", "first")
+  if (!agg_method %in% valid_agg) {
+    stop("Invalid `agg_method`. Choose from 'mean', 'mode', 'median', or 'first'.")
+  }
+  if (!is_numeric_resp && agg_method %in% c("mean", "median")) {
+    stop(
+      "agg_method = '", agg_method, "' requires a numeric response column, ",
+      "but `resp_col = \"", resp_col, "\"` is non-numeric. Use 'first' or 'mode' instead."
+    )
+  }
+
   if ("rater" %in% names(df)) {
     num_raters <- length(unique(df$rater))
     messages <- c(
@@ -176,10 +204,11 @@ irw_long2resp <- function(df,
              num_raters, " unique raters.\n")
     )
   }
-  # Drop non-essential columns except id, item, resp, and wave (if exists)
-  essential_cols <- c("id", "item", "resp", "wave")
+
+  essential_cols <- c("id", "item", "wave")
   df <- df[, intersect(names(df), essential_cols), drop = FALSE]
-  # Handle wave filtering
+  df$resp <- resp_raw
+
   if ("wave" %in% names(df)) {
     if (is.null(wave)) {
       # Find the most frequent wave
@@ -198,21 +227,21 @@ irw_long2resp <- function(df,
   
   # Ensure item names have "item_" prefix
   df$item <- ifelse(grepl("^item_", df$item), df$item, paste0("item_", df$item))
-  
-  # Convert response values to numeric
-  df$resp <- suppressWarnings(as.numeric(df$resp))
-  
-  # Warn if non-numeric responses exist
-  if (any(is.na(df$resp))) {
-    messages <- c(
-      messages,
-      paste0(
-        "Some responses were either missing or could not be converted to ",
-        "numeric; these have been recorded as NA."
+
+  if (agg_method %in% c("mean", "median")) {
+    original_resp <- df$resp
+    df$resp <- suppressWarnings(as.numeric(df$resp))
+    if (any(is.na(df$resp) & !is.na(original_resp))) {
+      messages <- c(
+        messages,
+        paste0(
+          "Some responses could not be converted to numeric for agg_method='",
+          agg_method, "' and were recorded as NA."
+        )
       )
-    )
+    }
   }
-  
+
   # ---- Duplicate handling ----
   # Count duplicate id-item responses
   dup_summary <- stats::aggregate(
@@ -229,23 +258,19 @@ irw_long2resp <- function(df,
   num_duplicate_responses <- if (num_affected_pairs > 0L) {
     sum(affected_pairs$n) - num_affected_pairs
   } else 0L
-  
-  avg_duplicates_per_pair <- if (num_affected_pairs > 0L) {
-    round(num_duplicate_responses / num_affected_pairs, 2)
-  } else 0
-  
-  prop_dup_pairs <- if (total_unique_pairs > 0L) {
-    round((num_affected_pairs / total_unique_pairs) * 100, 2)
-  } else 0
-  
+
   if (num_affected_pairs > 0L) {
+    default_note <- if (agg_method_defaulted) {
+      paste0(" (agg_method defaulted to '", agg_method, "' for ", if (is_numeric_resp) "numeric" else "non-numeric", " response)")
+    } else {
+      ""
+    }
     messages <- c(
       messages,
       paste0(
-        "Found ", num_duplicate_responses, " responses across ",
-        num_affected_pairs, " unique id-item pairs (", prop_dup_pairs, "% of total). ",
-        "\nAverage responses per pair: ", avg_duplicates_per_pair, ". ",
-        "\nAggregating responses based on agg_method='", agg_method, "'."
+        "Dropped ", num_duplicate_responses, " duplicate response(s) from ", num_affected_pairs,
+        " id-item pair(s) (out of ", total_unique_pairs, " total pairs). ",
+        "Aggregating using agg_method='", agg_method, "'", default_note, "."
       )
     )
     
@@ -253,7 +278,7 @@ irw_long2resp <- function(df,
     if (agg_method == "mode") {
       mode_fn <- function(x) {
         x <- x[!is.na(x)]
-        if (length(x) == 0L) return(NA_real_)
+        if (length(x) == 0L) return(NA)
         ux <- unique(x)
         ux[which.max(tabulate(match(x, ux)))]
       }
@@ -382,8 +407,8 @@ irw_long2resp <- function(df,
   
   # Remove "resp." prefix from column names
   colnames(wide_df) <- sub("^resp\\.", "", colnames(wide_df))
-  
-  # Attach response check info, if any
+
+  attr(wide_df, "resp_col") <- resp_col
   if (check_resp) {
     attr(wide_df, "resp_checks") <- resp_checks
   }

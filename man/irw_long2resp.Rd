@@ -8,8 +8,9 @@ irw_long2resp(
   df,
   wave = NULL,
   id_density_threshold = 0.1,
-  agg_method = "mean",
-  check_resp = FALSE
+  agg_method = NULL,
+  check_resp = FALSE,
+  resp_col = "resp"
 )
 }
 \arguments{
@@ -24,19 +25,26 @@ Defaults to the most frequent wave if \code{NULL}.}
 \item{id_density_threshold}{A numeric value between \code{0.0} and
 \code{1.0} specifying the minimum response density required for an \code{id}
 to be included. Default is \code{0.1}. Set to \code{NULL} to disable
-filtering.}
+filtering. Density is the proportion of items with a non-missing value
+in the column given by \code{resp_col}.}
 
 \item{agg_method}{A string specifying how to handle multiple
-\code{id}-\code{item} pairs. Options: \code{"mean"} (default),
-\code{"mode"}, \code{"median"}, \code{"first"}.}
+\code{id}-\code{item} pairs. Options: \code{"mean"}, \code{"mode"},
+\code{"median"}, \code{"first"}. Default is \code{"mean"} for numeric
+response columns and \code{"first"} for non-numeric (e.g. text).}
 
 \item{check_resp}{Logical; if \code{TRUE}, perform basic response diagnostics
 on items using default thresholds and attach results as an attribute.
 Default is \code{FALSE}.}
+
+\item{resp_col}{Character string giving the column in \code{df} to use as
+the response value when building the wide matrix. Defaults to \code{"resp"}.
+For nominal data stored in a text column, use e.g. \code{resp_col = "text"}.}
 }
 \value{
 A data frame in wide format where rows represent \code{id} values
-and columns represent \code{item_*} responses.
+and columns represent \code{item_*} responses. The column used for
+response values is recorded in the \code{"resp_col"} attribute.
 If \code{check_resp = TRUE}, an attribute \code{"resp_checks"}
 is attached:
 \itemize{
