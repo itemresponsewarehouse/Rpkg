@@ -4,7 +4,10 @@
 \alias{irw_tags}
 \title{Retrieve IRW Tags Table}
 \usage{
-irw_tags()
+irw_tags(tables = NULL)
+}
+\arguments{
+\item{tables}{Optional. A character vector of table name(s) to filter by.}
 }
 \value{
 A tibble containing tags information.

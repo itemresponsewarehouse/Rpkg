@@ -180,10 +180,36 @@ irw_metadata <- function(source = "core", sim = FALSE, comp = FALSE, nom = FALSE
 
 #' Automatically checks for updates and refreshes only when needed.
 #'
+#' @param tables Optional. A character vector of table name(s) to filter by.
+#'
 #' @return A tibble containing tags information.
 #' @export
-irw_tags <- function() {
-  return(.fetch_tags_table())
+irw_tags <- function(tables = NULL) {
+  tags <- .fetch_tags_table()
+  
+  if (is.null(tables)) {
+    return(tags)
+  }
+  
+  if (!is.character(tables)) {
+    stop("`tables` must be a character vector.")
+  }
+  
+  out <- tags[tags$table %in% tables, ]
+  
+  invalid <- setdiff(tables, out$table)
+  
+  if (length(invalid) > 0) {
+    warning(
+      sprintf(
+        "Unknown table name(s): %s",
+        paste(invalid, collapse = ", ")
+      ),
+      call. = FALSE
+    )
+  }
+  
+  out
 }
 
 
