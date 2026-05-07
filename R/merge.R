@@ -288,7 +288,7 @@ irw_merge <- function(table_name, add_source_column = TRUE) {
   }
 
   # If all tables failed to merge, return NULL
-  if (length(merge_candidates) == 1 + length(skipped_tables)) {
+  if (length(skipped_tables) >= length(merge_candidates) - 1) {
     message("\nMerging failed for all tables. No data merged.")
     return(NULL)
   }
