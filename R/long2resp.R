@@ -1,9 +1,13 @@
-.irw_check_resp <- function(df, min_count = 5L, min_prop = 0.01) {
+.irw_check_resp <- function(df, min_count = 5L, min_prop = 0.01, resp_col = "resp") {
+  if (!resp_col %in% names(df)) {
+    stop("Column specified by `resp_col` not found in `df`: ", resp_col)
+  }
+
   single_category_items <- character(0)
   sparse_category_items <- list()
   
   # Only use non-missing responses for checks
-  df_nonmiss <- df[!is.na(df$resp), , drop = FALSE]
+  df_nonmiss <- df[!is.na(df[[resp_col]]), , drop = FALSE]
   
   if (nrow(df_nonmiss) == 0L) {
     return(list(
@@ -13,7 +17,7 @@
   }
   
   # Group responses by item
-  resp_by_item <- split(df_nonmiss$resp, df_nonmiss$item)
+  resp_by_item <- split(df_nonmiss[[resp_col]], df_nonmiss$item)
   
   # 1. Items with only one observed response category
   unique_counts <- vapply(
@@ -77,6 +81,8 @@
 #' @param min_prop Minimum within-item proportion for a category before it
 #'   is considered sparse (only used when \code{x} is long-format).
 #'   Default is 0.01.
+#' @param resp_col Character string giving the response column to inspect when
+#'   \code{x} is long-format. Defaults to \code{"resp"}.
 #'
 #' @return A list with two elements:
 #'   \code{single_category_items} (character vector of item IDs) and
@@ -84,13 +90,20 @@
 #'   \code{resp}, \code{count}, \code{prop}).
 #'
 #' @export
-irw_check_resp <- function(x, min_count = 5L, min_prop = 0.01) {
-  # Case 1: x is long-format (id, item, resp)
-  if (all(c("id", "item", "resp") %in% names(x))) {
+irw_check_resp <- function(x, min_count = 5L, min_prop = 0.01, resp_col = "resp") {
+  # Case 1: x is long-format (id, item, <resp_col>)
+  if (all(c("id", "item") %in% names(x))) {
+    if (!resp_col %in% names(x)) {
+      stop("Column specified by `resp_col` not found in `x`: ", resp_col)
+    }
     df <- x
     df$item <- ifelse(grepl("^item_", df$item), df$item, paste0("item_", df$item))
-    df$resp <- suppressWarnings(as.numeric(df$resp))
-    return(.irw_check_resp(df, min_count = min_count, min_prop = min_prop))
+    return(.irw_check_resp(
+      df,
+      min_count = min_count,
+      min_prop = min_prop,
+      resp_col = resp_col
+    ))
   }
   
   # Case 2: x is wide (output of irw_long2resp)
@@ -99,7 +112,7 @@ irw_check_resp <- function(x, min_count = 5L, min_prop = 0.01) {
   
   stop(
     "`irw_check_resp()` expects either:\n",
-    "  - long-format data with id/item/resp, or\n",
+    "  - long-format data with id/item plus the column named in `resp_col`, or\n",
     "  - an object from irw_long2resp(check_resp = TRUE)."
   )
 }

@@ -4,7 +4,7 @@
 \alias{irw_check_resp}
 \title{Check response patterns in IRW data}
 \usage{
-irw_check_resp(x, min_count = 5L, min_prop = 0.01)
+irw_check_resp(x, min_count = 5L, min_prop = 0.01, resp_col = "resp")
 }
 \arguments{
 \item{x}{A data frame in long format with columns \code{id}, \code{item},
@@ -16,6 +16,9 @@ sparse (only used when \code{x} is long-format). Default is 5.}
 \item{min_prop}{Minimum within-item proportion for a category before it
 is considered sparse (only used when \code{x} is long-format).
 Default is 0.01.}
+
+\item{resp_col}{Character string giving the response column to inspect when
+\code{x} is long-format. Defaults to \code{"resp"}.}
 }
 \value{
 A list with two elements:

@@ -70,22 +70,16 @@ irw_tag_options <- function(column) {
 #'
 #' Returns a data frame showing the number of datasets associated with each license.
 #'
-#' @param source Character. Data source: \code{"core"} (default) or \code{"comp"}.
-#'   Use \code{source = "comp"} for competition bibliography.
+#' @param source Character. Data source: \code{"core"} (default), \code{"sim"},
+#'   \code{"nom"}, or \code{"comp"}.
 #' @param comp Deprecated. Use \code{source = "comp"} instead.
+#' @param sim Deprecated. Use \code{source = "sim"} instead.
+#' @param nom Deprecated. Use \code{source = "nom"} instead.
 #' @return A data.frame with 'license' and 'count' columns.
 #' @export
-irw_license_options <- function(source = "core", comp = FALSE) {
-  source <- .irw_resolve_source(source = source, sim = FALSE, comp = comp, nom = FALSE)
-  if (!source %in% c("core", "comp")) {
-    stop("'source' for irw_license_options must be \"core\" or \"comp\".")
-  }
-
-  bib <- if (source == "comp") {
-    .fetch_comps_biblio_table()
-  } else {
-    .fetch_biblio_table()
-  }
+irw_license_options <- function(source = "core", comp = FALSE, sim = FALSE, nom = FALSE) {
+  source <- .irw_resolve_source(source = source, sim = sim, comp = comp, nom = nom)
+  bib <- .irw_filter_biblio(source)
   
   freqs <- sort(table(bib$Derived_License), decreasing = TRUE)
   
@@ -94,6 +88,94 @@ irw_license_options <- function(source = "core", comp = FALSE) {
     count = as.integer(freqs),
     row.names = NULL
   )
+}
+
+.irw_filter_format_value <- function(x) {
+  if (is.character(x)) {
+    quoted <- sprintf("'%s'", x)
+    if (length(quoted) == 1L) {
+      return(quoted)
+    }
+    return(paste0("c(", paste(quoted, collapse = ", "), ")"))
+  }
+
+  if (is.logical(x) && length(x) == 1L) {
+    return(tolower(as.character(x)))
+  }
+
+  if (length(x) == 1L) {
+    return(as.character(x))
+  }
+
+  paste0("c(", paste(as.character(x), collapse = ", "), ")")
+}
+
+.irw_filter_describe <- function(name, value) {
+  if (is.numeric(value) && length(value) == 2L) {
+    return(sprintf("%s in [%s, %s]", name, value[1], value[2]))
+  }
+
+  sprintf("%s = %s", name, .irw_filter_format_value(value))
+}
+
+.irw_filter_no_match <- function(filter_name, value) {
+  message("0 tables matched ", .irw_filter_describe(filter_name, value), ".")
+  character(0)
+}
+
+.irw_filter_biblio <- function(source) {
+  switch(source,
+         core = .fetch_biblio_table(),
+         sim = .fetch_simsyn_biblio_table(),
+         nom = .fetch_nominal_biblio_table(),
+         comp = .fetch_comps_biblio_table())
+}
+
+.irw_filter_comp_impl <- function(n_responses = NULL,
+                                  n_actors = NULL,
+                                  license = NULL) {
+  meta <- .fetch_comps_metadata_table()
+
+  if (!all(c("table", "n_responses", "n_actors") %in% names(meta))) {
+    stop("Competition metadata table must contain columns: 'table', 'n_responses', 'n_actors'.")
+  }
+
+  if (!is.null(license)) {
+    bib <- .fetch_comps_biblio_table()
+
+    if (!"Derived_License" %in% names(bib)) {
+      warning("No 'Derived_License' column found in competition bibliography table. Skipping license filter.")
+    } else {
+      keep <- !is.na(bib$Derived_License) & bib$Derived_License %in% license
+      matched_tables <- bib$table[keep]
+      meta <- meta[meta$table %in% matched_tables, , drop = FALSE]
+      if (nrow(meta) == 0L) {
+        return(.irw_filter_no_match("license", license))
+      }
+    }
+  }
+
+  numeric_filters <- list(
+    n_responses = n_responses,
+    n_actors = n_actors
+  )
+  numeric_filters <- numeric_filters[vapply(numeric_filters, Negate(is.null), logical(1))]
+
+  for (nm in names(numeric_filters)) {
+    rng <- numeric_filters[[nm]]
+    if (!is.numeric(rng)) stop(sprintf("'%s' must be numeric.", nm))
+    if (length(rng) == 1L) rng <- rep(rng, 2)
+    if (length(rng) != 2L) stop(sprintf("'%s' must be length 1 or 2.", nm))
+
+    meta <- meta[!is.na(meta[[nm]]) &
+                   meta[[nm]] >= rng[1] &
+                   meta[[nm]] <= rng[2], , drop = FALSE]
+    if (nrow(meta) == 0L) {
+      return(.irw_filter_no_match(nm, rng))
+    }
+  }
+
+  sort(unique(meta$table))
 }
 
 #' Filter Available Datasets in IRW
@@ -152,6 +234,12 @@ irw_license_options <- function(source = "core", comp = FALSE) {
 #'   See `irw_tag_options("item_format")`.
 #' @param primary_language_s_ Character vector. Filters by language used (e.g., `"eng"`).
 #'   See `irw_tag_options("primary_language_s_")`.
+#' @param n_actors Numeric vector of length 1 or 2. Competition-only filter for the
+#'   number of actors. Only used when `source = "comp"`.
+#' @param source Character. Data source: `"core"` (default), `"nom"`, `"sim"`, or `"comp"`.
+#' @param comp Deprecated. Use `source = "comp"` instead.
+#' @param sim Deprecated. Use `source = "sim"` instead.
+#' @param nom Deprecated. Use `source = "nom"` instead.
 #' @param license Character vector. Filters datasets by license (e.g., `"CC BY 4.0"`).
 #'   See `irw_license_options()` for available values.
 #' @return A sorted character vector of dataset names that match all specified filters, or `character(0)` if no match is found.
@@ -178,6 +266,8 @@ irw_license_options <- function(source = "core", comp = FALSE) {
 #' irw_filter(n_categories = 2, density = NULL)           # binary
 #' irw_filter(n_categories = c(3, 5), density = NULL)     # small multi-category
 #' irw_filter(n_categories = c(10, Inf), density = NULL)  # large category sets
+#' irw_filter(source = "sim", n_items = c(10, Inf))
+#' irw_filter(source = "comp", n_actors = c(2, 10))
 #' }
 #' @export
 irw_filter <- function(n_responses = NULL,
@@ -197,11 +287,19 @@ irw_filter <- function(n_responses = NULL,
                        item_format = NULL,
                        primary_language_s_ = NULL,
                        longitudinal = NULL,
+                       n_actors = NULL,
+                       source = "core",
+                       comp = FALSE,
+                       sim = FALSE,
+                       nom = FALSE,
                        license = NULL) {
-  
-  metadata <- irw_metadata()
-  
-  # --- TAG FILTERING ---
+  density_supplied <- !missing(density)
+  source <- .irw_resolve_source(source = source, sim = sim, comp = comp, nom = nom)
+
+  if (!is.null(n_actors) && source != "comp") {
+    stop("`n_actors` is only available when `source = \"comp\"`.")
+  }
+
   tag_filters <- list(
     age_range = age_range,
     child_age__for_child_focused_studies_ = child_age__for_child_focused_studies_,
@@ -212,13 +310,57 @@ irw_filter <- function(n_responses = NULL,
     item_format = item_format,
     primary_language_s_ = primary_language_s_
   )
-  
-  # Remove NULL filters
   tag_filters <- tag_filters[vapply(tag_filters, Negate(is.null), logical(1))]
-  
+
+  if (source == "comp") {
+    unsupported_filters <- list(
+      n_categories = n_categories,
+      n_participants = n_participants,
+      n_items = n_items,
+      responses_per_participant = responses_per_participant,
+      responses_per_item = responses_per_item,
+      density = if (density_supplied) density else NULL,
+      var = var,
+      age_range = age_range,
+      child_age__for_child_focused_studies_ = child_age__for_child_focused_studies_,
+      construct_type = construct_type,
+      construct_name = construct_name,
+      sample = sample,
+      measurement_tool = measurement_tool,
+      item_format = item_format,
+      primary_language_s_ = primary_language_s_,
+      longitudinal = longitudinal
+    )
+    unsupported_filters <- unsupported_filters[vapply(unsupported_filters, Negate(is.null), logical(1))]
+
+    if (length(unsupported_filters) > 0L) {
+      stop(
+        "These filters are not available for `source = \"comp\"`: ",
+        paste(names(unsupported_filters), collapse = ", "),
+        "."
+      )
+    }
+
+    return(.irw_filter_comp_impl(
+      n_responses = n_responses,
+      n_actors = n_actors,
+      license = license
+    ))
+  }
+
+  if (source != "core" && length(tag_filters) > 0L) {
+    stop(
+      "Tag filters are only available for `source = \"core\"`. Unsupported filter(s): ",
+      paste(names(tag_filters), collapse = ", "),
+      "."
+    )
+  }
+
+  metadata <- irw_metadata(source = source)
+
   if (length(tag_filters) > 0) {
     tags <- .fetch_tags_table()
-    
+
     for (colname in names(tag_filters)) {
       value <- tag_filters[[colname]]
       if (!is.null(value) && colname %in% colnames(tags)) {
@@ -229,51 +371,53 @@ irw_filter <- function(n_responses = NULL,
               any(tag_list %in% value)
             }),
         ]
+        if (nrow(tags) == 0L) {
+          return(.irw_filter_no_match(colname, value))
+        }
       } else {
         warning(sprintf("Column '%s' not found in tags table. Ignored.", colname))
       }
     }
-    
-    if (nrow(tags) == 0) {
-      return(character(0))
-    }
-    
+
     metadata <- metadata[tolower(metadata$table) %in% tolower(tags$table), ]
+    if (nrow(metadata) == 0L) {
+      return(.irw_filter_no_match(names(tag_filters)[length(tag_filters)], tag_filters[[length(tag_filters)]]))
+    }
   }
-  
-  # --- LICENSE FILTERING ---
+
   if (!is.null(license)) {
-    biblio <- .fetch_biblio_table()
-    
+    biblio <- .irw_filter_biblio(source)
+
     if (!"Derived_License" %in% names(biblio)) {
       warning("No license information found in bibliography table. Skipping license filter.")
     } else {
       keep_rows <- !is.na(biblio[["Derived_License"]]) & biblio[["Derived_License"]] %in% license
-      matched <- biblio[keep_rows, "table"]
-      metadata <- metadata[tolower(metadata$table) %in% tolower(matched$table), ]
+      matched_tables <- biblio$table[keep_rows]
+      metadata <- metadata[tolower(metadata$table) %in% tolower(matched_tables), ]
+      if (nrow(metadata) == 0L) {
+        return(.irw_filter_no_match("license", license))
+      }
     }
   }
-  
-  # --- LONGITUDINAL FILTERING ---
+
   if (!is.null(longitudinal)) {
     if (!"longitudinal" %in% names(metadata)) {
       warning("No 'longitudinal' column in irw_metadata(); skipping longitudinal filter.")
     } else {
       keep_flag <- isTRUE(longitudinal)
       metadata <- metadata[!is.na(metadata$longitudinal) & metadata$longitudinal == keep_flag, ]
+      if (nrow(metadata) == 0L) {
+        return(.irw_filter_no_match("longitudinal", longitudinal))
+      }
     }
   }
-  
-  
-  # --- VARIABLE FILTERING ---
+
   if (!is.null(var)) {
-    # build lazily here
     metadata$variables_list <- strsplit(tolower(metadata$variables), "\\|\\s*")
     var_lc <- tolower(var)
-    
+
     metadata <- metadata[vapply(metadata$variables_list, function(vars) {
       all(vapply(var_lc, function(v) {
-        # treat any string with "_" as a prefix indicator (as before)
         if (grepl("_", v)) {
           any(grepl(paste0("^", v), vars))
         } else {
@@ -281,11 +425,11 @@ irw_filter <- function(n_responses = NULL,
         }
       }, logical(1)))
     }, logical(1)), ]
+    if (nrow(metadata) == 0L) {
+      return(.irw_filter_no_match("var", var))
+    }
   }
-  
-  if (nrow(metadata) == 0) return(character(0))
-  
-  # --- NUMERIC FILTERING ---
+
   numeric_filters <- list(
     n_responses = n_responses,
     n_categories = n_categories,
@@ -302,18 +446,21 @@ irw_filter <- function(n_responses = NULL,
     if (length(filter_value) == 1) filter_value <- rep(filter_value, 2)
     metadata <- metadata[metadata[[filter_name]] >= filter_value[1] &
                            metadata[[filter_name]] <= filter_value[2], ]
+    if (nrow(metadata) == 0L) {
+      return(.irw_filter_no_match(filter_name, filter_value))
+    }
   }
-  
-  user_specified_density <- !missing(density)
+
+  user_specified_density <- density_supplied
   if (!is.null(density)) {
     if (length(density) == 1) density <- rep(density, 2)
-    
+
     metadata_before_density <- metadata
     metadata <- metadata[metadata$density >= density[1] &
                            metadata$density <= density[2], ]
-    
+
     num_removed_by_density <- nrow(metadata_before_density) - nrow(metadata)
-    
+
     if (!user_specified_density &&
         identical(density, c(0.5, 1)) &&
         num_removed_by_density > 0) {
@@ -322,8 +469,12 @@ irw_filter <- function(n_responses = NULL,
         num_removed_by_density
       ))
     }
+
+    if (nrow(metadata) == 0L) {
+      return(.irw_filter_no_match("density", density))
+    }
   }
-  
+
   return(sort(metadata$table))
 }
 
@@ -353,47 +504,12 @@ irw_filter <- function(n_responses = NULL,
 irw_filter_comp <- function(n_responses = NULL,
                             n_actors = NULL,
                             license = NULL) {
-  meta <- .fetch_comps_metadata_table()
-  
-  if (!all(c("table", "n_responses", "n_actors") %in% names(meta))) {
-    stop("Competition metadata table must contain columns: 'table', 'n_responses', 'n_actors'.")
-  }
-  
-  # --- LICENSE FILTERING ---
-  if (!is.null(license)) {
-    bib <- .fetch_comps_biblio_table()
-    
-    if (!"Derived_License" %in% names(bib)) {
-      warning("No 'Derived_License' column found in competition bibliography table. Skipping license filter.")
-    } else {
-      keep <- !is.na(bib$Derived_License) & bib$Derived_License %in% license
-      matched_tables <- bib$table[keep]
-      meta <- meta[meta$table %in% matched_tables, , drop = FALSE]
-    }
-  }
-  
-  if (nrow(meta) == 0) return(character(0))
-  
-  # --- NUMERIC FILTERING ---
-  numeric_filters <- list(
+  irw_filter(
     n_responses = n_responses,
-    n_actors = n_actors
+    n_actors = n_actors,
+    license = license,
+    source = "comp"
   )
-  numeric_filters <- numeric_filters[vapply(numeric_filters, Negate(is.null), logical(1))]
-  
-  for (nm in names(numeric_filters)) {
-    rng <- numeric_filters[[nm]]
-    if (!is.numeric(rng)) stop(sprintf("'%s' must be numeric.", nm))
-    if (length(rng) == 1) rng <- rep(rng, 2)
-    if (length(rng) != 2) stop(sprintf("'%s' must be length 1 or 2.", nm))
-    
-    meta <- meta[!is.na(meta[[nm]]) &
-                   meta[[nm]] >= rng[1] &
-                   meta[[nm]] <= rng[2], , drop = FALSE]
-    if (nrow(meta) == 0) return(character(0))
-  }
-  
-  sort(unique(meta$table))
 }
 
 

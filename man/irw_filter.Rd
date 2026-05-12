@@ -22,6 +22,11 @@ irw_filter(
   item_format = NULL,
   primary_language_s_ = NULL,
   longitudinal = NULL,
+  n_actors = NULL,
+  source = "core",
+  comp = FALSE,
+  sim = FALSE,
+  nom = FALSE,
   license = NULL
 )
 }
@@ -85,6 +90,17 @@ See \code{irw_tag_options("primary_language_s_")}.}
 \item \code{NULL} (default): no filter
 }}
 
+\item{n_actors}{Numeric vector of length 1 or 2. Competition-only filter for the
+number of actors. Only used when \code{source = "comp"}.}
+
+\item{source}{Character. Data source: \code{"core"} (default), \code{"nom"}, \code{"sim"}, or \code{"comp"}.}
+
+\item{comp}{Deprecated. Use \code{source = "comp"} instead.}
+
+\item{sim}{Deprecated. Use \code{source = "sim"} instead.}
+
+\item{nom}{Deprecated. Use \code{source = "nom"} instead.}
+
 \item{license}{Character vector. Filters datasets by license (e.g., \code{"CC BY 4.0"}).
 See \code{irw_license_options()} for available values.}
 }
@@ -139,5 +155,7 @@ irw_filter(license = "CC BY 4.0")
 irw_filter(n_categories = 2, density = NULL)           # binary
 irw_filter(n_categories = c(3, 5), density = NULL)     # small multi-category
 irw_filter(n_categories = c(10, Inf), density = NULL)  # large category sets
+irw_filter(source = "sim", n_items = c(10, Inf))
+irw_filter(source = "comp", n_actors = c(2, 10))
 }
 }

@@ -4,13 +4,17 @@
 \alias{irw_license_options}
 \title{View Unique License Options with Frequencies}
 \usage{
-irw_license_options(source = "core", comp = FALSE)
+irw_license_options(source = "core", comp = FALSE, sim = FALSE, nom = FALSE)
 }
 \arguments{
-\item{source}{Character. Data source: \code{"core"} (default) or \code{"comp"}.
-Use \code{source = "comp"} for competition bibliography.}
+\item{source}{Character. Data source: \code{"core"} (default), \code{"sim"},
+\code{"nom"}, or \code{"comp"}.}
 
 \item{comp}{Deprecated. Use \code{source = "comp"} instead.}
+
+\item{sim}{Deprecated. Use \code{source = "sim"} instead.}
+
+\item{nom}{Deprecated. Use \code{source = "nom"} instead.}
 }
 \value{
 A data.frame with 'license' and 'count' columns.
