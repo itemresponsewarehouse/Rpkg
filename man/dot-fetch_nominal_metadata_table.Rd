@@ -12,5 +12,6 @@ A cached or newly fetched tibble containing nominal metadata information.
 \description{
 Retrieves the nominal_metadata table from Redivis user("bdomingu")$dataset("irw_meta").
 Only fetches new data if the dataset version tag has changed.
+Rows are filtered to tables that currently exist in the nominal dataset.
 }
 \keyword{internal}

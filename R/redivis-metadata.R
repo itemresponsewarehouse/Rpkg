@@ -6,6 +6,7 @@
 #'
 #' Retrieves the simsyn_metadata table from Redivis user("bdomingu")$dataset("irw_meta").
 #' Only fetches new data if the dataset version tag has changed.
+#' Rows are filtered to tables that currently exist in the simulation dataset.
 #'
 #' @return A cached or newly fetched tibble containing simulation metadata information.
 #' @keywords internal
@@ -22,7 +23,8 @@
   }
   
   table <- dataset$table("simsyn_metadata:2mwn")
-  .irw_env$simsyn_metadata_tibble <- table$to_tibble()
+  metadata_tibble <- table$to_tibble()
+  .irw_env$simsyn_metadata_tibble <- .irw_filter_rows_to_live_tables(metadata_tibble, source = "sim")
   .irw_env$simsyn_metadata_version <- latest_version_tag
   
   .irw_env$simsyn_metadata_tibble
@@ -32,6 +34,7 @@
 #'
 #' Retrieves the nominal_metadata table from Redivis user("bdomingu")$dataset("irw_meta").
 #' Only fetches new data if the dataset version tag has changed.
+#' Rows are filtered to tables that currently exist in the nominal dataset.
 #'
 #' @return A cached or newly fetched tibble containing nominal metadata information.
 #' @keywords internal
@@ -48,7 +51,8 @@
   }
   
   table <- dataset$table("nominal_metadata:vnhc")
-  .irw_env$nominal_metadata_tibble <- table$to_tibble()
+  metadata_tibble <- table$to_tibble()
+  .irw_env$nominal_metadata_tibble <- .irw_filter_rows_to_live_tables(metadata_tibble, source = "nom")
   .irw_env$nominal_metadata_version <- latest_version_tag
   
   .irw_env$nominal_metadata_tibble
@@ -58,6 +62,7 @@
 #'
 #' Retrieves the comps_metadata table from Redivis user("bdomingu")$dataset("irw_meta").
 #' Only fetches new data if the dataset version tag has changed.
+#' Rows are filtered to tables that currently exist in the competition dataset.
 #'
 #' @return A cached or newly fetched tibble containing competition metadata information.
 #' @keywords internal
@@ -74,9 +79,8 @@
   }
   
   table <- dataset$table("comps_metadata:2kz3")
-  
-  .irw_env$comps_metadata_tibble <- table$to_tibble()
-  
+  metadata_tibble <- table$to_tibble()
+  .irw_env$comps_metadata_tibble <- .irw_filter_rows_to_live_tables(metadata_tibble, source = "comp")
   .irw_env$comps_metadata_version <- latest_version_tag
   .irw_env$comps_metadata_tibble
 }
@@ -104,18 +108,7 @@
   
   table <- dataset$table("comps_biblio:w8pz")
   biblio_tibble <- .retry_with_backoff(function() table$to_tibble())
-  
-  # Get all table names from the competition dataset
-  ds_list <- .initialize_datasource(source = "comp")
-  table_name_list <- tolower(unlist(lapply(ds_list, function(ds) {
-    ds$get()
-    vapply(ds$list_tables(), function(tbl) tbl$name, character(1))
-  })))
-  
-  # Filter comps_biblio table
-  biblio_tibble$table_lower <- tolower(biblio_tibble$table)
-  filtered_biblio <- biblio_tibble[biblio_tibble$table_lower %in% table_name_list, ]
-  filtered_biblio$table_lower <- NULL
+  filtered_biblio <- .irw_filter_rows_to_live_tables(biblio_tibble, source = "comp")
   
   .irw_env$comps_biblio_version <- latest_version_tag
   .irw_env$comps_biblio_tibble <- filtered_biblio
@@ -136,16 +129,7 @@
   
   table <- dataset$table("simsyn_biblio:pm9v")
   biblio_tibble <- table$to_tibble()
-  
-  ds_list <- .initialize_datasource(source = "sim")
-  table_name_list <- tolower(unlist(lapply(ds_list, function(ds) {
-    ds$get()
-    vapply(ds$list_tables(), function(tbl) tbl$name, character(1))
-  })))
-  
-  biblio_tibble$table_lower <- tolower(biblio_tibble$table)
-  filtered_biblio <- biblio_tibble[biblio_tibble$table_lower %in% table_name_list, ]
-  filtered_biblio$table_lower <- NULL
+  filtered_biblio <- .irw_filter_rows_to_live_tables(biblio_tibble, source = "sim")
   
   .irw_env$simsyn_biblio_version <- latest_version_tag
   .irw_env$simsyn_biblio_tibble <- filtered_biblio
@@ -166,16 +150,7 @@
   
   table <- dataset$table("nominal_biblio:vphd")
   biblio_tibble <- table$to_tibble()
-  
-  ds_list <- .initialize_datasource(source = "nom")
-  table_name_list <- tolower(unlist(lapply(ds_list, function(ds) {
-    ds$get()
-    vapply(ds$list_tables(), function(tbl) tbl$name, character(1))
-  })))
-  
-  biblio_tibble$table_lower <- tolower(biblio_tibble$table)
-  filtered_biblio <- biblio_tibble[biblio_tibble$table_lower %in% table_name_list, ]
-  filtered_biblio$table_lower <- NULL
+  filtered_biblio <- .irw_filter_rows_to_live_tables(biblio_tibble, source = "nom")
   
   .irw_env$nominal_biblio_version <- latest_version_tag
   .irw_env$nominal_biblio_tibble <- filtered_biblio
@@ -187,6 +162,7 @@
 #'
 #' Retrieves the metadata table from Redivis user("bdomingu")$dataset("irw_meta")$table("metadata").
 #' Only fetches new data if the table version tag has changed.
+#' Rows are filtered to tables that currently exist in the IRW production datasets.
 #'
 #' @return A cached or newly fetched tibble containing metadata information.
 #' @keywords internal
@@ -207,9 +183,10 @@
   # Fetch new metadata table and convert it to a tibble
   table <- dataset$table("metadata:h5gs")
   
-  .irw_env$metadata_tibble <- .retry_with_backoff(function() {
+  metadata_tibble <- .retry_with_backoff(function() {
     table$to_tibble()
   })
+  .irw_env$metadata_tibble <- .irw_filter_rows_to_live_tables(metadata_tibble, source = "core")
   
   # Store the new version tag
   .irw_env$metadata_version <- latest_version_tag
@@ -241,18 +218,7 @@
   # Fetch fresh biblio table
   table <- dataset$table("biblio:qahg")
   biblio_tibble <- .retry_with_backoff(function() table$to_tibble())
-  
-  # Get all table names from all datasets
-  ds_list <- .initialize_datasource(source = "core")
-  table_name_list <- tolower(unlist(lapply(ds_list, function(ds) {
-    ds$get()  
-    vapply(ds$list_tables(), function(tbl) tbl$name, character(1))
-  })))
-  
-  # Filter biblio table
-  biblio_tibble$table_lower <- tolower(biblio_tibble$table)
-  filtered_biblio <- biblio_tibble[biblio_tibble$table_lower %in% table_name_list, ]
-  filtered_biblio$table_lower <- NULL
+  filtered_biblio <- .irw_filter_rows_to_live_tables(biblio_tibble, source = "core")
   
   # Cache
   .irw_env$biblio_version <- latest_version_tag
@@ -291,18 +257,7 @@
     col
   })
   tags_tibble <- tibble::as_tibble(tags_tibble)
-  
-  # Get all table names from all datasets
-  ds_list <- .initialize_datasource(source = "core")
-  table_name_list <- tolower(unlist(lapply(ds_list, function(ds) {
-    ds$get()  
-    vapply(ds$list_tables(), function(tbl) tbl$name, character(1))
-  })))
-  
-  # Filter tags table
-  tags_tibble$table_lower <- tolower(tags_tibble$table)
-  filtered_tags <- tags_tibble[tags_tibble$table_lower %in% table_name_list, ]
-  filtered_tags$table_lower <- NULL
+  filtered_tags <- .irw_filter_rows_to_live_tables(tags_tibble, source = "core")
   
   # Cache
   .irw_env$tags_version <- latest_version_tag

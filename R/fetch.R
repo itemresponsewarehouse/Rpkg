@@ -14,69 +14,93 @@
 #' @keywords internal
 fetch_single_data <- function(table_id, source = "core", dedup = FALSE, sim = FALSE, comp = FALSE, nom = FALSE) {
   source <- .irw_resolve_source(source = source, sim = sim, comp = comp, nom = nom)
-  tryCatch(
-    {
-      table_obj <- suppressMessages(.fetch_redivis_table(table_id, source = source))
-      df <- .retry_with_backoff(function() table_obj$to_tibble())
-      
-      # Recode 'resp' from character to numeric if needed (skip for nominal source)
-      if (source != "nom" && "resp" %in% names(df) && is.character(df$resp)) {
-        suppressWarnings({
-          new_resp <- as.numeric(df$resp)
+  ds_list <- .initialize_datasource(source = source)
+  last_err <- NULL
+
+  for (ds in ds_list) {
+    df <- tryCatch(
+      {
+        withCallingHandlers({
+          ds$get()
+          tbl <- ds$table(table_id)
+          tbl$get()
+          .retry_with_backoff(function() tbl$to_tibble())
+        },
+        warning = function(w) {
+          if (grepl("No reference id was provided for the table", conditionMessage(w))) {
+            invokeRestart("muffleWarning")
+          }
         })
-        non_numeric_values <- is.na(new_resp) & !(tolower(trimws(df$resp)) %in% c("na", "", NA))
-        if (any(non_numeric_values)) {
-          warning(sprintf(
-            "In dataset '%s': 'resp' column contained non-numeric values that could not be coerced. Some NAs were introduced.",
-            table_id
-          ))
+      },
+      error = function(e) {
+        msg <- conditionMessage(e)
+        last_err <<- msg
+        if (grepl("invalid_request_error", msg, ignore.case = TRUE)) {
+          stop(paste("\nTable", shQuote(table_id), "cannot be fetched due to an invalid format."), call. = FALSE)
         }
-        df$resp <- new_resp
+        NULL
       }
-      
-      # Deduplication logic
-      if (dedup) {
-        n_before <- nrow(df)
-        
-        if ("date" %in% names(df)) {
-          message(sprintf(
-            "Deduplication skipped for dataset '%s': 'date' column detected (timestamped responses).", table_id
-          ))
-        } else {
-          if ("wave" %in% names(df)) {
-            grouping_keys <- list(df$id, df$item, df$wave)
-            success_msg <- sprintf(
-              "Deduplicated dataset '%s': one response randomly retained per (id, item, wave) group.", table_id
-            )
-          } else {
-            grouping_keys <- list(df$id, df$item)
-            success_msg <- sprintf(
-              "Deduplicated dataset '%s': one response randomly retained per (id, item) pair.", table_id
-            )
-          }
-          
-          split_df <- split(df, grouping_keys, drop = TRUE)
-          df <- do.call(rbind, lapply(split_df, function(g) g[sample(nrow(g), 1), , drop = FALSE]))
-          rownames(df) <- NULL
-          
-          n_after <- nrow(df)
-          if (n_after < n_before) {
-            message(success_msg)
-          } else {
-            message(sprintf(
-              "Deduplication not needed for dataset '%s': no duplicate responses found.", table_id
-            ))
-          }
-        }
+    )
+
+    if (is.null(df)) next
+
+    # Recode 'resp' from character to numeric if needed (skip for nominal source)
+    if (source != "nom" && "resp" %in% names(df) && is.character(df$resp)) {
+      suppressWarnings({
+        new_resp <- as.numeric(df$resp)
+      })
+      non_numeric_values <- is.na(new_resp) & !(tolower(trimws(df$resp)) %in% c("na", "", NA))
+      if (any(non_numeric_values)) {
+        warning(sprintf(
+          "In dataset '%s': 'resp' column contained non-numeric values that could not be coerced. Some NAs were introduced.",
+          table_id
+        ))
       }
-      
-      return(df)
-    },
-    error = function(e) {
-      message(paste("Error fetching dataset", shQuote(table_id), ":", e$message))
-      return(invisible(NULL))
+      df$resp <- new_resp
     }
-  )
+
+    # Deduplication logic
+    if (dedup) {
+      n_before <- nrow(df)
+
+      if ("date" %in% names(df)) {
+        message(sprintf(
+          "Deduplication skipped for dataset '%s': 'date' column detected (timestamped responses).", table_id
+        ))
+      } else {
+        if ("wave" %in% names(df)) {
+          grouping_keys <- list(df$id, df$item, df$wave)
+          success_msg <- sprintf(
+            "Deduplicated dataset '%s': one response randomly retained per (id, item, wave) group.", table_id
+          )
+        } else {
+          grouping_keys <- list(df$id, df$item)
+          success_msg <- sprintf(
+            "Deduplicated dataset '%s': one response randomly retained per (id, item) pair.", table_id
+          )
+        }
+
+        split_df <- split(df, grouping_keys, drop = TRUE)
+        df <- do.call(rbind, lapply(split_df, function(g) g[sample(nrow(g), 1), , drop = FALSE]))
+        rownames(df) <- NULL
+
+        n_after <- nrow(df)
+        if (n_after < n_before) {
+          message(success_msg)
+        } else {
+          message(sprintf(
+            "Deduplication not needed for dataset '%s': no duplicate responses found.", table_id
+          ))
+        }
+      }
+    }
+
+    return(df)
+  }
+
+  err_text <- if (!is.null(last_err)) last_err else "table not found in any datasource"
+  message(paste("Error fetching dataset", shQuote(table_id), ":", err_text))
+  invisible(NULL)
 }
 
 #' Fetch Table(s) from the Item Response Warehouse

@@ -96,3 +96,44 @@
     return(.irw_env$datasource_list)
   }
 }
+
+#' Table names currently listed in Redivis for a source
+#'
+#' @param source Character. One of \code{"core"}, \code{"nom"}, \code{"sim"}, \code{"comp"}.
+#' @return Lowercase character vector of unique table names.
+#' @keywords internal
+#' @noRd
+.irw_live_table_names <- function(source = "core") {
+  ds_list <- .initialize_datasource(source = source)
+  unique(tolower(unlist(lapply(ds_list, function(ds) {
+    ds$get()
+    tables <- ds$list_tables()
+    vapply(tables, function(tbl) tbl$name, character(1))
+  }))))
+}
+
+#' Keep metadata/biblio/tags rows whose tables exist in Redivis
+#'
+#' @param df Data frame with a \code{table} column (or \code{table_col}).
+#' @param source Character. IRW data source passed to \code{.initialize_datasource()}.
+#' @param table_col Name of the table-name column.
+#' @keywords internal
+#' @noRd
+.irw_filter_rows_to_live_tables <- function(df, source = "core", table_col = "table") {
+  if (!table_col %in% names(df) || nrow(df) == 0L) {
+    return(df)
+  }
+  live <- .irw_live_table_names(source = source)
+  df[tolower(df[[table_col]]) %in% live, , drop = FALSE]
+}
+
+#' Whether a Redivis/BigQuery error indicates a missing table
+#'
+#' @param msg Error message text.
+#' @return Logical scalar.
+#' @keywords internal
+#' @noRd
+.irw_is_not_found_error <- function(msg) {
+  grepl("not_found_error", msg, ignore.case = TRUE) ||
+    grepl("not\\s*found", msg, ignore.case = TRUE)
+}

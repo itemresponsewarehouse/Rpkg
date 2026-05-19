@@ -35,12 +35,12 @@
       },
       error = function(e) {
         msg <- conditionMessage(e)
-        # Redivis may surface "not_found_error" in JSON; BigQuery often returns "Not found: ..."
-        if (grepl("not_found_error", msg, ignore.case = TRUE)) return(NULL)
-        if (grepl("not found:", msg, ignore.case = TRUE)) return(NULL)
         if (grepl("invalid_request_error", msg, ignore.case = TRUE)) {
           stop(paste("\nTable", shQuote(name), "cannot be fetched due to an invalid format."), call. = FALSE)
         }
+        # Missing in this dataset (or transient read error): try the next IRW datasource.
+        if (.irw_is_not_found_error(msg)) return(NULL)
+        if (length(ds_list) > 1L) return(NULL)
         stop(paste("\nAn unknown error occurred:", msg), call. = FALSE)
       }
     )
