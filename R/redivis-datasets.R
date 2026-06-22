@@ -89,7 +89,8 @@
     if (!exists("datasource_list", envir = .irw_env) || is.null(.irw_env$datasource_list)) {
       .irw_env$datasource_list <- list(
         redivis::redivis$user("datapages")$dataset("item_response_warehouse:as2e"),
-        redivis::redivis$user("datapages")$dataset("item_response_warehouse_2:epbx")
+        redivis::redivis$user("datapages")$dataset("item_response_warehouse_2:epbx"),
+        redivis::redivis$user("datapages")$dataset("item_response_warehouse_3:5xaj")
       )
       lapply(.irw_env$datasource_list, function(ds) ds$get())
     }
