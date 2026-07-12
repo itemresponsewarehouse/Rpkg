@@ -1,0 +1,31 @@
+Package: irw
+Type: Package
+Title: Package for Working with Data from the Item Response Warehouse
+Version: 1.0.0
+Authors@R: c(
+  person("Hansol", "Lee", email = "hansol@stanford.edu",role = c("aut", "cre")),
+	person("Michael", "Hardy", email = "hardym@stanford.edu",role = c("aut")),
+	person("Ben", "Domingue", email = "bdomingu@stanford.edu", role = c("aut"))
+	)
+Maintainer: Hansol Lee <hansol@stanford.edu>
+URL: https://itemresponsewarehouse.github.io/Rpkg
+Contact: mailto:itemresponsewarehouse@stanford.edu
+Description: Functions to manage data from the Item Response Warehouse. 
+Depends: R (>= 4.0.0)
+Imports: glue, httr, redivis, tibble, stats
+Suggests: testthat (>= 3.0.0), evaluate
+Remotes: redivis/redivis-r
+License: MIT + file LICENSE
+Encoding: UTF-8
+LazyData: true
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.3.3
+Config/testthat/edition: 3
+Config/build/clean-inst-doc: FALSE
+Config/Needs/website: rmarkdown
+BugReports: https://github.com/itemresponsewarehouse/Rpkg/issues
+NeedsCompilation: no
+Packaged: 2026-07-12 18:45:41 UTC; hansol
+Author: Hansol Lee [aut, cre],
+  Michael Hardy [aut],
+  Ben Domingue [aut]

@@ -1,0 +1,285 @@
+pkgname <- "irw"
+source(file.path(R.home("share"), "R", "examples-header.R"))
+options(warn = 1)
+library('irw')
+
+base::assign(".oldSearch", base::search(), pos = 'CheckExEnv')
+base::assign(".old_wd", base::getwd(), pos = 'CheckExEnv')
+cleanEx()
+nameEx("irw_fetch")
+### * irw_fetch
+
+flush(stderr()); flush(stdout())
+
+### Name: irw_fetch
+### Title: Fetch Table(s) from the Item Response Warehouse
+### Aliases: irw_fetch
+
+### ** Examples
+
+## Not run: 
+##D # Main IRW data
+##D irw_fetch("environment_ltm")
+##D 
+##D # Deduplicated
+##D irw_fetch("pks_probability", dedup = TRUE)
+##D 
+##D # Simulation data
+##D irw_fetch("gilbert_meta_3", source = "sim")
+##D 
+##D # Competition data
+##D irw_fetch("collegefb_2021and2022", source = "comp")
+## End(Not run)
+
+
+
+
+cleanEx()
+nameEx("irw_filter")
+### * irw_filter
+
+flush(stderr()); flush(stdout())
+
+### Name: irw_filter
+### Title: Filter Available Datasets in IRW
+### Aliases: irw_filter
+
+### ** Examples
+
+## Not run: 
+##D # Numeric filters
+##D irw_filter(n_responses = c(1000, Inf), n_items = c(10, 50))
+##D irw_filter(n_participants = c(500, Inf), density = c(0.3, 0.9))
+##D 
+##D # Variable presence
+##D irw_filter(var = "rt")
+##D irw_filter(var = c("wave", "cov_"), density = NULL)
+##D 
+##D # Tag metadata filtering
+##D irw_filter(construct_type = "Affective/mental health", sample = "Educational")
+##D irw_tag_options("construct_type")  # view tag values
+##D 
+##D # License filtering
+##D irw_license_options()
+##D irw_filter(license = "CC BY 4.0")
+##D 
+##D # Filter by response category complexity
+##D irw_filter(n_categories = 2, density = NULL)           # binary
+##D irw_filter(n_categories = c(3, 5), density = NULL)     # small multi-category
+##D irw_filter(n_categories = c(10, Inf), density = NULL)  # large category sets
+##D irw_filter(source = "sim", n_items = c(10, Inf))
+##D irw_filter(source = "comp", n_actors = c(2, 10))
+## End(Not run)
+
+
+
+cleanEx()
+nameEx("irw_info")
+### * irw_info
+
+flush(stderr()); flush(stdout())
+
+### Name: irw_info
+### Title: Retrieve and Print IRW Database or Table Information
+### Aliases: irw_info
+
+### ** Examples
+
+## Not run: 
+##D irw_info()                 # Combined totals
+##D irw_info(details = TRUE)   # Combined + per-dataset breakdown
+##D irw_info("frac20")      # Specific IRW table
+##D irw_info("t20_hyper", source = "comp")  # Competition table
+##D irw_info("gilbert_meta_3", source = "sim")
+##D 
+## End(Not run)
+
+
+
+cleanEx()
+nameEx("irw_itemtext")
+### * irw_itemtext
+
+flush(stderr()); flush(stdout())
+
+### Name: irw_itemtext
+### Title: Retrieve item text metadata for an IRW table
+### Aliases: irw_itemtext
+
+### ** Examples
+
+## Not run: 
+##D   irw_itemtext("gilbert_meta_49")
+## End(Not run)
+
+
+
+
+cleanEx()
+nameEx("irw_list_itemtext_tables")
+### * irw_list_itemtext_tables
+
+flush(stderr()); flush(stdout())
+
+### Name: irw_list_itemtext_tables
+### Title: List IRW tables with available item text metadata
+### Aliases: irw_list_itemtext_tables
+
+### ** Examples
+
+## Not run: 
+##D   irw_list_itemtext_tables()
+## End(Not run)
+
+
+
+
+cleanEx()
+nameEx("irw_list_tables")
+### * irw_list_tables
+
+flush(stderr()); flush(stdout())
+
+### Name: irw_list_tables
+### Title: List Available Tables
+### Aliases: irw_list_tables
+
+### ** Examples
+
+## Not run: 
+##D irw_list_tables()               # Main IRW database
+##D irw_list_tables(source = "sim")   # Simulation dataset
+##D irw_list_tables(source = "comp")  # Competition dataset
+## End(Not run)
+
+
+
+cleanEx()
+nameEx("irw_simdata")
+### * irw_simdata
+
+flush(stderr()); flush(stdout())
+
+### Name: irw_simdata
+### Title: Simulate IRW-compliant dichotomous item response data
+### Aliases: irw_simdata
+
+### ** Examples
+
+## Not run: 
+##D # 1PL (default)
+##D dat <- irw_simdata(n_item = 5)
+##D 
+##D # 3PL with latent traits drawn from N(-0.5, 1)
+##D sim <- irw_simdata(n_item = 5, model = "3PL", theta_mean = -0.5, return_params = TRUE)
+##D head(sim$data)
+## End(Not run)
+
+
+
+
+cleanEx()
+nameEx("irw_simdata_comp")
+### * irw_simdata_comp
+
+flush(stderr()); flush(stdout())
+
+### Name: irw_simdata_comp
+### Title: Simulate IRW-compliant pairwise-comparison data
+### Aliases: irw_simdata_comp
+
+### ** Examples
+
+## Not run: 
+##D # --- Basic usage ---
+##D d <- irw_simdata_comp(n_agent = 100, n_pairs = 10000, nu = 0)
+##D head(d)
+##D 
+##D # Simulate pairwise comparison data and recover abilities with a Davidson model
+##D 
+##D th <- rnorm(n = 50, mean = 0.5, sd = 3)
+##D pairs <- irw_simdata_comp(
+##D   n_agent = 50, n_pairs = 3000, nu = 0.1,
+##D   theta = th, seed = 1, return_params = TRUE
+##D )
+##D 
+##D x <- pairs$data
+##D x$winner <- ifelse(x$winner == "agent_b", -1, 1)
+##D x$winner <- ifelse(x$winner == "draw", 0, x$winner)
+##D x$agent_a <- as.factor(x$agent_a)
+##D x$agent_b <- as.factor(x$agent_b)
+##D x$pair <- seq_len(nrow(x))  # add pair id for expandCategorical
+##D 
+##D library(gnm)
+##D library(BradleyTerry2)
+##D 
+##D pairs.tri <- expandCategorical(x, "winner", idvar = "pair")
+##D 
+##D dav <- gnm(
+##D   count ~ GenDavidson(
+##D     winner == 1, winner == 0, winner == -1,
+##D     player1 = agent_a,
+##D     player2 = agent_b
+##D   ) - 1,
+##D   eliminate = pair,
+##D   family = poisson,
+##D   data = pairs.tri
+##D )
+##D 
+##D plot(
+##D   pairs$theta, coef(dav)[-1],
+##D   xlab = "True theta",
+##D   ylab = "Estimated ability (shifted)",
+##D   main = "Davidson recovery using gnm"
+##D )
+##D abline(lm(coef(dav)[-1] ~ pairs$theta), lty = 2)
+## End(Not run)
+
+
+
+
+cleanEx()
+nameEx("irw_simu_diff")
+### * irw_simu_diff
+
+flush(stderr()); flush(stdout())
+
+### Name: irw_simu_diff
+### Title: Simulate Item Difficulties from IRW or Custom Pools
+### Aliases: irw_simu_diff
+
+### ** Examples
+
+## Not run: 
+##D # Use all IRW data (default)
+##D irw_simu_diff(num_items = 5)
+##D 
+##D # Filter to specific IRW datasets
+##D irw_simu_diff(num_items = 5, irw_names = c("psychtools_epi", "psychtools_blot"))
+##D 
+##D # Use a custom difficulty pool
+##D my_pool <- data.frame(dataset = "x",
+##D                       difficulty = c(-0.2, 0.1),
+##D                       SE = c(0.1, 0.2))
+##D irw_simu_diff(num_items = 5, difficulty_pool = my_pool)
+##D 
+##D # Explore built-in IRW difficulty pool
+##D head(diff_long)
+##D unique(diff_long$dataset)
+## End(Not run)
+
+
+
+
+### * <FOOTER>
+###
+cleanEx()
+options(digits = 7L)
+base::cat("Time elapsed: ", proc.time() - base::get("ptime", pos = 'CheckExEnv'),"\n")
+grDevices::dev.off()
+###
+### Local variables: ***
+### mode: outline-minor ***
+### outline-regexp: "\\(> \\)?### [*]+" ***
+### End: ***
+quit('no')
