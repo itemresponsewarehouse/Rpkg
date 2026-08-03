@@ -11,7 +11,7 @@ knitr::opts_chunk$set(
 
 
 ## 📌 Overview
-`irw` provides an interface to access datasets from the [Item Response Warehouse (IRW)](https://datapages.github.io/irw/). 
+`irw` provides an interface to access datasets from the [Item Response Warehouse (IRW)](https://itemresponsewarehouse.org/). 
 
 ```{r setup, echo=FALSE}
 library(irw)

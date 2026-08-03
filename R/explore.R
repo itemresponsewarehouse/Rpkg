@@ -116,11 +116,11 @@ irw_info <- function(table_name = NULL, details = FALSE, source = "core", comp =
                     format(as.POSIXct(max(updated_at_all), origin = "1970-01-01", tz = "UTC"),
                            "%Y-%m-%d %H:%M:%S")))
     message(strrep("-", 50))
-    message(sprintf("%-25s %s", "Data Website:", "https://datapages.github.io/irw/"))
+    message(sprintf("%-25s %s", "Data Website:", "https://itemresponsewarehouse.org/"))
     message(sprintf("%-25s %s", "Methodology:",
-                    "Tables harmonized as per https://datapages.github.io/irw/standard.html"))
+                    "Tables harmonized as per https://itemresponsewarehouse.org/standard.html"))
     message(sprintf("%-25s %s", "Usage Information:",
-                    "License & citation info: https://datapages.github.io/irw/docs.html"))
+                    "License & citation info: https://itemresponsewarehouse.org/docs.html"))
     message(strrep("-", 50))
     
     # --- Optional per-dataset details ---

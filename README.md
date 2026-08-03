@@ -1,6 +1,6 @@
 # `irw`: R Package for the Item Response Warehouse
 
-This repository hosts the R package `irw`, which provides programmatic access to the [Item Response Warehouse (IRW)](https://datapages.github.io/irw/), an open repository of harmonized item response data.
+This repository hosts the R package `irw`, which provides programmatic access to the [Item Response Warehouse (IRW)](https://itemresponsewarehouse.org/), an open repository of harmonized item response data.
 
 Documentation for all available functions can be found at: <https://itemresponsewarehouse.github.io/Rpkg/reference/index.html>.
 
