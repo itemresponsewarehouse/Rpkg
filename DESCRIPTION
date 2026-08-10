@@ -1,7 +1,7 @@
 Package: irw
 Type: Package
 Title: Package for Working with Data from the Item Response Warehouse
-Version: 1.0.0
+Version: 1.0.1
 Authors@R: c(
   person("Hansol", "Lee", email = "hansol@stanford.edu",role = c("aut", "cre")),
 	person("Michael", "Hardy", email = "hardym@stanford.edu",role = c("aut")),
@@ -26,8 +26,8 @@ License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: true
 Roxygen: list(markdown = TRUE)
-RoxygenNote: 7.3.3
 Config/testthat/edition: 3
 Config/build/clean-inst-doc: FALSE
 Config/Needs/website: rmarkdown
 BugReports: https://github.com/itemresponsewarehouse/Rpkg/issues
+Config/roxygen2/version: 8.0.0

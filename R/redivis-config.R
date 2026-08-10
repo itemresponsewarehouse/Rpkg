@@ -10,7 +10,8 @@
   core = list(
     list(user = "datapages", dataset = "item_response_warehouse:as2e"),
     list(user = "datapages", dataset = "item_response_warehouse_2:epbx"),
-    list(user = "datapages", dataset = "item_response_warehouse_3:5xaj")
+    list(user = "datapages", dataset = "item_response_warehouse_3:5xaj"),
+    list(user = "datapages", dataset = "item_response_warehouse_4:980f")
   ),
   sim = list(
     list(user = "bdomingu", dataset = "irw_simsyn:0btg")

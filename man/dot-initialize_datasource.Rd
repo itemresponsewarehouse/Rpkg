@@ -25,7 +25,7 @@ Returns a list of Redivis dataset objects based on the selected source:
 \item If \code{source = "sim"}, returns the IRW simulation dataset (\code{irw_simsyn:0btg})
 \item If \code{source = "comp"}, returns the IRW competition dataset (\code{irw_competitions:cmd7})
 \item If \code{source = "nom"}, returns the IRW nominal dataset (\code{irw_nominal:614n})
-\item If \code{source = "core"} (default), returns the main IRW production datasets
+\item If \code{source = "core"} (default), returns all main IRW production datasets
 }
 }
 \keyword{internal}
