@@ -1,9 +1,54 @@
 ##### Helper functions for irw_merge() #####
 
+#' Flag bibliography values that identify a real citation
+#'
+#' Biblio columns store missing citations as the literal string "NA" (and
+#' occasionally as an empty string), so grouping on the raw column would treat
+#' "no citation" as a shared citation.
+#'
+#' @param x A character vector from the biblio table.
+#' @return A logical vector, TRUE where the value is a usable citation key.
+#' @noRd
+.is_present_biblio_value <- function(x) {
+  x <- trimws(as.character(x))
+  !is.na(x) & nzchar(x) & x != "NA"
+}
+
+#' Ask a yes/no question at the console
+#'
+#' In a non-interactive session `readline()` returns "" immediately, so this
+#' helper never loops there: it reports the assumed answer and returns it.
+#' Interactively it re-asks until the input is valid, giving up after a bounded
+#' number of attempts rather than looping forever.
+#'
+#' @param prompt Character. The question to display.
+#' @param default Logical. The answer assumed when no input can be read.
+#' @param max_attempts Integer. Maximum number of invalid inputs tolerated.
+#' @return Logical, TRUE for "yes" and FALSE for "no".
+#' @noRd
+.prompt_yes_no <- function(prompt, default = TRUE, max_attempts = 5L) {
+  if (!interactive()) {
+    message(prompt, if (default) "yes" else "no",
+            " (assumed; session is not interactive)")
+    return(default)
+  }
+
+  for (i in seq_len(max_attempts)) {
+    answer <- tolower(trimws(readline(prompt = prompt)))
+    if (answer %in% c("yes", "y")) return(TRUE)
+    if (answer %in% c("no", "n")) return(FALSE)
+    message("Invalid input. Please enter 'yes' or 'no'.")
+  }
+
+  message("No valid input received; assuming '", if (default) "yes" else "no", "'.")
+  default
+}
+
 #' Generate DOI and BibTex mappings from a bibliography table
 #'
 #' This function creates mappings of table names grouped by their DOI and BibTex keys.
-#' It ignores entries with missing or "NA" DOI values.
+#' It ignores entries with missing, empty, or "NA" DOI/BibTex values, so that tables
+#' lacking a bibliography entry are never grouped with one another.
 #'
 #' @param biblio_table A data frame containing columns `DOI__for_paper_`, `BibTex`, and `table`.
 #' @return A list containing two named lists:
@@ -11,10 +56,11 @@
 #'   - `bibtex_map`: A list mapping BibTex keys to associated table names.
 #' @noRd
 generate_doi_bibtex_mapping <- function(biblio_table) {
-  valid_doi_entries <- biblio_table$DOI__for_paper_ != "NA" &
-    !is.na(biblio_table$DOI__for_paper_)
+  valid_doi_entries <- .is_present_biblio_value(biblio_table$DOI__for_paper_)
+  valid_bibtex_entries <- .is_present_biblio_value(biblio_table$BibTex)
+
   doi_map <- split(biblio_table$table[valid_doi_entries], biblio_table$DOI__for_paper_[valid_doi_entries])
-  bibtex_map <- split(biblio_table$table, biblio_table$BibTex)
+  bibtex_map <- split(biblio_table$table[valid_bibtex_entries], biblio_table$BibTex[valid_bibtex_entries])
 
   doi_map <- doi_map[lengths(doi_map) > 1] # Keep only DOIs with multiple tables
   bibtex_map <- bibtex_map[lengths(bibtex_map) > 1] # Keep only BibTex with multiple tables
@@ -106,18 +152,9 @@ check_n_respondents <- function(table_names) {
   }
 
   # Ask user if they want to proceed
-  repeat {
-    proceed_input <- readline(prompt = "Do you want to proceed with merging these tables? (yes/no): ")
-    proceed_input <- tolower(trimws(proceed_input))
+  proceed <- .prompt_yes_no("Do you want to proceed with merging these tables? (yes/no): ")
 
-    if (proceed_input %in% c("yes", "no")) {
-      break # Exit loop if input is valid
-    }
-
-    message("Invalid input. Please enter 'yes' or 'no'.")
-  }
-
-  if (proceed_input == "no") {
+  if (!proceed) {
     message("Merge operation canceled.")
     return(FALSE)
   }
@@ -168,11 +205,15 @@ check_ids_and_items <- function(all_tables) {
   }
 
   # Step 3: Check if item columns have overlapping items across tables
-  item_overlap <- any(vapply(1:(length(item_columns) - 1), function(i) {
-    any(vapply((i + 1):length(item_columns), function(j) {
-      length(intersect(item_columns[[i]], item_columns[[j]])) > 0
+  # (only meaningful with at least two tables to compare)
+  item_overlap <- FALSE
+  if (length(item_columns) > 1) {
+    item_overlap <- any(vapply(seq_len(length(item_columns) - 1), function(i) {
+      any(vapply(seq.int(i + 1, length(item_columns)), function(j) {
+        length(intersect(item_columns[[i]], item_columns[[j]])) > 0
+      }, logical(1)))
     }, logical(1)))
-  }, logical(1)))
+  }
 
   if (item_overlap) {
     messages <- c(messages, "There are items that overlap across tables.")
@@ -231,7 +272,13 @@ check_ids_and_items <- function(all_tables) {
 #'      === NOTE: ===
 #'      - There are items that overlap across tables.
 #'      ```
-#'   
+#'
+#' Tables whose bibliography entry is missing (recorded as `"NA"` in the biblio
+#' table) are never treated as merge candidates for one another.
+#'
+#' In a non-interactive session the confirmation prompts cannot be answered, so
+#' the merge proceeds by default; the checks above are still reported as messages.
+#'
 #' @return A merged data frame containing all tables with the same DOI or BibTex, or NULL if no merge candidates are found.
 #' @export
 irw_merge <- function(table_name, add_source_column = TRUE) {
@@ -261,6 +308,14 @@ irw_merge <- function(table_name, add_source_column = TRUE) {
   message("\033[1m\n=== Fetching Tables ===\033[0m")
   for (tbl_name in merge_candidates) {
     data <- irw_fetch(tbl_name)
+
+    # irw_fetch() returns NULL when the table is listed in the bibliography but
+    # is not present in any IRW datasource; record it and move on.
+    if (is.null(data) || nrow(data) == 0) {
+      skipped_tables[[tbl_name]] <- "table could not be fetched"
+      message(sprintf("  - Skipping table '%s': no data returned.", tbl_name))
+      next
+    }
 
     message(sprintf("- Fetching table: %s (Rows: %d, Columns: %d)...", tbl_name, nrow(data), ncol(data)))
 
@@ -297,20 +352,7 @@ irw_merge <- function(table_name, add_source_column = TRUE) {
   proceed <- check_ids_and_items(all_tables)
 
   if (!proceed) {
-    repeat {
-      proceed_input <- readline(prompt = "Do you still want to proceed with merging? (yes/no): ")
-      proceed_input <- tolower(trimws(proceed_input)) # Convert to lowercase and trim spaces
-
-      if (proceed_input %in% c("yes", "no")) {
-        break # Exit loop if input is valid
-      }
-
-      message("Invalid input. Please enter 'yes' or 'no'.")
-    }
-
-    if (proceed_input == "yes") {
-      add_source_column <- TRUE # Set add_source_column to TRUE if user confirms
-    } else {
+    if (!.prompt_yes_no("Do you still want to proceed with merging? (yes/no): ")) {
       message("Merge operation canceled.")
       return(NULL)
     }
@@ -328,9 +370,9 @@ irw_merge <- function(table_name, add_source_column = TRUE) {
   # Print summary of skipped tables (if any)
   if (length(skipped_tables) > 0) {
     message("\033[1m\n=== Skipped Tables ===\033[0m")
-    message("The following tables were skipped due to column mismatch:")
+    message("The following tables were skipped:")
     for (tbl in names(skipped_tables)) {
-      message(sprintf("- %s", tbl))
+      message(sprintf("- %s (%s)", tbl, skipped_tables[[tbl]]))
     }
   }
 

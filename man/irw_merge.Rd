@@ -58,4 +58,10 @@ Merging tables with inconsistent N respondents may require human judgment.
 }\if{html}{\out{</div>}}
 }
 }
+
+Tables whose bibliography entry is missing (recorded as \code{"NA"} in the biblio
+table) are never treated as merge candidates for one another.
+
+In a non-interactive session the confirmation prompts cannot be answered, so
+the merge proceeds by default; the checks above are still reported as messages.
 }
