@@ -16,6 +16,7 @@
   if (!is.character(name) || length(name) != 1) stop("The 'name' parameter must be a single character string.")
   source <- .irw_resolve_source(source = source, sim = sim, comp = comp, nom = nom)
   ds_list <- .irw_order_datasources(.initialize_datasource(source = source), source = source)
+  errors <- .irw_new_error_collector()
 
   for (ds in ds_list) {
     ds$get()
@@ -34,11 +35,16 @@
         })
       },
       error = function(e) {
-        .irw_handle_datasource_error(conditionMessage(e), table_name = name, ds_list = ds_list)
+        .irw_handle_datasource_error(conditionMessage(e), table_name = name, ds_list = ds_list, errors = errors)
         NULL
       }
     )
     if (!is.null(result)) return(result)
+  }
+
+  failure <- .irw_collected_error_message(errors)
+  if (!is.null(failure)) {
+    stop(failure, call. = FALSE)
   }
 
   stop(.irw_table_not_found_message(name), call. = FALSE)

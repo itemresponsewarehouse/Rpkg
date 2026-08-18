@@ -114,3 +114,86 @@ test_that(".irw_table_not_found_message does not mention warehouse ids", {
   expect_match(msg, "does not exist in IRW")
   expect_false(grepl("warehouse", msg, ignore.case = TRUE))
 })
+
+test_that(".irw_redivis_error_type classifies export quota and rate limits", {
+  quota <- paste(
+    "[400 invalid_request] Cannot export more than 200GB within a 30 day period.",
+    "You have exported 204GB in the past 30 days"
+  )
+  expect_equal(irw:::.irw_redivis_error_type(quota), "quota")
+  expect_equal(irw:::.irw_redivis_error_type("429 Too Many Requests"), "quota")
+  expect_equal(irw:::.irw_redivis_error_type("RESOURCE_EXHAUSTED: rate limit exceeded"), "quota")
+})
+
+test_that(".irw_handle_datasource_error stops on quota errors instead of falling through", {
+  quota <- "[400 invalid_request] Cannot export more than 200GB within a 30 day period."
+  expect_error(
+    irw:::.irw_handle_datasource_error(quota, "some_table", ds_list = list("a", "b", "c", "d")),
+    "export quota"
+  )
+})
+
+test_that(".irw_handle_datasource_error collects unclassified errors across datasources", {
+  errors <- irw:::.irw_new_error_collector()
+  expect_null(irw:::.irw_handle_datasource_error(
+    "temporary upstream failure", "some_table",
+    ds_list = list("a", "b"), errors = errors
+  ))
+  expect_null(irw:::.irw_handle_datasource_error(
+    "Not found: some_table", "some_table",
+    ds_list = list("a", "b"), errors = errors
+  ))
+  expect_length(errors$msgs, 1L)
+  expect_match(irw:::.irw_collected_error_message(errors), "temporary upstream failure")
+})
+
+test_that(".irw_collected_error_message is NULL when every datasource said not-found", {
+  errors <- irw:::.irw_new_error_collector()
+  irw:::.irw_handle_datasource_error(
+    "Not found: some_table", "some_table",
+    ds_list = list("a", "b"), errors = errors
+  )
+  expect_null(irw:::.irw_collected_error_message(errors))
+})
+
+test_that("fetch_single_data reports the real error rather than a missing table", {
+  fake_ds <- function(msg) {
+    list(
+      get = function() invisible(NULL),
+      table = function(name) list(get = function() stop(msg, call. = FALSE))
+    )
+  }
+  local_mocked_bindings(
+    .initialize_datasource = function(source = "core", ...) {
+      list(fake_ds("temporary upstream failure"), fake_ds("temporary upstream failure"))
+    },
+    .env = asNamespace("irw")
+  )
+
+  expect_message(out <- irw:::fetch_single_data("some_table"), "temporary upstream failure")
+  expect_null(out)
+})
+
+test_that("fetch_single_data still reports a genuinely missing table", {
+  fake_ds <- function(msg) {
+    list(
+      get = function() invisible(NULL),
+      table = function(name) list(get = function() stop(msg, call. = FALSE))
+    )
+  }
+  local_mocked_bindings(
+    .initialize_datasource = function(source = "core", ...) {
+      list(fake_ds("Not found: some_table"), fake_ds("Not found: some_table"))
+    },
+    .env = asNamespace("irw")
+  )
+
+  expect_message(out <- irw:::fetch_single_data("some_table"), "does not exist in IRW")
+  expect_null(out)
+})
+
+test_that(".irw_coerce_resp_set keeps nominal responses as character", {
+  expect_identical(irw:::.irw_coerce_resp_set(c("2", "1"), source = "core"), c(1, 2))
+  expect_identical(irw:::.irw_coerce_resp_set(c("b", "a"), source = "core"), c("a", "b"))
+  expect_identical(irw:::.irw_coerce_resp_set(c("2", "1"), source = "nom"), c("2", "1"))
+})

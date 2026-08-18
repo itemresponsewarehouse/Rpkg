@@ -15,6 +15,7 @@
 fetch_single_data <- function(table_id, source = "core", dedup = FALSE, sim = FALSE, comp = FALSE, nom = FALSE) {
   source <- .irw_resolve_source(source = source, sim = sim, comp = comp, nom = nom)
   ds_list <- .irw_order_datasources(.initialize_datasource(source = source), source = source)
+  errors <- .irw_new_error_collector()
 
   for (ds in ds_list) {
     df <- tryCatch(
@@ -32,7 +33,7 @@ fetch_single_data <- function(table_id, source = "core", dedup = FALSE, sim = FA
         })
       },
       error = function(e) {
-        .irw_handle_datasource_error(conditionMessage(e), table_name = table_id, ds_list = ds_list)
+        .irw_handle_datasource_error(conditionMessage(e), table_name = table_id, ds_list = ds_list, errors = errors)
         NULL
       }
     )
@@ -93,6 +94,15 @@ fetch_single_data <- function(table_id, source = "core", dedup = FALSE, sim = FA
     return(df)
   }
 
+  # Only report the table as missing when every datasource actually said
+  # "not found"; anything else (quota, timeout, transport) is re-raised so it is
+  # not mistaken for a table that was removed from IRW.
+  failure <- .irw_collected_error_message(errors)
+  if (!is.null(failure)) {
+    message("Error fetching dataset ", shQuote(table_id), ":", failure)
+    return(invisible(NULL))
+  }
+
   message(
     "Error fetching dataset ",
     shQuote(table_id),
@@ -104,6 +114,9 @@ fetch_single_data <- function(table_id, source = "core", dedup = FALSE, sim = FA
 #' Fetch Table(s) from the Item Response Warehouse
 #'
 #' Retrieves one or more tables from IRW and returns them as tibbles.
+#' This downloads every row of each table and counts against the Redivis export
+#' quota; if you only need the item or response value sets, or per-item counts
+#' and ranges, use [irw_table_sets()], which answers with a server-side query.
 #' If the table includes a character `resp` column, the function attempts to
 #' coerce it into numeric. Strings like `"NA"`, `""`, and `NA` are treated as missing values.
 #' A warning is issued only if other non-numeric values are encountered.
@@ -121,6 +134,8 @@ fetch_single_data <- function(table_id, source = "core", dedup = FALSE, sim = FA
 #'
 #' @return If a single name is provided, returns a tibble. If multiple, returns a named list
 #'         of tibbles (or error messages, if retrieval failed).
+#'
+#' @seealso [irw_table_sets()] for value sets and summaries without a download.
 #'
 #' @examples
 #' \dontrun{

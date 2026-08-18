@@ -48,7 +48,27 @@ irw_filter(var = "rt")
 x = irw_fetch("4thgrade_math_sirt") 
 ```
 
+``` r
+# summarize a table without downloading it: item and response value sets,
+# and optionally per-item counts and response ranges
+s = irw_table_sets("4thgrade_math_sirt", per_item = TRUE)
+s$items
+s$resp
+```
+
 ## Troubleshooting
+
+#### Export Quota
+
+`irw_fetch()` downloads every row of a table. Redivis caps the bytes an account
+can export in a rolling 30-day window, and one pass over the whole IRW corpus
+comes close to that cap on its own. If you only need to know which items or
+response values a table contains, use `irw_table_sets()`: it answers with a
+server-side query, returns in seconds even for tables with tens of millions of
+rows, and does not count against the export quota.
+
+If the quota is exhausted, `irw_fetch()` reports it as a quota error rather than
+a missing table.
 
 #### Authentication Issues
 
