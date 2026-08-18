@@ -24,6 +24,7 @@ reference:
   desc: Functions for fetching IRW data.
 - contents:
   - irw_fetch
+  - irw_table_sets
   - irw_merge
   - irw_download
   - irw_save_bibtex

@@ -156,8 +156,9 @@ irw_info <- function(table_name = NULL, details = FALSE, source = "core", comp =
       v <- m$variables[m$table == table_name]
       vars <- if (length(v) > 0 && !is.na(v[1]) && nzchar(v[1])) v[1] else NA
     } else {
-      # sim / comp / nom: infer from table itself
-      vars <- paste(names(table$to_tibble()), collapse = " | ")
+      # sim / comp / nom: infer from the table's schema rather than its rows,
+      # so listing variables does not export the whole table
+      vars <- paste(.irw_table_variable_names(table), collapse = " | ")
     }
 
     # Tags: only main

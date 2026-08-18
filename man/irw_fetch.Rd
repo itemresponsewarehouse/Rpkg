@@ -38,6 +38,9 @@ of tibbles (or error messages, if retrieval failed).
 }
 \description{
 Retrieves one or more tables from IRW and returns them as tibbles.
+This downloads every row of each table and counts against the Redivis export
+quota; if you only need the item or response value sets, or per-item counts
+and ranges, use \code{\link[=irw_table_sets]{irw_table_sets()}}, which answers with a server-side query.
 If the table includes a character \code{resp} column, the function attempts to
 coerce it into numeric. Strings like \code{"NA"}, \code{""}, and \code{NA} are treated as missing values.
 A warning is issued only if other non-numeric values are encountered.
@@ -57,4 +60,7 @@ irw_fetch("gilbert_meta_3", source = "sim")
 irw_fetch("collegefb_2021and2022", source = "comp")
 }
 
+}
+\seealso{
+\code{\link[=irw_table_sets]{irw_table_sets()}} for value sets and summaries without a download.
 }
