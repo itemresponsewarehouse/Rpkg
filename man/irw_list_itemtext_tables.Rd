@@ -12,6 +12,25 @@ A sorted character vector of IRW table names with item text metadata.
 \description{
 Returns a character vector of IRW table names for which item text is available.
 }
+\section{Disclaimer}{
+
+IRW item text is reconstructed from published articles, codebooks, and
+supplementary materials using a largely automated pipeline with partial human
+review, and is provided \strong{for research purposes only}. We make no
+guarantee that the text is accurate, complete, or correctly aligned with the
+\code{item} identifiers in the corresponding IRW response data; the original
+source document is always authoritative. Users are responsible for verifying
+item text against that source before drawing substantive conclusions.
+Documented discrepancies are listed at
+\url{https://itemresponsewarehouse.org/itemtext_issues.html}.
+
+Note also that the licenses recorded for IRW response data do not extend to
+the instruments themselves. Inclusion of item text here implies no license to
+reuse an instrument; copyright and related rights remain with the original
+rights holders, and users are responsible for obtaining any permissions their
+intended use requires.
+}
+
 \examples{
 \dontrun{
   irw_list_itemtext_tables()
