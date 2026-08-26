@@ -306,16 +306,55 @@
 #' @keywords internal
 .fetch_itemtext_table <- function(table_name) {
   available_tables <- irw_list_itemtext_tables()
-  
-  if (!(table_name %in% available_tables)) {
+
+  # Item text tables are stored on Redivis with names that are lower-cased on
+  # upload, while many IRW response tables have mixed case (e.g. the response
+  # table `HEARD_Roch_2022_K6` has its item text stored as
+  # `heard_roch_2022_k6__items`). Matching only on the exact string made the
+  # item text for those tables unreachable under the name a user would
+  # naturally pass. So: prefer an exact match, then fall back to a
+  # case-insensitive one.
+  resolved <- .resolve_itemtext_table_name(table_name, available_tables)
+
+  if (is.null(resolved)) {
     message(glue::glue("Item text not available for table: '{table_name}'"))
     return(NULL)
   }
-  
+
   dataset <- .get_irw_itemtext_dataset()
-  full_name <- paste0(table_name, "__items")
-  
+  full_name <- paste0(resolved, "__items")
+
   table <- dataset$table(full_name)
   suppressWarnings(.retry_with_backoff(function() table$to_tibble()))
+}
+
+# Resolve a user-supplied table name against the available item text tables,
+# tolerating case differences. Returns the stored name, or NULL if there is no
+# match. An ambiguous case-insensitive match (two stored tables differing only
+# in case) is reported rather than silently resolved to one of them.
+.resolve_itemtext_table_name <- function(table_name, available_tables) {
+  if (length(table_name) != 1 || is.na(table_name) || !nzchar(table_name)) {
+    return(NULL)
+  }
+
+  if (table_name %in% available_tables) {
+    return(table_name)
+  }
+
+  matches <- available_tables[tolower(available_tables) == tolower(table_name)]
+
+  if (length(matches) == 0) {
+    return(NULL)
+  }
+
+  if (length(matches) > 1) {
+    message(glue::glue(
+      "Multiple item text tables match '{table_name}' case-insensitively: ",
+      "{paste(matches, collapse = ', ')}. Please pass one of these exactly."
+    ))
+    return(NULL)
+  }
+
+  matches
 }
 
