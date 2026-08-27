@@ -37,6 +37,19 @@ test_that(".irw_redivis_error_type classifies common errors", {
     irw:::.irw_redivis_error_type("Error: User is not authenticated"),
     "auth"
   )
+  # The message Redivis actually returns for a bad/expired token.
+  expect_equal(
+    irw:::.irw_redivis_error_type("[401 invalid_token] Must be logged in"),
+    "auth"
+  )
+  # A warehouse with no released version yet: skippable, not an auth failure.
+  expect_equal(
+    irw:::.irw_redivis_error_type(
+      paste("[403 insufficient_scope] You have access to the underlying resource,",
+            "but your current credentials are missing the required scope(s): data.edit")
+    ),
+    "other"
+  )
   expect_equal(
     irw:::.irw_redivis_error_type("temporary upstream failure"),
     "other"
@@ -196,4 +209,128 @@ test_that(".irw_coerce_resp_set keeps nominal responses as character", {
   expect_identical(irw:::.irw_coerce_resp_set(c("2", "1"), source = "core"), c(1, 2))
   expect_identical(irw:::.irw_coerce_resp_set(c("b", "a"), source = "core"), c("a", "b"))
   expect_identical(irw:::.irw_coerce_resp_set(c("2", "1"), source = "nom"), c("2", "1"))
+})
+
+# A warehouse that exists but has no released version yet errors for read-only
+# tokens; it must not take down every IRW lookup.
+
+test_that(".irw_open_core_datasources skips an unreleased warehouse with a warning", {
+  local_mocked_bindings(
+    .irw_datasource_specs = list(
+      core = list(
+        list(user = "datapages", dataset = "item_response_warehouse:as2e"),
+        list(user = "datapages", dataset = "item_response_warehouse_5:3ykx")
+      ),
+      sim = irw:::.irw_datasource_specs$sim,
+      comp = irw:::.irw_datasource_specs$comp,
+      nom = irw:::.irw_datasource_specs$nom
+    ),
+    .env = asNamespace("irw")
+  )
+  local_mocked_bindings(
+    .irw_open_dataset = function(spec) {
+      if (grepl("_5", spec$dataset, fixed = TRUE)) {
+        stop("[403 insufficient_scope] missing the required scope(s): data.edit")
+      }
+      spec$dataset
+    },
+    .env = asNamespace("irw")
+  )
+
+  expect_warning(out <- irw:::.irw_open_core_datasources(), "unavailable IRW datasource")
+  expect_equal(out, list("item_response_warehouse:as2e"))
+})
+
+test_that(".irw_open_core_datasources warning does not leak warehouse ids", {
+  local_mocked_bindings(
+    .irw_datasource_specs = list(
+      core = list(
+        list(user = "datapages", dataset = "item_response_warehouse:as2e"),
+        list(user = "datapages", dataset = "item_response_warehouse_5:3ykx")
+      ),
+      sim = irw:::.irw_datasource_specs$sim,
+      comp = irw:::.irw_datasource_specs$comp,
+      nom = irw:::.irw_datasource_specs$nom
+    ),
+    .env = asNamespace("irw")
+  )
+  local_mocked_bindings(
+    .irw_open_dataset = function(spec) {
+      if (grepl("_5", spec$dataset, fixed = TRUE)) {
+        stop("Boom on item_response_warehouse_5:3ykx")
+      }
+      spec$dataset
+    },
+    .env = asNamespace("irw")
+  )
+
+  w <- tryCatch(irw:::.irw_open_core_datasources(), warning = function(e) conditionMessage(e))
+  expect_false(grepl("3ykx", w, fixed = TRUE))
+})
+
+test_that(".irw_open_core_datasources errors when every warehouse is unavailable", {
+  local_mocked_bindings(
+    .irw_datasource_specs = list(
+      core = list(
+        list(user = "datapages", dataset = "item_response_warehouse:as2e"),
+        list(user = "datapages", dataset = "item_response_warehouse_5:3ykx")
+      ),
+      sim = irw:::.irw_datasource_specs$sim,
+      comp = irw:::.irw_datasource_specs$comp,
+      nom = irw:::.irw_datasource_specs$nom
+    ),
+    .env = asNamespace("irw")
+  )
+  local_mocked_bindings(
+    .irw_open_dataset = function(spec) stop("[500] upstream is down"),
+    .env = asNamespace("irw")
+  )
+
+  expect_error(irw:::.irw_open_core_datasources(), "An error occurred while accessing IRW")
+})
+
+test_that(".irw_open_core_datasources stops immediately on an auth failure", {
+  local_mocked_bindings(
+    .irw_datasource_specs = list(
+      core = list(
+        list(user = "datapages", dataset = "item_response_warehouse:as2e"),
+        list(user = "datapages", dataset = "item_response_warehouse_5:3ykx")
+      ),
+      sim = irw:::.irw_datasource_specs$sim,
+      comp = irw:::.irw_datasource_specs$comp,
+      nom = irw:::.irw_datasource_specs$nom
+    ),
+    .env = asNamespace("irw")
+  )
+  local_mocked_bindings(
+    .irw_open_dataset = function(spec) stop("unauthorized: bad token"),
+    .env = asNamespace("irw")
+  )
+
+  expect_error(irw:::.irw_open_core_datasources(), "Redivis authentication failed")
+})
+
+test_that(".irw_open_core_datasources returns config order when all are available", {
+  local_mocked_bindings(
+    .irw_datasource_specs = list(
+      core = list(
+        list(user = "datapages", dataset = "wh_a"),
+        list(user = "datapages", dataset = "wh_b"),
+        list(user = "datapages", dataset = "wh_c")
+      ),
+      sim = irw:::.irw_datasource_specs$sim,
+      comp = irw:::.irw_datasource_specs$comp,
+      nom = irw:::.irw_datasource_specs$nom
+    ),
+    .env = asNamespace("irw")
+  )
+  local_mocked_bindings(
+    .irw_open_dataset = function(spec) spec$dataset,
+    .env = asNamespace("irw")
+  )
+
+  expect_silent(out <- irw:::.irw_open_core_datasources())
+  expect_equal(out, list("wh_a", "wh_b", "wh_c"))
+  # .irw_order_datasources is what flips this to newest-first at point of use.
+  expect_equal(irw:::.irw_order_datasources(out, "core"), list("wh_c", "wh_b", "wh_a"))
 })

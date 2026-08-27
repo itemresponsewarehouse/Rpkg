@@ -47,7 +47,11 @@
     return("not_found")
   }
   if (grepl(
-    "unauthorized|unauthenticated|not authenticated|authentication|permission_denied|access_denied|forbidden|invalid_grant|login required|not authorized",
+    paste0(
+      "unauthorized|unauthenticated|not authenticated|authentication|permission_denied|",
+      "access_denied|forbidden|invalid_grant|invalid_token|login required|not authorized|",
+      "must be logged in|\\b401\\b"
+    ),
     msg,
     ignore.case = TRUE
   )) {

@@ -11,7 +11,9 @@
     list(user = "datapages", dataset = "item_response_warehouse:as2e"),
     list(user = "datapages", dataset = "item_response_warehouse_2:epbx"),
     list(user = "datapages", dataset = "item_response_warehouse_3:5xaj"),
-    list(user = "datapages", dataset = "item_response_warehouse_4:980f")
+    list(user = "datapages", dataset = "item_response_warehouse_4:980f"),
+    list(user = "datapages", dataset = "item_response_warehouse_5:3ykx"),
+    list(user = "datapages", dataset = "item_response_warehouse_6:fpe6")
   ),
   sim = list(
     list(user = "bdomingu", dataset = "irw_simsyn:0btg")

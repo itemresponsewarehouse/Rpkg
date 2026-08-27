@@ -16,7 +16,9 @@ Main production warehouses are listed under `$core` in **oldest-to-newest** orde
     list(user = "datapages", dataset = "item_response_warehouse:as2e"),
     list(user = "datapages", dataset = "item_response_warehouse_2:epbx"),
     list(user = "datapages", dataset = "item_response_warehouse_3:5xaj"),
-    list(user = "datapages", dataset = "item_response_warehouse_4:XXXX")  # example
+    list(user = "datapages", dataset = "item_response_warehouse_4:980f"),
+    list(user = "datapages", dataset = "item_response_warehouse_5:3ykx"),
+    list(user = "datapages", dataset = "item_response_warehouse_6:XXXX")  # example
   ),
   ...
 )
@@ -27,6 +29,11 @@ No other files need hard-coded warehouse IDs for fetch/list/filter/download to w
 ## Runtime behavior
 
 - **Search order:** core warehouses are queried **newest first** so duplicate table names resolve to the latest copy.
+- **Unavailable warehouses are skipped.** A warehouse that exists but has no
+  released version yet returns an error for read-only tokens, so
+  `.irw_open_core_datasources()` drops it with a warning rather than failing
+  every lookup. If *no* warehouse opens (e.g. a bad token, which fails for all
+  of them), it errors; an authentication failure stops immediately.
 - **Listing:** `irw_list_tables()` unions tables across all core warehouses and deduplicates by name (newest wins).
 - **Metadata:** rows in `irw_meta` are filtered to tables that exist in **any** core warehouse.
 - **Caching:** session caches invalidate automatically when:
@@ -37,8 +44,11 @@ No other files need hard-coded warehouse IDs for fetch/list/filter/download to w
 ## After adding a warehouse
 
 1. Append the new `list(user = ..., dataset = ...)` to `.irw_datasource_specs$core`.
-2. Run `devtools::test()` (or at least `tests/testthat/test-redivis-datasets.R`).
-3. Optionally verify live access with Redivis authenticated:
+2. **Publish a release of the new dataset on Redivis before shipping this.**
+   An unreleased warehouse is skipped with a warning for read-only users, so its
+   tables are simply missing until it is released.
+3. Run `devtools::test()` (or at least `tests/testthat/test-redivis-datasets.R`).
+4. Optionally verify live access with Redivis authenticated:
    - `irw_list_tables()` shows tables from the new warehouse
    - `irw_fetch("<known_table>")` succeeds for a table only in the new warehouse
 

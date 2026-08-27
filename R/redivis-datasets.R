@@ -123,13 +123,65 @@
 #'
 #' @return A list of one or more Redivis dataset objects.
 #' @keywords internal
+#' Open every core warehouse, skipping any that are currently unavailable
+#'
+#' A freshly created warehouse has no released version yet, so opening it with a
+#' read-only token fails. One such warehouse must not take down every IRW
+#' lookup, so unavailable warehouses are dropped with a warning. An
+#' authentication failure applies to all of them, so that still stops.
+#'
+#' @return A non-empty list of Redivis dataset objects, in config order.
+#' @keywords internal
+#' @noRd
+.irw_open_core_datasources <- function() {
+  opened <- list()
+  failures <- character(0)
+
+  for (spec in .irw_datasource_specs$core) {
+    ds <- tryCatch(
+      .irw_open_dataset(spec),
+      error = function(e) {
+        msg <- conditionMessage(e)
+        if (.irw_redivis_error_type(msg) == "auth") {
+          stop(.irw_auth_error_message(), call. = FALSE)
+        }
+        failures <<- c(failures, .irw_sanitize_redivis_error(msg))
+        NULL
+      }
+    )
+    if (!is.null(ds)) {
+      opened <- c(opened, list(ds))
+    }
+  }
+
+  if (length(opened) == 0L) {
+    stop(
+      paste(
+        "\nAn error occurred while accessing IRW:",
+        paste(unique(failures), collapse = "; ")
+      ),
+      call. = FALSE
+    )
+  }
+
+  if (length(failures) > 0L) {
+    warning(
+      "Skipping ", length(failures), " unavailable IRW datasource(s): ",
+      paste(unique(failures), collapse = "; "),
+      call. = FALSE
+    )
+  }
+
+  opened
+}
+
 .initialize_datasource <- function(source = "core", sim = FALSE, comp = FALSE, nom = FALSE) {
   source <- .irw_resolve_source(source = source, sim = sim, comp = comp, nom = nom)
 
   if (source == "core") {
     .irw_sync_core_warehouse_caches()
     if (!exists("datasource_list", envir = .irw_env) || is.null(.irw_env$datasource_list)) {
-      .irw_env$datasource_list <- lapply(.irw_datasource_specs$core, .irw_open_dataset)
+      .irw_env$datasource_list <- .irw_open_core_datasources()
     }
     return(.irw_env$datasource_list)
   }
