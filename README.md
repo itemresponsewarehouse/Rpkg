@@ -8,7 +8,8 @@ Documentation for all available functions can be found at: <https://itemresponse
 
 ``` r
 # Install the development version of irw from GitHub
-devtools::install_github("itemresponsewarehouse/Rpkg")
+# install.packages("pak")  # if you don't already have pak
+pak::pak("itemresponsewarehouse/Rpkg")
 
 # Load the package
 library(irw)
