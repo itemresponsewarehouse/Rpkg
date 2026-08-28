@@ -40,6 +40,9 @@ reference:
   - irw_long2resp
   - irw_resp2long
   - irw_check_resp
+  - irw_recode
+  - irw_recode_key
+  - irw_decode
 - title: Example IRW data
 - contents:
   - swmd_mokken
