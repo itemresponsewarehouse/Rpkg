@@ -1,0 +1,133 @@
+---
+title: "Fitting IRT Models to IRW Data"
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+IRW tables arrive in long format with one row per response and the columns
+`id`, `item`, and `resp`. Most IRT packages want the opposite shape: a wide
+numeric matrix with one row per person and one column per item. This article
+covers that handoff, then fits the same data with three packages.
+
+```{r setup, message=FALSE}
+library(irw)
+library(mirt)
+library(ltm)
+library(psychotools)
+```
+
+## Getting the data
+
+In normal use you fetch a table straight from the warehouse:
+
+```{r, eval=FALSE}
+df <- irw_fetch("4thgrade_math_sirt")
+```
+
+That call needs Redivis credentials, which this documentation build does not
+have. So that these pages show real output, the rest of the article runs on a
+simulated table with the same structure, via `irw_simdata()`:
+
+```{r}
+df <- irw_simdata(n_id = 500, n_item = 12, model = "2PL", seed = 1)
+str(df)
+```
+
+## Checking responses before modelling
+
+`irw_check_resp()` flags the two problems that most often break an estimator:
+items where everyone gave the same answer, and polytomous categories that are
+too thin to estimate.
+
+```{r}
+checks <- irw_check_resp(df)
+length(checks$single_category_items)
+length(checks$sparse_category_items)
+```
+
+## Long to wide
+
+`irw_long2resp()` pivots to one row per person. It also applies a default
+sparsity filter, dropping people who answered fewer than 10% of items; pass
+`id_density_threshold = NULL` to keep everyone.
+
+```{r}
+wide <- irw_long2resp(df)
+dim(wide)
+wide[1:5, 1:5]
+```
+
+The result keeps `id` as a column, and its row and column order is not sorted.
+IRT packages want just the item columns as a matrix, so drop `id` and move it
+to the rownames:
+
+```{r}
+resp <- as.matrix(wide[, setdiff(names(wide), "id"), drop = FALSE])
+rownames(resp) <- wide$id
+dim(resp)
+```
+
+That matrix is the input for everything below.
+
+## mirt
+
+```{r, results="hide"}
+fit_2pl <- mirt(resp, 1, itemtype = "2PL", verbose = FALSE)
+```
+
+```{r}
+head(coef(fit_2pl, simplify = TRUE, IRTpars = TRUE)$items)
+```
+
+Person ability estimates come back in the row order of `resp`, so they can be
+attached to the ids directly:
+
+```{r}
+theta <- fscores(fit_2pl)
+scores <- data.frame(id = rownames(resp), theta = as.numeric(theta))
+head(scores)
+```
+
+Comparing nested models is the usual way to justify the extra parameter:
+
+```{r, results="hide"}
+fit_1pl <- mirt(resp, 1, itemtype = "Rasch", verbose = FALSE)
+```
+
+```{r}
+anova(fit_1pl, fit_2pl)
+```
+
+## ltm
+
+`ltm` takes a data frame rather than a matrix:
+
+```{r}
+fit_rasch <- rasch(as.data.frame(resp))
+head(coef(fit_rasch))
+```
+
+## psychotools
+
+`psychotools::raschmodel()` is a lean conditional-maximum-likelihood fit, handy
+when you want item difficulties without a full IRT apparatus:
+
+```{r}
+fit_pc <- raschmodel(resp)
+head(itempar(fit_pc))
+```
+
+```{r, fig.alt = "Item characteristic curves for the fitted Rasch model."}
+plot(fit_pc, type = "curves")
+```
+
+## Where to go next
+
+- `vignette("scaling-reliability")` for reliability and Mokken scalability.
+- `vignette("dif-linking")` for differential item functioning, which needs
+  person covariates carried alongside the response matrix.

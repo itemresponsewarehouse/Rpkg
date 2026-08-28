@@ -1,0 +1,125 @@
+---
+title: "SEM and Multilevel Models with IRW Data"
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+Not every measurement model wants a response matrix. This article fits a
+categorical confirmatory factor analysis with `lavaan`, which needs the wide
+form, and then a Rasch model as a generalized linear mixed model with `lme4`,
+which consumes IRW long format directly with no reshape at all.
+
+```{r setup, message=FALSE}
+library(irw)
+library(lavaan)
+library(lme4)
+```
+
+## The data
+
+```{r, eval=FALSE}
+df <- irw_fetch("4thgrade_math_sirt")
+```
+
+That call needs Redivis credentials, which this documentation build does not
+have, so the article runs on a simulated table of the same shape:
+
+```{r}
+df <- irw_simdata(n_id = 500, n_item = 8, model = "2PL", seed = 3)
+head(df, 3)
+```
+
+## Categorical CFA with lavaan
+
+`lavaan` needs one column per item, so pivot first:
+
+```{r}
+wide <- irw_long2resp(df)
+resp <- as.data.frame(wide[, setdiff(names(wide), "id"), drop = FALSE])
+```
+
+Because the item columns are already named `item_1` ... `item_8`, the model
+syntax can be built from `names(resp)` rather than typed out:
+
+```{r}
+items <- names(resp)
+model <- paste0("F =~ ", paste(items, collapse = " + "))
+model
+```
+
+Binary items must be declared `ordered`, which switches `lavaan` to a
+diagonally weighted least squares estimator with a probit link. A CFA fitted
+this way is equivalent to a two-parameter normal-ogive IRT model:
+
+```{r}
+fit <- cfa(model, data = resp, ordered = items)
+```
+
+Declaring the items ordered switches the estimator to DWLS with a scaled and
+shifted test statistic, so the `.scaled` fit measures are the ones to read;
+the unscaled `pvalue` is reported as `NA` under this test:
+
+```{r}
+fitMeasures(fit, c("chisq.scaled", "df.scaled", "pvalue.scaled",
+                   "cfi.scaled", "tli.scaled", "rmsea.scaled"))
+```
+
+The fit is close to perfect, which is what simulated unidimensional data
+should produce. Real IRW tables rarely look this tidy.
+
+```{r}
+head(parameterEstimates(fit, standardized = TRUE)[, c("lhs", "op", "rhs", "est", "std.all")], 8)
+```
+
+The standardized loadings are a monotone transformation of IRT
+discriminations, so items that load highly here are the same items `mirt`
+would give a high `a` parameter.
+
+## Rasch as a mixed model with lme4
+
+This is the one workflow where IRW's native shape is exactly what the package
+wants. A Rasch model is a logistic mixed model with a random person intercept
+and fixed item effects, so the long data frame goes straight in:
+
+```{r}
+df$id <- factor(df$id)
+df$item <- factor(df$item)
+```
+
+```{r}
+fit_glmm <- glmer(resp ~ 0 + item + (1 | id), data = df, family = binomial)
+```
+
+The fixed effects are item easiness, so negate them to read them as the item
+difficulties an IRT package would report:
+
+```{r}
+difficulty <- -fixef(fit_glmm)
+head(round(difficulty, 3))
+```
+
+The person variance is the squared latent trait standard deviation:
+
+```{r}
+VarCorr(fit_glmm)
+```
+
+### Why bother
+
+Writing the Rasch model this way buys you everything `lme4` can do. Person
+covariates enter as fixed effects, giving an explanatory IRT model in one line,
+and crossed random effects handle raters without a separate package. IRW tables
+that carry a `rater` column suit the latter directly:
+
+```{r, eval=FALSE}
+# for a table with a rater column, e.g. irw_fetch("swmd_mokken")
+glmer(resp ~ 0 + item + (1 | id) + (1 | rater), data = df, family = binomial)
+```
+
+See `vignette("dif-linking")` for adding a person covariate, which is where
+`irw_covariates()` comes in.
