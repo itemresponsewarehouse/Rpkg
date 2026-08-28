@@ -43,6 +43,7 @@ reference:
   - irw_recode
   - irw_recode_key
   - irw_decode
+  - irw_covariates
 - title: Example IRW data
 - contents:
   - swmd_mokken

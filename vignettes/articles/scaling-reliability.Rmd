@@ -1,0 +1,128 @@
+---
+title: "Reliability and Scalability with IRW Data"
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+Before fitting a measurement model it is worth asking whether the items hang
+together at all. This article covers internal consistency with `psych` and
+nonparametric scalability with `mokken`, using a real IRW table that ships with
+the package.
+
+```{r setup, message=FALSE}
+library(irw)
+library(psych)
+library(mokken)
+```
+
+## The data
+
+`swmd_mokken` is bundled with `irw`, so this article runs on genuine warehouse
+data with no network access. Fetching it yourself would look like this:
+
+```{r, eval=FALSE}
+df <- irw_fetch("swmd_mokken")
+```
+
+```{r}
+df <- swmd_mokken
+str(df)
+```
+
+Note the `rater` column: each person-item pair was scored by several raters, so
+there are many more rows than the 30 x 7 = 210 person-item combinations.
+
+```{r}
+nrow(df)
+length(unique(df$id)) * length(unique(df$item))
+```
+
+## Collapsing raters
+
+`irw_long2resp()` aggregates duplicate `id`-`item` pairs, and how it does so
+matters here. The default for a numeric response is `"mean"`, which produces
+fractional scores that neither package below will accept as ordinal
+categories. `"mode"` keeps the responses on their original 1-5 scale by taking
+each rater panel's most common score:
+
+```{r}
+wide <- irw_long2resp(df, agg_method = "mode", id_density_threshold = NULL)
+dim(wide)
+wide[1:3, ]
+```
+
+```{r}
+resp <- as.matrix(wide[, setdiff(names(wide), "id"), drop = FALSE])
+rownames(resp) <- wide$id
+range(resp)
+```
+
+## Internal consistency
+
+```{r}
+alpha(resp)$total
+```
+
+```{r}
+omega(resp, nfactors = 1, plot = FALSE)$omega.tot
+```
+
+## Mokken scalability
+
+Scalability coefficients ask whether the items form a cumulative scale.
+Guttman's rule of thumb reads H below 0.3 as unscalable, 0.3-0.4 as weak,
+0.4-0.5 as moderate, and above 0.5 as strong.
+
+```{r}
+H <- coefH(as.data.frame(resp))
+H$Hi
+H$H
+```
+
+Every item clears 0.5 and the scale coefficient is comfortably strong.
+
+Automated item selection confirms that the items belong to a single scale --
+every item is assigned to scale 1 at the default lower bound of 0.3:
+
+```{r}
+aisp(as.data.frame(resp))
+```
+
+`aisp()` warns that the items show varying numbers of observed response
+categories. With only 30 respondents some of the five categories simply never
+came up for some items. That is a property of this small table rather than a
+mistake, but on a larger table it is worth checking with `irw_check_resp()`,
+which reports sparse categories item by item:
+
+```{r}
+checks <- irw_check_resp(df)
+names(checks$sparse_category_items)
+```
+
+## Monotone homogeneity
+
+The monotonicity check needs enough people per rest-score group to estimate
+item-step response functions. With only 30 respondents, `check.monotonicity()`
+stops at its default group size, so the group size has to be set by hand:
+
+```{r}
+mono <- check.monotonicity(as.data.frame(resp), minsize = 10)
+summary(mono)
+```
+
+No violations, but treat that as illustrative rather than conclusive. The
+`#ac` column counts the comparisons the check was actually able to make, and at
+this sample size there are very few of them: `minsize = 5` yields 18 active
+comparisons and 3 violations, `minsize = 10` yields 3 and 0, and `minsize = 15`
+yields 1 and 0. A clean result from three comparisons is weak evidence. A
+serious monotonicity assessment wants a larger table; `irw_filter()` will find
+one:
+
+```{r, eval=FALSE}
+irw_filter(n_participants = c(500, 5000), density = c(0.8, 1))
+```

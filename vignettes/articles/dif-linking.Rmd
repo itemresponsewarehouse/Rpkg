@@ -1,0 +1,167 @@
+---
+title: "Differential Item Functioning with IRW Data"
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+A DIF analysis needs two things: a response matrix, and a grouping variable
+whose order lines up with the rows of that matrix. The second one is the
+awkward part of the IRW workflow, because `irw_long2resp()` returns only `id`,
+`item`, and the response -- person covariates are dropped, and some people may
+be dropped too. This article uses `irw_covariates()` to keep the two in step,
+then runs DIF with `difR` and calibrates items with `irtoys`.
+
+```{r setup, message=FALSE}
+library(irw)
+library(difR)
+library(irtoys)
+```
+
+## The data
+
+Many IRW tables carry person covariates in columns prefixed `cov_`, and
+`irw_filter()` will find them:
+
+```{r, eval=FALSE}
+irw_filter(var = "cov_")
+df <- irw_fetch("swmd_mokken")
+```
+
+Fetching needs Redivis credentials that this documentation build does not have,
+so the article builds a table with a known answer instead. Two groups of 400
+people answer the same 10 items; items 3 and 7 are one logit harder for the
+focal group and the other eight behave identically. Sixty people, chosen at
+random, answered only the first three items -- IRW tables are frequently ragged
+like this, and it matters below.
+
+```{r}
+a <- rep(1.2, 10)
+b_reference <- seq(-1.5, 1.5, length.out = 10)
+b_focal <- b_reference
+b_focal[c(3, 7)] <- b_focal[c(3, 7)] + 1
+
+reference <- irw_simdata(n_id = 400, n_item = 10, model = "2PL",
+                         a = a, b = b_reference, seed = 11)
+focal <- irw_simdata(n_id = 400, n_item = 10, model = "2PL",
+                     a = a, b = b_focal, seed = 12)
+focal$id <- focal$id + 1000
+
+reference$cov_group <- "reference"
+focal$cov_group <- "focal"
+df <- rbind(reference, focal)
+
+set.seed(9)
+quit_early <- sample(unique(df$id), 60)
+df <- df[!(df$id %in% quit_early & df$item %in% 4:10), ]
+head(df, 3)
+```
+
+## Why alignment needs care
+
+Pivot to wide and build the response matrix:
+
+```{r}
+wide <- irw_long2resp(df, id_density_threshold = 0.5)
+resp <- as.matrix(wide[, setdiff(names(wide), "id"), drop = FALSE])
+rownames(resp) <- wide$id
+dim(resp)
+```
+
+Two things happened. `cov_group` is gone, because `irw_long2resp()` keeps only
+the response columns. And the density filter dropped the 60 people who quit
+early, so the matrix has fewer rows than the long data has people:
+
+```{r}
+length(unique(df$id))
+nrow(wide)
+```
+
+That is what makes hand-alignment risky. Taking the covariate in its original
+order gives a vector of the wrong length:
+
+```{r}
+naive <- df$cov_group[!duplicated(df$id)]
+length(naive) == nrow(resp)
+```
+
+Had the filter dropped nobody, this would have produced a vector of the right
+length that was still wrong whenever the wide row order differed from first
+appearance -- a silent error rather than a loud one.
+
+`irw_covariates()` reduces the long data to one row per person and, given
+`align`, returns those rows in the order of the wide matrix:
+
+```{r}
+people <- irw_covariates(df, align = wide)
+head(people)
+```
+
+```{r}
+identical(people$id, wide$id)
+table(people$cov_group)
+```
+
+```{r}
+group <- people$cov_group
+```
+
+## Logistic regression DIF
+
+```{r}
+dif <- difLogistic(resp, group = group, focal.name = "focal")
+colnames(resp)[dif$DIFitems]
+```
+
+Statistical significance is easy to reach with hundreds of people per group, so
+read the effect sizes rather than the flags:
+
+```{r}
+round(dif$deltaR2, 4)
+```
+
+Items 3 and 7 -- the two that were built to have DIF -- have much the largest
+values. The other flagged items have effect sizes several times smaller, a
+reminder that a DIF flag at this sample size is not on its own evidence of a
+problem.
+
+## Mantel-Haenszel
+
+A second method on the same inputs, as a cross-check. It flags the same items
+here, which is reassuring but not guaranteed in general:
+
+```{r}
+mh <- difMH(resp, group = group, focal.name = "focal")
+colnames(resp)[mh$DIFitems]
+```
+
+## Calibrating items with irtoys
+
+`irtoys` wraps `ltm` and `mirt` behind one interface, which is convenient for
+quick estimates and plots:
+
+```{r}
+params <- est(resp, model = "2PL", engine = "ltm", nqp = 20)
+head(round(params$est, 3))
+```
+
+The columns are discrimination, difficulty, and guessing. Calibrating the
+pooled sample recovers the generating difficulties reasonably well, except at
+the two DIF items, where pooling mixes two different difficulties:
+
+```{r}
+data.frame(
+  item = colnames(resp),
+  b_reference = round(b_reference, 3),
+  b_focal = round(b_focal, 3),
+  b_pooled_estimate = round(params$est[, 2], 3)
+)
+```
+
+```{r, fig.alt = "Item characteristic curves for the calibrated two-parameter model."}
+plot(irf(params), co = NA, label = TRUE)
+```

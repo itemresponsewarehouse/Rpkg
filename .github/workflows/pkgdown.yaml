@@ -46,7 +46,10 @@ jobs:
         run: |
           install.packages(c("remotes","pkgdown","knitr","rmarkdown","systemfonts","ragg","textshaping"))
           remotes::install_github("redivis/redivis-r", ref = "main")
-          remotes::install_deps(dependencies = NA, upgrade = "never")
+          remotes::install_deps(
+            dependencies = c("Depends", "Imports", "LinkingTo", "Config/Needs/website"),
+            upgrade = "never"
+          )
           remotes::install_local(dependencies = NA, upgrade = "never")
         shell: Rscript {0}
 
