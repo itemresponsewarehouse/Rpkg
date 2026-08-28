@@ -4,15 +4,14 @@
 
 #' Fetch Simulation Metadata Table
 #'
-#' Retrieves the simsyn_metadata table from Redivis user("bdomingu")$dataset("irw_meta").
+#' Retrieves the simsyn_metadata table from Redivis user("datapages")$dataset("irw_meta").
 #' Only fetches new data if the dataset version tag has changed.
 #' Rows are filtered to tables that currently exist in the simulation dataset.
 #'
 #' @return A cached or newly fetched tibble containing simulation metadata information.
 #' @keywords internal
 .fetch_simsyn_metadata_table <- function() {
-  dataset <- redivis::redivis$user("bdomingu")$dataset("irw_meta:bdxt")
-  dataset$get()
+  dataset <- .irw_open_meta_dataset()
   latest_version_tag <- dataset$properties$version$tag
   
   if (!is.null(latest_version_tag) &&
@@ -32,15 +31,14 @@
 
 #' Fetch Nominal Metadata Table
 #'
-#' Retrieves the nominal_metadata table from Redivis user("bdomingu")$dataset("irw_meta").
+#' Retrieves the nominal_metadata table from Redivis user("datapages")$dataset("irw_meta").
 #' Only fetches new data if the dataset version tag has changed.
 #' Rows are filtered to tables that currently exist in the nominal dataset.
 #'
 #' @return A cached or newly fetched tibble containing nominal metadata information.
 #' @keywords internal
 .fetch_nominal_metadata_table <- function() {
-  dataset <- redivis::redivis$user("bdomingu")$dataset("irw_meta:bdxt")
-  dataset$get()
+  dataset <- .irw_open_meta_dataset()
   latest_version_tag <- dataset$properties$version$tag
   
   if (!is.null(latest_version_tag) &&
@@ -60,15 +58,14 @@
 
 #' Fetch Competition Metadata Table
 #'
-#' Retrieves the comps_metadata table from Redivis user("bdomingu")$dataset("irw_meta").
+#' Retrieves the comps_metadata table from Redivis user("datapages")$dataset("irw_meta").
 #' Only fetches new data if the dataset version tag has changed.
 #' Rows are filtered to tables that currently exist in the competition dataset.
 #'
 #' @return A cached or newly fetched tibble containing competition metadata information.
 #' @keywords internal
 .fetch_comps_metadata_table <- function() {
-  dataset <- redivis::redivis$user("bdomingu")$dataset("irw_meta:bdxt")
-  dataset$get()
+  dataset <- .irw_open_meta_dataset()
   latest_version_tag <- dataset$properties$version$tag
   
   if (!is.null(latest_version_tag) &&
@@ -88,15 +85,14 @@
 
 #' Fetch Competition Bibliography Table
 #'
-#' Retrieves the comps_biblio table from Redivis user("bdomingu")$dataset("irw_meta").
+#' Retrieves the comps_biblio table from Redivis user("datapages")$dataset("irw_meta").
 #' Only fetches new data if the dataset version tag has changed.
 #' This version filters out any tables that do not exist in the IRW competitions database.
 #'
 #' @return A tibble containing filtered comps biblio information.
 #' @keywords internal
 .fetch_comps_biblio_table <- function() {
-  dataset <- redivis::redivis$user("bdomingu")$dataset("irw_meta:bdxt")
-  dataset$get()
+  dataset <- .irw_open_meta_dataset()
   latest_version_tag <- dataset$properties$version$tag
   
   if (!is.null(latest_version_tag) &&
@@ -116,8 +112,7 @@
 }
 
 .fetch_simsyn_biblio_table <- function() {
-  dataset <- redivis::redivis$user("bdomingu")$dataset("irw_meta:bdxt")
-  dataset$get()
+  dataset <- .irw_open_meta_dataset()
   latest_version_tag <- dataset$properties$version$tag
   
   if (!is.null(latest_version_tag) &&
@@ -137,8 +132,7 @@
 }
 
 .fetch_nominal_biblio_table <- function() {
-  dataset <- redivis::redivis$user("bdomingu")$dataset("irw_meta:bdxt")
-  dataset$get()
+  dataset <- .irw_open_meta_dataset()
   latest_version_tag <- dataset$properties$version$tag
   
   if (!is.null(latest_version_tag) &&
@@ -160,15 +154,14 @@
 
 #' Fetch Metadata Table
 #'
-#' Retrieves the metadata table from Redivis user("bdomingu")$dataset("irw_meta")$table("metadata").
+#' Retrieves the metadata table from Redivis user("datapages")$dataset("irw_meta")$table("metadata").
 #' Only fetches new data if the table version tag has changed.
 #' Rows are filtered to tables that currently exist in the IRW production datasets.
 #'
 #' @return A cached or newly fetched tibble containing metadata information.
 #' @keywords internal
 .fetch_metadata_table <- function() {
-  dataset <- redivis::redivis$user("bdomingu")$dataset("irw_meta:bdxt")
-  dataset$get()
+  dataset <- .irw_open_meta_dataset()
   # Retrieve version tag
   latest_version_tag <- dataset$properties$version$tag
   catalog_fp <- .irw_core_live_catalog_fingerprint()
@@ -201,15 +194,14 @@
 
 #' Fetch Bibliography Metadata Table
 #'
-#' Retrieves the metadata table from Redivis user("bdomingu")$dataset("irw_meta")$table("biblio").
+#' Retrieves the metadata table from Redivis user("datapages")$dataset("irw_meta")$table("biblio").
 #' Only fetches new data if the table version tag has changed.
 #' This version filters out any tables that do not exist in the IRW database.
 #'
 #' @return A tibble containing filtered biblio information, with only the tables that exist in the IRW database.
 #' @keywords internal
 .fetch_biblio_table <- function() {
-  dataset <- redivis::redivis$user("bdomingu")$dataset("irw_meta:bdxt")
-  dataset$get() 
+  dataset <- .irw_open_meta_dataset()
   latest_version_tag <- dataset$properties$version$tag
   catalog_fp <- .irw_core_live_catalog_fingerprint()
   
@@ -237,15 +229,14 @@
 
 #' Fetch Tags Metadata Table
 #'
-#' Retrieves the tags metadata table from Redivis user("bdomingu")$dataset("irw_meta")$table("tags").
+#' Retrieves the tags metadata table from Redivis user("datapages")$dataset("irw_meta")$table("tags").
 #' Only fetches new data if the table version tag has changed.
 #' Filters out any tags referring to tables that do not exist in the IRW database.
 #'
 #' @return A tibble containing filtered tags information.
 #' @keywords internal
 .fetch_tags_table <- function() {
-  dataset <- redivis::redivis$user("bdomingu")$dataset("irw_meta:bdxt")
-  dataset$get()
+  dataset <- .irw_open_meta_dataset()
   latest_version_tag <- dataset$properties$version$tag
   catalog_fp <- .irw_core_live_catalog_fingerprint()
   
@@ -288,8 +279,7 @@
 #' @keywords internal
 .get_irw_itemtext_dataset <- function() {
   if (!exists("itemtext_dataset", envir = .irw_env) || is.null(.irw_env$itemtext_dataset)) {
-    dataset <- redivis::redivis$user("bdomingu")$dataset("irw_text:07b6")
-    dataset$get() 
+    dataset <- .irw_open_dataset(.irw_itemtext_spec)
     .irw_env$itemtext_dataset <- dataset
   }
   .irw_env$itemtext_dataset

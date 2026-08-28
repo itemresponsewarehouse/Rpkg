@@ -10,7 +10,7 @@
 A cached or newly fetched tibble containing competition metadata information.
 }
 \description{
-Retrieves the comps_metadata table from Redivis user("bdomingu")$dataset("irw_meta").
+Retrieves the comps_metadata table from Redivis user("datapages")$dataset("irw_meta").
 Only fetches new data if the dataset version tag has changed.
 Rows are filtered to tables that currently exist in the competition dataset.
 }

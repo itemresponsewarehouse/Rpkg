@@ -10,7 +10,7 @@
 A cached or newly fetched tibble containing metadata information.
 }
 \description{
-Retrieves the metadata table from Redivis user("bdomingu")$dataset("irw_meta")$table("metadata").
+Retrieves the metadata table from Redivis user("datapages")$dataset("irw_meta")$table("metadata").
 Only fetches new data if the table version tag has changed.
 Rows are filtered to tables that currently exist in the IRW production datasets.
 }

@@ -10,7 +10,7 @@
 A tibble containing filtered tags information.
 }
 \description{
-Retrieves the tags metadata table from Redivis user("bdomingu")$dataset("irw_meta")$table("tags").
+Retrieves the tags metadata table from Redivis user("datapages")$dataset("irw_meta")$table("tags").
 Only fetches new data if the table version tag has changed.
 Filters out any tags referring to tables that do not exist in the IRW database.
 }

@@ -53,3 +53,27 @@ No other files need hard-coded warehouse IDs for fetch/list/filter/download to w
    - `irw_fetch("<known_table>")` succeeds for a table only in the new warehouse
 
 Simulation, competition, and nominal sources each use a single dataset spec under their respective keys in the same config object.
+
+## Non-source datasets
+
+Two datasets are not table sources and so live beside `.irw_datasource_specs`
+rather than inside it, in the same `R/redivis-config.R`:
+
+- `.irw_meta_spec` — the `irw_meta` metadata/biblio/tags backbone. Every
+  fetcher in `R/redivis-metadata.R` opens it through `.irw_open_meta_dataset()`;
+  none of them names the owner or dataset directly.
+- `.irw_itemtext_spec` — the `irw_text` item text dataset, opened via
+  `.irw_open_dataset()` in `.get_irw_itemtext_dataset()`.
+
+They are deliberately *not* keyed under `.irw_datasource_specs`, because that
+object is indexed by the user-facing `source` argument (`.irw_sources` in
+`R/redivis-datasets.R`), and neither is a valid `source`.
+
+## Changing the Redivis owner
+
+All five auxiliary datasets (`irw_meta`, `irw_text`, `irw_simsyn`,
+`irw_competitions`, `irw_nominal`) moved from the `bdomingu` personal account to
+`datapages` in August 2026, joining the six core warehouses already there. The
+short dataset IDs were unchanged by the transfer. Redivis auto-resolves
+references to a previous owner, so a future move is again a config-only change:
+edit the `user` fields in `R/redivis-config.R` and nothing else.

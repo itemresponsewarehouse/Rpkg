@@ -10,7 +10,7 @@
 A tibble containing filtered comps biblio information.
 }
 \description{
-Retrieves the comps_biblio table from Redivis user("bdomingu")$dataset("irw_meta").
+Retrieves the comps_biblio table from Redivis user("datapages")$dataset("irw_meta").
 Only fetches new data if the dataset version tag has changed.
 This version filters out any tables that do not exist in the IRW competitions database.
 }

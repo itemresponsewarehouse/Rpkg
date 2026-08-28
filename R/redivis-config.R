@@ -16,15 +16,42 @@
     list(user = "datapages", dataset = "item_response_warehouse_6:fpe6")
   ),
   sim = list(
-    list(user = "bdomingu", dataset = "irw_simsyn:0btg")
+    list(user = "datapages", dataset = "irw_simsyn:0btg")
   ),
   comp = list(
-    list(user = "bdomingu", dataset = "irw_competitions:cmd7")
+    list(user = "datapages", dataset = "irw_competitions:cmd7")
   ),
   nom = list(
-    list(user = "bdomingu", dataset = "irw_nominal:614n")
+    list(user = "datapages", dataset = "irw_nominal:614n")
   )
 )
+
+#' IRW auxiliary datasource identifiers
+#'
+#' Companions to \code{.irw_datasource_specs}, for the datasets that are not
+#' table sources: the metadata/biblio/tags backbone and the item text dataset.
+#' Kept as bare specs (not wrapped in a list) because, unlike the entries in
+#' \code{.irw_datasource_specs}, they are never looked up by a \code{source}
+#' argument -- see \code{.irw_sources} in \code{redivis-datasets.R}.
+#'
+#' @keywords internal
+#' @noRd
+.irw_meta_spec <- list(user = "datapages", dataset = "irw_meta:bdxt")
+
+#' @keywords internal
+#' @noRd
+.irw_itemtext_spec <- list(user = "datapages", dataset = "irw_text:07b6")
+
+#' Open the IRW metadata dataset
+#'
+#' Thin wrapper so the many metadata fetchers share one definition of the
+#' owner/dataset pair.
+#'
+#' @keywords internal
+#' @noRd
+.irw_open_meta_dataset <- function() {
+  .irw_open_dataset(.irw_meta_spec)
+}
 
 #' Open a Redivis dataset from a spec list
 #'
