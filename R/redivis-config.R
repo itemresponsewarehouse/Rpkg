@@ -36,6 +36,13 @@
 #' @noRd
 .irw_tag_sources <- c("core", "nom")
 
+##Sources that have collections (issue #1633). Core only for now. Same reason
+##.irw_tag_sources exists: filter.R and explore.R read this rather than testing
+##source == "core", and a non-collection source must ERROR rather than return an
+##empty tibble -- an empty tibble filters every table away and reads as "no
+##matches" instead of "wrong question". See inst/developer/collections.md.
+.irw_collection_sources <- c("core")
+
 #' IRW auxiliary datasource identifiers
 #'
 #' Companions to \code{.irw_datasource_specs}, for the datasets that are not

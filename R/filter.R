@@ -198,6 +198,8 @@ irw_license_options <- function(source = "core", comp = FALSE, sim = FALSE, nom 
 #' - `irw_tags()` — full tag metadata table (1 row per dataset)
 #' - `irw_tag_options("column_name")` — valid values (with counts) for any tag column
 #' - `irw_license_options()` — available license values with frequencies
+#' - `irw_collections()` — the 22 collections, with kind, definition and coverage
+#' - `irw_collection("name")` — the table names in one collection
 #'
 #' Tag-based metadata (e.g., `construct_type`, `sample`, `item_format`) can be passed
 #' directly as named arguments. See the parameter list below for supported tag columns.
@@ -247,6 +249,13 @@ irw_license_options <- function(source = "core", comp = FALSE, sim = FALSE, nom 
 #' @param nom Deprecated. Use `source = "nom"` instead.
 #' @param license Character vector. Filters datasets by license (e.g., `"CC BY 4.0"`).
 #'   See `irw_license_options()` for available values.
+#' @param collection Character vector. Filters datasets by collection membership
+#'   (e.g., `"rct"`, `"big_five"`, `"depression"`). Matching is **OR within the
+#'   argument**: `collection = c("rct", "response_time")` returns the union. For
+#'   the intersection, use
+#'   `intersect(irw_collection("rct"), irw_collection("response_time"))`.
+#'   See `irw_collections()` for available collections and their coverage.
+#'   Core source only.
 #' @return A sorted character vector of dataset names that match all specified filters, or `character(0)` if no match is found.
 #'
 #' @examples
@@ -266,6 +275,12 @@ irw_license_options <- function(source = "core", comp = FALSE, sim = FALSE, nom 
 #' # License filtering
 #' irw_license_options()
 #' irw_filter(license = "CC BY 4.0")
+#'
+#' # Collection filtering
+#' irw_collections()                                    # what exists
+#' irw_filter(collection = "rct")
+#' irw_filter(collection = "depression", n_participants = c(500, Inf))
+#' irw_filter(collection = c("rct", "response_time"))   # union, not intersection
 #'
 #' # Filter by response category complexity
 #' irw_filter(n_categories = 2, density = NULL)           # binary
@@ -297,7 +312,8 @@ irw_filter <- function(n_responses = NULL,
                        comp = FALSE,
                        sim = FALSE,
                        nom = FALSE,
-                       license = NULL) {
+                       license = NULL,
+                       collection = NULL) {
   density_supplied <- !missing(density)
   source <- .irw_resolve_source(source = source, sim = sim, comp = comp, nom = nom)
 
@@ -334,7 +350,8 @@ irw_filter <- function(n_responses = NULL,
       measurement_tool = measurement_tool,
       item_format = item_format,
       primary_language_s_ = primary_language_s_,
-      longitudinal = longitudinal
+      longitudinal = longitudinal,
+      collection = collection
     )
     unsupported_filters <- unsupported_filters[vapply(unsupported_filters, Negate(is.null), logical(1))]
 
@@ -360,6 +377,15 @@ irw_filter <- function(n_responses = NULL,
       ". Unsupported filter(s): ",
       paste(names(tag_filters), collapse = ", "),
       "."
+    )
+  }
+
+  if (!is.null(collection) && !source %in% .irw_collection_sources) {
+    stop(
+      "`collection` is only available for `source` in ",
+      paste(sprintf("\"%s\"", .irw_collection_sources), collapse = ", "),
+      ".",
+      call. = FALSE
     )
   }
 
@@ -403,6 +429,36 @@ irw_filter <- function(n_responses = NULL,
       metadata <- metadata[tolower(metadata$table) %in% tolower(matched_tables), ]
       if (nrow(metadata) == 0L) {
         return(.irw_filter_no_match("license", license))
+      }
+    }
+  }
+
+  ##Collections live in their own table keyed on `table`, so this is modelled on
+  ##the `license` block above and NOT added to `tag_filters`. Putting it in
+  ##`tag_filters` would send it into the loop that tests
+  ##`colname %in% colnames(tags)`, hit the else branch, warn that the column
+  ##was not found in the tags table and was ignored, and then return UNFILTERED
+  ##results -- the silent way to ship this broken. test-collections.R has a
+  ##regression test asserting an unknown value errors rather than warns.
+  if (!is.null(collection)) {
+    members <- .fetch_collection_members_table()
+
+    if (!all(c("table", "collection") %in% names(members))) {
+      warning("Collection membership table is missing expected columns. Skipping collection filter.")
+    } else {
+      known <- unique(members$collection)
+      unknown <- setdiff(collection, known)
+      if (length(unknown) > 0L) {
+        stop(
+          "Unknown collection(s): ", paste(sprintf("\"%s\"", unknown), collapse = ", "),
+          ".\nSee `irw_collections()` for the ", length(known), " available.",
+          call. = FALSE
+        )
+      }
+      matched <- members$table[members$collection %in% collection]
+      metadata <- metadata[tolower(metadata$table) %in% tolower(matched), ]
+      if (nrow(metadata) == 0L) {
+        return(.irw_filter_no_match("collection", collection))
       }
     }
   }

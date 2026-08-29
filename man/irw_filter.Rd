@@ -27,7 +27,8 @@ irw_filter(
   comp = FALSE,
   sim = FALSE,
   nom = FALSE,
-  license = NULL
+  license = NULL,
+  collection = NULL
 )
 }
 \arguments{
@@ -104,6 +105,14 @@ Tag filters require \code{"core"} or \code{"nom"}.}
 
 \item{license}{Character vector. Filters datasets by license (e.g., \code{"CC BY 4.0"}).
 See \code{irw_license_options()} for available values.}
+
+\item{collection}{Character vector. Filters datasets by collection membership
+(e.g., \code{"rct"}, \code{"big_five"}, \code{"depression"}). Matching is \strong{OR within the
+argument}: \code{collection = c("rct", "response_time")} returns the union. For
+the intersection, use
+\code{intersect(irw_collection("rct"), irw_collection("response_time"))}.
+See \code{irw_collections()} for available collections and their coverage.
+Core source only.}
 }
 \value{
 A sorted character vector of dataset names that match all specified filters, or \code{character(0)} if no match is found.
@@ -128,6 +137,8 @@ To explore available metadata:
 \item \code{irw_tags()} — full tag metadata table (1 row per dataset)
 \item \code{irw_tag_options("column_name")} — valid values (with counts) for any tag column
 \item \code{irw_license_options()} — available license values with frequencies
+\item \code{irw_collections()} — the 22 collections, with kind, definition and coverage
+\item \code{irw_collection("name")} — the table names in one collection
 }
 
 Tag-based metadata (e.g., \code{construct_type}, \code{sample}, \code{item_format}) can be passed
@@ -153,6 +164,12 @@ irw_tag_options("construct_type")  # view tag values
 # License filtering
 irw_license_options()
 irw_filter(license = "CC BY 4.0")
+
+# Collection filtering
+irw_collections()                                    # what exists
+irw_filter(collection = "rct")
+irw_filter(collection = "depression", n_participants = c(500, Inf))
+irw_filter(collection = c("rct", "response_time"))   # union, not intersection
 
 # Filter by response category complexity
 irw_filter(n_categories = 2, density = NULL)           # binary

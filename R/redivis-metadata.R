@@ -310,6 +310,68 @@
   .irw_env$nominal_tags_tibble
 }
 
+##Collections (issue #1633). Two tables, deliberately handled differently:
+##
+##  collections        the registry, one row per collection. Has NO `table`
+##                     column, so it must NOT go through
+##                     .irw_filter_rows_to_live_tables() -- that would error or
+##                     silently empty it.
+##  collection_members long, one row per (table, collection). Live-filtered like
+##                     every other per-table product.
+##
+##Consequence: after live filtering, membership can be smaller than the
+##`n_tables` the registry published. irw_collections() recomputes rather than
+##trusting that column -- see the note there.
+.fetch_collections_table <- function() {
+  dataset <- .irw_open_meta_dataset()
+  latest_version_tag <- dataset$properties$version$tag
+
+  if (!is.null(latest_version_tag) &&
+      exists("collections_tibble", envir = .irw_env) &&
+      identical(.irw_env$collections_version, latest_version_tag)) {
+    return(.irw_env$collections_tibble)
+  }
+
+  table <- dataset$table("collections:va83")
+  out <- .retry_with_backoff(function() table$to_tibble())
+  out <- as.data.frame(out)
+  out[] <- lapply(out, function(col) {
+    if (is.character(col)) col[col == "NA"] <- NA
+    col
+  })
+  if ("n_tables" %in% names(out)) out$n_tables <- suppressWarnings(as.integer(out$n_tables))
+  out <- tibble::as_tibble(out)
+
+  .irw_env$collections_version <- latest_version_tag
+  .irw_env$collections_tibble <- out
+  out
+}
+
+.fetch_collection_members_table <- function() {
+  dataset <- .irw_open_meta_dataset()
+  latest_version_tag <- dataset$properties$version$tag
+  catalog_fp <- .irw_core_live_catalog_fingerprint()
+
+  if (!is.null(latest_version_tag) &&
+      exists("collection_members_tibble", envir = .irw_env) &&
+      identical(.irw_env$collection_members_version, latest_version_tag) &&
+      exists("core_live_catalog_fingerprint", envir = .irw_env) &&
+      identical(.irw_env$core_live_catalog_fingerprint, catalog_fp)) {
+    return(.irw_env$collection_members_tibble)
+  }
+
+  table <- dataset$table("collection_members:j7rp")
+  out <- .retry_with_backoff(function() table$to_tibble())
+  out <- tibble::as_tibble(as.data.frame(out))
+  filtered <- .irw_filter_rows_to_live_tables(out, source = "core")
+
+  .irw_env$collection_members_version <- latest_version_tag
+  .irw_env$collection_members_tibble <- filtered
+  .irw_env$core_live_catalog_fingerprint <- catalog_fp
+
+  filtered
+}
+
 #' Fetch the tags table for a datasource
 #'
 #' Central dispatch so callers never hardcode which sources have tags.
