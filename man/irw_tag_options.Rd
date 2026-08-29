@@ -4,10 +4,13 @@
 \alias{irw_tag_options}
 \title{View Available Tag Values with Frequencies}
 \usage{
-irw_tag_options(column)
+irw_tag_options(column, source = "core")
 }
 \arguments{
 \item{column}{A character string specifying the tag column name.}
+
+\item{source}{Character. Data source: \code{"core"} (default) or \code{"nom"}.
+\code{"comp"} and \code{"sim"} have no tags by design and error.}
 }
 \value{
 A data.frame with columns: \code{tag} and \code{count}, sorted by descending frequency.

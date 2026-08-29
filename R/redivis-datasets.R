@@ -55,6 +55,8 @@
     "biblio_version",
     "tags_tibble",
     "tags_version",
+    "nominal_tags_tibble",
+    "nominal_tags_version",
     "core_live_catalog_fingerprint"
   )) {
     if (exists(nm, envir = .irw_env)) {

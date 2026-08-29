@@ -93,7 +93,8 @@ See \code{irw_tag_options("primary_language_s_")}.}
 \item{n_actors}{Numeric vector of length 1 or 2. Competition-only filter for the
 number of actors. Only used when \code{source = "comp"}.}
 
-\item{source}{Character. Data source: \code{"core"} (default), \code{"nom"}, \code{"sim"}, or \code{"comp"}.}
+\item{source}{Character. Data source: \code{"core"} (default), \code{"nom"}, \code{"sim"}, or \code{"comp"}.
+Tag filters require \code{"core"} or \code{"nom"}.}
 
 \item{comp}{Deprecated. Use \code{source = "comp"} instead.}
 
@@ -131,6 +132,8 @@ To explore available metadata:
 
 Tag-based metadata (e.g., \code{construct_type}, \code{sample}, \code{item_format}) can be passed
 directly as named arguments. See the parameter list below for supported tag columns.
+Tag filters are available for \code{source = "core"} and \code{source = "nom"}; \code{"comp"}
+and \code{"sim"} have no tags by design and reject them.
 }
 }
 \examples{

@@ -269,6 +269,64 @@
   return(filtered_tags)
 }
 
+#' Fetch Nominal Tags Table
+#'
+#' Retrieves the nominal_tags table from Redivis
+#' user("datapages")$dataset("irw_meta")$table("nominal_tags").
+#' Only fetches new data if the dataset version tag has changed.
+#' Rows are filtered to tables that currently exist in the nominal dataset.
+#'
+#' Added for issue #1689: the tagging sheet used to be core-only, leaving the
+#' nominal branch with nowhere to record tags. `comp` and `sim` deliberately
+#' have no equivalent -- see inst/developer/tags.md.
+#'
+#' @return A tibble containing filtered nominal tags information.
+#' @keywords internal
+.fetch_nominal_tags_table <- function() {
+  dataset <- .irw_open_meta_dataset()
+  latest_version_tag <- dataset$properties$version$tag
+
+  if (!is.null(latest_version_tag) &&
+      exists("nominal_tags_tibble", envir = .irw_env) &&
+      exists("nominal_tags_version", envir = .irw_env) &&
+      identical(.irw_env$nominal_tags_version, latest_version_tag)) {
+    return(.irw_env$nominal_tags_tibble)
+  }
+
+  table <- dataset$table("nominal_tags:xgzq")
+  tags_tibble <- .retry_with_backoff(function() table$to_tibble())
+
+  # Tags reach Redivis as literal "NA" strings; coerce as the core fetcher does.
+  tags_tibble <- as.data.frame(tags_tibble)
+  tags_tibble[] <- lapply(tags_tibble, function(col) {
+    if (is.character(col)) col[col == "NA"] <- NA
+    col
+  })
+  tags_tibble <- tibble::as_tibble(tags_tibble)
+
+  .irw_env$nominal_tags_tibble <- .irw_filter_rows_to_live_tables(tags_tibble, source = "nom")
+  .irw_env$nominal_tags_version <- latest_version_tag
+
+  .irw_env$nominal_tags_tibble
+}
+
+#' Fetch the tags table for a datasource
+#'
+#' Central dispatch so callers never hardcode which sources have tags.
+#' Errors for \code{comp}/\code{sim}, which have none by design.
+#'
+#' @param source One of \code{"core"} or \code{"nom"}.
+#' @return A tibble of tags for that source.
+#' @keywords internal
+.irw_tags_for_source <- function(source = "core") {
+  switch(source,
+         core = .fetch_tags_table(),
+         nom  = .fetch_nominal_tags_table(),
+         stop("Tags are not available for `source = \"", source,
+              "\"`. Tagged sources: ", paste(.irw_tag_sources, collapse = ", "),
+              ".", call. = FALSE))
+}
+
 
 #' Access the IRW item text dataset object
 #'

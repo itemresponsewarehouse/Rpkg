@@ -218,11 +218,18 @@ irw_metadata <- function(source = "core", sim = FALSE, comp = FALSE, nom = FALSE
 #' Automatically checks for updates and refreshes only when needed.
 #'
 #' @param tables Optional. A character vector of table name(s) to filter by.
+#' @param source Character. Data source: \code{"core"} (default) or \code{"nom"}.
+#'   \code{"comp"} and \code{"sim"} have no tags by design and error.
 #'
 #' @return A tibble containing tags information.
+#' @examples
+#' \dontrun{
+#' irw_tags()                  # core
+#' irw_tags(source = "nom")    # nominal
+#' }
 #' @export
-irw_tags <- function(tables = NULL) {
-  tags <- .fetch_tags_table()
+irw_tags <- function(tables = NULL, source = "core") {
+  tags <- .irw_tags_for_source(source)
   
   if (is.null(tables)) {
     return(tags)

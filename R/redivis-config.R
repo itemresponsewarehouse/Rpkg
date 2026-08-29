@@ -26,6 +26,16 @@
   )
 )
 
+#' Datasources that have a tags table
+#'
+#' Tags are hand-annotated per source from a Google Sheet (see
+#' \code{src/metadata/03_tags.R}). \code{comp} and \code{sim} deliberately have
+#' none -- see \code{inst/developer/tags.md} before adding one.
+#'
+#' @keywords internal
+#' @noRd
+.irw_tag_sources <- c("core", "nom")
+
 #' IRW auxiliary datasource identifiers
 #'
 #' Companions to \code{.irw_datasource_specs}, for the datasets that are not

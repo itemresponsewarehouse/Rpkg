@@ -161,11 +161,11 @@ irw_info <- function(table_name = NULL, details = FALSE, source = "core", comp =
       vars <- paste(.irw_table_variable_names(table), collapse = " | ")
     }
 
-    # Tags: only main
+    # Tags: core and nom only (comp/sim have no tags by design)
     construct <- "Not available for this datasource"
-    if (source == "core") {
+    if (source %in% .irw_tag_sources) {
       construct <- "No construct specified"
-      tags <- .fetch_tags_table()
+      tags <- .irw_tags_for_source(source)
       cvec <- tags$construct_name[tags$table == table_name]
       if (length(cvec) > 0 && !is.na(cvec[1]) && nzchar(cvec[1])) {
         construct <- cvec[1]

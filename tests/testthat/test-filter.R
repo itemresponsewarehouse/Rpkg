@@ -140,9 +140,54 @@ test_that("irw_filter routes simulation and competition sources", {
   )
 })
 
-test_that("irw_filter rejects tag filters on non-core sources", {
+test_that("irw_filter rejects tag filters on untagged sources", {
+  # comp and sim deliberately have no tags -- see inst/developer/tags.md
   expect_error(
     irw_filter(source = "sim", construct_name = "Big Five", density = NULL),
-    "Tag filters are only available for `source = \"core\"`"
+    "Tag filters are only available for `source` in"
   )
+
+  expect_error(
+    irw_filter(source = "comp", construct_name = "Big Five"),
+    "not available for `source = \"comp\"`"
+  )
+})
+
+test_that("irw_filter accepts tag filters on nominal", {
+  local_mocked_bindings(
+    .fetch_nominal_tags_table = function() {
+      data.frame(
+        table = c("nom_a", "nom_b"),
+        construct_type = c("Cognitive/educational", "Personality"),
+        stringsAsFactors = FALSE
+      )
+    },
+    irw_metadata = function(source = "core", sim = FALSE, comp = FALSE, nom = FALSE) {
+      expect_identical(source, "nom")
+      data.frame(
+        table = c("nom_a", "nom_b"),
+        n_responses = c(100, 200),
+        stringsAsFactors = FALSE
+      )
+    },
+    .env = asNamespace("irw")
+  )
+
+  expect_equal(
+    irw_filter(source = "nom", construct_type = "Cognitive/educational", density = NULL),
+    "nom_a"
+  )
+
+  expect_message(
+    expect_equal(
+      irw_filter(source = "nom", construct_type = "Not Here", density = NULL),
+      character(0)
+    ),
+    "0 tables matched construct_type = 'Not Here'\\."
+  )
+})
+
+test_that("tags dispatch errors for untagged sources", {
+  expect_error(irw_tags(source = "comp"), "Tags are not available")
+  expect_error(irw_tag_options("sample", source = "sim"), "Tags are not available")
 })

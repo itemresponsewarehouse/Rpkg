@@ -5,10 +5,12 @@
 #' with quoted values containing commas.
 #'
 #' @param column A character string specifying the tag column name.
+#' @param source Character. Data source: \code{"core"} (default) or \code{"nom"}.
+#'   \code{"comp"} and \code{"sim"} have no tags by design and error.
 #' @return A data.frame with columns: `tag` and `count`, sorted by descending frequency.
 #' @export
-irw_tag_options <- function(column) {
-  tags <- .fetch_tags_table()
+irw_tag_options <- function(column, source = "core") {
+  tags <- .irw_tags_for_source(source)
   
   if (missing(column)) {
     message("Available tag columns:\n", paste(names(tags), collapse = ", "))
@@ -16,7 +18,7 @@ irw_tag_options <- function(column) {
   }
   
   if (!column %in% colnames(tags)) {
-    stop(sprintf("'%s' is not a valid column in the tags table. Use names(irw_tags()) to see available options.", column))
+    stop(sprintf("'%s' is not a valid column in the tags table for source = \"%s\". Use names(irw_tags(source = \"%s\")) to see available options.", column, source, source))
   }
   
   all_values <- tags[[column]]
@@ -199,6 +201,8 @@ irw_license_options <- function(source = "core", comp = FALSE, sim = FALSE, nom 
 #'
 #' Tag-based metadata (e.g., `construct_type`, `sample`, `item_format`) can be passed
 #' directly as named arguments. See the parameter list below for supported tag columns.
+#' Tag filters are available for `source = "core"` and `source = "nom"`; `"comp"`
+#' and `"sim"` have no tags by design and reject them.
 #'
 #' @param n_responses Numeric vector of length 1 or 2. Filters datasets by total number of responses.
 #'   - Length 1: exact value (e.g., `n_responses = 1000`)
@@ -237,6 +241,7 @@ irw_license_options <- function(source = "core", comp = FALSE, sim = FALSE, nom 
 #' @param n_actors Numeric vector of length 1 or 2. Competition-only filter for the
 #'   number of actors. Only used when `source = "comp"`.
 #' @param source Character. Data source: `"core"` (default), `"nom"`, `"sim"`, or `"comp"`.
+#'   Tag filters require `"core"` or `"nom"`.
 #' @param comp Deprecated. Use `source = "comp"` instead.
 #' @param sim Deprecated. Use `source = "sim"` instead.
 #' @param nom Deprecated. Use `source = "nom"` instead.
@@ -348,9 +353,11 @@ irw_filter <- function(n_responses = NULL,
     ))
   }
 
-  if (source != "core" && length(tag_filters) > 0L) {
+  if (!source %in% .irw_tag_sources && length(tag_filters) > 0L) {
     stop(
-      "Tag filters are only available for `source = \"core\"`. Unsupported filter(s): ",
+      "Tag filters are only available for `source` in ",
+      paste(sprintf("\"%s\"", .irw_tag_sources), collapse = ", "),
+      ". Unsupported filter(s): ",
       paste(names(tag_filters), collapse = ", "),
       "."
     )
@@ -359,7 +366,7 @@ irw_filter <- function(n_responses = NULL,
   metadata <- irw_metadata(source = source)
 
   if (length(tag_filters) > 0) {
-    tags <- .fetch_tags_table()
+    tags <- .irw_tags_for_source(source)
 
     for (colname in names(tag_filters)) {
       value <- tag_filters[[colname]]
