@@ -18,6 +18,9 @@ reference:
   - irw_tags
   - irw_tag_options
   - irw_license_options
+  - irw_collections
+  - irw_collection
+  - irw_collection_members
   - irw_itemtext
   - irw_list_itemtext_tables
 - title: Fetch

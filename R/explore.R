@@ -172,6 +172,17 @@ irw_info <- function(table_name = NULL, details = FALSE, source = "core", comp =
       }
     }
     
+    # Collections: core only (issue #1633). Reads the same list filter.R does
+    # rather than testing source == "core".
+    collections <- "Not available for this datasource"
+    if (source %in% .irw_collection_sources) {
+      collections <- tryCatch({
+        mem <- .fetch_collection_members_table()
+        hit <- sort(unique(mem$collection[tolower(mem$table) == tolower(table_name)]))
+        if (length(hit) > 0) paste(hit, collapse = ", ") else "None"
+      }, error = function(e) "None")
+    }
+
     # Biblio: main + comp only (sim has none)
     description <- NA
     doi <- NA
@@ -213,6 +224,7 @@ irw_info <- function(table_name = NULL, details = FALSE, source = "core", comp =
     message(strrep("-", 50))
     message(sprintf("%-25s %s", "Description:", description))
     message(sprintf("%-25s %s", "Construct:", construct))
+    message(sprintf("%-25s %s", "Collections:", collections))
     message(sprintf("%-25s %d", "Number of Rows:", num_rows))
     message(sprintf("%-25s %d", "Variable Count:", variable_count))
     message(sprintf("%-25s %s", "Variables:", vars))
