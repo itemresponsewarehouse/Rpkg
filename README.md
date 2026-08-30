@@ -4,6 +4,9 @@ This repository hosts the R package `irw`, which provides programmatic access to
 
 Documentation for all available functions can be found at: <https://itemresponsewarehouse.github.io/Rpkg/reference/index.html>.
 
+Project map: [`ARCHITECTURE.md`](https://github.com/ben-domingue/irw/blob/main/ARCHITECTURE.md) in `ben-domingue/irw` — which repo owns
+what, where the data lives, and which document is authoritative when two disagree.
+
 ## Installation
 
 ``` r
