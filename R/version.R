@@ -1,15 +1,3 @@
-#' Version pinning for IRW Redivis datasets
-#'
-#' IRW data on Redivis is versioned, and the warehouses are re-released as
-#' datasets are added or corrected. Analyses that need to be reproducible must
-#' therefore be able to say which release they ran against. These functions pin
-#' a Redivis dataset to a released version for the rest of the R session; every
-#' subsequent lookup -- \code{irw_fetch()}, \code{irw_filter()},
-#' \code{irw_list_tables()}, metadata -- then reads that version.
-#'
-#' @name irw_version
-NULL
-
 #' Accepted form of a Redivis version tag
 #'
 #' Redivis silently resolves an unrecognized version string to the current
@@ -141,6 +129,10 @@ NULL
 #' that fetches, listings, and metadata are reproducible. Pin at the top of an
 #' analysis script and the script will return the same data when it is re-run,
 #' even after IRW has been updated.
+#'
+#' The pin covers every lookup that reads the dataset, not just fetches:
+#' \code{irw_fetch()}, \code{irw_filter()}, \code{irw_list_tables()}, and
+#' metadata all read the pinned version.
 #'
 #' Each IRW dataset is versioned independently on Redivis, so pinning is
 #' per-dataset. \code{irw_get_version()} reports the versions currently in use,

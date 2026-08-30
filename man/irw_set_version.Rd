@@ -24,6 +24,10 @@ analysis script and the script will return the same data when it is re-run,
 even after IRW has been updated.
 }
 \details{
+The pin covers every lookup that reads the dataset, not just fetches:
+\code{irw_fetch()}, \code{irw_filter()}, \code{irw_list_tables()}, and
+metadata all read the pinned version.
+
 Each IRW dataset is versioned independently on Redivis, so pinning is
 per-dataset. \code{irw_get_version()} reports the versions currently in use,
 which is how you find the tags to write into a script.
