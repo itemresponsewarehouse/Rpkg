@@ -17,6 +17,6 @@ A data.frame with columns: \code{tag} and \code{count}, sorted by descending fre
 }
 \description{
 Returns a data frame of unique tag values from a given tag metadata column,
-along with the number of datasets each tag appears in. Handles multi-tag fields
-with quoted values containing commas.
+along with the number of datasets each tag appears in. Multi-tag fields hold a
+comma-joined list; no tag value contains a comma (see \code{.irw_split_tags}).
 }

@@ -72,13 +72,35 @@
 
 #' Open a Redivis dataset from a spec list
 #'
+#' Honors any session version pin for the dataset (see \code{irw_set_version()}).
+#' Every IRW dataset is opened through here, so pinning one dataset pins it for
+#' fetches, table listings, and metadata alike.
+#'
 #' @param spec A list with \code{user} and \code{dataset} elements.
 #' @keywords internal
 #' @noRd
 .irw_open_dataset <- function(spec) {
-  ds <- redivis::redivis$user(spec$user)$dataset(spec$dataset)
+  ds <- .irw_redivis_dataset(spec, .irw_pinned_version(.irw_dataset_key(spec$dataset)))
   ds$get()
   ds
+}
+
+#' Construct a Redivis dataset handle, optionally at a fixed version
+#'
+#' The single point where the Redivis client is asked for a dataset, so that
+#' version pinning has exactly one place to take effect.
+#'
+#' @param spec A list with \code{user} and \code{dataset} elements.
+#' @param version Optional version tag, e.g. \code{"v32.0"}.
+#' @keywords internal
+#' @noRd
+.irw_redivis_dataset <- function(spec, version = NULL) {
+  user <- redivis::redivis$user(spec$user)
+  if (is.null(version)) {
+    user$dataset(spec$dataset)
+  } else {
+    user$dataset(spec$dataset, version = version)
+  }
 }
 
 #' Fingerprint of configured core warehouses (for session cache invalidation)

@@ -60,6 +60,13 @@ s$items
 s$resp
 ```
 
+``` r
+# pin IRW to a Redivis version so an analysis stays reproducible
+irw_get_version()                                    # versions currently in use
+irw_set_version("item_response_warehouse", "v45.1")  # pin for this session
+irw_reset_version()                                  # back to the current release
+```
+
 ## Troubleshooting
 
 #### Export Quota

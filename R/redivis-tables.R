@@ -47,5 +47,10 @@
     stop(failure, call. = FALSE)
   }
 
+  pinned <- .irw_pinned_not_found_message(name, source)
+  if (!is.null(pinned)) {
+    stop(pinned, call. = FALSE)
+  }
+
   stop(.irw_table_not_found_message(name), call. = FALSE)
 }

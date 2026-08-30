@@ -103,6 +103,12 @@ fetch_single_data <- function(table_id, source = "core", dedup = FALSE, sim = FA
     return(invisible(NULL))
   }
 
+  pinned <- .irw_pinned_not_found_message(table_id, source)
+  if (!is.null(pinned)) {
+    message("Error fetching dataset ", shQuote(table_id), ":", pinned)
+    return(invisible(NULL))
+  }
+
   message(
     "Error fetching dataset ",
     shQuote(table_id),
