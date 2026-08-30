@@ -1,8 +1,32 @@
+#' Split a multi-select tag cell into its atoms
+#'
+#' Tag columns such as \code{sample} and \code{construct type} are multi-select,
+#' stored as one comma-joined string. \code{03_tags.R} in the pipeline repo
+#' normalizes them on export (issue #1720): stray quotes are removed, atoms are
+#' sorted into canonical order, and no tag value contains a comma -- the one that
+#' did, \code{"Internet-based (Mturkers, etc)"}, was renamed to
+#' \code{"Internet-based"}. That is what makes a plain split correct here.
+#'
+#' Before that normalization this function had to be quote-aware, and a
+#' 34-line hand-rolled parser lived here for the purpose -- but only
+#' \code{irw_tag_options()} used it, while \code{irw_filter()} did a naive
+#' split, so filtering on the one comma-bearing value silently matched nothing.
+#' Both now share this single code path.
+#'
+#' @param x A single character cell, possibly NA.
+#' @return Character vector of trimmed atoms; \code{character(0)} for NA/empty.
+#' @keywords internal
+.irw_split_tags <- function(x) {
+  if (length(x) != 1L || is.na(x)) return(character(0))
+  atoms <- trimws(strsplit(as.character(x), ",", fixed = TRUE)[[1]])
+  atoms[nzchar(atoms)]
+}
+
 #' View Available Tag Values with Frequencies
 #'
 #' Returns a data frame of unique tag values from a given tag metadata column,
-#' along with the number of datasets each tag appears in. Handles multi-tag fields
-#' with quoted values containing commas.
+#' along with the number of datasets each tag appears in. Multi-tag fields hold a
+#' comma-joined list; no tag value contains a comma (see \code{.irw_split_tags}).
 #'
 #' @param column A character string specifying the tag column name.
 #' @param source Character. Data source: \code{"core"} (default) or \code{"nom"}.
@@ -24,40 +48,9 @@ irw_tag_options <- function(column, source = "core") {
   all_values <- tags[[column]]
   all_values <- all_values[!is.na(all_values)]
   
-  parse_mixed_quoted_tags <- function(x) {
-    x <- gsub('\\"', '"', x)
-    if (!grepl('"', x) && grepl("^Internet-based \\(Mturkers, etc\\)$", x)) {
-      return("Internet-based (Mturkers, etc)")
-    }
-    
-    chars <- strsplit(x, "")[[1]]
-    in_quotes <- FALSE
-    buffer <- ""
-    parts <- character()
-    
-    for (ch in chars) {
-      if (ch == '"') {
-        in_quotes <- !in_quotes
-      } else if (ch == "," && !in_quotes) {
-        parts <- c(parts, trimws(buffer))
-        buffer <- ""
-      } else {
-        buffer <- paste0(buffer, ch)
-      }
-    }
-    parts <- c(parts, trimws(buffer))
-    parts <- gsub('^"|"$', '', parts)
-    parts[nzchar(parts)]
-  }
-  
-  parsed_list <- lapply(all_values, function(x) {
-    result <- tryCatch(parse_mixed_quoted_tags(x), error = function(e) character(0))
-    if (length(result) > 0 && all(nzchar(result))) result else NULL
-  })
-  
-  parsed_flat <- unlist(parsed_list, use.names = FALSE)
-  parsed_clean <- parsed_flat[nzchar(parsed_flat)]
-  
+  parsed_clean <- unlist(lapply(all_values, .irw_split_tags), use.names = FALSE)
+  parsed_clean <- parsed_clean[nzchar(parsed_clean)]
+
   freq_table <- sort(table(parsed_clean), decreasing = TRUE)
   out <- data.frame(
     tag = names(freq_table),
@@ -400,8 +393,7 @@ irw_filter <- function(n_responses = NULL,
         tags <- tags[
           !is.na(tags[[colname]]) &
             sapply(tags[[colname]], function(x) {
-              tag_list <- trimws(unlist(strsplit(x, ",")))
-              any(tag_list %in% value)
+              any(.irw_split_tags(x) %in% value)
             }),
         ]
         if (nrow(tags) == 0L) {
