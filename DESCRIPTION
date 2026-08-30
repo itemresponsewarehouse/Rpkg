@@ -18,8 +18,9 @@ Imports:
     redivis, 
     tibble,
     stats
-Suggests: 
+Suggests:
     testthat (>= 3.0.0),
+    withr,
     evaluate
 Remotes: redivis/redivis-r
 License: MIT + file LICENSE

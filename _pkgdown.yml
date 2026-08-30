@@ -31,6 +31,12 @@ reference:
   - irw_merge
   - irw_download
   - irw_save_bibtex
+- title: Reproducibility
+  desc: Functions for pinning IRW data to a Redivis version.
+- contents:
+  - irw_set_version
+  - irw_get_version
+  - irw_reset_version
 - title: Simulate
   desc: Functions for simulating IRW data.
 - contents:

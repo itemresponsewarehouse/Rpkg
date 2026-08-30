@@ -86,18 +86,10 @@ test_that(".irw_core_warehouse_fingerprint changes when specs change", {
   expect_type(fp, "character")
   expect_true(nzchar(fp))
 
-  local_mocked_bindings(
-    .irw_datasource_specs = list(
-      core = list(
+  local_irw_core_specs(list(
         list(user = "datapages", dataset = "item_response_warehouse:as2e"),
         list(user = "datapages", dataset = "item_response_warehouse_99:zzzz")
-      ),
-      sim = irw:::.irw_datasource_specs$sim,
-      comp = irw:::.irw_datasource_specs$comp,
-      nom = irw:::.irw_datasource_specs$nom
-    ),
-    .env = asNamespace("irw")
-  )
+      ))
 
   expect_false(identical(fp, irw:::.irw_core_warehouse_fingerprint()))
 })
@@ -109,8 +101,8 @@ test_that(".irw_sync_core_warehouse_caches clears live-table caches when specs c
     env$metadata_tibble <- data.frame(table = "x")
     env$core_warehouse_fingerprint <- "old"
 
+    local_irw_binding(".irw_env", env)
     local_mocked_bindings(
-      .irw_env = env,
       .irw_core_warehouse_fingerprint = function() "new",
       .env = asNamespace("irw")
     )
@@ -215,18 +207,10 @@ test_that(".irw_coerce_resp_set keeps nominal responses as character", {
 # tokens; it must not take down every IRW lookup.
 
 test_that(".irw_open_core_datasources skips an unreleased warehouse with a warning", {
-  local_mocked_bindings(
-    .irw_datasource_specs = list(
-      core = list(
+  local_irw_core_specs(list(
         list(user = "datapages", dataset = "item_response_warehouse:as2e"),
         list(user = "datapages", dataset = "item_response_warehouse_5:3ykx")
-      ),
-      sim = irw:::.irw_datasource_specs$sim,
-      comp = irw:::.irw_datasource_specs$comp,
-      nom = irw:::.irw_datasource_specs$nom
-    ),
-    .env = asNamespace("irw")
-  )
+      ))
   local_mocked_bindings(
     .irw_open_dataset = function(spec) {
       if (grepl("_5", spec$dataset, fixed = TRUE)) {
@@ -242,18 +226,10 @@ test_that(".irw_open_core_datasources skips an unreleased warehouse with a warni
 })
 
 test_that(".irw_open_core_datasources warning does not leak warehouse ids", {
-  local_mocked_bindings(
-    .irw_datasource_specs = list(
-      core = list(
+  local_irw_core_specs(list(
         list(user = "datapages", dataset = "item_response_warehouse:as2e"),
         list(user = "datapages", dataset = "item_response_warehouse_5:3ykx")
-      ),
-      sim = irw:::.irw_datasource_specs$sim,
-      comp = irw:::.irw_datasource_specs$comp,
-      nom = irw:::.irw_datasource_specs$nom
-    ),
-    .env = asNamespace("irw")
-  )
+      ))
   local_mocked_bindings(
     .irw_open_dataset = function(spec) {
       if (grepl("_5", spec$dataset, fixed = TRUE)) {
@@ -269,18 +245,10 @@ test_that(".irw_open_core_datasources warning does not leak warehouse ids", {
 })
 
 test_that(".irw_open_core_datasources errors when every warehouse is unavailable", {
-  local_mocked_bindings(
-    .irw_datasource_specs = list(
-      core = list(
+  local_irw_core_specs(list(
         list(user = "datapages", dataset = "item_response_warehouse:as2e"),
         list(user = "datapages", dataset = "item_response_warehouse_5:3ykx")
-      ),
-      sim = irw:::.irw_datasource_specs$sim,
-      comp = irw:::.irw_datasource_specs$comp,
-      nom = irw:::.irw_datasource_specs$nom
-    ),
-    .env = asNamespace("irw")
-  )
+      ))
   local_mocked_bindings(
     .irw_open_dataset = function(spec) stop("[500] upstream is down"),
     .env = asNamespace("irw")
@@ -290,18 +258,10 @@ test_that(".irw_open_core_datasources errors when every warehouse is unavailable
 })
 
 test_that(".irw_open_core_datasources stops immediately on an auth failure", {
-  local_mocked_bindings(
-    .irw_datasource_specs = list(
-      core = list(
+  local_irw_core_specs(list(
         list(user = "datapages", dataset = "item_response_warehouse:as2e"),
         list(user = "datapages", dataset = "item_response_warehouse_5:3ykx")
-      ),
-      sim = irw:::.irw_datasource_specs$sim,
-      comp = irw:::.irw_datasource_specs$comp,
-      nom = irw:::.irw_datasource_specs$nom
-    ),
-    .env = asNamespace("irw")
-  )
+      ))
   local_mocked_bindings(
     .irw_open_dataset = function(spec) stop("unauthorized: bad token"),
     .env = asNamespace("irw")
@@ -311,19 +271,11 @@ test_that(".irw_open_core_datasources stops immediately on an auth failure", {
 })
 
 test_that(".irw_open_core_datasources returns config order when all are available", {
-  local_mocked_bindings(
-    .irw_datasource_specs = list(
-      core = list(
+  local_irw_core_specs(list(
         list(user = "datapages", dataset = "wh_a"),
         list(user = "datapages", dataset = "wh_b"),
         list(user = "datapages", dataset = "wh_c")
-      ),
-      sim = irw:::.irw_datasource_specs$sim,
-      comp = irw:::.irw_datasource_specs$comp,
-      nom = irw:::.irw_datasource_specs$nom
-    ),
-    .env = asNamespace("irw")
-  )
+      ))
   local_mocked_bindings(
     .irw_open_dataset = function(spec) spec$dataset,
     .env = asNamespace("irw")

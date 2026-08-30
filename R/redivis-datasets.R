@@ -109,22 +109,6 @@
   }
 }
 
-#' Initialize Redivis Datasource(s)
-#'
-#' Returns a list of Redivis dataset objects based on the selected source:
-#' - If \code{source = "sim"}, returns the IRW simulation dataset (\code{irw_simsyn:0btg})
-#' - If \code{source = "comp"}, returns the IRW competition dataset (\code{irw_competitions:cmd7})
-#' - If \code{source = "nom"}, returns the IRW nominal dataset (\code{irw_nominal:614n})
-#' - If \code{source = "core"} (default), returns all main IRW production datasets
-#'
-#' @param source Character. One of \code{"core"}, \code{"nom"}, \code{"sim"}, \code{"comp"}.
-#'   Default is \code{"core"}.
-#' @param sim Deprecated. Use \code{source = "sim"} instead.
-#' @param comp Deprecated. Use \code{source = "comp"} instead.
-#' @param nom Deprecated. Use \code{source = "nom"} instead.
-#'
-#' @return A list of one or more Redivis dataset objects.
-#' @keywords internal
 #' Open every core warehouse, skipping any that are currently unavailable
 #'
 #' A freshly created warehouse has no released version yet, so opening it with a
@@ -177,6 +161,23 @@
   opened
 }
 
+#' Initialize Redivis Datasource(s)
+#'
+#' Returns a list of Redivis dataset objects based on the selected source:
+#' - If \code{source = "sim"}, returns the IRW simulation dataset (\code{irw_simsyn:0btg})
+#' - If \code{source = "comp"}, returns the IRW competition dataset (\code{irw_competitions:cmd7})
+#' - If \code{source = "nom"}, returns the IRW nominal dataset (\code{irw_nominal:614n})
+#' - If \code{source = "core"} (default), returns all main IRW production datasets
+#'
+#' @param source Character. One of \code{"core"}, \code{"nom"}, \code{"sim"}, \code{"comp"}.
+#'   Default is \code{"core"}.
+#' @param sim Deprecated. Use \code{source = "sim"} instead.
+#' @param comp Deprecated. Use \code{source = "comp"} instead.
+#' @param nom Deprecated. Use \code{source = "nom"} instead.
+#'
+#' @return A list of one or more Redivis dataset objects.
+#' @keywords internal
+#' @noRd
 .initialize_datasource <- function(source = "core", sim = FALSE, comp = FALSE, nom = FALSE) {
   source <- .irw_resolve_source(source = source, sim = sim, comp = comp, nom = nom)
 
