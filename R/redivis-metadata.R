@@ -332,7 +332,7 @@
     return(.irw_env$collections_tibble)
   }
 
-  table <- dataset$table("collections:va83")
+  table <- dataset$table("collections:7ae4")
   out <- .retry_with_backoff(function() table$to_tibble())
   out <- as.data.frame(out)
   out[] <- lapply(out, function(col) {
@@ -360,7 +360,7 @@
     return(.irw_env$collection_members_tibble)
   }
 
-  table <- dataset$table("collection_members:j7rp")
+  table <- dataset$table("collection_members:qses")
   out <- .retry_with_backoff(function() table$to_tibble())
   out <- tibble::as_tibble(as.data.frame(out))
   filtered <- .irw_filter_rows_to_live_tables(out, source = "core")
