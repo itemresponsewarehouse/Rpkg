@@ -89,9 +89,13 @@ jobs:
               echo "No release tag yet; using changes since ${{ steps.version.outputs.current }} was set ($since)"
             fi
           fi
+          # Release PRs are dropped by head branch, not by time: GitHub stamps
+          # mergedAt a second or so after the committer date of the commit the
+          # merge produces, so a release PR always lands just after its own tag
+          # and would reappear in the next release's notes.
           gh pr list --state merged --base main --limit 200 \
-            --json number,title,mergedAt \
-            --jq "[.[] | select(.mergedAt > \"$since\")] | sort_by(.mergedAt) | reverse | .[] | \"- \(.title) (#\(.number))\"" \
+            --json number,title,mergedAt,headRefName \
+            --jq "[.[] | select(.mergedAt > \"$since\") | select(.headRefName | startswith(\"release/\") | not)] | sort_by(.mergedAt) | reverse | .[] | \"- \(.title) (#\(.number))\"" \
             > changelog.md
           if [ ! -s changelog.md ]; then
             echo "- Maintenance release; no pull requests merged since ${last_tag:-the first commit}." > changelog.md
