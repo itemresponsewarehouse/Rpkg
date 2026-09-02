@@ -40,11 +40,25 @@ jobs:
           http-user-agent: ${{ matrix.config.http-user-agent }}
           use-public-rspm: true
           
+      # redivis has a configure script that links against libcurl, and its
+      # DESCRIPTION declares no SystemRequirements, so nothing installs the
+      # headers for us. macOS and Windows runners already have them; Ubuntu
+      # does not, and the build fails with "ERROR: libcurl not found."
+      - name: Install system dependencies for redivis
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libcurl4-openssl-dev
+
       # Install Redivis from GitHub before checking dependencies
       - name: Install Redivis from GitHub
         run: |
           Rscript -e "if (!requireNamespace('remotes', quietly = TRUE)) install.packages('remotes')"
           Rscript -e "remotes::install_github('redivis/redivis-r', ref='main')"
+          # install_github() only warns when the build fails, which leaves the
+          # dependency solve below to report a confusing "Can't find package
+          # called redivis". Fail here instead, where the real error is.
+          Rscript -e "if (!requireNamespace('redivis', quietly = TRUE)) stop('redivis failed to install; see the build output above')"
 
       - uses: r-lib/actions/setup-r-dependencies@v2
         with:
