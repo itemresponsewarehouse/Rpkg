@@ -186,3 +186,28 @@
   clean <- unique(vapply(errors$msgs, .irw_sanitize_redivis_error, character(1), USE.NAMES = FALSE))
   paste("\nAn error occurred while accessing IRW:", paste(clean, collapse = "; "))
 }
+
+#' Stop unless the redivis client is installed
+#'
+#' redivis is not on CRAN, so it lives in Suggests and is resolved through the
+#' \code{Remotes:} field. Installers that ignore that field (\code{R CMD
+#' INSTALL}, a plain tarball, r-universe) leave the package usable but without a
+#' client, so the two functions that touch \code{redivis::} check here first
+#' rather than failing with "there is no package called 'redivis'".
+#'
+#' @keywords internal
+#' @noRd
+.irw_require_redivis <- function() {
+  if (requireNamespace("redivis", quietly = TRUE)) {
+    return(invisible(TRUE))
+  }
+  stop(
+    "\nThis function needs the redivis package, which is not installed.\n",
+    "redivis is not on CRAN; install it with:\n",
+    "  remotes::install_github(\"redivis/redivis-r\", ref = \"main\")\n\n",
+    "The parts of irw that do not download from the warehouse work without it:\n",
+    "  irw_simdata(), irw_simdata_comp(), irw_simu_diff(), irw_imv(), irw_predict(),\n",
+    "  irw_long2resp(), irw_resp2long(), irw_check_resp(), irw_covariates().",
+    call. = FALSE
+  )
+}

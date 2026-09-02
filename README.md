@@ -18,6 +18,20 @@ pak::pak("itemresponsewarehouse/Rpkg")
 library(irw)
 ```
 
+`pak` also installs [redivis](https://github.com/redivis/redivis-r), the client
+for the warehouse itself. Installers that ignore the `Remotes:` field --- `R CMD
+INSTALL`, a plain tarball, r-universe --- will not, and every function that
+downloads a table then asks you to install it:
+
+``` r
+remotes::install_github("redivis/redivis-r", ref = "main")
+```
+
+The functions that do not touch the warehouse --- `irw_simdata()`,
+`irw_simdata_comp()`, `irw_simu_diff()`, `irw_imv()`, `irw_predict()`,
+`irw_long2resp()`, `irw_resp2long()`, `irw_check_resp()` and `irw_covariates()`
+--- work without it.
+
 ## IMPORTANT: Redivis Authentication
 
 The IRW tables are hosted on [Redivis](https://redivis.com), a data management platform. To access these datasets, you'll need to:

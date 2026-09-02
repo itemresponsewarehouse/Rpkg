@@ -95,6 +95,7 @@
 #' @keywords internal
 #' @noRd
 .irw_redivis_dataset <- function(spec, version = NULL) {
+  .irw_require_redivis()
   user <- redivis::redivis$user(spec$user)
   if (is.null(version)) {
     user$dataset(spec$dataset)
