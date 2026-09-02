@@ -1,3 +1,8 @@
+# irw 1.1.2
+
+- Drop release PRs from the generated NEWS.md entry (#142)
+- Move redivis to Suggests and check for it at runtime (#141)
+
 # irw 1.1.1
 
 - Compare release timestamps in UTC so NEWS.md skips released PRs (#139)

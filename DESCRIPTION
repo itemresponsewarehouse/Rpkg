@@ -1,7 +1,7 @@
 Package: irw
 Type: Package
 Title: Package for Working with Data from the Item Response Warehouse
-Version: 1.1.1
+Version: 1.1.2
 Authors@R: c(
   person("Hansol", "Lee", email = "hansol@stanford.edu",role = c("aut", "cre")),
 	person("Michael", "Hardy", email = "hardym@stanford.edu",role = c("aut")),
