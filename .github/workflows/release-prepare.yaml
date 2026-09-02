@@ -69,17 +69,21 @@ jobs:
             since="${{ inputs.since }}"
             echo "Changes since $since (given as input)"
           elif [ -n "$last_tag" ]; then
-            since=$(git log -1 --format=%cI "$last_tag")
+            # Always UTC, in gh's own Z-suffixed shape: the jq filter below
+            # compares these timestamps as strings against mergedAt, so a local
+            # -07:00 offset would let PRs merged *before* the tag sort after it,
+            # and a +00:00 offset would still miss the tag commit itself.
+            since=$(TZ=UTC0 git log -1 --format=%cd --date=format-local:%Y-%m-%dT%H:%M:%SZ "$last_tag")
             echo "Changes since $last_tag ($since)"
           else
             # No release tag yet. The last time DESCRIPTION's version changed is
             # the honest start of this release; fall back to the root commit if
             # even that cannot be found.
-            since=$(git log -n1 --format=%cI \
+            since=$(TZ=UTC0 git log -n1 --format=%cd --date=format-local:%Y-%m-%dT%H:%M:%SZ \
               -S"Version: ${{ steps.version.outputs.current }}" -- DESCRIPTION)
             if [ -z "$since" ]; then
               root=$(git rev-list --max-parents=0 HEAD | tail -1)
-              since=$(git log -1 --format=%cI "$root")
+              since=$(TZ=UTC0 git log -1 --format=%cd --date=format-local:%Y-%m-%dT%H:%M:%SZ "$root")
               echo "No release tag and no version bump in history; using the whole history"
             else
               echo "No release tag yet; using changes since ${{ steps.version.outputs.current }} was set ($since)"
