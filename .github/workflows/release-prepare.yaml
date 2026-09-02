@@ -1,0 +1,111 @@
+# Opens a release PR: bumps the version in DESCRIPTION and writes the NEWS.md
+# entry from the pull requests merged since the last release tag.
+#
+# Run it from the Actions tab (release-prepare.yaml -> Run workflow) and pick
+# patch, minor or major. Merging the PR it opens is what actually releases:
+# release-publish.yaml then tags the commit and cuts the GitHub release.
+on:
+  workflow_dispatch:
+    inputs:
+      bump:
+        description: "Which part of the version to increase"
+        type: choice
+        options: [patch, minor, major]
+        default: patch
+      since:
+        description: "Only list PRs merged after this ISO timestamp (blank = since the last release tag)"
+        type: string
+        default: ""
+
+name: release-prepare.yaml
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Compute the next version
+        id: version
+        run: |
+          set -euo pipefail
+          current=$(sed -n 's/^Version:[[:space:]]*//p' DESCRIPTION | head -1)
+          if ! printf '%s' "$current" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+$'; then
+            echo "DESCRIPTION has a version this workflow cannot bump: '$current'" >&2
+            echo "Expected major.minor.patch." >&2
+            exit 1
+          fi
+          major=${current%%.*}
+          rest=${current#*.}
+          minor=${rest%%.*}
+          patch=${rest#*.}
+          case "${{ inputs.bump }}" in
+            major) major=$((major + 1)); minor=0; patch=0 ;;
+            minor) minor=$((minor + 1)); patch=0 ;;
+            patch) patch=$((patch + 1)) ;;
+          esac
+          next="$major.$minor.$patch"
+          echo "current=$current" >> "$GITHUB_OUTPUT"
+          echo "next=$next" >> "$GITHUB_OUTPUT"
+          echo "Bumping $current -> $next"
+
+      - name: Collect merged pull requests since the last release
+        id: changelog
+        run: |
+          set -euo pipefail
+          last_tag=$(git tag --list 'v*' --sort=-v:refname | head -1)
+          if [ -n "${{ inputs.since }}" ]; then
+            since="${{ inputs.since }}"
+            echo "Changes since $since (given as input)"
+          elif [ -n "$last_tag" ]; then
+            since=$(git log -1 --format=%cI "$last_tag")
+            echo "Changes since $last_tag ($since)"
+          else
+            since=$(git log --reverse --format=%cI | head -1)
+            echo "No release tag yet; using the whole history"
+          fi
+          gh pr list --state merged --base main --limit 200 \
+            --json number,title,mergedAt \
+            --jq "[.[] | select(.mergedAt > \"$since\")] | sort_by(.mergedAt) | reverse | .[] | \"- \(.title) (#\(.number))\"" \
+            > changelog.md
+          if [ ! -s changelog.md ]; then
+            echo "- Maintenance release; no pull requests merged since ${last_tag:-the first commit}." > changelog.md
+          fi
+          cat changelog.md
+
+      - name: Update DESCRIPTION and NEWS.md
+        run: |
+          set -euo pipefail
+          next="${{ steps.version.outputs.next }}"
+          sed -i "s/^Version:.*/Version: $next/" DESCRIPTION
+          {
+            printf '# irw %s\n\n' "$next"
+            cat changelog.md
+            printf '\n'
+            if [ -f NEWS.md ]; then cat NEWS.md; fi
+          } > NEWS.md.tmp
+          mv NEWS.md.tmp NEWS.md
+          rm changelog.md
+
+      - name: Open the release pull request
+        run: |
+          set -euo pipefail
+          next="${{ steps.version.outputs.next }}"
+          branch="release/v$next"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -b "$branch"
+          git add DESCRIPTION NEWS.md
+          git commit -m "Release irw $next"
+          git push --force origin "$branch"
+          body=$(printf 'Bumps `DESCRIPTION` to %s and adds the `NEWS.md` entry below, generated from the pull requests merged since the last release.\n\nEdit `NEWS.md` on this branch if the generated list needs tidying. Merging tags `v%s` and publishes the release automatically.\n' "$next" "$next")
+          gh pr create --base main --head "$branch" \
+            --title "Release irw $next" --body "$body"
