@@ -13,7 +13,7 @@ on:
         options: [patch, minor, major]
         default: patch
       since:
-        description: "Only list PRs merged after this ISO timestamp (blank = since the last release tag)"
+        description: "Only list PRs merged after this ISO timestamp (blank = auto-detect)"
         type: string
         default: ""
 
@@ -37,7 +37,9 @@ jobs:
         id: version
         run: |
           set -euo pipefail
-          current=$(sed -n 's/^Version:[[:space:]]*//p' DESCRIPTION | head -1)
+          # No `| head -1` anywhere in this workflow: head exits early, git and
+          # sed take SIGPIPE, and `set -o pipefail` turns that into exit 141.
+          current=$(awk '/^Version:/ {sub(/^Version:[[:space:]]*/, ""); print; exit}' DESCRIPTION)
           if ! printf '%s' "$current" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+$'; then
             echo "DESCRIPTION has a version this workflow cannot bump: '$current'" >&2
             echo "Expected major.minor.patch." >&2
@@ -61,7 +63,8 @@ jobs:
         id: changelog
         run: |
           set -euo pipefail
-          last_tag=$(git tag --list 'v*' --sort=-v:refname | head -1)
+          last_tag=$(git for-each-ref --count=1 --sort=-v:refname \
+            --format='%(refname:short)' 'refs/tags/v*')
           if [ -n "${{ inputs.since }}" ]; then
             since="${{ inputs.since }}"
             echo "Changes since $since (given as input)"
@@ -69,8 +72,18 @@ jobs:
             since=$(git log -1 --format=%cI "$last_tag")
             echo "Changes since $last_tag ($since)"
           else
-            since=$(git log --reverse --format=%cI | head -1)
-            echo "No release tag yet; using the whole history"
+            # No release tag yet. The last time DESCRIPTION's version changed is
+            # the honest start of this release; fall back to the root commit if
+            # even that cannot be found.
+            since=$(git log -n1 --format=%cI \
+              -S"Version: ${{ steps.version.outputs.current }}" -- DESCRIPTION)
+            if [ -z "$since" ]; then
+              root=$(git rev-list --max-parents=0 HEAD | tail -1)
+              since=$(git log -1 --format=%cI "$root")
+              echo "No release tag and no version bump in history; using the whole history"
+            else
+              echo "No release tag yet; using changes since ${{ steps.version.outputs.current }} was set ($since)"
+            fi
           fi
           gh pr list --state merged --base main --limit 200 \
             --json number,title,mergedAt \
