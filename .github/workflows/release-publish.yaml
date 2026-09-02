@@ -1,0 +1,55 @@
+# Tags and publishes a release once a version bump lands on main.
+#
+# Fires when DESCRIPTION changes, does nothing unless the version it names has
+# no tag yet, and takes the release notes from the matching NEWS.md section.
+# Normally the push it reacts to is a merged release PR from
+# release-prepare.yaml, but a hand-edited version bump works the same way.
+on:
+  push:
+    branches: [main]
+    paths: ["DESCRIPTION"]
+  workflow_dispatch:
+
+name: release-publish.yaml
+
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Tag and release if the version is new
+        run: |
+          set -euo pipefail
+          version=$(sed -n 's/^Version:[[:space:]]*//p' DESCRIPTION | head -1)
+          tag="v$version"
+          if git rev-parse -q --verify "refs/tags/$tag" >/dev/null; then
+            echo "$tag already exists; nothing to release."
+            exit 0
+          fi
+
+          if [ -f NEWS.md ]; then
+            awk -v want="# irw $version" '
+              $0 == want { grab = 1; next }
+              grab && /^# irw / { exit }
+              grab { print }
+            ' NEWS.md > notes.md
+          else
+            : > notes.md
+          fi
+          if [ ! -s notes.md ]; then
+            printf 'See the commit history for changes in %s.\n' "$version" > notes.md
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag -a "$tag" -m "irw $version"
+          git push origin "$tag"
+          gh release create "$tag" --title "irw $version" --notes-file notes.md

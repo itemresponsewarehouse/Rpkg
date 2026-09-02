@@ -90,3 +90,13 @@ a missing table.
 ## Feedback and Contributions
 
 If you encounter issues or have suggestions for improving `irw`, please submit them on the [GitHub Issues page](https://github.com/itemresponsewarehouse/Rpkg/issues). Contributions are welcome!
+
+### Releasing
+
+Releases are cut from the Actions tab, not by hand:
+
+1.  Run **release-prepare.yaml** and choose `patch`, `minor` or `major`. It bumps `Version:` in `DESCRIPTION` and writes the `NEWS.md` entry from the pull requests merged since the last release tag, then opens a `Release irw X.Y.Z` pull request.
+2.  Tidy the generated `NEWS.md` on that branch if the PR titles need editing, then merge it.
+3.  **release-publish.yaml** sees the new version land on `main`, tags `vX.Y.Z`, and publishes a GitHub release using that `NEWS.md` section. The pkgdown site rebuilds on the published release.
+
+Nothing else needs a version number, so `DESCRIPTION` and `NEWS.md` cannot drift apart. A hand-edited version bump merged to `main` still gets tagged and released; only the changelog would then be your problem.
