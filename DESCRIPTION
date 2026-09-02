@@ -21,7 +21,8 @@ Imports:
 Suggests:
     testthat (>= 3.0.0),
     withr,
-    evaluate
+    evaluate,
+    mirt
 Remotes: redivis/redivis-r
 License: MIT + file LICENSE
 Encoding: UTF-8

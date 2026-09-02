@@ -53,6 +53,11 @@ reference:
   - irw_recode_key
   - irw_decode
   - irw_covariates
+- title: Model comparison
+  desc: Functions for comparing the predictions of fitted models.
+- contents:
+  - irw_imv
+  - irw_predict
 - title: Example IRW data
 - contents:
   - swmd_mokken

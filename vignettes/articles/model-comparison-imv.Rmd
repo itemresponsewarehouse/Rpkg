@@ -1,0 +1,146 @@
+---
+title: "Comparing Models Out of Sample with the IMV"
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+Fit two IRT models to the same data and the more flexible one always fits
+better in sample. The question worth asking is whether it *predicts* better on
+responses it has not seen, and by how much. The InterModel Vigorish (IMV)
+answers the second half of that: it puts the improvement on the scale of a
+weighted coin, so "the 2PL is 3% better than the Rasch model" means something
+concrete rather than being a difference of log-likelihoods no one can picture.
+
+Two functions do the work. `irw_predict()` turns a fitted `mirt` model plus a
+set of `id`/`item` pairs into predicted probabilities, and `irw_imv()` compares
+two such sets of predictions against the observed responses.
+
+```{r setup, message=FALSE}
+library(irw)
+library(mirt)
+```
+
+## What the IMV measures
+
+Each model's predictions are summarized by their geometric mean likelihood,
+which is then converted into the weight of a coin with the same entropy. A
+model that predicts every response perfectly is a coin that always lands the
+same way; a model that predicts nothing is a fair coin. The IMV is the
+proportional gain in that weight going from the baseline model to the
+comparison model.
+
+Two quick reference points, with no model fitting involved:
+
+```{r}
+set.seed(1)
+truth <- rbinom(2000, 1, 0.8)
+
+# Same predictions twice: no gain.
+irw_imv(truth, p1 = rep(0.8, 2000), p2 = rep(0.8, 2000))
+
+# Knowing the base rate, versus guessing at random.
+irw_imv(truth, p1 = rep(0.5, 2000), p2 = rep(0.8, 2000))
+```
+
+The statistic is not symmetric — it is the gain from `p1` to `p2`, so swapping
+the arguments gives a negative number of a different magnitude, not a sign
+flip.
+
+## Getting the data
+
+In normal use you would fetch a table from the warehouse:
+
+```{r, eval=FALSE}
+df <- irw_fetch("4thgrade_math_sirt")
+```
+
+That needs Redivis credentials, which this documentation build does not have,
+so the rest of the article uses `irw_simdata()`. Item discriminations are drawn
+with a wide spread, which is exactly the situation where a 2PL should have
+something to say that a Rasch model cannot.
+
+```{r}
+set.seed(20)
+a_true <- rlnorm(12, 0, 0.6)
+df <- irw_simdata(n_id = 1000, n_item = 12, model = "2PL", a = a_true, seed = 20)
+str(df)
+```
+
+## Cross-validating over responses
+
+Hold out a random quarter of the *responses* — not of the people — so that
+everyone still appears in the training data and therefore still has an ability
+estimate. In each fold, fit both models to the training responses and score the
+held-out ones.
+
+```{r}
+nfold <- 4
+fold <- sample(rep_len(1:nfold, nrow(df)))
+
+omega <- numeric(nfold)
+
+for (k in seq_len(nfold)) {
+  train <- df[fold != k, ]
+  test  <- df[fold == k, ]
+
+  wide <- irw_long2resp(train, id_density_threshold = NULL)
+  items <- wide[, setdiff(names(wide), "id"), drop = FALSE]
+
+  m_rasch <- mirt(items, 1, itemtype = "Rasch", verbose = FALSE)
+  m_2pl   <- mirt(items, 1, itemtype = "2PL", verbose = FALSE)
+
+  # Persons need an ability estimate from the training fit to be scored.
+  test <- test[test$id %in% wide$id, ]
+
+  z <- irw_predict(m_rasch, wide, newdata = test)
+  names(z)[names(z) == "p"] <- "p1"
+  z$p2 <- irw_predict(m_2pl, wide, newdata = z[, c("id", "item")])$p
+
+  omega[k] <- irw_imv(z, p1 = "p1", p2 = "p2")
+}
+
+round(omega, 4)
+mean(omega)
+```
+
+The 2PL buys a small but consistent improvement across folds: moving from the
+Rasch model to the 2PL is like trading a coin of one weight for a coin roughly
+3% more predictable.
+
+Two details in that loop matter more than they look:
+
+- `id_density_threshold = NULL` keeps `irw_long2resp()` from dropping sparse
+  respondents. With responses split across folds, everyone looks sparser than
+  they are, and a person filtered out of the training frame has no ability
+  estimate for the test rows.
+- `irw_predict()` is given `wide`, with its `id` column still attached, rather
+  than the item-only matrix passed to `mirt()`. That column is how abilities
+  from `fscores()` get matched back to people; without it there is nothing to
+  stop a silent misalignment between rows and ids.
+
+## Reading the number
+
+The IMV is a *relative* measure and inherits the baseline's units, so it is
+only interpretable alongside the comparison being made. A few things to hold on
+to:
+
+- **Sign.** Positive means the second model predicts better out of sample.
+  Negative is a real and common result: extra parameters that do not
+  correspond to anything in the data cost predictive accuracy.
+- **Scale.** Values in psychometric model comparisons are typically small.
+  A 0.01 gain is not nothing — it is a coin 1% more predictable than the
+  baseline's.
+- **Out of sample.** Comparing in-sample predictions rewards the more flexible
+  model by construction. The cross-validation loop is not optional decoration.
+
+## Reference
+
+Domingue, B. W., Rahal, C., Faul, J., Freese, J., Kanopka, K., Rigos, A.,
+Stenhaug, B., & Tripathi, A. (2021). InterModel Vigorish (IMV): A novel
+approach for quantifying predictive accuracy with binary outcomes.
+<https://doi.org/10.31235/osf.io/8sgz5>
