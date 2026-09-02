@@ -60,13 +60,16 @@ df <- irw_fetch("4thgrade_math_sirt")
 ```
 
 That needs Redivis credentials, which this documentation build does not have,
-so the rest of the article uses `irw_simdata()`. Item discriminations are drawn
-with a wide spread, which is exactly the situation where a 2PL should have
-something to say that a Rasch model cannot.
+so the rest of the article uses `irw_simdata()`. Discriminations are set by
+hand on a wide ladder, from an item that barely separates people to one that
+separates them sharply. That is exactly the situation where a 2PL has something
+to say that a Rasch model cannot — with discriminations packed near 1, the two
+models make nearly the same predictions and the comparison below is mostly
+noise.
 
 ```{r}
 set.seed(20)
-a_true <- rlnorm(12, 0, 0.6)
+a_true <- seq(0.4, 2.5, length.out = 12)
 df <- irw_simdata(n_id = 1000, n_item = 12, model = "2PL", a = a_true, seed = 20)
 str(df)
 ```
@@ -110,7 +113,7 @@ mean(omega)
 
 The 2PL buys a small but consistent improvement across folds: moving from the
 Rasch model to the 2PL is like trading a coin of one weight for a coin roughly
-3% more predictable.
+1.7% more predictable.
 
 Two details in that loop matter more than they look:
 

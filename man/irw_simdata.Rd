@@ -25,7 +25,9 @@ irw_simdata(
 
 \item{model}{Character string: one of \code{"1PL"}, \code{"2PL"}, or \code{"3PL"}. Default is \code{"1PL"}.}
 
-\item{a}{Optional vector of item discriminations. If \code{NULL}, sampled from lognormal(0.2, 0.2) (ignored for 1PL).}
+\item{a}{Optional vector of item discriminations. If \code{NULL}, sampled from
+lognormal(0, 0.5), i.e. a median of 1 with roughly the middle half of
+items between 0.7 and 1.4 (ignored for 1PL).}
 
 \item{b}{Optional vector of item difficulties. If \code{NULL}, sampled from N(0, 1).}
 

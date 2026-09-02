@@ -6,7 +6,9 @@
 #' @param n_id Number of respondents. Ignored if `theta` is provided. Default is 1000.
 #' @param n_item Number of items. Default is 20.
 #' @param model Character string: one of `"1PL"`, `"2PL"`, or `"3PL"`. Default is `"1PL"`.
-#' @param a Optional vector of item discriminations. If `NULL`, sampled from lognormal(0.2, 0.2) (ignored for 1PL).
+#' @param a Optional vector of item discriminations. If `NULL`, sampled from
+#'   lognormal(0, 0.5), i.e. a median of 1 with roughly the middle half of
+#'   items between 0.7 and 1.4 (ignored for 1PL).
 #' @param b Optional vector of item difficulties. If `NULL`, sampled from N(0, 1).
 #' @param g Optional vector of guessing parameters. Required for 3PL; if `NULL`, sampled from Beta(5, 17).
 #' @param theta Optional vector of person abilities. If provided, overrides `n_id`, `theta_mean`, and `theta_sd`.
@@ -56,8 +58,8 @@ irw_simdata <- function(n_id = 1000,
   if (is.null(a)) {
     a <- switch(model,
                 "1PL" = rep(1, n_item),
-                "2PL" = rlnorm(n_item, 0.2, 0.2),
-                "3PL" = rlnorm(n_item, 0.2, 0.2))
+                "2PL" = rlnorm(n_item, 0, 0.5),
+                "3PL" = rlnorm(n_item, 0, 0.5))
   }
   
   if (is.null(b)) {
