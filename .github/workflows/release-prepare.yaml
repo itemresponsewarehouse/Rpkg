@@ -120,5 +120,23 @@ jobs:
           git commit -m "Release irw $next"
           git push --force origin "$branch"
           body=$(printf 'Bumps `DESCRIPTION` to %s and adds the `NEWS.md` entry below, generated from the pull requests merged since the last release.\n\nEdit `NEWS.md` on this branch if the generated list needs tidying. Merging tags `v%s` and publishes the release automatically.\n' "$next" "$next")
-          gh pr create --base main --head "$branch" \
-            --title "Release irw $next" --body "$body"
+
+          # Creating the PR needs "Allow GitHub Actions to create and approve
+          # pull requests" (Settings -> Actions -> General), which an org can
+          # withhold. The branch is already pushed either way, so fall back to
+          # handing over a link rather than failing a release that succeeded.
+          if gh pr create --base main --head "$branch" \
+               --title "Release irw $next" --body "$body"; then
+            exit 0
+          fi
+
+          repo_url="${{ github.server_url }}/${{ github.repository }}"
+          {
+            printf '## Release irw %s is ready, but needs a PR opened by hand\n\n' "$next"
+            printf 'Branch `%s` is pushed with the version bump and the changelog. ' "$branch"
+            printf 'GitHub Actions is not permitted to open pull requests in this repository, so:\n\n'
+            printf '%s/compare/main...%s?expand=1\n\n' "$repo_url" "$branch"
+            printf 'Enabling "Allow GitHub Actions to create and approve pull requests" '
+            printf '(Settings -> Actions -> General -> Workflow permissions) removes this step.\n'
+          } >> "$GITHUB_STEP_SUMMARY"
+          echo "::warning::Release branch $branch pushed, but Actions cannot open the PR. See the run summary for the link."
