@@ -1,3 +1,10 @@
+# irw 1.1.1
+
+- Compare release timestamps in UTC so NEWS.md skips released PRs (#139)
+- Strip the arrow namespace reference from swmd_mokken.rda (#138)
+- Install libcurl headers so redivis builds on Ubuntu (#137)
+- Don't fail release-prepare when Actions can't open the PR (#136)
+
 # irw 1.1.0
 
 ## New features
