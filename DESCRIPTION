@@ -15,10 +15,10 @@ Depends: R (>= 4.0.0)
 Imports:
     glue,
     httr,
-    redivis, 
     tibble,
     stats
 Suggests:
+    redivis,
     testthat (>= 3.0.0),
     withr,
     evaluate,

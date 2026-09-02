@@ -9,6 +9,7 @@
 #' @keywords internal
 #' @noRd
 .irw_query_tibble <- function(sql) {
+  .irw_require_redivis()
   tryCatch(
     suppressWarnings(redivis::redivis$query(sql)$to_tibble()),
     error = function(e) {
