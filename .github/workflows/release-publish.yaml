@@ -28,7 +28,7 @@ jobs:
       - name: Tag and release if the version is new
         run: |
           set -euo pipefail
-          version=$(sed -n 's/^Version:[[:space:]]*//p' DESCRIPTION | head -1)
+          version=$(awk '/^Version:/ {sub(/^Version:[[:space:]]*/, ""); print; exit}' DESCRIPTION)
           tag="v$version"
           if git rev-parse -q --verify "refs/tags/$tag" >/dev/null; then
             echo "$tag already exists; nothing to release."
