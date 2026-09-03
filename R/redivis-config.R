@@ -80,7 +80,22 @@
 #' @keywords internal
 #' @noRd
 .irw_open_dataset <- function(spec) {
-  ds <- .irw_redivis_dataset(spec, .irw_pinned_version(.irw_dataset_key(spec$dataset)))
+  key <- .irw_dataset_key(spec$dataset)
+  version <- .irw_pinned_version(key)
+  # `irw_use_version()` pins a dataset that did not exist yet to a sentinel.
+  # Reading it has to fail: falling back to the current release would mix
+  # today's data into a run that is meant to reproduce an old one. For a core
+  # warehouse this is caught by `.irw_open_core_datasources()` and the shard is
+  # dropped, which is exactly right -- it was not part of that IRW version.
+  if (identical(version, .irw_absent_version)) {
+    stop(
+      key, " had no released version at the IRW version pinned by ",
+      "`irw_use_version()`, so it cannot be read in this session. Use ",
+      "`irw_reset_version()` to return to the current release.",
+      call. = FALSE
+    )
+  }
+  ds <- .irw_redivis_dataset(spec, version)
   ds$get()
   ds
 }

@@ -116,14 +116,28 @@
 #' lookup, so unavailable warehouses are dropped with a warning. An
 #' authentication failure applies to all of them, so that still stops.
 #'
+#' A warehouse that is younger than a pinned IRW version is a different case
+#' and is skipped without a warning: it did not exist then, so its absence is
+#' the correct answer rather than a fault.
+#'
 #' @return A non-empty list of Redivis dataset objects, in config order.
 #' @keywords internal
 #' @noRd
 .irw_open_core_datasources <- function() {
   opened <- list()
   failures <- character(0)
+  skipped <- character(0)
 
   for (spec in .irw_datasource_specs$core) {
+    # A warehouse younger than the pinned IRW version is not a failure: it did
+    # not exist then, so a reproduced session should not see it. Skip it here
+    # rather than letting `.irw_open_dataset()` error, which would report an
+    # expected absence as an unavailable datasource.
+    key <- .irw_dataset_key(spec$dataset)
+    if (identical(.irw_pinned_version(key), .irw_absent_version)) {
+      skipped <- c(skipped, key)
+      next
+    }
     ds <- tryCatch(
       .irw_open_dataset(spec),
       error = function(e) {
@@ -140,7 +154,22 @@
     }
   }
 
+  if (length(skipped) > 0L) {
+    message(
+      "Skipping ", length(skipped), " warehouse(s) with no release at the ",
+      "pinned IRW version: ", paste(skipped, collapse = ", "), "."
+    )
+  }
+
   if (length(opened) == 0L) {
+    if (length(failures) == 0L) {
+      stop(
+        "No IRW warehouse had a released version at the IRW version pinned by ",
+        "`irw_use_version()`. Use `irw_reset_version()` to return to the ",
+        "current release.",
+        call. = FALSE
+      )
+    }
     stop(
       paste(
         "\nAn error occurred while accessing IRW:",

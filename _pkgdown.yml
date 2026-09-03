@@ -34,9 +34,11 @@ reference:
 - title: Reproducibility
   desc: >
     Functions for citing and pinning IRW data at a version. `irw_version()`
-    names the corpus as a whole; the others pin one dataset at a time.
+    names the corpus as a whole and `irw_use_version()` reads it; the others
+    pin one dataset at a time.
 - contents:
   - irw_version
+  - irw_use_version
   - irw_set_version
   - irw_get_version
   - irw_reset_version

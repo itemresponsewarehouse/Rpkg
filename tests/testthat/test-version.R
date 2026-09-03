@@ -1,23 +1,5 @@
 library(testthat)
 
-# Version pins live in the package session environment, so every test that sets
-# one must put the environment back the way it found it.
-local_no_pins <- function(env = parent.frame()) {
-  # Other test files leave mocked bindings behind (see helper-redivis.R), so
-  # start from the real session environment and warehouse config every time.
-  local_irw_pristine(c(".irw_env", ".irw_datasource_specs"), env = env)
-  e <- irw:::.irw_env
-  had <- exists("pinned_versions", envir = e)
-  old <- if (had) e$pinned_versions else NULL
-  withr::defer(
-    {
-      if (had) e$pinned_versions <- old else suppressWarnings(rm(list = "pinned_versions", envir = e))
-    },
-    envir = env
-  )
-  e$pinned_versions <- stats::setNames(character(0), character(0))
-}
-
 test_that(".irw_normalize_version accepts released tags and adds the 'v'", {
   expect_identical(irw:::.irw_normalize_version("v32.0"), "v32.0")
   expect_identical(irw:::.irw_normalize_version("32.0"), "v32.0")

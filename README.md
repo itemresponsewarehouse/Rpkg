@@ -75,31 +75,40 @@ s$resp
 ```
 
 ``` r
-# cite the corpus: one number naming the version of all eleven IRW datasets
-irw_version()                                        # newest IRW version + its pins
-irw_version("2026-08-01")                            # what was live on a given date
+# read the whole corpus as one IRW version held it: the reproducibility switch
+irw_use_version(332)                                 # everything below is frozen
+df <- irw_fetch("gilbert_meta_12")                    # v332's copy, today and next year
 
-# pin IRW to a Redivis version so an analysis stays reproducible
-irw_get_version()                                    # versions currently in use
-irw_set_version("item_response_warehouse", "v45.1")  # pin for this session
+irw_use_version()                                    # freeze today; record the number
 irw_reset_version()                                  # back to the current release
 ```
 
 IRW is eleven Redivis datasets versioned independently, so no single Redivis
-version describes the corpus. `irw_version()` reports the IRW version number,
-which does: it increments whenever any dataset is published and names one exact
-combination of the eleven, so a paper can cite it. Feed it back to reproduce a
-run:
+version describes the corpus. The IRW version number does: it increments
+whenever any dataset is published and names one exact combination of the
+eleven, so a paper can cite it and a reader can reproduce the run.
+
+Put `irw_use_version()` at the top of an analysis script and every `irw_fetch()`
+below it is pinned — including metadata and item text — so the script returns
+the same data after IRW is corrected or extended. A table added later is an
+error rather than a quiet fetch from the current release.
 
 ``` r
-pins <- irw_version("2026-08-01")
-for (i in seq_len(nrow(pins))) irw_set_version(pins$dataset[i], pins$version[i])
+# look a version up without reading it
+irw_version()                                        # newest IRW version + its pins
+irw_version(version = 332)                           # exactly what v332 held
+irw_version("2026-08-01")                            # what was live on a date
+
+# or pin one dataset at a time
+irw_get_version()                                    # versions currently in use
+irw_set_version("item_response_warehouse", "v45.1")
 ```
 
-Date lookups before 21 July 2026 are approximate and say so — Redivis
-overwrote its own release timestamps for the older warehouse shards during a
-platform migration, so those versions can only be bracketed. IRW version
-numbers themselves are always exact.
+**Cite the number, not the date.** Date lookups before 21 July 2026 are
+approximate and say so — Redivis overwrote its own release timestamps for the
+older warehouse shards during a platform migration, so those versions can only
+be bracketed, and a date can resolve to the wrong version. IRW version numbers
+themselves are always exact.
 
 ## Troubleshooting
 
