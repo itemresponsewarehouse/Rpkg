@@ -75,11 +75,31 @@ s$resp
 ```
 
 ``` r
+# cite the corpus: one number naming the version of all eleven IRW datasets
+irw_version()                                        # newest IRW version + its pins
+irw_version("2026-08-01")                            # what was live on a given date
+
 # pin IRW to a Redivis version so an analysis stays reproducible
 irw_get_version()                                    # versions currently in use
 irw_set_version("item_response_warehouse", "v45.1")  # pin for this session
 irw_reset_version()                                  # back to the current release
 ```
+
+IRW is eleven Redivis datasets versioned independently, so no single Redivis
+version describes the corpus. `irw_version()` reports the IRW version number,
+which does: it increments whenever any dataset is published and names one exact
+combination of the eleven, so a paper can cite it. Feed it back to reproduce a
+run:
+
+``` r
+pins <- irw_version("2026-08-01")
+for (i in seq_len(nrow(pins))) irw_set_version(pins$dataset[i], pins$version[i])
+```
+
+Date lookups before 21 July 2026 are approximate and say so — Redivis
+overwrote its own release timestamps for the older warehouse shards during a
+platform migration, so those versions can only be bracketed. IRW version
+numbers themselves are always exact.
 
 ## Troubleshooting
 
