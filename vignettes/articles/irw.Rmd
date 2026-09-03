@@ -80,6 +80,48 @@ print(names(datasets))
 
 ---
 
+## Pin a Version for Reproducibility
+IRW grows and gets corrected: tables are added, and errors found in published
+tables are fixed. A script that fetches by name alone will therefore not
+necessarily return the same data next year. Pin the corpus to an IRW version
+and it will.
+
+```{r, eval=FALSE}
+irw_use_version(332)                       # every fetch below reads v332
+swmd_mokken <- irw_fetch("swmd_mokken")    # v332's copy, today and next year
+```
+
+The IRW version number names one exact combination of all eleven Redivis
+datasets that make up IRW, so it is the thing to cite in a paper. Call
+`irw_use_version()` with no argument at the start of a project to pin today's
+version and print the number to record:
+
+```{r, eval=FALSE}
+irw_use_version()      # "Reading IRW v332 ... 11 dataset(s) pinned."
+irw_get_version()      # what the session is reading, dataset by dataset
+irw_reset_version()    # back to the current release
+```
+
+The pin covers metadata and item text as well as response data, and holds for
+the R session. A table added to IRW after the pinned version is an error rather
+than a quiet fetch from the current release — mixing versions would defeat the
+point.
+
+You can also look a version up without reading it:
+
+```{r, eval=FALSE}
+irw_version()                # the newest version and its eleven Redivis tags
+irw_version(version = 332)   # exactly what v332 held
+irw_version("2026-08-01")    # what was live on a date
+```
+
+Cite the number rather than the date. Redivis overwrote its own release
+timestamps for the older warehouse shards during a platform migration, so
+dates before 21 July 2026 resolve only approximately and say so; version
+numbers are always exact.
+
+---
+
 ## Download Datasets
 Save datasets locally.
 

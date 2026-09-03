@@ -37,6 +37,19 @@ run it at the start of a project and record the number it prints.
 The pin covers the metadata and item text datasets too, not just response
 data, and lasts for the session; \code{\link[=irw_reset_version]{irw_reset_version()}} lifts it.
 }
+\section{Each dataset is pinned to its own version}{
+
+The response data is spread over several Redivis warehouses ("shards"), each
+released on its own schedule, so one IRW version means a \emph{different} Redivis
+version in each. That is handled: every dataset is pinned to the tag the
+manifest records for it, and a single \code{irw_fetch()} call may read several
+shards at different versions.
+
+\if{html}{\out{<div class="sourceCode r">}}\preformatted{irw_use_version(200)   # shard 1 at v36.0, shard 2 at v3.3
+L <- irw_fetch(c("idcr_martinez_2023_numSeries", "gcb5_2025"))
+}\if{html}{\out{</div>}}
+}
+
 \section{A dataset that did not exist yet}{
 
 Not every IRW dataset has a release in every IRW version -- the sixth
