@@ -125,55 +125,74 @@
   )
 }
 
-#' Which IRW version was live, and what every dataset was pinned to
+
+#' Reject an argument pair that names two different points in history
 #'
-#' IRW is made of eleven Redivis datasets that are versioned independently, so
-#' no single Redivis version describes the corpus. The IRW version number does:
-#' it increments whenever any dataset is published, and it names one exact
-#' combination of the eleven. Cite it in a paper and a reader can reconstruct
-#' the data you used.
+#' @keywords internal
+#' @noRd
+.irw_check_one_key <- function(version, date) {
+  if (!is.null(version) && !is.null(date)) {
+    stop(
+      "Give either 'version' or 'date', not both. An IRW version number is ",
+      "exact; a date has to be resolved to one.",
+      call. = FALSE
+    )
+  }
+  invisible(NULL)
+}
+
+#' Coerce a user-supplied IRW version number
 #'
-#' Called with no argument, reports the newest IRW version. Called with a date,
-#' reports the version that was live on that date -- which is how you recover
-#' what an analysis run months ago was actually reading.
+#' Accepts \code{332}, \code{332L} or \code{"332"}; anything else is a mistake
+#' worth naming, since a date silently coerced to a version number would pin a
+#' session to the wrong corpus.
 #'
-#' @section Dates before 21 July 2026 are approximate:
-#' Redivis overwrote its own release timestamps for the older warehouse shards
-#' during a platform migration: 142 of the corpus' 332 released versions claim
-#' to have been released inside one 80-minute window on 2026-07-21. For those,
-#' the manifest records the earliest date the version could have been live
-#' (its creation date) and marks the row `bracketed`. A lookup that lands on
-#' one warns, because the *tag* may then be wrong too -- a later version could
-#' already have been released inside the bracket. IRW version numbers
-#' themselves are always exact; only the mapping from a date to a version is
-#' affected.
+#' @keywords internal
+#' @noRd
+.irw_as_irw_version <- function(version) {
+  if (is.character(version) && length(version) == 1L && !is.na(version) &&
+      grepl("^[0-9]+$", trimws(version))) {
+    version <- as.numeric(trimws(version))
+  }
+  if (!is.numeric(version) || length(version) != 1L || is.na(version) ||
+      version != round(version) || version < 1 || version > 1e6) {
+    stop(
+      "'version' must be a single IRW version number, e.g. 332; got ",
+      shQuote(paste(as.character(version), collapse = ", ")), ".\n",
+      "To look up a date instead, name the argument: date = \"2026-08-01\".",
+      call. = FALSE
+    )
+  }
+  as.integer(version)
+}
+
+#' Resolve a version number or a date to one IRW version's manifest rows
 #'
-#' @param date Optional. A date or time to look up, as `"2026-08-01"`,
-#'   `"2026-08-01 12:00:00"`, or a `Date`/`POSIXct`. Defaults to the newest
-#'   version.
+#' The single place that turns "which point in history" into rows, so that
+#' \code{irw_version()} and \code{irw_use_version()} cannot disagree about what
+#' a date or a number means.
 #'
-#' @return A data frame with one row per dataset and columns `dataset`,
-#'   `version`, `released_at`, and `approximate`. The IRW version number is
-#'   attached as the attribute `irw_version` and printed as a message.
-#'
-#' @seealso [irw_set_version()] to pin a dataset, [irw_get_version()] for the
-#'   versions the current session is actually reading.
-#' @examples
-#' \dontrun{
-#' irw_version()                # the newest IRW version, and its eleven pins
-#' irw_version("2026-08-01")    # what was live on 1 August 2026
-#'
-#' # Replay it: pin each dataset to what that version held.
-#' pins <- irw_version("2026-08-01")
-#' for (i in seq_len(nrow(pins))) {
-#'   irw_set_version(pins$dataset[i], pins$version[i])
-#' }
-#' }
-#' @export
-irw_version <- function(date = NULL) {
+#' @param version Optional IRW version number.
+#' @param date Optional date or time.
+#' @return A list with \code{version}, \code{rows}, and \code{as_of} (whether
+#'   the version was reached via a date, which is the case that can be wrong).
+#' @keywords internal
+#' @noRd
+.irw_manifest_select <- function(version = NULL, date = NULL) {
+  .irw_check_one_key(version, date)
   manifest <- .irw_manifest()
 
-  if (is.null(date)) {
+  if (!is.null(version)) {
+    version <- .irw_as_irw_version(version)
+    if (!version %in% manifest$irw_version) {
+      stop(
+        "IRW has no version ", version, ". Released versions run from ",
+        min(manifest$irw_version), " to ", max(manifest$irw_version), ".",
+        call. = FALSE
+      )
+    }
+    as_of <- FALSE
+  } else if (is.null(date)) {
     version <- max(manifest$irw_version)
     as_of <- FALSE
   } else {
@@ -191,7 +210,62 @@ irw_version <- function(date = NULL) {
     as_of <- TRUE
   }
 
-  rows <- manifest[manifest$irw_version == version, , drop = FALSE]
+  list(
+    version = version,
+    rows = manifest[manifest$irw_version == version, , drop = FALSE],
+    as_of = as_of
+  )
+}
+
+#' Which IRW version was live, and what every dataset was pinned to
+#'
+#' IRW is made of eleven Redivis datasets that are versioned independently, so
+#' no single Redivis version describes the corpus. The IRW version number does:
+#' it increments whenever any dataset is published and names one exact
+#' combination of the eleven. Cite it in a paper and a reader can reconstruct
+#' the data you used.
+#'
+#' Called with no argument, reports the newest IRW version. Called with a
+#' `version`, reports exactly what that version held. Called with a `date`,
+#' reports the version that was live then -- which is how you recover what an
+#' analysis run months ago was actually reading.
+#'
+#' Use [irw_use_version()] to make the session read one of these versions.
+#'
+#' @section Dates before 21 July 2026 are approximate:
+#' Redivis overwrote its own release timestamps for the older warehouse shards
+#' during a platform migration: 142 of the corpus' 332 released versions claim
+#' to have been released inside one 80-minute window on 2026-07-21. For those,
+#' the manifest records the earliest date the version could have been live
+#' (its creation date) and marks the row `bracketed`. A lookup that lands on
+#' one warns, because the *tag* may then be wrong too -- a later version could
+#' already have been released inside the bracket. IRW version numbers
+#' themselves are always exact; only the mapping from a date to a version is
+#' affected. This is why a paper should cite the number, not the date.
+#'
+#' @param date Optional. A date or time to look up, as `"2026-08-01"`,
+#'   `"2026-08-01 12:00:00"`, or a `Date`/`POSIXct`.
+#' @param version Optional. An IRW version number, e.g. `332`. Mutually
+#'   exclusive with `date`. Defaults, with `date`, to the newest version.
+#'
+#' @return A data frame with one row per dataset and columns `dataset`,
+#'   `version`, `released_at`, and `approximate`. The IRW version number is
+#'   attached as the attribute `irw_version` and printed as a message.
+#'
+#' @seealso [irw_use_version()] to read a whole IRW version,
+#'   [irw_set_version()] to pin one dataset, [irw_get_version()] for the
+#'   versions the current session is actually reading.
+#' @examples
+#' \dontrun{
+#' irw_version()                # the newest IRW version, and its eleven pins
+#' irw_version(version = 332)   # exactly what v332 held
+#' irw_version("2026-08-01")    # what was live on 1 August 2026
+#' }
+#' @export
+irw_version <- function(date = NULL, version = NULL) {
+  sel <- .irw_manifest_select(version = version, date = date)
+  rows <- sel$rows
+
   out <- data.frame(
     dataset = rows$dataset,
     version = rows$redivis_tag,
@@ -200,34 +274,168 @@ irw_version <- function(date = NULL) {
     stringsAsFactors = FALSE
   )
   rownames(out) <- NULL
-  attr(out, "irw_version") <- version
+  attr(out, "irw_version") <- sel$version
   attr(out, "irw_released_at") <- rows$irw_released_at[1]
 
   message(
-    "IRW v", version, " (released ", rows$irw_released_at[1], "), ",
+    "IRW v", sel$version, " (released ", rows$irw_released_at[1], "), ",
     nrow(out), " dataset(s)."
   )
+  .irw_warn_approximate(out$approximate, sel$as_of)
 
-  # The two caveats are different and must not be confused. Asked for a
-  # version, a bracketed row means only that we cannot date it -- the pins are
-  # exactly what that version held. Asked what was live on a *date*, the same
-  # row means the pin itself may be wrong.
-  approx <- sum(out$approximate)
-  if (approx > 0L && as_of) {
+  out
+}
+
+#' Report the two different meanings of a bracketed row
+#'
+#' The caveats are not the same and must not be confused. Asked for a version,
+#' a bracketed row means only that we cannot date it -- the pins are exactly
+#' what that version held. Asked what was live on a *date*, the same row means
+#' the pin itself may be wrong.
+#'
+#' @param approximate Logical vector, one element per dataset.
+#' @param as_of Whether the version was reached from a date.
+#' @keywords internal
+#' @noRd
+.irw_warn_approximate <- function(approximate, as_of) {
+  n <- sum(approximate)
+  if (n == 0L) {
+    return(invisible(NULL))
+  }
+  if (as_of) {
     warning(
-      "This is approximate. ", approx, " of ", nrow(out), " pins rest on a ",
-      "release date that Redivis overwrote, so for those the version tag may ",
+      "This is approximate. ", n, " of ", length(approximate), " pins rest on ",
+      "a release date that Redivis overwrote, so for those the version tag may ",
       "be wrong as well: a later release could already have been live. Cite ",
       "an IRW version number rather than a date.",
       call. = FALSE
     )
-  } else if (approx > 0L) {
+  } else {
     message(
-      "  ", approx, " of ", nrow(out), " release dates are approximate ",
+      "  ", n, " of ", length(approximate), " release dates are approximate ",
       "(Redivis overwrote them). The pins are exact; only their dates are ",
       "lower bounds."
     )
   }
+  invisible(NULL)
+}
 
-  out
+#' Read the whole corpus at one IRW version
+#'
+#' Pins every IRW dataset at once to what a single IRW version held, so that
+#' `irw_fetch()` and everything around it return the same data whenever the
+#' script is re-run -- even after IRW has been corrected or extended. This is
+#' the reproducibility switch: put one call at the top of an analysis and the
+#' rest of the script is frozen.
+#'
+#' ```r
+#' irw_use_version(332)
+#' df <- irw_fetch("gilbert_meta_12")   # v332's copy, today and next year
+#' ```
+#'
+#' Called with no arguments it pins the newest version and reports its number:
+#' run it at the start of a project and record the number it prints.
+#'
+#' The pin covers the metadata and item text datasets too, not just response
+#' data, and lasts for the session; [irw_reset_version()] lifts it.
+#'
+#' @section Each dataset is pinned to its own version:
+#' The response data is spread over several Redivis warehouses ("shards"), each
+#' released on its own schedule, so one IRW version means a *different* Redivis
+#' version in each. That is handled: every dataset is pinned to the tag the
+#' manifest records for it, and a single `irw_fetch()` call may read several
+#' shards at different versions.
+#'
+#' ```r
+#' irw_use_version(200)   # shard 1 at v36.0, shard 2 at v3.3
+#' L <- irw_fetch(c("idcr_martinez_2023_numSeries", "gcb5_2025"))
+#' ```
+#'
+#' @section A dataset that did not exist yet:
+#' Not every IRW dataset has a release in every IRW version -- the sixth
+#' warehouse shard is younger than the first. Rather than let those fall
+#' through to the current release and silently mix versions into a "reproduced"
+#' run, they are pinned to nothing and error if something reads them. Fetches
+#' are unaffected: a table that did not exist then is simply not found.
+#'
+#' @section Prefer a version number to a date:
+#' A date has to be resolved to a version, and before 21 July 2026 that
+#' resolution is approximate for the older warehouse shards -- see
+#' [irw_version()]. Pinning by date therefore warns; pinning by number never
+#' has to.
+#'
+#' @param version Optional IRW version number, e.g. `332`. Defaults to the
+#'   newest version.
+#' @param date Optional date or time to pin the corpus as it was then, e.g.
+#'   `"2026-08-01"`. Mutually exclusive with `version`.
+#' @param quiet Logical. Suppress the per-dataset summary.
+#'
+#' @return Invisibly, a data frame of `dataset` and `version` as pinned, with
+#'   the IRW version number in the attribute `irw_version`.
+#' @seealso [irw_version()], [irw_get_version()], [irw_reset_version()]
+#' @examples
+#' \dontrun{
+#' irw_use_version(332)              # read the corpus as v332 held it
+#' irw_use_version()                 # freeze today's version; record the number
+#' irw_use_version(date = "2026-08-01")
+#' irw_reset_version()               # back to the current release
+#' }
+#' @export
+irw_use_version <- function(version = NULL, date = NULL, quiet = FALSE) {
+  sel <- .irw_manifest_select(version = version, date = date)
+  rows <- sel$rows
+  specs <- .irw_pinnable_specs()
+
+  unknown <- setdiff(rows$dataset, names(specs))
+  if (length(unknown) > 0L) {
+    warning(
+      "IRW v", sel$version, " contains ", length(unknown), " dataset(s) this ",
+      "version of the package does not know about: ",
+      paste(unknown, collapse = ", "), ".\n",
+      "They cannot be pinned or read here; update the package.",
+      call. = FALSE
+    )
+  }
+
+  tags <- stats::setNames(rows$redivis_tag, rows$dataset)
+  pins <- stats::setNames(character(0), character(0))
+  for (key in names(specs)) {
+    tag <- if (key %in% names(tags)) .irw_normalize_version(unname(tags[[key]])) else NULL
+    if (is.null(tag)) {
+      # Either absent from this version, or a tag the manifest wrote in a form
+      # we do not recognize. Both must block reads rather than fall through.
+      pins[[key]] <- .irw_absent_version
+    } else {
+      .irw_verify_version(specs[[key]], key, tag)
+      pins[[key]] <- tag
+    }
+  }
+
+  .irw_env$pinned_versions <- pins
+  .irw_clear_all_datasource_caches()
+
+  out <- data.frame(
+    dataset = names(pins),
+    version = ifelse(unname(pins) == .irw_absent_version, NA_character_, unname(pins)),
+    stringsAsFactors = FALSE
+  )
+  rownames(out) <- NULL
+  attr(out, "irw_version") <- sel$version
+
+  absent <- sum(is.na(out$version))
+  message(
+    "Reading IRW v", sel$version, " (released ", rows$irw_released_at[1], ") ",
+    "for this session: ", nrow(out) - absent, " dataset(s) pinned",
+    if (absent > 0L) paste0(", ", absent, " not yet released then") else "",
+    "."
+  )
+  if (!quiet) {
+    for (i in seq_len(nrow(out))) {
+      message("  ", out$dataset[i], ": ",
+              if (is.na(out$version[i])) "not released yet" else out$version[i])
+    }
+  }
+  .irw_warn_approximate(rows$precision == "bracketed", sel$as_of)
+
+  invisible(out)
 }

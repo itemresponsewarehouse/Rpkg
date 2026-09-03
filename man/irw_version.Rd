@@ -4,12 +4,14 @@
 \alias{irw_version}
 \title{Which IRW version was live, and what every dataset was pinned to}
 \usage{
-irw_version(date = NULL)
+irw_version(date = NULL, version = NULL)
 }
 \arguments{
 \item{date}{Optional. A date or time to look up, as \code{"2026-08-01"},
-\code{"2026-08-01 12:00:00"}, or a \code{Date}/\code{POSIXct}. Defaults to the newest
-version.}
+\code{"2026-08-01 12:00:00"}, or a \code{Date}/\code{POSIXct}.}
+
+\item{version}{Optional. An IRW version number, e.g. \code{332}. Mutually
+exclusive with \code{date}. Defaults, with \code{date}, to the newest version.}
 }
 \value{
 A data frame with one row per dataset and columns \code{dataset},
@@ -19,14 +21,17 @@ attached as the attribute \code{irw_version} and printed as a message.
 \description{
 IRW is made of eleven Redivis datasets that are versioned independently, so
 no single Redivis version describes the corpus. The IRW version number does:
-it increments whenever any dataset is published, and it names one exact
+it increments whenever any dataset is published and names one exact
 combination of the eleven. Cite it in a paper and a reader can reconstruct
 the data you used.
 }
 \details{
-Called with no argument, reports the newest IRW version. Called with a date,
-reports the version that was live on that date -- which is how you recover
-what an analysis run months ago was actually reading.
+Called with no argument, reports the newest IRW version. Called with a
+\code{version}, reports exactly what that version held. Called with a \code{date},
+reports the version that was live then -- which is how you recover what an
+analysis run months ago was actually reading.
+
+Use \code{\link[=irw_use_version]{irw_use_version()}} to make the session read one of these versions.
 }
 \section{Dates before 21 July 2026 are approximate}{
 
@@ -38,22 +43,18 @@ the manifest records the earliest date the version could have been live
 one warns, because the \emph{tag} may then be wrong too -- a later version could
 already have been released inside the bracket. IRW version numbers
 themselves are always exact; only the mapping from a date to a version is
-affected.
+affected. This is why a paper should cite the number, not the date.
 }
 
 \examples{
 \dontrun{
 irw_version()                # the newest IRW version, and its eleven pins
+irw_version(version = 332)   # exactly what v332 held
 irw_version("2026-08-01")    # what was live on 1 August 2026
-
-# Replay it: pin each dataset to what that version held.
-pins <- irw_version("2026-08-01")
-for (i in seq_len(nrow(pins))) {
-  irw_set_version(pins$dataset[i], pins$version[i])
-}
 }
 }
 \seealso{
-\code{\link[=irw_set_version]{irw_set_version()}} to pin a dataset, \code{\link[=irw_get_version]{irw_get_version()}} for the
+\code{\link[=irw_use_version]{irw_use_version()}} to read a whole IRW version,
+\code{\link[=irw_set_version]{irw_set_version()}} to pin one dataset, \code{\link[=irw_get_version]{irw_get_version()}} for the
 versions the current session is actually reading.
 }

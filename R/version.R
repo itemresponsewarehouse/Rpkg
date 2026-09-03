@@ -10,6 +10,26 @@
 #' @noRd
 .irw_version_pattern <- "^v?[0-9]+\\.[0-9]+$"
 
+#' Pin value for a dataset that had no release at the pinned IRW version
+#'
+#' A dataset younger than the IRW version being read cannot be left unpinned:
+#' unpinned means "current release", which would quietly mix today's data into
+#' a run that is supposed to reproduce an old one. It is pinned to this
+#' sentinel instead, and reading it errors. Deliberately not a valid version
+#' tag, so \code{irw_set_version()} cannot be talked into setting it.
+#'
+#' @keywords internal
+#' @noRd
+.irw_absent_version <- "<none>"
+
+#' Human-readable form of a pin
+#'
+#' @keywords internal
+#' @noRd
+.irw_format_pin <- function(tag) {
+  ifelse(tag == .irw_absent_version, "not released yet", tag)
+}
+
 #' Normalize a version tag to Redivis' \code{"vN.N"} form
 #'
 #' @param version Character scalar, e.g. \code{"32.0"} or \code{"v32.0"}.
@@ -102,7 +122,9 @@
 #' @keywords internal
 #' @noRd
 .irw_clear_all_datasource_caches <- function() {
-  keep <- c("pinned_versions", "itemtext_disclaimer_shown")
+  # The manifest is a download, not a cache of version-dependent data: it says
+  # what every IRW version held, so it is still true after the pins change.
+  keep <- c("pinned_versions", "itemtext_disclaimer_shown", "manifest")
   drop <- setdiff(ls(.irw_env, all.names = TRUE), keep)
   if (length(drop) > 0L) {
     rm(list = drop, envir = .irw_env)
@@ -121,6 +143,45 @@
   ds <- .irw_redivis_dataset(spec, version)
   ds$get()
   ds
+}
+
+#' Confirm a version tag exists and is what Redivis actually serves
+#'
+#' Redivis resolves an unrecognized version to the current release instead of
+#' failing, which would defeat the point of pinning, so every tag is opened and
+#' the tag it resolves to is compared with the tag that was asked for.
+#'
+#' @param spec Dataset spec list.
+#' @param dataset Dataset key, for the error message.
+#' @param tag Normalized version tag.
+#' @return Invisibly, the opened Redivis dataset object.
+#' @keywords internal
+#' @noRd
+.irw_verify_version <- function(spec, dataset, tag) {
+  ds <- tryCatch(
+    .irw_open_dataset_at_version(spec, tag),
+    error = function(e) {
+      msg <- conditionMessage(e)
+      if (.irw_redivis_error_type(msg) == "auth") {
+        stop(.irw_auth_error_message(), call. = FALSE)
+      }
+      stop(
+        "Version ", tag, " of ", dataset, " does not exist on Redivis.\n",
+        "Use `irw_get_version()` to see the version currently in use.",
+        call. = FALSE
+      )
+    }
+  )
+
+  resolved <- ds$properties$version$tag
+  if (!identical(as.character(resolved), tag)) {
+    stop(
+      "Version ", tag, " of ", dataset, " could not be resolved on Redivis ",
+      "(got ", shQuote(as.character(resolved)), " instead).",
+      call. = FALSE
+    )
+  }
+  invisible(ds)
 }
 
 #' Pin an IRW Redivis dataset to a released version
@@ -183,31 +244,7 @@ irw_set_version <- function(dataset, version) {
     )
   }
 
-  ds <- tryCatch(
-    .irw_open_dataset_at_version(specs[[dataset]], tag),
-    error = function(e) {
-      msg <- conditionMessage(e)
-      if (.irw_redivis_error_type(msg) == "auth") {
-        stop(.irw_auth_error_message(), call. = FALSE)
-      }
-      stop(
-        "Version ", tag, " of ", dataset, " does not exist on Redivis.\n",
-        "Use `irw_get_version()` to see the version currently in use.",
-        call. = FALSE
-      )
-    }
-  )
-
-  # Redivis resolves an unrecognized version to the current release instead of
-  # failing, so confirm we actually landed on the requested tag.
-  resolved <- ds$properties$version$tag
-  if (!identical(as.character(resolved), tag)) {
-    stop(
-      "Version ", tag, " of ", dataset, " could not be resolved on Redivis ",
-      "(got ", shQuote(as.character(resolved)), " instead).",
-      call. = FALSE
-    )
-  }
+  .irw_verify_version(specs[[dataset]], dataset, tag)
 
   pins <- .irw_pins()
   pins[[dataset]] <- tag
@@ -256,6 +293,10 @@ irw_get_version <- function(dataset = NULL) {
 
   pins <- .irw_pins()
   versions <- vapply(names(specs), function(key) {
+    # An absent pin has no version to report and nothing to ask Redivis about.
+    if (identical(.irw_pinned_version(key), .irw_absent_version)) {
+      return(NA_character_)
+    }
     tag <- tryCatch(
       {
         ds <- .irw_open_dataset(specs[[key]])
@@ -334,7 +375,7 @@ irw_reset_version <- function(dataset = NULL) {
   }
   paste0(
     "\nTable ", shQuote(table_name), " does not exist in the pinned version(s): ",
-    paste(paste(names(pins), unname(pins)), collapse = ", "), ".\n",
+    paste(paste(names(pins), .irw_format_pin(unname(pins))), collapse = ", "), ".\n",
     "It may have been added in a later release. Use `irw_reset_version()` to fetch ",
     "the current version, or `irw_list_tables()` to see what the pinned version holds."
   )

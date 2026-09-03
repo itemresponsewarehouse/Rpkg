@@ -58,3 +58,65 @@ local_irw_pristine <- function(names, env = parent.frame()) {
   }
   invisible(NULL)
 }
+
+# The manifest is downloaded once per session and cached in the package
+# environment. Tests install this fixture in that cache instead, so nothing
+# touches the network. Two datasets only: the nine others in
+# `.irw_pinnable_specs()` are then absent from every version, which is exactly
+# the case `irw_use_version()` has to handle.
+MANIFEST_FIXTURE <- data.frame(
+  irw_version = c(1L, 1L, 2L, 2L, 3L, 3L),
+  irw_released_at = c(
+    "2024-01-01T00:00:00Z", "2024-01-01T00:00:00Z",
+    "2026-07-01T00:00:00Z", "2026-07-01T00:00:00Z",
+    "2026-08-15T00:00:00Z", "2026-08-15T00:00:00Z"
+  ),
+  dataset = c("item_response_warehouse", "irw_meta",
+              "item_response_warehouse", "irw_meta",
+              "item_response_warehouse", "irw_meta"),
+  redivis_tag = c("v1.0", "v1.0", "v2.0", "v1.0", "v2.0", "v2.0"),
+  redivis_released_at = c(
+    "2024-01-01T00:00:00Z", "2024-01-01T00:00:00Z",
+    "2026-07-01T00:00:00Z", "2024-01-01T00:00:00Z",
+    "2026-07-01T00:00:00Z", "2026-08-15T00:00:00Z"
+  ),
+  # The first shard's dates are the overwritten kind; irw_meta's are genuine.
+  precision = c("bracketed", "exact", "bracketed", "exact", "bracketed", "exact"),
+  redivis_released_before = c(
+    "2026-07-01T00:00:00Z", "", "2026-09-01T00:00:00Z", "",
+    "2026-09-01T00:00:00Z", ""
+  ),
+  stringsAsFactors = FALSE
+)
+
+local_manifest <- function(manifest = MANIFEST_FIXTURE, env = parent.frame()) {
+  e <- irw:::.irw_env
+  had <- !is.null(e$manifest)
+  old <- e$manifest
+  withr::defer(
+    {
+      if (had) e$manifest <- old else suppressWarnings(rm(list = "manifest", envir = e))
+    },
+    envir = env
+  )
+  manifest$released <- irw:::.irw_parse_utc(manifest$irw_released_at)
+  e$manifest <- manifest
+}
+
+# Version pins live in the package session environment, so every test that sets
+# one must put the environment back the way it found it.
+local_no_pins <- function(env = parent.frame()) {
+  # Other test files leave mocked bindings behind (see helper-redivis.R), so
+  # start from the real session environment and warehouse config every time.
+  local_irw_pristine(c(".irw_env", ".irw_datasource_specs"), env = env)
+  e <- irw:::.irw_env
+  had <- exists("pinned_versions", envir = e)
+  old <- if (had) e$pinned_versions else NULL
+  withr::defer(
+    {
+      if (had) e$pinned_versions <- old else suppressWarnings(rm(list = "pinned_versions", envir = e))
+    },
+    envir = env
+  )
+  e$pinned_versions <- stats::setNames(character(0), character(0))
+}
