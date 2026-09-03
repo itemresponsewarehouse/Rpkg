@@ -32,8 +32,11 @@ reference:
   - irw_download
   - irw_save_bibtex
 - title: Reproducibility
-  desc: Functions for pinning IRW data to a Redivis version.
+  desc: >
+    Functions for citing and pinning IRW data at a version. `irw_version()`
+    names the corpus as a whole; the others pin one dataset at a time.
 - contents:
+  - irw_version
   - irw_set_version
   - irw_get_version
   - irw_reset_version
