@@ -1,6 +1,18 @@
 # 1. dataset management (getting datasets, caching)
 # 2. table fetching (getting specific tables)
 # 3. metadata operations (metadata, biblio, tags, itemtext)
+#
+# Tables here are addressed by NAME -- $table("tags"), never $table("tags:7nkh").
+# A Redivis reference id belongs to one version's table, not to the table's
+# name: the upload replaces a table by deleting and recreating it (uploads
+# append, so that is the only true replace), and the irw_meta v20.0 cut on
+# 2026-09-04 minted a new id for all thirteen tables at once. Every pinned id
+# in this file stopped resolving that morning and irw_collections() failed for
+# every user. The id had survived the v18 -> v19 cut, so the reuse that kept
+# these strings working was luck rather than a contract.
+#
+# Dataset references DO keep their ids (see redivis-config.R): a dataset is
+# not recreated by an upload, and its id is what protects against a rename.
 
 #' Fetch Simulation Metadata Table
 #'
@@ -21,7 +33,7 @@
     return(.irw_env$simsyn_metadata_tibble)
   }
   
-  table <- dataset$table("simsyn_metadata:2mwn")
+  table <- dataset$table("simsyn_metadata")
   metadata_tibble <- table$to_tibble()
   .irw_env$simsyn_metadata_tibble <- .irw_filter_rows_to_live_tables(metadata_tibble, source = "sim")
   .irw_env$simsyn_metadata_version <- latest_version_tag
@@ -48,7 +60,7 @@
     return(.irw_env$nominal_metadata_tibble)
   }
   
-  table <- dataset$table("nominal_metadata:vnhc")
+  table <- dataset$table("nominal_metadata")
   metadata_tibble <- table$to_tibble()
   .irw_env$nominal_metadata_tibble <- .irw_filter_rows_to_live_tables(metadata_tibble, source = "nom")
   .irw_env$nominal_metadata_version <- latest_version_tag
@@ -75,7 +87,7 @@
     return(.irw_env$comps_metadata_tibble)
   }
   
-  table <- dataset$table("comps_metadata:2kz3")
+  table <- dataset$table("comps_metadata")
   metadata_tibble <- table$to_tibble()
   .irw_env$comps_metadata_tibble <- .irw_filter_rows_to_live_tables(metadata_tibble, source = "comp")
   .irw_env$comps_metadata_version <- latest_version_tag
@@ -102,7 +114,7 @@
     return(.irw_env$comps_biblio_tibble)
   }
   
-  table <- dataset$table("comps_biblio:w8pz")
+  table <- dataset$table("comps_biblio")
   biblio_tibble <- .retry_with_backoff(function() table$to_tibble())
   filtered_biblio <- .irw_filter_rows_to_live_tables(biblio_tibble, source = "comp")
   
@@ -122,7 +134,7 @@
     return(.irw_env$simsyn_biblio_tibble)
   }
   
-  table <- dataset$table("simsyn_biblio:pm9v")
+  table <- dataset$table("simsyn_biblio")
   biblio_tibble <- table$to_tibble()
   filtered_biblio <- .irw_filter_rows_to_live_tables(biblio_tibble, source = "sim")
   
@@ -142,7 +154,7 @@
     return(.irw_env$nominal_biblio_tibble)
   }
   
-  table <- dataset$table("nominal_biblio:vphd")
+  table <- dataset$table("nominal_biblio")
   biblio_tibble <- table$to_tibble()
   filtered_biblio <- .irw_filter_rows_to_live_tables(biblio_tibble, source = "nom")
   
@@ -177,7 +189,7 @@
   }
   
   # Fetch new metadata table and convert it to a tibble
-  table <- dataset$table("metadata:h5gs")
+  table <- dataset$table("metadata")
   
   metadata_tibble <- .retry_with_backoff(function() {
     table$to_tibble()
@@ -215,7 +227,7 @@
   }
   
   # Fetch fresh biblio table
-  table <- dataset$table("biblio:qahg")
+  table <- dataset$table("biblio")
   biblio_tibble <- .retry_with_backoff(function() table$to_tibble())
   filtered_biblio <- .irw_filter_rows_to_live_tables(biblio_tibble, source = "core")
   
@@ -250,7 +262,7 @@
   }
   
   # Fetch and clean tags table
-  table <- dataset$table("tags:7nkh")
+  table <- dataset$table("tags")
   tags_tibble <- .retry_with_backoff(function() table$to_tibble())
   
   tags_tibble <- as.data.frame(tags_tibble)
@@ -293,7 +305,7 @@
     return(.irw_env$nominal_tags_tibble)
   }
 
-  table <- dataset$table("nominal_tags:xgzq")
+  table <- dataset$table("nominal_tags")
   tags_tibble <- .retry_with_backoff(function() table$to_tibble())
 
   # Tags reach Redivis as literal "NA" strings; coerce as the core fetcher does.
@@ -332,7 +344,7 @@
     return(.irw_env$collections_tibble)
   }
 
-  table <- dataset$table("collections:7ae4")
+  table <- dataset$table("collections")
   out <- .retry_with_backoff(function() table$to_tibble())
   out <- as.data.frame(out)
   out[] <- lapply(out, function(col) {
@@ -360,7 +372,7 @@
     return(.irw_env$collection_members_tibble)
   }
 
-  table <- dataset$table("collection_members:qses")
+  table <- dataset$table("collection_members")
   out <- .retry_with_backoff(function() table$to_tibble())
   out <- tibble::as_tibble(as.data.frame(out))
   filtered <- .irw_filter_rows_to_live_tables(out, source = "core")
