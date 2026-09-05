@@ -55,9 +55,19 @@
 #' @noRd
 .irw_meta_spec <- list(user = "datapages", dataset = "irw_meta:bdxt")
 
+#' Item text datasource identifiers
+#'
+#' A *list* of specs, oldest to newest, exactly like
+#' \code{.irw_datasource_specs$core}. Redivis caps a dataset at 1000 tables, so
+#' item text shards the way response data does; the shards are searched
+#' newest-first and the first match wins. To add one, append a list element here
+#' -- see \code{inst/developer/warehouses.md}.
+#'
 #' @keywords internal
 #' @noRd
-.irw_itemtext_spec <- list(user = "datapages", dataset = "irw_text:07b6")
+.irw_itemtext_specs <- list(
+  list(user = "datapages", dataset = "irw_text:07b6")
+)
 
 #' Open the IRW metadata dataset
 #'
@@ -119,13 +129,29 @@
   }
 }
 
+#' Fingerprint of a list of dataset specs (for session cache invalidation)
+#'
+#' @param specs List of specs, each with \code{user} and \code{dataset}.
+#' @keywords internal
+#' @noRd
+.irw_specs_fingerprint <- function(specs) {
+  paste(vapply(specs, function(s) paste(s$user, s$dataset, sep = "/"), character(1)), collapse = "|")
+}
+
 #' Fingerprint of configured core warehouses (for session cache invalidation)
 #'
 #' @keywords internal
 #' @noRd
 .irw_core_warehouse_fingerprint <- function() {
-  specs <- .irw_datasource_specs$core
-  paste(vapply(specs, function(s) paste(s$user, s$dataset, sep = "/"), character(1)), collapse = "|")
+  .irw_specs_fingerprint(.irw_datasource_specs$core)
+}
+
+#' Fingerprint of configured item text shards (for session cache invalidation)
+#'
+#' @keywords internal
+#' @noRd
+.irw_itemtext_fingerprint <- function() {
+  .irw_specs_fingerprint(.irw_itemtext_specs)
 }
 
 #' Session cache key for a non-core datasource

@@ -54,20 +54,61 @@ No other files need hard-coded warehouse IDs for fetch/list/filter/download to w
 
 Simulation, competition, and nominal sources each use a single dataset spec under their respective keys in the same config object.
 
+## Why warehouses are a list at all
+
+**Redivis caps any dataset at 1000 tables.** That is the only reason there is
+more than one warehouse, and it applies to every dataset — so item text is a
+shard list too (below), and any other dataset would become one if it grew that
+far.
+
 ## Non-source datasets
 
-Two datasets are not table sources and so live beside `.irw_datasource_specs`
+Two things are not table sources and so live beside `.irw_datasource_specs`
 rather than inside it, in the same `R/redivis-config.R`:
 
 - `.irw_meta_spec` — the `irw_meta` metadata/biblio/tags backbone. Every
   fetcher in `R/redivis-metadata.R` opens it through `.irw_open_meta_dataset()`;
-  none of them names the owner or dataset directly.
-- `.irw_itemtext_spec` — the `irw_text` item text dataset, opened via
-  `.irw_open_dataset()` in `.get_irw_itemtext_dataset()`.
+  none of them names the owner or dataset directly. A single spec: `irw_meta` is
+  nowhere near the cap.
+- `.irw_itemtext_specs` — the item text **shard list** (`irw_text`,
+  `irw_text_2`, …), oldest to newest, with the same semantics as `$core`:
+  opened by `.irw_open_datasources()`, ordered newest-first by
+  `.irw_order_datasources(..., "text")`, and reached through
+  `.irw_itemtext_datasources()`.
 
 They are deliberately *not* keyed under `.irw_datasource_specs`, because that
 object is indexed by the user-facing `source` argument (`.irw_sources` in
 `R/redivis-datasets.R`), and neither is a valid `source`.
+
+### Adding an item text shard
+
+`irw_text` holds ~590 tables against a 1000 cap, and the extraction queue has
+~1,000 still pending, so a second shard is a matter of when. The code is already
+shard-aware; the cutover is config plus a Redivis click.
+
+1. Create `irw_text_2` on Redivis under `datapages`, upload at least one table,
+   and **publish a release before touching any config**. An unreleased dataset
+   errors for read-only tokens — both client packages will drop it with a
+   warning and its tables will simply be missing for every non-owner user, with
+   nobody seeing an error. This is the one trap.
+2. Append `"irw_text_2"` to `IRW_TEXT_DATASETS` in
+   `src/metadata/redivis_config.R`. `red_up` parses that file, so new
+   `*__items.csv` uploads default to the new shard immediately.
+3. Append `list(user = "datapages", dataset = "irw_text_2:<refid>")` to
+   `.irw_itemtext_specs` here, and the matching tuple to `ITEMTEXT_REFS` in
+   `Python-pkg/src/irw/config.py`. **Ship steps 2 and 3 together** — a config
+   naming a shard the other two do not is the drift of ben-domingue/irw#1733.
+   Reference ids rotate when a release is cut, so read the refid off Redivis at
+   that moment rather than from an older document.
+4. Run `python3 -m red_up.manifest` and commit `metadata/version_manifest.tsv`;
+   the daily `--check` fails until the new dataset's release rows are appended.
+5. Re-run `src/metadata/08_itemtext.R` (it reads the union through this package,
+   so no edit is needed) and upload `irw_meta` as usual.
+6. Update the browse link in `irw_site/itemtext.qmd`, which points at shard 1's
+   Redivis page and would otherwise show a reader only part of the item text.
+7. **Do not move existing tables.** Newest-first resolution keeps every table
+   reachable where it already is; moving one *creates* the shadowing problem
+   rather than solving it.
 
 ## Changing the Redivis owner
 

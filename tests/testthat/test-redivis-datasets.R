@@ -286,3 +286,48 @@ test_that(".irw_open_core_datasources returns config order when all are availabl
   # .irw_order_datasources is what flips this to newest-first at point of use.
   expect_equal(irw:::.irw_order_datasources(out, "core"), list("wh_c", "wh_b", "wh_a"))
 })
+
+test_that(".irw_order_datasources also reverses item text shards", {
+  # Item text shards resolve newest-first for the same reason core warehouses
+  # do. Forgetting this helper is the way sharding silently returns a stale
+  # copy of a table that lives in more than one shard.
+  ds <- list("text1", "text2")
+  expect_equal(irw:::.irw_order_datasources(ds, "text"), list("text2", "text1"))
+  expect_equal(irw:::.irw_order_datasources(list("only"), "text"), list("only"))
+})
+
+test_that(".irw_open_datasources drops an unreleased shard but keeps the rest", {
+  local_irw_pristine(".irw_env")
+  specs <- list(
+    list(user = "u", dataset = "text_a:1111"),
+    list(user = "u", dataset = "text_b:2222")
+  )
+  local_mocked_bindings(
+    .irw_open_dataset = function(spec) {
+      # A freshly created shard has no released version yet, so a read-only
+      # token cannot open it. That must not take down item text entirely.
+      if (grepl("text_b", spec$dataset)) stop("[403 insufficient_scope] no release")
+      structure(list(id = spec$dataset), class = "fake_ds")
+    },
+    .env = asNamespace("irw")
+  )
+  expect_warning(
+    opened <- irw:::.irw_open_datasources(specs, noun = "item text dataset"),
+    "unavailable"
+  )
+  expect_length(opened, 1L)
+  expect_equal(opened[[1]]$id, "text_a:1111")
+})
+
+test_that(".irw_open_datasources reports the noun it was given", {
+  local_irw_pristine(".irw_env")
+  local_mocked_bindings(
+    .irw_open_dataset = function(spec) stop("[403 insufficient_scope] no release"),
+    .env = asNamespace("irw")
+  )
+  expect_error(
+    irw:::.irw_open_datasources(list(list(user = "u", dataset = "text_a:1")),
+                                noun = "item text dataset"),
+    "error occurred while accessing IRW"
+  )
+})

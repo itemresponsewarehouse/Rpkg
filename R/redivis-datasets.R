@@ -95,40 +95,51 @@
   paste(.irw_core_warehouse_fingerprint(), paste(tags, collapse = ","), sep = "|")
 }
 
-#' Return datasources in preferred search order (newest core warehouse first)
+#' Return datasources in preferred search order (newest shard first)
+#'
+#' Both sharded families -- core warehouses and item text -- resolve
+#' newest-first, so a name present in more than one shard resolves to its most
+#' recent copy. The single-dataset sources have nothing to order.
 #'
 #' @param ds_list List of Redivis dataset objects.
-#' @param source Resolved source name.
+#' @param source Resolved source name, or \code{"text"} for item text.
 #' @keywords internal
 #' @noRd
 .irw_order_datasources <- function(ds_list, source) {
-  if (source == "core" && length(ds_list) > 1L) {
+  if (source %in% c("core", "text") && length(ds_list) > 1L) {
     rev(ds_list)
   } else {
     ds_list
   }
 }
 
-#' Open every core warehouse, skipping any that are currently unavailable
+#' Open every shard in a spec list, skipping any that are currently unavailable
 #'
-#' A freshly created warehouse has no released version yet, so opening it with a
-#' read-only token fails. One such warehouse must not take down every IRW
-#' lookup, so unavailable warehouses are dropped with a warning. An
+#' A freshly created shard has no released version yet, so opening it with a
+#' read-only token fails. One such shard must not take down every IRW
+#' lookup, so unavailable shards are dropped with a warning. An
 #' authentication failure applies to all of them, so that still stops.
 #'
-#' A warehouse that is younger than a pinned IRW version is a different case
+#' A shard that is younger than a pinned IRW version is a different case
 #' and is skipped without a warning: it did not exist then, so its absence is
 #' the correct answer rather than a fault.
 #'
+#' Note this returns shards in **config order** (oldest first). Ordering for
+#' search is a separate concern -- see \code{.irw_order_datasources()}. Opening
+#' without ordering yields oldest-first resolution, which is the shadowing bug
+#' exactly backwards, so the two are always used together.
+#'
+#' @param specs List of specs to open.
+#' @param noun What one of these is called, for messages.
 #' @return A non-empty list of Redivis dataset objects, in config order.
 #' @keywords internal
 #' @noRd
-.irw_open_core_datasources <- function() {
+.irw_open_datasources <- function(specs, noun = "warehouse") {
   opened <- list()
   failures <- character(0)
   skipped <- character(0)
 
-  for (spec in .irw_datasource_specs$core) {
+  for (spec in specs) {
     # A warehouse younger than the pinned IRW version is not a failure: it did
     # not exist then, so a reproduced session should not see it. Skip it here
     # rather than letting `.irw_open_dataset()` error, which would report an
@@ -156,7 +167,7 @@
 
   if (length(skipped) > 0L) {
     message(
-      "Skipping ", length(skipped), " warehouse(s) with no release at the ",
+      "Skipping ", length(skipped), " ", noun, "(s) with no release at the ",
       "pinned IRW version: ", paste(skipped, collapse = ", "), "."
     )
   }
@@ -164,7 +175,7 @@
   if (length(opened) == 0L) {
     if (length(failures) == 0L) {
       stop(
-        "No IRW warehouse had a released version at the IRW version pinned by ",
+        "No IRW ", noun, " had a released version at the IRW version pinned by ",
         "`irw_use_version()`. Use `irw_reset_version()` to return to the ",
         "current release.",
         call. = FALSE
@@ -188,6 +199,15 @@
   }
 
   opened
+}
+
+#' Open every core warehouse, skipping any that are currently unavailable
+#'
+#' @return A non-empty list of Redivis dataset objects, in config order.
+#' @keywords internal
+#' @noRd
+.irw_open_core_datasources <- function() {
+  .irw_open_datasources(.irw_datasource_specs$core, noun = "warehouse")
 }
 
 #' Initialize Redivis Datasource(s)

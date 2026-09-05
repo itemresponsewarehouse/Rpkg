@@ -76,3 +76,128 @@ test_that(".resolve_itemtext_table_name rejects unusable input without matching"
   expect_null(irw:::.resolve_itemtext_table_name("", available))
   expect_null(irw:::.resolve_itemtext_table_name(character(0), available))
 })
+
+# ---------------------------------------------------------------------------
+# Item text sharding. Redivis caps a dataset at 1000 tables, so `irw_text` will
+# become `irw_text`, `irw_text_2`, ... These tests drive the two-shard path
+# before a second shard exists, so the cutover is a config edit rather than a
+# code change made under pressure.
+# ---------------------------------------------------------------------------
+
+# A stand-in for a Redivis dataset holding the named item text tables.
+fake_text_shard <- function(id, bases) {
+  tables <- lapply(paste0(bases, "__items"),
+                   function(nm) list(properties = list(name = nm)))
+  list(
+    id = id,
+    list_tables = function() tables,
+    table = function(nm) list(shard = id, name = nm)
+  )
+}
+
+# The session env is shared across test files, and the item text fingerprint is
+# deliberately config-only -- two tests using the same shard *names* with
+# different contents look identical to it, which is correct in production and
+# wrong in a test. So clear the caches explicitly.
+clear_itemtext_caches <- function() {
+  e <- irw:::.irw_env
+  for (nm in c("itemtext_fingerprint", "itemtext_datasource_list",
+               "itemtext_table_names", "itemtext_table_index")) {
+    if (exists(nm, envir = e)) rm(list = nm, envir = e)
+  }
+}
+
+local_text_shards <- function(shards, env = parent.frame()) {
+  local_irw_pristine(".irw_env", env = env)
+  clear_itemtext_caches()
+  withr::defer(clear_itemtext_caches(), envir = env)
+  # Two specs so the ordering helper actually has something to reverse.
+  local_irw_binding(
+    ".irw_itemtext_specs",
+    lapply(names(shards), function(id) list(user = "u", dataset = id)),
+    env = env
+  )
+  local_mocked_bindings(
+    .irw_open_dataset = function(spec) shards[[spec$dataset]],
+    .env = asNamespace("irw")
+  )
+}
+
+test_that("item text lists the union across shards, deduplicated", {
+  local_text_shards(list(
+    "irw_text:1"   = fake_text_shard("old", c("alpha", "shared")),
+    "irw_text_2:2" = fake_text_shard("new", c("shared", "beta"))
+  ))
+  expect_equal(irw:::.irw_itemtext_table_index() |> names() |> sort(),
+               c("alpha", "beta", "shared"))
+  expect_equal(irw_list_itemtext_tables(), c("alpha", "beta", "shared"))
+})
+
+test_that("a table in two shards routes to the newest", {
+  # This is the whole point. Clients resolve newest-first, so the copy in
+  # irw_text_2 is the live one; serving the older copy would be silently wrong.
+  local_text_shards(list(
+    "irw_text:1"   = fake_text_shard("old", c("shared")),
+    "irw_text_2:2" = fake_text_shard("new", c("shared"))
+  ))
+  expect_equal(irw:::.irw_itemtext_table_index()[["shared"]]$id, "new")
+})
+
+test_that("a table only in the older shard still resolves there", {
+  local_text_shards(list(
+    "irw_text:1"   = fake_text_shard("old", c("only_old")),
+    "irw_text_2:2" = fake_text_shard("new", c("something_else"))
+  ))
+  expect_equal(irw:::.irw_itemtext_table_index()[["only_old"]]$id, "old")
+})
+
+test_that("item text shards are stored newest-first", {
+  local_text_shards(list(
+    "irw_text:1"   = fake_text_shard("old", c("a")),
+    "irw_text_2:2" = fake_text_shard("new", c("b"))
+  ))
+  ids <- vapply(irw:::.irw_itemtext_datasources(), function(d) d$id, character(1))
+  expect_equal(ids, c("new", "old"))
+})
+
+test_that("an unavailable shard does not hide the other one's tables", {
+  local_irw_pristine(".irw_env")
+  clear_itemtext_caches()
+  withr::defer(clear_itemtext_caches())
+  local_irw_binding(".irw_itemtext_specs", list(
+    list(user = "u", dataset = "irw_text:1"),
+    list(user = "u", dataset = "irw_text_2:2")
+  ))
+  local_mocked_bindings(
+    .irw_open_dataset = function(spec) {
+      if (grepl("_2:", spec$dataset)) stop("[403 insufficient_scope] no release")
+      fake_text_shard("old", c("alpha"))
+    },
+    .env = asNamespace("irw")
+  )
+  expect_warning(nms <- irw_list_itemtext_tables(), "unavailable")
+  expect_equal(nms, "alpha")
+})
+
+test_that("changing the shard list invalidates the cached union", {
+  # A package upgrade or devtools::load_all() can add a shard mid-session.
+  # Without the fingerprint the old union stays cached and the new shard is
+  # invisible until restart.
+  local_irw_pristine(".irw_env")
+  clear_itemtext_caches()
+  withr::defer(clear_itemtext_caches())
+  one <- fake_text_shard("old", c("alpha"))
+  two <- fake_text_shard("new", c("beta"))
+  local_mocked_bindings(
+    .irw_open_dataset = function(spec) if (grepl("_2:", spec$dataset)) two else one,
+    .env = asNamespace("irw")
+  )
+  local_irw_binding(".irw_itemtext_specs", list(list(user = "u", dataset = "irw_text:1")))
+  expect_equal(irw_list_itemtext_tables(), "alpha")
+
+  local_irw_binding(".irw_itemtext_specs", list(
+    list(user = "u", dataset = "irw_text:1"),
+    list(user = "u", dataset = "irw_text_2:2")
+  ))
+  expect_equal(irw_list_itemtext_tables(), c("alpha", "beta"))
+})
