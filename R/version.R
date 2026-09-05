@@ -62,8 +62,8 @@
 #' Every pinnable Redivis dataset, keyed by dataset name
 #'
 #' Covers the table sources in \code{.irw_datasource_specs} plus the metadata
-#' and item text datasets, so that a pinned session is reproducible in its
-#' metadata as well as its response data.
+#' dataset and every item text shard, so that a pinned session is reproducible
+#' in its metadata as well as its response data.
 #'
 #' @return Named list of specs.
 #' @keywords internal
@@ -71,7 +71,8 @@
 .irw_pinnable_specs <- function() {
   specs <- c(
     unlist(.irw_datasource_specs, recursive = FALSE, use.names = FALSE),
-    list(.irw_meta_spec, .irw_itemtext_spec)
+    list(.irw_meta_spec),
+    .irw_itemtext_specs
   )
   names(specs) <- vapply(specs, function(s) .irw_dataset_key(s$dataset), character(1))
   specs

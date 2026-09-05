@@ -29,12 +29,9 @@
 #' @export
 irw_list_itemtext_tables <- function() {
   if (!identical(getOption("irw.itemtext_disclaimer"), FALSE)) .itemtext_disclaimer()
-  if (!exists("itemtext_table_names", envir = .irw_env) || is.null(.irw_env$itemtext_table_names)) {
-    dataset <- .get_irw_itemtext_dataset()
-    tables <- dataset$list_tables()
-    names <- vapply(tables, function(table) table$properties$name, character(1))
-    .irw_env$itemtext_table_names <- sort(sub("__items$", "", names))
-  }
+  # The union across every item text shard, deduplicated. Building the index is
+  # the same listing pass, and it also populates `itemtext_table_names`.
+  .irw_itemtext_table_index()
   .irw_env$itemtext_table_names
 }
 

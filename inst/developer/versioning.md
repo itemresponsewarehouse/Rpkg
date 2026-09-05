@@ -46,10 +46,10 @@ dataset name (the part of the spec before the colon, e.g.
 
 Everything goes through one seam: `.irw_open_dataset()` in `R/redivis-config.R`
 looks up the pin and hands the version to `.irw_redivis_dataset()`. Because every
-IRW dataset — the six core warehouses, sim/comp/nom, `irw_meta` and `irw_text` —
-is opened through that function, a pin applies uniformly to fetches, table
-listings, and metadata. Adding a datasource to `.irw_datasource_specs` makes it
-pinnable with no further work.
+IRW dataset — the core warehouses, sim/comp/nom, `irw_meta` and every item text
+shard — is opened through that function, a pin applies uniformly to fetches,
+table listings, and metadata. Adding a datasource to `.irw_datasource_specs`, or
+a shard to `.irw_itemtext_specs`, makes it pinnable with no further work.
 
 ## Two things that are easy to get wrong
 

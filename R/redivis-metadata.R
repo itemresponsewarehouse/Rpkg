@@ -402,19 +402,78 @@
 }
 
 
-#' Access the IRW item text dataset object
+#' Invalidate item text session caches when the configured shard list changes
 #'
-#' Returns the Redivis dataset object for IRW item text metadata,
-#' and ensures metadata is loaded via \code{get()}.
+#' Mirrors \code{.irw_sync_core_warehouse_caches()}. Without this, a session that
+#' gains a shard (a package upgrade, or \code{devtools::load_all()}) would keep
+#' serving the union it had already cached and the new shard would stay
+#' invisible until restart.
 #'
-#' @return A Redivis dataset object.
 #' @keywords internal
-.get_irw_itemtext_dataset <- function() {
-  if (!exists("itemtext_dataset", envir = .irw_env) || is.null(.irw_env$itemtext_dataset)) {
-    dataset <- .irw_open_dataset(.irw_itemtext_spec)
-    .irw_env$itemtext_dataset <- dataset
+#' @noRd
+.irw_sync_itemtext_caches <- function() {
+  fp <- .irw_itemtext_fingerprint()
+  if (!exists("itemtext_fingerprint", envir = .irw_env) ||
+      !identical(.irw_env$itemtext_fingerprint, fp)) {
+    .irw_env$itemtext_fingerprint <- fp
+    for (nm in c("itemtext_datasource_list", "itemtext_table_names",
+                 "itemtext_table_index")) {
+      if (exists(nm, envir = .irw_env)) rm(list = nm, envir = .irw_env)
+    }
   }
-  .irw_env$itemtext_dataset
+}
+
+
+#' Access the IRW item text datasources, newest shard first
+#'
+#' Item text is a shard list for the same reason response data is: Redivis caps
+#' a dataset at 1000 tables. The list is stored **already ordered**, so no
+#' caller can forget to reverse it -- oldest-first resolution would return a
+#' stale copy of any table present in more than one shard.
+#'
+#' @return A non-empty list of Redivis dataset objects, newest first.
+#' @keywords internal
+.irw_itemtext_datasources <- function() {
+  .irw_sync_itemtext_caches()
+  if (!exists("itemtext_datasource_list", envir = .irw_env) ||
+      is.null(.irw_env$itemtext_datasource_list)) {
+    .irw_env$itemtext_datasource_list <- .irw_order_datasources(
+      .irw_open_datasources(.irw_itemtext_specs, noun = "item text dataset"),
+      source = "text"
+    )
+  }
+  .irw_env$itemtext_datasource_list
+}
+
+
+#' Map each item text table to the shard that should serve it
+#'
+#' Built in the same listing pass as \code{irw_list_itemtext_tables()}: one
+#' round-trip gives both the union and the routing. Populated newest-first, so
+#' the first writer wins and an older shard never overwrites a newer entry.
+#'
+#' Fetching must go through this rather than through "the" item text dataset.
+#' "Listing found it in shard 2, fetch asked shard 1" is precisely the shadowing
+#' bug that sharding otherwise introduces.
+#'
+#' @return A named list mapping stored base name -> Redivis dataset object.
+#' @keywords internal
+.irw_itemtext_table_index <- function() {
+  .irw_sync_itemtext_caches()
+  if (!exists("itemtext_table_index", envir = .irw_env) ||
+      is.null(.irw_env$itemtext_table_index)) {
+    index <- list()
+    for (ds in .irw_itemtext_datasources()) {
+      nms <- vapply(ds$list_tables(), function(t) t$properties$name, character(1))
+      nms <- sub("__items$", "", nms)
+      for (nm in nms) {
+        if (is.null(index[[nm]])) index[[nm]] <- ds
+      }
+    }
+    .irw_env$itemtext_table_index <- index
+    .irw_env$itemtext_table_names <- sort(names(index))
+  }
+  .irw_env$itemtext_table_index
 }
 
 
@@ -443,7 +502,13 @@
     return(NULL)
   }
 
-  dataset <- .get_irw_itemtext_dataset()
+  # Route to the shard that actually holds it, never to a remembered "the"
+  # item text dataset.
+  dataset <- .irw_itemtext_table_index()[[resolved]]
+  if (is.null(dataset)) {
+    message(glue::glue("Item text not available for table: '{table_name}'"))
+    return(NULL)
+  }
   full_name <- paste0(resolved, "__items")
 
   table <- dataset$table(full_name)
