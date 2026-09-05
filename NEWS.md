@@ -1,3 +1,13 @@
+# irw 1.1.3
+
+- Untrack irw.Rcheck/, and fix the ignore rule that was meant to stop it (#152)
+- Add irw_text_2 as the second item-text shard (#151)
+- Make item text a shard list, ahead of the 1000-table cap (#150)
+- Address metadata tables by name; the pinned reference ids are dead (#148)
+- irw_use_version(): read the whole corpus at one IRW version (#146)
+- README: document irw_version() alongside the pinning functions (#145)
+- irw_version(): one number for the whole corpus, and as-of-date lookup (#144)
+
 # irw 1.1.2
 
 - Drop release PRs from the generated NEWS.md entry (#142)
