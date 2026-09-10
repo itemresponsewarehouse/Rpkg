@@ -191,3 +191,38 @@ test_that("tags dispatch errors for untagged sources", {
   expect_error(irw_tags(source = "comp"), "Tags are not available")
   expect_error(irw_tag_options("sample", source = "sim"), "Tags are not available")
 })
+
+test_that(".irw_license_terms treats blanks and literal NA as no terms", {
+  bib <- data.frame(
+    table = c("a", "b", "c", "d"),
+    Derived_License = c("Custom", "Custom", "CC BY 4.0", "Custom"),
+    Custom_License_Terms = c("Academic use only.", "NA", " Attribute separately. ", ""),
+    stringsAsFactors = FALSE
+  )
+  expect_identical(
+    irw:::.irw_license_terms(bib),
+    c("Academic use only.", NA, "Attribute separately.", NA)
+  )
+  # Pinned versions from before the column existed
+  expect_identical(irw:::.irw_license_terms(bib[, 1:2]), rep(NA_character_, 4))
+})
+
+test_that("irw_license_options says how many Custom tables record their terms", {
+  local_mocked_bindings(
+    .fetch_simsyn_biblio_table = function() {
+      data.frame(
+        table = c("sim_a", "sim_b", "sim_c"),
+        Derived_License = c("Custom", "Custom", "CC BY 4.0"),
+        Custom_License_Terms = c("Academic use only.", "NA", "NA"),
+        stringsAsFactors = FALSE
+      )
+    },
+    .env = asNamespace("irw")
+  )
+  expect_message(
+    out <- irw_license_options(source = "sim"),
+    "1 of 2 tables marked Custom record their terms",
+    fixed = TRUE
+  )
+  expect_equal(out, data.frame(license = c("Custom", "CC BY 4.0"), count = c(2L, 1L)))
+})
