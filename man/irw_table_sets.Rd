@@ -7,7 +7,9 @@
 irw_table_sets(name, source = "core", per_item = FALSE)
 }
 \arguments{
-\item{name}{Character. Name of a single IRW table.}
+\item{name}{Character vector of one or more IRW table names. Several names
+run the same queries once per table, still without an export, so this is
+the way to sweep many tables.}
 
 \item{source}{Character. Data source: \code{"core"} (default), \code{"nom"},
 \code{"sim"}, or \code{"comp"}.}
@@ -17,7 +19,7 @@ response minimum, maximum, and number of distinct response values). One
 extra query; the result has one row per distinct item. Defaults to FALSE.}
 }
 \value{
-A list with elements:
+For a single name, a list with elements:
 \describe{
 \item{table}{Fully qualified Redivis reference for the table.}
 \item{n_rows}{Total number of rows.}
@@ -28,6 +30,8 @@ strings are treated as missing, matching \code{irw_fetch()}.}
 \item{per_item}{Data frame of per-item summaries, or \code{NULL} when
 \code{per_item = FALSE}.}
 }
+For several names, a named list of those lists, one per table, in the
+order given. Each element is exactly what the single-name call returns.
 }
 \description{
 Answers set and summary questions about a table -- which item codes it
@@ -45,6 +49,10 @@ sets$items
 sets$resp
 
 irw_table_sets("condon_2024_sapa_personality", per_item = TRUE)$per_item
+
+# Several tables at once: no export, one set of queries per table
+sweep <- irw_table_sets(c("rosenberg_selfesteem", "environment_ltm"))
+lengths(lapply(sweep, `[[`, "items"))
 }
 
 }

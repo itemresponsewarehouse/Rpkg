@@ -44,14 +44,16 @@
 #' \code{irw_table_sets()} returns the same answer in seconds and does not
 #' consume the Redivis export quota.
 #'
-#' @param name Character. Name of a single IRW table.
+#' @param name Character vector of one or more IRW table names. Several names
+#'   run the same queries once per table, still without an export, so this is
+#'   the way to sweep many tables.
 #' @param source Character. Data source: \code{"core"} (default), \code{"nom"},
 #'   \code{"sim"}, or \code{"comp"}.
 #' @param per_item Logical. If TRUE, also return a per-item summary (row count,
 #'   response minimum, maximum, and number of distinct response values). One
 #'   extra query; the result has one row per distinct item. Defaults to FALSE.
 #'
-#' @return A list with elements:
+#' @return For a single name, a list with elements:
 #'   \describe{
 #'     \item{table}{Fully qualified Redivis reference for the table.}
 #'     \item{n_rows}{Total number of rows.}
@@ -62,6 +64,8 @@
 #'     \item{per_item}{Data frame of per-item summaries, or \code{NULL} when
 #'       \code{per_item = FALSE}.}
 #'   }
+#'   For several names, a named list of those lists, one per table, in the
+#'   order given. Each element is exactly what the single-name call returns.
 #'
 #' @examples
 #' \dontrun{
@@ -70,15 +74,36 @@
 #' sets$resp
 #'
 #' irw_table_sets("condon_2024_sapa_personality", per_item = TRUE)$per_item
+#'
+#' # Several tables at once: no export, one set of queries per table
+#' sweep <- irw_table_sets(c("rosenberg_selfesteem", "environment_ltm"))
+#' lengths(lapply(sweep, `[[`, "items"))
 #' }
 #'
 #' @export
 irw_table_sets <- function(name, source = "core", per_item = FALSE) {
-  if (!is.character(name) || length(name) != 1L) {
-    stop("`name` must be a single table name.", call. = FALSE)
+  if (!is.character(name) || length(name) < 1L || anyNA(name)) {
+    stop("`name` must be one or more table names.", call. = FALSE)
   }
   source <- .irw_resolve_source(source = source)
 
+  if (length(name) == 1L) {
+    return(.irw_table_sets_one(name, source = source, per_item = per_item))
+  }
+  sets <- lapply(name, .irw_table_sets_one, source = source, per_item = per_item)
+  names(sets) <- name
+  sets
+}
+
+#' Value sets of one IRW table
+#'
+#' @param name Single table name.
+#' @param source Resolved source name.
+#' @param per_item Logical; also compute the per-item summary.
+#' @return The single-table list documented in \code{irw_table_sets()}.
+#' @keywords internal
+#' @noRd
+.irw_table_sets_one <- function(name, source, per_item) {
   tbl <- .fetch_redivis_table(name, source = source)
   ref <- tbl$qualified_reference
   vars <- .irw_table_variable_names(tbl)
