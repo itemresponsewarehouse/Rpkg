@@ -1,15 +1,3 @@
-# Internal: solve for the coin weight whose entropy matches a given
-# geometric-mean likelihood. See Domingue et al. (2021).
-.irw_imv_coin <- function(a) {
-  f <- function(p, a) abs(p * log(p) + (1 - p) * log(1 - p) - log(a))
-  stats::nlminb(0.5, f, lower = 1e-3, upper = 1 - 1e-3, a = a)$par
-}
-
-# Internal: geometric mean likelihood of predictions `p` for outcomes `resp`.
-.irw_imv_gml <- function(resp, p) {
-  exp(sum(log(p) * resp + log(1 - p) * (1 - resp)) / length(resp))
-}
-
 #' InterModel Vigorish (IMV)
 #'
 #' @description
@@ -29,6 +17,9 @@
 #' Predicted probabilities are clamped to \code{[eps, 1 - eps]} before the
 #' likelihoods are computed, so predictions of exactly 0 or 1 do not produce
 #' an infinite log-likelihood.
+#'
+#' The computation is \code{\link[imv]{imv.binary}} from the \pkg{imv}
+#' package; \code{irw_imv()} adds the data-frame interface and input checks.
 #'
 #' Out-of-sample predictions are the intended use: comparing in-sample
 #' predictions will favour the more flexible model by construction. The
@@ -65,7 +56,6 @@
 #' # A model that knows the base rate beats one that guesses at random.
 #' irw_imv(truth, p1 = rep(0.5, 500), p2 = rep(0.7, 500))
 #'
-#' @importFrom stats nlminb
 #' @export
 irw_imv <- function(data, p1, p2, resp = "resp", eps = 1e-6) {
   if (is.data.frame(data)) {
@@ -111,12 +101,5 @@ irw_imv <- function(data, p1, p2, resp = "resp", eps = 1e-6) {
     stop("Predictions must be probabilities in [0, 1].")
   }
 
-  clamp <- function(p) pmin(pmax(p, eps), 1 - eps)
-  v1 <- clamp(v1)
-  v2 <- clamp(v2)
-
-  c1 <- .irw_imv_coin(.irw_imv_gml(y, v1))
-  c2 <- .irw_imv_coin(.irw_imv_gml(y, v2))
-
-  (c2 - c1) / c1
+  imv::imv.binary(y, v1, v2, sigma = eps)
 }

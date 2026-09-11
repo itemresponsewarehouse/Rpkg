@@ -45,6 +45,9 @@ Predicted probabilities are clamped to \code{[eps, 1 - eps]} before the
 likelihoods are computed, so predictions of exactly 0 or 1 do not produce
 an infinite log-likelihood.
 
+The computation is \code{\link[imv]{imv.binary}} from the \pkg{imv}
+package; \code{irw_imv()} adds the data-frame interface and input checks.
+
 Out-of-sample predictions are the intended use: comparing in-sample
 predictions will favour the more flexible model by construction. The
 "Comparing Models Out of Sample with the IMV" article works through a
