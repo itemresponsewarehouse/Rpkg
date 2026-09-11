@@ -1,3 +1,9 @@
+# irw 1.2.0
+
+- Show custom licence terms in irw_info() and flag "Custom" in irw_license_options() (#159)
+- irw_table_sets(): accept several table names, like irw_fetch() (#158)
+- warehouses.md: adding a warehouse is a three-repo change (irw#1733) (#157)
+
 # irw 1.1.3
 
 - Untrack irw.Rcheck/, and fix the ignore rule that was meant to stop it (#152)
