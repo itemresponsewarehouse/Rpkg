@@ -14,7 +14,11 @@ irw_license_options(source = "core", comp = FALSE, sim = FALSE, nom = FALSE)
 
 \item{sim}{Deprecated. Use \code{source = "sim"} instead.}
 
-\item{nom}{Deprecated. Use \code{source = "nom"} instead.}
+\item{nom}{Deprecated. Use \code{source = "nom"} instead.
+\code{"Custom"} is not a licence: it marks a table whose terms are its own. When
+it appears, a message says how many of those tables record their terms, which
+\code{\link[=irw_info]{irw_info()}} prints for a single table. Read the terms before relying on them;
+the package does not infer what they permit.}
 }
 \value{
 A data.frame with 'license' and 'count' columns.

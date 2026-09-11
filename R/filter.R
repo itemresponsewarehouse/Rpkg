@@ -70,6 +70,11 @@ irw_tag_options <- function(column, source = "core") {
 #' @param comp Deprecated. Use \code{source = "comp"} instead.
 #' @param sim Deprecated. Use \code{source = "sim"} instead.
 #' @param nom Deprecated. Use \code{source = "nom"} instead.
+#' `"Custom"` is not a licence: it marks a table whose terms are its own. When
+#' it appears, a message says how many of those tables record their terms, which
+#' [irw_info()] prints for a single table. Read the terms before relying on them;
+#' the package does not infer what they permit.
+#'
 #' @return A data.frame with 'license' and 'count' columns.
 #' @export
 irw_license_options <- function(source = "core", comp = FALSE, sim = FALSE, nom = FALSE) {
@@ -77,12 +82,41 @@ irw_license_options <- function(source = "core", comp = FALSE, sim = FALSE, nom 
   bib <- .irw_filter_biblio(source)
   
   freqs <- sort(table(bib$Derived_License), decreasing = TRUE)
-  
+
+  is_custom <- !is.na(bib$Derived_License) & bib$Derived_License == "Custom"
+  if (any(is_custom)) {
+    n_terms <- sum(!is.na(.irw_license_terms(bib)[is_custom]))
+    message(sprintf(
+      paste0("'Custom' is not a licence: %d of %d tables marked Custom record their terms. ",
+             "Read them with irw_info(\"<table>\") before relying on them."),
+      n_terms, sum(is_custom)
+    ))
+  }
+
   data.frame(
     license = names(freqs),
     count = as.integer(freqs),
     row.names = NULL
   )
+}
+
+#' Custom licence terms recorded for each row of a bibliography table
+#'
+#' `Custom_License_Terms` arrived in biblio with ben-domingue/irw#2000, so older
+#' pinned versions and the other sources may not have it. Blank cells and the
+#' literal "NA" the warehouse stores for missing values both count as no terms.
+#'
+#' @param bib A bibliography data frame.
+#' @return Character vector, one per row, NA where no terms are recorded.
+#' @keywords internal
+#' @noRd
+.irw_license_terms <- function(bib) {
+  if (!"Custom_License_Terms" %in% names(bib)) {
+    return(rep(NA_character_, nrow(bib)))
+  }
+  terms <- trimws(as.character(bib[["Custom_License_Terms"]]))
+  terms[is.na(terms) | terms %in% c("", "NA")] <- NA_character_
+  terms
 }
 
 .irw_filter_format_value <- function(x) {

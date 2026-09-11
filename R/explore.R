@@ -188,6 +188,7 @@ irw_info <- function(table_name = NULL, details = FALSE, source = "core", comp =
     doi <- NA
     url_data <- NA
     licence <- NA
+    licence_terms <- NA_character_
     reference <- NA
     bib_found <- FALSE
     
@@ -208,6 +209,7 @@ irw_info <- function(table_name = NULL, details = FALSE, source = "core", comp =
       doi <- thisbib$DOI__for_paper_
       url_data <- thisbib$URL__for_data_
       licence <- thisbib$Derived_License
+      licence_terms <- .irw_license_terms(thisbib)[1]
       description <- thisbib$Description
       reference <- thisbib$Reference_x
     }
@@ -237,6 +239,14 @@ irw_info <- function(table_name = NULL, details = FALSE, source = "core", comp =
     message(sprintf("%-25s %s", "Data URL:", url_data))
     message(sprintf("%-25s %s", "DOI:", doi))
     message(sprintf("%-25s %s", "License:", licence))
+    # Terms are shown whenever recorded, not only for "Custom": some CC BY
+    # tables carry attribution conditions here too.
+    if (!is.na(licence_terms)) {
+      message(sprintf("%-25s %s", "License Terms:", licence_terms))
+    } else if (isTRUE(any(licence == "Custom"))) {
+      message(sprintf("%-25s %s", "License Terms:",
+                      "not recorded in IRW; check the data source before reuse"))
+    }
     message(strrep("-", 50))
     message(sprintf("%s%s", "Reference:\n", reference))
     message(strrep("-", 50))
