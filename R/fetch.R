@@ -24,7 +24,9 @@ fetch_single_data <- function(table_id, source = "core", dedup = FALSE, sim = FA
           ds$get()
           tbl <- ds$table(table_id)
           tbl$get()
-          .retry_with_backoff(function() tbl$to_tibble())
+          # Not retried: a retry would export the table again against the
+          # 30-day export cap. See .retry_with_backoff().
+          tbl$to_tibble()
         },
         warning = function(w) {
           if (grepl("No reference id was provided for the table", conditionMessage(w))) {
