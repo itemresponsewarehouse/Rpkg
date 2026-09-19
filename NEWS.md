@@ -1,3 +1,7 @@
+# irw 1.2.2
+
+- .retry_with_backoff(): retry transient failures on small reads (#167)
+
 # irw 1.2.1
 
 - irw_filter(): skip the density default for sources without a density column (#165)
