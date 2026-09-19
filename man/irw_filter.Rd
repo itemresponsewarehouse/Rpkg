@@ -52,6 +52,9 @@ irw_filter(
 \itemize{
 \item Default is \code{c(0.5, 1)} to exclude sparse matrices.
 \item Use \code{NULL} to disable this filter.
+\item The default is skipped for a source whose metadata has no \code{density} column
+(\code{"nom"}). Passing \code{density}, \code{var}, \code{longitudinal} or a numeric filter
+whose column that source lacks is an error.
 }}
 
 \item{var}{Character vector. Filters datasets by presence of variables.
