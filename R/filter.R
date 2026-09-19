@@ -244,6 +244,9 @@ irw_license_options <- function(source = "core", comp = FALSE, sim = FALSE, nom 
 #' @param density Numeric vector of length 1 or 2, or `NULL`. Filters by matrix density.
 #'   - Default is `c(0.5, 1)` to exclude sparse matrices.
 #'   - Use `NULL` to disable this filter.
+#'   - The default is skipped for a source whose metadata has no `density` column
+#'     (`"nom"`). Passing `density`, `var`, `longitudinal` or a numeric filter
+#'     whose column that source lacks is an error.
 #' @param var Character vector. Filters datasets by presence of variables.
 #'   - Use exact names (e.g., `"rt"`, `"wave"`), or
 #'   - Use a prefix (e.g., `"cov_"`) to match any variable starting with that prefix.
@@ -417,6 +420,40 @@ irw_filter <- function(n_responses = NULL,
   }
 
   metadata <- irw_metadata(source = source)
+
+  # Core metadata always carries every filter column, but the other sources'
+  # metadata legitimately lacks some (nominal has no density, variables or
+  # longitudinal). Name those filters rather than failing on a subset error,
+  # and skip the density default where there is no density to filter on.
+  if (source != "core") {
+    requested <- list(
+      n_responses = n_responses,
+      n_categories = n_categories,
+      n_participants = n_participants,
+      n_items = n_items,
+      responses_per_participant = responses_per_participant,
+      responses_per_item = responses_per_item,
+      density = if (density_supplied) density else NULL,
+      var = var,
+      longitudinal = longitudinal
+    )
+    requested <- requested[vapply(requested, Negate(is.null), logical(1))]
+    columns <- c(var = "variables")
+    needed <- ifelse(names(requested) %in% names(columns),
+                     columns[names(requested)], names(requested))
+    unavailable <- names(requested)[!needed %in% names(metadata)]
+    if (length(unavailable) > 0L) {
+      stop(
+        sprintf("These filters are not available for `source = \"%s\"`, whose metadata has no column for them: ", source),
+        paste(unavailable, collapse = ", "),
+        ".",
+        call. = FALSE
+      )
+    }
+    if (!density_supplied && !"density" %in% names(metadata)) {
+      density <- NULL
+    }
+  }
 
   if (length(tag_filters) > 0) {
     tags <- .irw_tags_for_source(source)

@@ -226,3 +226,19 @@ test_that("irw_license_options says how many Custom tables record their terms", 
   )
   expect_equal(out, data.frame(license = c("Custom", "CC BY 4.0"), count = c(2L, 1L)))
 })
+
+test_that("irw_filter skips the density default when nom metadata has no density", {
+  local_mocked_bindings(
+    irw_metadata = function(source = "core", sim = FALSE, comp = FALSE, nom = FALSE) {
+      data.frame(table = c("nom_b", "nom_a"), n_items = c(5, 20), stringsAsFactors = FALSE)
+    },
+    .env = asNamespace("irw")
+  )
+
+  expect_equal(irw_filter(source = "nom"), c("nom_a", "nom_b"))
+  expect_equal(irw_filter(source = "nom", n_items = c(10, Inf)), "nom_a")
+  expect_error(irw_filter(source = "nom", density = c(0.3, 1)),
+               "not available for `source = \"nom\"`.*density")
+  expect_error(irw_filter(source = "nom", var = "wave", longitudinal = TRUE),
+               "var, longitudinal", fixed = TRUE)
+})
