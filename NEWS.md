@@ -1,6 +1,6 @@
-# irw (development version)
+# irw 1.3.0
 
-- irw_fetch() and irw_itemtext() keep downloaded tables on disk, keyed on each table's Redivis content hash and shared with the Python package; new irw_cache_dir(), irw_cache_info() and irw_clear_cache() (#169)
+- On-disk table cache, shared with the Python package (#170)
 
 # irw 1.2.2
 
