@@ -62,7 +62,8 @@
 #'       all values are numeric and character otherwise. \code{"NA"} and empty
 #'       strings are treated as missing, matching \code{irw_fetch()}.}
 #'     \item{per_item}{Data frame of per-item summaries, or \code{NULL} when
-#'       \code{per_item = FALSE}.}
+#'       \code{per_item = FALSE} or the table has no \code{item} or
+#'       \code{resp} column.}
 #'   }
 #'   For several names, a named list of those lists, one per table, in the
 #'   order given. Each element is exactly what the single-name call returns.
@@ -131,8 +132,10 @@ irw_table_sets <- function(name, source = "core", per_item = FALSE) {
     resp <- .irw_coerce_resp_set(resp_raw, source = source)
   }
 
+  # The summary is built from `resp`, so a table without it (some nominal
+  # tables store the response under another name) gets NULL, as `resp` does.
   per_item_df <- NULL
-  if (isTRUE(per_item) && "item" %in% vars) {
+  if (isTRUE(per_item) && all(c("item", "resp") %in% vars)) {
     per_item_df <- as.data.frame(.irw_query_tibble(sprintf(
       paste(
         "SELECT CAST(item AS STRING) AS item, COUNT(*) AS n,",

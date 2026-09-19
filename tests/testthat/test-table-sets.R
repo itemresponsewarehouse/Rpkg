@@ -64,3 +64,12 @@ test_that("name must be one or more non-missing strings", {
   expect_error(irw_table_sets(c("a", NA)), "one or more table names", fixed = TRUE)
   expect_error(irw_table_sets(1), "one or more table names", fixed = TRUE)
 })
+
+test_that("per_item is NULL, not a query error, when the table has no resp column", {
+  local_fake_warehouse(TABLES)
+  local_irw_binding(".irw_table_variable_names", function(tbl) c("id", "item", "text"))
+  out <- irw_table_sets("a", per_item = TRUE)
+  expect_null(out$resp)
+  expect_null(out$per_item)
+  expect_equal(out$items, c("q1", "q2"))
+})

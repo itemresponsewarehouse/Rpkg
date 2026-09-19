@@ -28,7 +28,8 @@ For a single name, a list with elements:
 all values are numeric and character otherwise. \code{"NA"} and empty
 strings are treated as missing, matching \code{irw_fetch()}.}
 \item{per_item}{Data frame of per-item summaries, or \code{NULL} when
-\code{per_item = FALSE}.}
+\code{per_item = FALSE} or the table has no \code{item} or
+\code{resp} column.}
 }
 For several names, a named list of those lists, one per table, in the
 order given. Each element is exactly what the single-name call returns.
