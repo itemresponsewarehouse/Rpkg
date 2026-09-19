@@ -1,19 +1,65 @@
-#' Retry with Exponential Backoff (Deprecated)
+#' Whether a Redivis client error is worth retrying
 #'
-#' This function is a no-op placeholder.
+#' Covers only what the \code{redivis} client does not already retry itself:
+#' it retries 503s (up to 10 times) and resumes partial downloads, but 502/504
+#' and connection-level failures (resets, timeouts, a truncated Arrow read)
+#' reach us as errors. The markers are ported from Python-pkg's
+#' \code{_TRANSIENT_ERROR_MARKERS}, which accumulated from failures actually
+#' seen against Redivis. Quota, auth, not-found and invalid-request errors are
+#' never retried: retrying cannot fix them, and a quota retry spends more quota.
 #'
-#' @param expr A function that executes the API call.
-#' @param ... Ignored.
-#' @return The result of evaluating `expr()`.
+#' @param msg Error message text.
+#' @return Logical.
 #' @keywords internal
 #' @noRd
-.retry_with_backoff <- function(expr, ...) {
-  if (is.function(expr)) {
-    expr()
-  } else {
+.irw_is_transient_error <- function(msg) {
+  if (.irw_redivis_error_type(msg) != "other") {
+    return(FALSE)
+  }
+  grepl(
+    paste0(
+      "\\b50[24]\\b|bad gateway|gateway time-?out|timed? ?out|timeout was reached|",
+      "connection reset|connection was reset|broken pipe|empty reply from server|",
+      "recv failure|send failure|closed cleanly|",
+      "expected to be able to read|message body|incomplete read"
+    ),
+    msg,
+    ignore.case = TRUE
+  )
+}
+
+#' Retry a small Redivis read on transient failures
+#'
+#' Retries \code{expr()} with exponential backoff when the error is one
+#' \code{.irw_is_transient_error()} accepts, and rethrows anything else at once.
+#' Use it only for small reads (metadata, tags, biblio, table listings). Do not
+#' wrap \code{irw_fetch()}'s export: a retry there could export a large table
+#' again against the 30-day export cap.
+#'
+#' @param expr A function that executes the API call.
+#' @param attempts Total number of attempts.
+#' @param base_delay Seconds to wait before the first retry; doubles each time.
+#' @return The result of \code{expr()}.
+#' @keywords internal
+#' @noRd
+.retry_with_backoff <- function(expr, attempts = 3L, base_delay = 1) {
+  if (!is.function(expr)) {
     stop("`.retry_with_backoff()` now expects a function argument, e.g. `.retry_with_backoff(function() expr)`")
   }
+  for (i in seq_len(attempts)) {
+    result <- tryCatch(expr(), error = function(e) e)
+    if (!inherits(result, "error")) {
+      return(result)
+    }
+    if (i == attempts || !.irw_is_transient_error(conditionMessage(result))) {
+      stop(result)
+    }
+    .irw_sleep(base_delay * 2^(i - 1))
+  }
 }
+
+# Indirection so tests can skip the backoff wait.
+.irw_sleep <- function(seconds) Sys.sleep(seconds)
 
 
 # helper for multiple redivis datasets
