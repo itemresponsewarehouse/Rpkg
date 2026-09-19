@@ -1,3 +1,7 @@
+# irw (development version)
+
+- irw_fetch() and irw_itemtext() keep downloaded tables on disk, keyed on each table's Redivis content hash and shared with the Python package; new irw_cache_dir(), irw_cache_info() and irw_clear_cache() (#169)
+
 # irw 1.2.2
 
 - .retry_with_backoff(): retry transient failures on small reads (#167)

@@ -25,8 +25,9 @@ fetch_single_data <- function(table_id, source = "core", dedup = FALSE, sim = FA
           tbl <- ds$table(table_id)
           tbl$get()
           # Not retried: a retry would export the table again against the
-          # 30-day export cap. See .retry_with_backoff().
-          tbl$to_tibble()
+          # 30-day export cap. See .retry_with_backoff(). Served from the disk
+          # cache when this exact table (by content hash) was fetched before.
+          .irw_cached_download(tbl, "tables")
         },
         warning = function(w) {
           if (grepl("No reference id was provided for the table", conditionMessage(w))) {
@@ -129,6 +130,11 @@ fetch_single_data <- function(table_id, source = "core", dedup = FALSE, sim = FA
 #' coerce it into numeric. Strings like `"NA"`, `""`, and `NA` are treated as missing values.
 #' A warning is issued only if other non-numeric values are encountered.
 #'
+#' Each table downloaded is also kept on disk (see [irw_cache_dir()]) and reused
+#' by later fetches, in this session or another, for as long as the table is
+#' unchanged on Redivis; the Python package shares the same copies. Switch this
+#' off with `options(irw.cache = FALSE)` or `IRW_CACHE=0`.
+#'
 #' @param name Character vector of one or more table names (IRW table IDs).
 #' @param source Character. Data source: \code{"core"} (default), \code{"nom"}, \code{"sim"}, or \code{"comp"}.
 #' @param sim Deprecated. Use \code{source = "sim"} instead.
@@ -143,7 +149,8 @@ fetch_single_data <- function(table_id, source = "core", dedup = FALSE, sim = FA
 #' @return If a single name is provided, returns a tibble. If multiple, returns a named list
 #'         of tibbles (or error messages, if retrieval failed).
 #'
-#' @seealso [irw_table_sets()] for value sets and summaries without a download.
+#' @seealso [irw_table_sets()] for value sets and summaries without a download;
+#'   [irw_cache_info()] for the tables kept on disk.
 #'
 #' @examples
 #' \dontrun{

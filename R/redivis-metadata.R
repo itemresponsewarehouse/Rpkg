@@ -512,7 +512,11 @@
   full_name <- paste0(resolved, "__items")
 
   table <- dataset$table(full_name)
-  suppressWarnings(.retry_with_backoff(function() table$to_tibble()))
+  # get() loads the table's content hash, which keys the disk cache.
+  suppressWarnings(.retry_with_backoff(function() {
+    table$get()
+    .irw_cached_download(table, "itemtext")
+  }))
 }
 
 # Resolve a user-supplied table name against the available item text tables,
