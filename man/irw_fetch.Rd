@@ -45,6 +45,12 @@ If the table includes a character \code{resp} column, the function attempts to
 coerce it into numeric. Strings like \code{"NA"}, \code{""}, and \code{NA} are treated as missing values.
 A warning is issued only if other non-numeric values are encountered.
 }
+\details{
+Each table downloaded is also kept on disk (see \code{\link[=irw_cache_dir]{irw_cache_dir()}}) and reused
+by later fetches, in this session or another, for as long as the table is
+unchanged on Redivis; the Python package shares the same copies. Switch this
+off with \code{options(irw.cache = FALSE)} or \code{IRW_CACHE=0}.
+}
 \examples{
 \dontrun{
 # Main IRW data
@@ -62,5 +68,6 @@ irw_fetch("collegefb_2021and2022", source = "comp")
 
 }
 \seealso{
-\code{\link[=irw_table_sets]{irw_table_sets()}} for value sets and summaries without a download.
+\code{\link[=irw_table_sets]{irw_table_sets()}} for value sets and summaries without a download;
+\code{\link[=irw_cache_info]{irw_cache_info()}} for the tables kept on disk.
 }
