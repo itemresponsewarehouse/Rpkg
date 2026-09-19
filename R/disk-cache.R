@@ -219,11 +219,14 @@ irw_cache_dir <- function() {
 # stored inside each file, not on the folder, so two tables differing only in
 # case cannot sweep each other on a case-insensitive filesystem.
 .irw_cache_sweep <- function(keep, table) {
+  # Compared by file name, not full path: on Windows dirname() turns "\\" into
+  # "/", so the listed path of the file just written does not equal `keep`,
+  # and a path comparison sweeps away the very copy it meant to keep.
   others <- setdiff(
-    list.files(dirname(keep), pattern = "\\.parquet$", full.names = TRUE),
-    keep
+    list.files(dirname(keep), pattern = "\\.parquet$"),
+    basename(keep)
   )
-  for (other in others) {
+  for (other in file.path(dirname(keep), others)) {
     stored <- .irw_cache_file_meta(other)$table
     if (is.null(stored) || identical(stored, table)) unlink(other)
   }
@@ -252,6 +255,9 @@ irw_cache_dir <- function() {
     },
     error = function(e) list()
   )
+  if (length(meta) == 0 || is.null(names(meta))) {
+    return(list())
+  }
   meta <- meta[startsWith(names(meta), "irw_")]
   stats::setNames(meta, sub("^irw_", "", names(meta)))
 }

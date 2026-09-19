@@ -227,3 +227,20 @@ test_that("R reads a file the Python package wrote", {
   expect_equal(tbl$calls$n, 0L)
   expect_equal(out$id, c(1L, 2L))
 })
+
+test_that("the sweep keeps the file it was given even when its path is spelled differently", {
+  # On Windows dirname() rewrites "\" as "/", so the listed path of the file
+  # just written differed from the path it was written to, and the sweep
+  # deleted it. dirname() dropping a doubled "/" reproduces that on any OS.
+  local_empty_cache()
+  local_fake_source(fake_table(hash = "h1"))
+  irw:::fetch_single_data("t_one")
+  keep <- file.path(Sys.getenv("IRW_CACHE_DIR"), cache_files()[1])
+  respelled <- paste0(dirname(keep), "//", basename(keep))
+  irw:::.irw_cache_sweep(respelled, "t_one")
+  expect_equal(cache_files(), "v1/tables/t_one/h1.parquet")
+})
+
+test_that("metadata of a missing file is empty, not an error", {
+  expect_equal(irw:::.irw_cache_file_meta(tempfile(fileext = ".parquet")), list())
+})
