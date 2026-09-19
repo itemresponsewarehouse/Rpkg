@@ -155,7 +155,10 @@ irw_cache_dir <- function() {
     return(NULL)
   }
   tryCatch(
-    tibble::as_tibble(arrow::read_parquet(path, as_data_frame = FALSE)),
+    # mmap = FALSE: a memory-mapped file stays open for as long as the tibble
+    # built on it lives, and Windows cannot then delete or replace it -- the
+    # sweep, irw_clear_cache() and a corrupt-file rewrite all fail quietly.
+    tibble::as_tibble(arrow::read_parquet(path, as_data_frame = FALSE, mmap = FALSE)),
     error = function(e) {
       # A truncated write should cost one re-export, not a failed fetch.
       message("Discarding unreadable IRW cache file ", path, "; fetching again.")
@@ -241,9 +244,11 @@ irw_cache_dir <- function() {
 .irw_cache_file_meta <- function(path) {
   meta <- tryCatch(
     {
-      reader <- arrow::ParquetFileReader$create(path)
-      on.exit(rm(reader))
-      reader$GetSchema()$metadata
+      # Opened and closed explicitly: a reader left to the garbage collector
+      # keeps the file open, and on Windows an open file cannot be deleted.
+      file <- arrow::ReadableFile$create(path)
+      on.exit(file$close())
+      arrow::ParquetFileReader$create(file)$GetSchema()$metadata
     },
     error = function(e) list()
   )
