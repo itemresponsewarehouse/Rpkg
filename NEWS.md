@@ -1,3 +1,9 @@
+# irw 1.2.1
+
+- irw_filter(): skip the density default for sources without a density column (#165)
+- irw_table_sets(): per_item is NULL when the table has no resp column (#164)
+- irw_imv(): call imv::imv.binary() instead of a private copy (#163)
+
 # irw 1.2.0
 
 - Show custom licence terms in irw_info() and flag "Custom" in irw_license_options() (#159)
