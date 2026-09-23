@@ -52,14 +52,16 @@ searched:
 - `metadata-complete` — read `irw_metadata()`, so it saw every documented table.
   Still not the whole warehouse: `irw_metadata()` itself has gaps (no w5/w6
   rows, ~403 tables missing).
-- `tagged-subset-only` — read the tags table, which covers ~62% of documented
-  tables, and far less in the newer warehouses (w1 99.6%, w2 77.4%, **w3 27.2%,
-  w4 34.7%**). Biased toward older tables. Not "all" of anything.
+- `tagged-subset-only` — read the `construct name` tag, not just "has a tags
+  row". Most rows added by auto-tagging (#1704) have no construct name, so this
+  is about half of documented tables: 2,467 of 4,495 on 2026-09-23 (w1 98%,
+  w2 77%, **w3 26%, w4 27%, w5 30%**, w6 52%). Biased toward older tables. Not
+  "all" of anything. The exact count is appended to each definition.
 - `curated-only` — chosen by hand.
 
 `irw_collection()` prints this when it is not `metadata-complete`. That message
 is the feature, not noise — someone assembling a meta-analytic corpus from
-`irw_collection("depression")` needs to know it searched 2,251 of 3,650 tables.
+`irw_collection("depression")` needs to know it searched only about half the corpus.
 Do not quiet it by default.
 
 ## Three invariants that break silently

@@ -14,9 +14,9 @@
 #'   \item{`metadata-complete`}{The rule read `irw_metadata()`, so it saw every
 #'     documented table. Note this is not the same as the whole warehouse —
 #'     `irw_metadata()` itself has gaps.}
-#'   \item{`tagged-subset-only`}{The rule read the tags table, which covers
-#'     roughly 62% of documented tables, and coverage is much lower in the newer
-#'     warehouses. These collections are biased toward older tables and should
+#'   \item{`tagged-subset-only`}{The rule read the `construct name` tag, which
+#'     is filled for only about half of documented tables, and far fewer in the
+#'     newer warehouses. The definition states the exact count searched. These collections are biased toward older tables and should
 #'     not be described as exhaustive.}
 #'   \item{`curated-only`}{Every member was chosen by hand.}
 #' }
