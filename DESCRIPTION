@@ -1,6 +1,6 @@
 Package: irw
 Type: Package
-Title: Package for Working with Data from the Item Response Warehouse
+Title: Access and Analyze Data from the Item Response Warehouse
 Version: 1.3.0
 Authors@R: c(
   person("Hansol", "Lee", email = "hansol@stanford.edu", role = c("aut")),
@@ -10,7 +10,13 @@ Authors@R: c(
 Maintainer: Ben Domingue <bdomingu@stanford.edu>
 URL: https://itemresponsewarehouse.github.io/Rpkg/
 Contact: mailto:itemresponsewarehouse@stanford.edu
-Description: Functions to manage data from the Item Response Warehouse. 
+Description: Tools for finding, downloading, and analyzing datasets from the
+    Item Response Warehouse, a harmonized collection of item response data
+    from educational and psychological measurement described in Nadela et al.
+    (2026) <doi:10.59863/cijg4549>. Functions search tables by metadata,
+    fetch them in a common long format, reshape between long and wide
+    layouts, simulate item response data, and compare the predictive
+    accuracy of fitted models with the InterModel Vigorish.
 Depends: R (>= 4.0.0)
 Imports:
     glue,
