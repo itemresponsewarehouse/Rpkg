@@ -43,9 +43,10 @@
 #'
 #' @references
 #' Domingue, B. W., Rahal, C., Faul, J., Freese, J., Kanopka, K.,
-#' Rigos, A., Stenhaug, B., & Tripathi, A. (2021). InterModel Vigorish (IMV):
-#' A novel approach for quantifying predictive accuracy with binary outcomes.
-#' \doi{10.31235/osf.io/8sgz5}
+#' Rigos, A., Stenhaug, B., & Tripathi, A. (2025). The InterModel Vigorish
+#' (IMV) as a flexible and portable approach for quantifying predictive
+#' accuracy with binary outcomes. \emph{PLOS ONE}, 20(3), e0316491.
+#' \doi{10.1371/journal.pone.0316491}
 #'
 #' @seealso \code{\link{irw_predict}} for producing \code{p1} and \code{p2}
 #'   from fitted \pkg{mirt} models.

@@ -203,8 +203,8 @@
   }
   stop(
     "\nThis function needs the redivis package, which is not installed.\n",
-    "redivis is not on CRAN; install it with:\n",
-    "  remotes::install_github(\"redivis/redivis-r\", ref = \"main\")\n\n",
+    "redivis is not on CRAN; install it from r-universe with:\n",
+    "  install.packages(\"redivis\", repos = c(\"https://redivis.r-universe.dev\", getOption(\"repos\")))\n\n",
     "The parts of irw that do not download from the warehouse work without it:\n",
     "  irw_simdata(), irw_simdata_comp(), irw_simu_diff(), irw_imv(), irw_predict(),\n",
     "  irw_long2resp(), irw_resp2long(), irw_check_resp(), irw_covariates().",

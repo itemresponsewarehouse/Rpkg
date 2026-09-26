@@ -18,13 +18,12 @@ pak::pak("itemresponsewarehouse/Rpkg")
 library(irw)
 ```
 
-`pak` also installs [redivis](https://github.com/redivis/redivis-r), the client
-for the warehouse itself. Installers that ignore the `Remotes:` field --- `R CMD
-INSTALL`, a plain tarball, r-universe --- will not, and every function that
-downloads a table then asks you to install it:
+Downloading tables also needs [redivis](https://github.com/redivis/redivis-r),
+the client for the warehouse itself. It is not on CRAN and `pak` does not install
+it for you; get it from r-universe:
 
 ``` r
-remotes::install_github("redivis/redivis-r", ref = "main")
+install.packages("redivis", repos = c("https://redivis.r-universe.dev", getOption("repos")))
 ```
 
 The functions that do not touch the warehouse --- `irw_simdata()`,
