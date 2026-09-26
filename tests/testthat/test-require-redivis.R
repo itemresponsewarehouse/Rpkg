@@ -5,7 +5,7 @@ test_that(".irw_require_redivis() passes when the client is installed", {
 
 test_that(".irw_require_redivis() names the install command when it is missing", {
   local_mocked_bindings(requireNamespace = function(...) FALSE, .package = "base")
-  expect_error(irw:::.irw_require_redivis(), "redivis/redivis-r", fixed = TRUE)
+  expect_error(irw:::.irw_require_redivis(), "https://redivis.r-universe.dev", fixed = TRUE)
 })
 
 test_that("the redivis call sites are guarded", {
