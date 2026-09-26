@@ -5,9 +5,9 @@ Version: 1.3.0
 Authors@R: c(
   person("Hansol", "Lee", email = "hansol@stanford.edu", role = c("aut")),
 	person("Michael", "Hardy", email = "hardym@stanford.edu",role = c("aut")),
-	person("Ben", "Domingue", email = "bdomingu@stanford.edu", role = c("aut", "cre"))
+	person("Ben", "Domingue", email = "ben.domingue@gmail.com", role = c("aut", "cre"))
 	)
-Maintainer: Ben Domingue <bdomingu@stanford.edu>
+Maintainer: Ben Domingue <ben.domingue@gmail.com>
 URL: https://itemresponsewarehouse.github.io/Rpkg/
 Contact: mailto:itemresponsewarehouse@stanford.edu
 Description: Tools for finding, downloading, and analyzing datasets from the
