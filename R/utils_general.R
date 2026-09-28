@@ -67,6 +67,10 @@ irw_download <- function(table_name,
 #' Saves BibTeX entries for one or more IRW tables to a specified output file.
 #' Updates the BibTeX key to match the table name.
 #'
+#' A table the IRW found through another collection, such as openESM, also
+#' gets that collection's own entry (e.g. `siepe2026openesm`), added once
+#' however many of its tables are requested.
+#'
 #' @param table_names A character vector of table names for which BibTeX entries are generated.
 #' @param output_file A character string specifying the file path to save BibTeX entries. Default is "refs.bib".
 #' @param source Character. Data source: \code{"core"} (default), \code{"nom"}, \code{"sim"}, or \code{"comp"}.
@@ -93,6 +97,7 @@ irw_save_bibtex <- function(table_names,
   # Initialize lists
   valid_entries <- character()
   missing_tables <- character()
+  sources_via <- character()
   missing_bib_tables <- character()
   missing_doi_tables <- character()
   
@@ -126,6 +131,14 @@ irw_save_bibtex <- function(table_names,
     if (nrow(biblio_entry) == 0) {
       missing_bib_tables <- c(missing_bib_tables, table_name)
       next
+    }
+
+    # A table found through an intermediary such as openESM also cites that
+    # intermediary (ben-domingue/irw#2421); collected here, appended once per
+    # source after the tables' own entries.
+    if ("Source_via" %in% names(biblio_entry)) {
+      via <- trimws(as.character(biblio_entry$Source_via[1]))
+      if (!is.na(via) && nzchar(via)) sources_via <- c(sources_via, via)
     }
     
     # --- Step 1: Try manual BibTeX ---
@@ -168,6 +181,14 @@ irw_save_bibtex <- function(table_names,
     valid_entries <- c(valid_entries, bibtex)
   }
   
+  aggregator_entries <- .irw_aggregator_bibtex(sources_via)
+  if (length(aggregator_entries) > 0) {
+    valid_entries <- c(valid_entries, aggregator_entries)
+    message("Also added the citation for ",
+            paste(intersect(unique(sources_via), names(.irw_aggregators)), collapse = ", "),
+            ", which some of these tables were found through; please cite it too.")
+  }
+
   # Write BibTeX entries to file
   if (length(valid_entries) > 0) {
     writeLines(paste0(unique(valid_entries), "\n"), con = output_file)

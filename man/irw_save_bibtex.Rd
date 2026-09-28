@@ -34,3 +34,8 @@ Invisibly returns BibTeX entries as a character vector.
 Saves BibTeX entries for one or more IRW tables to a specified output file.
 Updates the BibTeX key to match the table name.
 }
+\details{
+A table the IRW found through another collection, such as openESM, also
+gets that collection's own entry (e.g. \code{siepe2026openesm}), added once
+however many of its tables are requested.
+}

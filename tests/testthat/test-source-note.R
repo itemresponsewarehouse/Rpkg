@@ -144,3 +144,57 @@ test_that("irw_fetch() prints it for a table it returned, not for one it did not
   expect_length(notes(irw_fetch("missing")), 0)
   expect_length(notes(irw_fetch(c("missing", "bailon_2020_covidaffect"))), 1)
 })
+
+## ---- irw_save_bibtex(): the intermediary's own entry (#2421) ---------------
+
+fake_biblio <- function(with_column = TRUE) {
+  b <- tibble::tibble(
+    table = c("bailon_2020_covidaffect", "other_esm", "environment_ltm"),
+    BibTex = c("@article{Bailon2020, title={CoVidAffect}}",
+               "@article{Other2021, title={Other}}",
+               "@article{Env2019, title={Env}}"),
+    DOI__for_paper_ = NA_character_
+  )
+  if (with_column) b$Source_via <- c("openESM", "openESM", NA)
+  b
+}
+
+save_quietly <- function(...) {
+  f <- withr::local_tempfile(fileext = ".bib", .local_envir = parent.frame())
+  out <- suppressMessages(irw_save_bibtex(..., output_file = f))
+  list(entries = out, file = readLines(f, encoding = "UTF-8"))
+}
+
+test_that("irw_save_bibtex() adds the openESM entry once, after the tables", {
+  local_mocked_bindings(.fetch_biblio_table = function() fake_biblio(),
+                        .fetch_redivis_table = function(...) TRUE)
+  res <- save_quietly(c("bailon_2020_covidaffect", "other_esm", "environment_ltm"))
+  keys <- sub(",.*", "", res$entries)
+  expect_equal(keys, c("@article{bailon_2020_covidaffect", "@article{other_esm",
+                       "@article{environment_ltm", "@article{siepe2026openesm"))
+  expect_match(res$entries[4], "B{\\\"u}chner, Anabel", fixed = TRUE)
+  expect_true(any(grepl("@article{siepe2026openesm", res$file, fixed = TRUE)))
+})
+
+test_that("it says so when it adds the entry", {
+  local_mocked_bindings(.fetch_biblio_table = function() fake_biblio(),
+                        .fetch_redivis_table = function(...) TRUE)
+  f <- withr::local_tempfile(fileext = ".bib")
+  expect_message(irw_save_bibtex("bailon_2020_covidaffect", output_file = f),
+                 "Also added the citation for openESM")
+})
+
+test_that("tables not found via openESM, and a biblio without the column, are unchanged", {
+  local_mocked_bindings(.fetch_biblio_table = function() fake_biblio(),
+                        .fetch_redivis_table = function(...) TRUE)
+  expect_length(save_quietly("environment_ltm")$entries, 1)
+  local_mocked_bindings(.fetch_biblio_table = function() fake_biblio(FALSE))
+  expect_length(save_quietly(c("bailon_2020_covidaffect", "environment_ltm"))$entries, 2)
+})
+
+test_that("the openESM BibTeX is balanced and keyed", {
+  b <- .irw_aggregators$openESM$bibtex
+  expect_equal(lengths(regmatches(b, gregexpr("\\{", b))),
+               lengths(regmatches(b, gregexpr("\\}", b))))
+  expect_true(startsWith(b, "@article{siepe2026openesm,"))
+})
