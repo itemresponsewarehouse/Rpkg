@@ -35,9 +35,30 @@
       "Fried, E. I., & Heck, D. W. (2026). Introducing openESM: A database of",
       "openly available experience sampling datasets. Behavior Research",
       "Methods, 58(8), 240. https://doi.org/10.3758/s13428-026-03112-y"
+    ),
+    # irw_save_bibtex() appends this once for any requested table found via
+    # openESM. Names per Crossref (ben-domingue/irw#2503).
+    bibtex = paste0(
+      "@article{siepe2026openesm, title={Introducing openESM: A database ",
+      "of openly available experience sampling datasets}, ",
+      "author={Siepe, Bj{\\\"o}rn S. and Haslbeck, Jonas M. B. and ",
+      "Kloft, Matthias and B{\\\"u}chner, Anabel and Zhang, Yong and ",
+      "Fried, Eiko I. and Heck, Daniel W.}, journal={Behavior Research ",
+      "Methods}, volume={58}, number={8}, pages={240}, year={2026}, ",
+      "doi={10.3758/s13428-026-03112-y}}"
     )
   )
 )
+
+# BibTeX entries for the distinct known sources in `sources`, in order.
+.irw_aggregator_bibtex <- function(sources) {
+  sources <- unique(sources[!is.na(sources) & nzchar(sources)])
+  out <- vapply(sources, function(via) {
+    entry <- .irw_aggregators[[via]]$bibtex
+    if (is.null(entry)) NA_character_ else entry
+  }, character(1), USE.NAMES = FALSE)
+  out[!is.na(out)]
+}
 
 .irw_source_note_cache_file <- "source_via.csv"
 .irw_source_note_ttl_seconds <- 7 * 24 * 3600
