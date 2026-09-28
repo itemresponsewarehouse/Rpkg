@@ -50,6 +50,10 @@ Each table downloaded is also kept on disk (see \code{\link[=irw_cache_dir]{irw_
 by later fetches, in this session or another, for as long as the table is
 unchanged on Redivis; the Python package shares the same copies. Switch this
 off with \code{options(irw.cache = FALSE)} or \code{IRW_CACHE=0}.
+
+A table the IRW found through another collection, such as openESM, prints
+that collection's note and citation once per session per collection.
+Silence it with \code{options(irw.source_note = FALSE)} or \code{IRW_SOURCE_NOTE=0}.
 }
 \examples{
 \dontrun{

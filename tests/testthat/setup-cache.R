@@ -7,3 +7,7 @@ withr::local_envvar(
   .local_envir = testthat::teardown_env()
 )
 withr::local_options(irw.cache = NULL, .local_envir = testthat::teardown_env())
+
+# Keep irw_fetch()'s credit note from querying the live biblio in tests;
+# test-source-note.R turns it back on and replaces the lookup itself.
+withr::local_envvar(IRW_SOURCE_NOTE = "0", .local_envir = testthat::teardown_env())

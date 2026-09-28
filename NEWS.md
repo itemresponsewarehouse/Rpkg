@@ -1,3 +1,7 @@
+# irw (development version)
+
+- irw_fetch(): once-per-session credit note for tables found via openESM and similar collections (ben-domingue/irw#2421)
+
 # irw 1.3.0
 
 - On-disk table cache, shared with the Python package (#170)

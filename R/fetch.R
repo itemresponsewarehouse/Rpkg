@@ -135,6 +135,10 @@ fetch_single_data <- function(table_id, source = "core", dedup = FALSE, sim = FA
 #' unchanged on Redivis; the Python package shares the same copies. Switch this
 #' off with `options(irw.cache = FALSE)` or `IRW_CACHE=0`.
 #'
+#' A table the IRW found through another collection, such as openESM, prints
+#' that collection's note and citation once per session per collection.
+#' Silence it with `options(irw.source_note = FALSE)` or `IRW_SOURCE_NOTE=0`.
+#'
 #' @param name Character vector of one or more table names (IRW table IDs).
 #' @param source Character. Data source: \code{"core"} (default), \code{"nom"}, \code{"sim"}, or \code{"comp"}.
 #' @param sim Deprecated. Use \code{source = "sim"} instead.
@@ -181,6 +185,9 @@ irw_fetch <- function(name, source = "core", dedup = FALSE, sim = FALSE, comp = 
 
   process_one <- function(nm) {
     dat <- fetch_single_data(nm, source = source, dedup = dedup)
+    # Credit a table found through an intermediary such as openESM (#2421).
+    # Never raises and is silent on any failure.
+    if (!is.null(dat)) .irw_source_note(nm, source)
     if (resp) {
       dat <- tryCatch(
         irw_long2resp(dat),
