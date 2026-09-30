@@ -4,8 +4,9 @@
 #' definition, the rule that produced it, and how complete its coverage is.
 #'
 #' Collections are labelled groupings of IRW tables — study designs (`rct`,
-#' `clustered`, `q_matrix`), instrument families (`big_five`, `promis`) and
-#' constructs (`depression`, `math`). A table can belong to any number of them.
+#' `clustered`, `q_matrix`), instrument families (`big_five`, `promis`), exact
+#' instruments (`phq9`, `gad7`, `rses`, ...) and constructs (`depression`,
+#' `math`). A table can belong to any number of them.
 #'
 #' @section Coverage:
 #' `coverage` says how much of the warehouse the collection's rule actually
@@ -18,7 +19,9 @@
 #'     is filled for only about half of documented tables, and far fewer in the
 #'     newer warehouses. The definition states the exact count searched. These collections are biased toward older tables and should
 #'     not be described as exhaustive.}
-#'   \item{`curated-only`}{Every member was chosen by hand.}
+#'   \item{`curated-only`}{Every member was chosen by hand. The exact-instrument
+#'     collections are of this kind; see [irw_collection_members()] for how each
+#'     of their members was identified.}
 #' }
 #'
 #' @param kind Optional character vector. Filter to `"design"`, `"instrument"`
@@ -131,6 +134,24 @@ irw_collection <- function(name, quiet = FALSE) {
 #' curator. Use this to ask the inverse question: what collections is a given
 #' table in?
 #'
+#' @section Basis in the exact-instrument collections:
+#' In the exact-instrument collections (`phq9`, `gad7`, `rses`, `cesd`,
+#' `dass21`, `panas`, `tipi`, `pcl5`, `gse`, `erq`, `mspss`, `sd3`), `basis`
+#' starts with how the table was identified as that instrument:
+#' \describe{
+#'   \item{`wording`}{The study's own item text matches the instrument.
+#'     Identity is observed.}
+#'   \item{`supplied`}{IRW identified the instrument and supplied its canonical
+#'     wording, so a wording match only confirms that identification. Identity
+#'     is asserted.}
+#'   \item{`name`}{There is no usable English item text; only the table's
+#'     metadata names the instrument.}
+#' }
+#' A note may follow after `"; "`: `"supplied; subscale: anxiety (7/21)"` for a
+#' table holding one whole subscale, `"name; partial: 18/20 items"` for one
+#' holding most of the scale. For the strictly verified set, keep rows whose
+#' basis starts with `"wording"`, not rows equal to it.
+#'
 #' @param tables Optional character vector. Restrict to these table names.
 #' @param collection Optional character vector. Restrict to these collections.
 #' @return A tibble with columns `table`, `collection`, `basis`.
@@ -139,6 +160,10 @@ irw_collection <- function(name, quiet = FALSE) {
 #' \dontrun{
 #' irw_collection_members(tables = "frac20")
 #' irw_collection_members(collection = "q_matrix")
+#'
+#' # PHQ-9 tables whose own item text was checked against the instrument
+#' m <- irw_collection_members(collection = "phq9")
+#' m[startsWith(m$basis, "wording"), ]
 #' }
 #' @export
 irw_collection_members <- function(tables = NULL, collection = NULL) {

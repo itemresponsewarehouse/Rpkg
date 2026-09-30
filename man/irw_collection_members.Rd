@@ -20,10 +20,34 @@ The long membership table: one row per (table, collection) pair, with the
 curator. Use this to ask the inverse question: what collections is a given
 table in?
 }
+\section{Basis in the exact-instrument collections}{
+
+In the exact-instrument collections (\code{phq9}, \code{gad7}, \code{rses}, \code{cesd},
+\code{dass21}, \code{panas}, \code{tipi}, \code{pcl5}, \code{gse}, \code{erq}, \code{mspss}, \code{sd3}), \code{basis}
+starts with how the table was identified as that instrument:
+\describe{
+\item{\code{wording}}{The study's own item text matches the instrument.
+Identity is observed.}
+\item{\code{supplied}}{IRW identified the instrument and supplied its canonical
+wording, so a wording match only confirms that identification. Identity
+is asserted.}
+\item{\code{name}}{There is no usable English item text; only the table's
+metadata names the instrument.}
+}
+A note may follow after \code{"; "}: \code{"supplied; subscale: anxiety (7/21)"} for a
+table holding one whole subscale, \code{"name; partial: 18/20 items"} for one
+holding most of the scale. For the strictly verified set, keep rows whose
+basis starts with \code{"wording"}, not rows equal to it.
+}
+
 \examples{
 \dontrun{
 irw_collection_members(tables = "frac20")
 irw_collection_members(collection = "q_matrix")
+
+# PHQ-9 tables whose own item text was checked against the instrument
+m <- irw_collection_members(collection = "phq9")
+m[startsWith(m$basis, "wording"), ]
 }
 }
 \seealso{
