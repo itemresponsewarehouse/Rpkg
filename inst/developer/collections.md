@@ -57,7 +57,8 @@ searched:
   is about half of documented tables: 2,467 of 4,495 on 2026-09-23 (w1 98%,
   w2 77%, **w3 26%, w4 27%, w5 30%**, w6 52%). Biased toward older tables. Not
   "all" of anything. The exact count is appended to each definition.
-- `curated-only` — chosen by hand.
+- `curated-only` — chosen by hand (`continuous_response` and the
+  exact-instrument collections).
 
 `irw_collection()` prints this when it is not `metadata-complete`. That message
 is the feature, not noise — someone assembling a meta-analytic corpus from
@@ -83,6 +84,29 @@ inside it as a documentation directive, and the result is garbage entries in
 NAMESPACE. Likewise, do not insert code between an existing roxygen block and
 the function it documents — that silently reassigns the documentation to your
 new function.
+
+## Exact-instrument collections, and what `basis` holds there
+
+Twelve `curated` collections of kind `instrument` (`phq9`, `gad7`, `rses`, `cesd`,
+`dass21`, `panas`, `tipi`, `pcl5`, `gse`, `erq`, `mspss`, `sd3`; ben-domingue/irw#1712,
+live 2026-09-30) list the tables that administered one specific instrument. They sit
+beside the looser `cname:` collections (`depression`, `self_esteem`, `affect_panas`)
+and replace none of them.
+
+Their `basis` is not a rule expression. It **starts** with `wording`, `supplied` or
+`name` (how the table's identity as that instrument was decided), and may carry a
+note after `"; "` (`"supplied; subscale: anxiety (7/21)"`). The note rides inside
+`basis` because the pipeline publishes only `table` and `basis` from a curated file.
+So:
+
+- anything filtering on it must use `startsWith(basis, "wording")`, never `==`;
+- do not split `basis` into more columns here. Adding a published `note` column is
+  a pipeline change (`10_collections.R`), and then a change to both packages
+  together, not a package-only one.
+
+How the members were chosen, and how to add an instrument, is in
+`src/collections/README` (section "exact-instrument collections"). Nothing in this
+package is specific to them: they are ordinary `curated-only` collections.
 
 ## Adding a collection
 

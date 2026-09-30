@@ -19,8 +19,9 @@ definition, the rule that produced it, and how complete its coverage is.
 }
 \details{
 Collections are labelled groupings of IRW tables — study designs (\code{rct},
-\code{clustered}, \code{q_matrix}), instrument families (\code{big_five}, \code{promis}) and
-constructs (\code{depression}, \code{math}). A table can belong to any number of them.
+\code{clustered}, \code{q_matrix}), instrument families (\code{big_five}, \code{promis}), exact
+instruments (\code{phq9}, \code{gad7}, \code{rses}, ...) and constructs (\code{depression},
+\code{math}). A table can belong to any number of them.
 }
 \section{Coverage}{
 
@@ -34,7 +35,9 @@ documented table. Note this is not the same as the whole warehouse —
 is filled for only about half of documented tables, and far fewer in the
 newer warehouses. The definition states the exact count searched. These collections are biased toward older tables and should
 not be described as exhaustive.}
-\item{\code{curated-only}}{Every member was chosen by hand.}
+\item{\code{curated-only}}{Every member was chosen by hand. The exact-instrument
+collections are of this kind; see \code{\link[=irw_collection_members]{irw_collection_members()}} for how each
+of their members was identified.}
 }
 }
 
