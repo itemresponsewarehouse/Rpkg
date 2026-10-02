@@ -1,5 +1,6 @@
 # irw (development version)
 
+- irw_covariate_labels() and irw_covariates(labels = TRUE): the source's value labels for coded covariates, from irw_meta's new `covariate_labels` table; opt-in, irw_fetch() unchanged (ben-domingue/irw#1775)
 - Docs: the exact-instrument collections (`phq9`, `gad7`, ...) and what their `basis` values mean, in `irw_collection_members()` and `irw_collections()` (ben-domingue/irw#1712)
 - irw_fetch(): once-per-session credit note for tables found via openESM and similar collections (ben-domingue/irw#2421)
 - irw_save_bibtex(): also returns the openESM citation for tables found via openESM (ben-domingue/irw#2421)

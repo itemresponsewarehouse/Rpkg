@@ -4,7 +4,7 @@
 \alias{irw_covariates}
 \title{Extract Person-Level Covariates from IRW Long-Format Data}
 \usage{
-irw_covariates(df, cols = NULL, align = NULL)
+irw_covariates(df, cols = NULL, align = NULL, labels = FALSE, table = NULL)
 }
 \arguments{
 \item{df}{A data frame in IRW long format, containing an \code{id} column.}
@@ -16,6 +16,23 @@ irw_covariates(df, cols = NULL, align = NULL)
 result of \code{irw_long2resp()}), a matrix with \code{id} rownames, or a
 vector of ids. The returned rows are put in this order, one row per
 element, so the result lines up with the rows of a wide response matrix.}
+
+\item{labels}{Opt in to source value labels (ben-domingue/irw#1775).
+\code{FALSE} (default) returns the shipped codes. \code{TRUE} reads the
+labels for \code{table} with \code{\link{irw_covariate_labels}()}; a data
+frame from \code{irw_covariate_labels()} is used as given (no network).
+Each returned covariate that has labels becomes a factor whose levels are
+the labels in code order (unordered: the source does not say whether the
+codes are ordinal). A code with no label keeps its code text as a level
+and is named in a message. A covariate whose codes share one label --
+institution names withheld -- is left as codes, since decoding would merge
+distinct groups. Covariates without labels are untouched.}
+
+\item{table}{The IRW table \code{df} came from, for \code{labels = TRUE}.
+\code{irw_fetch()} output does not carry its table name, so this must be
+given unless \code{df} has a \code{source_table} column naming a single
+table. Rows from several tables are refused: the same code means
+different things in different tables.}
 }
 \value{
 A data frame with one row per \code{id} and columns \code{id}
@@ -59,7 +76,13 @@ irw_covariates(df)
 wide <- irw_long2resp(df, id_density_threshold = NULL)
 irw_covariates(df, align = wide)
 
+# With the source's value labels (cov_gender 1/2 -> female/male)
+\dontrun{
+  df <- irw_fetch("cucchi_2018_rfq")
+  irw_covariates(df, labels = TRUE, table = "cucchi_2018_rfq")
+}
+
 }
 \seealso{
-\code{\link{irw_long2resp}}
+\code{\link{irw_long2resp}}, \code{\link{irw_covariate_labels}}
 }
