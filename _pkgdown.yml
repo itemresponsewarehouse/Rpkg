@@ -66,6 +66,7 @@ reference:
   - irw_recode_key
   - irw_decode
   - irw_covariates
+  - irw_covariate_labels
 - title: Model comparison
   desc: Functions for comparing the predictions of fitted models.
 - contents:
