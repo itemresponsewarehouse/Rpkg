@@ -6,6 +6,8 @@ Changes asked for in CRAN's review of the first submission:
 - The table cache now defaults to `tools::R_user_dir("irw", "cache")` (e.g. `~/.cache/R/irw`) instead of `~/.cache/irw`, per CRAN policy. Tables cached by 1.3.0 are fetched again once. The Python package still defaults to `~/.cache/irw`; set `IRW_CACHE_DIR` for both to share one cache.
 - Examples: the ones that need no network run as-is; the ones that query Redivis are in `\donttest{}` instead of `\dontrun{}`.
 - `gnm` and `BradleyTerry2` added to Suggests (used by the irw_simdata_comp() example).
+- Reading the warehouse needs a Redivis login (the README's 1.3.0-era "login optional" section was wrong and is reverted). Outside an interactive session, functions that read the warehouse now stop at once with instructions when no login is cached, instead of starting a browser login that waits forever. New irw_has_credentials() reports whether a login is available; the warehouse examples run only when it is TRUE.
+- irw_simdata() and irw_simdata_comp(): `seed` no longer changes the caller's random number stream; it is restored on exit.
 
 - irw_covariate_labels() and irw_covariates(labels = TRUE): the source's value labels for coded covariates, from irw_meta's new `covariate_labels` table; opt-in, irw_fetch() unchanged (ben-domingue/irw#1775)
 - Docs: the exact-instrument collections (`phq9`, `gad7`, ...) and what their `basis` values mean, in `irw_collection_members()` and `irw_collections()` (ben-domingue/irw#1712)

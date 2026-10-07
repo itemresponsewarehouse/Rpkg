@@ -35,7 +35,7 @@ irw_meta's \code{covariate_labels} table. It does not touch the response
 data, and \code{irw_fetch()} output is unchanged.
 }
 \examples{
-\dontshow{if (requireNamespace("redivis", quietly = TRUE)) withAutoprint(\{ # examplesIf}
+\dontshow{if (irw_has_credentials()) withAutoprint(\{ # examplesIf}
 \donttest{
   irw_covariate_labels("cucchi_2018_rfq")
 }

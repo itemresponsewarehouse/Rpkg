@@ -32,7 +32,7 @@ intended use requires.
 }
 
 \examples{
-\dontshow{if (requireNamespace("redivis", quietly = TRUE)) withAutoprint(\{ # examplesIf}
+\dontshow{if (irw_has_credentials()) withAutoprint(\{ # examplesIf}
 \donttest{
   irw_list_itemtext_tables()
 }

@@ -25,7 +25,7 @@ the whole warehouse, says so — see the Coverage section of
 \code{\link[=irw_collections]{irw_collections()}}. Suppress with \code{quiet = TRUE}.
 }
 \examples{
-\dontshow{if (requireNamespace("redivis", quietly = TRUE)) withAutoprint(\{ # examplesIf}
+\dontshow{if (irw_has_credentials()) withAutoprint(\{ # examplesIf}
 \donttest{
 tabs <- irw_collection("depression")
 irw_save_bibtex(head(tabs, 3), output_file = file.path(tempdir(), "depression.bib"))

@@ -151,7 +151,7 @@ and \code{"sim"} have no tags by design and reject them.
 }
 }
 \examples{
-\dontshow{if (requireNamespace("redivis", quietly = TRUE)) withAutoprint(\{ # examplesIf}
+\dontshow{if (irw_has_credentials()) withAutoprint(\{ # examplesIf}
 \donttest{
 # Numeric filters
 irw_filter(n_responses = c(1000, Inf), n_items = c(10, 50))

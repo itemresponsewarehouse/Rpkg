@@ -31,19 +31,23 @@ The functions that do not touch the warehouse --- `irw_simdata()`,
 `irw_long2resp()`, `irw_resp2long()`, `irw_check_resp()` and `irw_covariates()`
 --- work without it.
 
-## Redivis Login (optional)
+## IMPORTANT: Redivis Authentication
 
-The IRW tables are hosted on [Redivis](https://redivis.com), a data management platform. The tables are public, and `irw` reads them without a Redivis account: `irw_fetch()`, `irw_filter()`, `irw_metadata()`, `irw_table_sets()`, `irw_itemtext()` and the other functions that touch the warehouse all work with no login, for tables of any size.
+The IRW tables are hosted on [Redivis](https://redivis.com), a data management platform. To access these datasets, you'll need to:
 
-### When you need a Redivis login
+1.  Have a Redivis account (create one at <https://redivis.com/?createAccount> if you don't have one).
 
-You need a free Redivis account (create one at <https://redivis.com/?createAccount>) only to:
+2.  Authenticate using the Redivis R Client:
 
--   use the [Python package](https://github.com/itemresponsewarehouse/Python-pkg) or the IRW MCP server for AI assistants, because Redivis's Python client signs in before every request;
--   download a table from the Redivis website, or download a table larger than 100 MB as a CSV from its IRW page;
--   work in a Redivis notebook.
+    1.  When you first use a function in `irw` that connects to Redivis (e.g. `irw_info()`), a browser window will open, prompting you to sign in to your Redivis account.
 
-If you have signed in to Redivis from R before, the cached credentials are used and downloads count against your account's export quota (see [Export Quota](#export-quota) below).
+    2.  After signing in, click **Allow** to grant access for the Redivis R Client.
+
+    3.  Once authentication is successful, close the browser window. You will see the message “Authentication was successful” in the R console.
+
+**Note:** You only need to authenticate once per session. For detailed instructions, refer to the [Redivis R Client documentation](https://apidocs.redivis.com/client-libraries/redivis-r/getting-started).
+
+In a script, a scheduled job or another non-interactive session, `irw` does not open a browser. If no login is cached it stops and asks you to sign in once from an interactive R session (the login is then reused) or to set the `REDIVIS_API_TOKEN` environment variable. `irw_has_credentials()` reports whether a login is available.
 
 ## Usage Examples
 
@@ -111,10 +115,9 @@ themselves are always exact.
 
 #### Export Quota
 
-`irw_fetch()` downloads every row of a table. Redivis caps the bytes a signed-in
-account can export in a rolling 30-day window, and one pass over the whole IRW
-corpus comes close to that cap on its own. Whether a cap applies to downloads
-without a login is not documented, so the same advice holds either way. If you only need to know which items or
+`irw_fetch()` downloads every row of a table. Redivis caps the bytes an account
+can export in a rolling 30-day window, and one pass over the whole IRW corpus
+comes close to that cap on its own. If you only need to know which items or
 response values a table contains, use `irw_table_sets()`: it answers with a
 server-side query, returns in seconds even for tables with tens of millions of
 rows, and does not count against the export quota.
@@ -124,11 +127,9 @@ a missing table.
 
 #### Authentication Issues
 
-`irw` does not need a login, so an authentication error usually comes from stale cached credentials. Delete `~/.redivis/r_credentials` (or unset `REDIVIS_API_TOKEN` if you set one) and try again.
+-   No Browser Pop-up: If the browser window doesn't open automatically, check your pop-up blocker settings.
 
--   No Browser Pop-up: If Redivis does ask you to sign in and the browser window doesn't open automatically, check your pop-up blocker settings.
-
--   Authentication errors while signing in: try clearing your browser cookies and attempting again.
+-   Authentication errors: If you see an authentication error, try clearing your browser cookies and attempting again.
 
 ## Feedback and Contributions
 

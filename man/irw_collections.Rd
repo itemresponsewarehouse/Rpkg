@@ -42,7 +42,7 @@ of their members was identified.}
 }
 
 \examples{
-\dontshow{if (requireNamespace("redivis", quietly = TRUE)) withAutoprint(\{ # examplesIf}
+\dontshow{if (irw_has_credentials()) withAutoprint(\{ # examplesIf}
 \donttest{
 irw_collections()
 irw_collections(kind = "instrument")

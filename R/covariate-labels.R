@@ -124,7 +124,7 @@
 #' @seealso \code{\link{irw_covariates}}, whose \code{labels = TRUE} applies
 #'   these labels.
 #'
-#' @examplesIf requireNamespace("redivis", quietly = TRUE)
+#' @examplesIf irw_has_credentials()
 #' \donttest{
 #'   irw_covariate_labels("cucchi_2018_rfq")
 #' }

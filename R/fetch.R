@@ -156,7 +156,7 @@ fetch_single_data <- function(table_id, source = "core", dedup = FALSE, sim = FA
 #' @seealso [irw_table_sets()] for value sets and summaries without a download;
 #'   [irw_cache_info()] for the tables kept on disk.
 #'
-#' @examplesIf requireNamespace("redivis", quietly = TRUE)
+#' @examplesIf irw_has_credentials()
 #' \donttest{
 #' # Main IRW data
 #' irw_fetch("environment_ltm")
@@ -244,7 +244,7 @@ irw_metadata <- function(source = "core", sim = FALSE, comp = FALSE, nom = FALSE
 #'   \code{"comp"} and \code{"sim"} have no tags by design and error.
 #'
 #' @return A tibble containing tags information.
-#' @examplesIf requireNamespace("redivis", quietly = TRUE)
+#' @examplesIf irw_has_credentials()
 #' \donttest{
 #' irw_tags()                  # core
 #' irw_tags(source = "nom")    # nominal

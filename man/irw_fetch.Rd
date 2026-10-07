@@ -56,7 +56,7 @@ that collection's note and citation once per session per collection.
 Silence it with \code{options(irw.source_note = FALSE)} or \code{IRW_SOURCE_NOTE=0}.
 }
 \examples{
-\dontshow{if (requireNamespace("redivis", quietly = TRUE)) withAutoprint(\{ # examplesIf}
+\dontshow{if (irw_has_credentials()) withAutoprint(\{ # examplesIf}
 \donttest{
 # Main IRW data
 irw_fetch("environment_ltm")

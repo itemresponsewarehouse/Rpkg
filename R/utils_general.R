@@ -226,3 +226,30 @@ irw_save_bibtex <- function(table_names,
   
   invisible(valid_entries)
 }
+
+#' Save and restore the global random number stream around a seeded section
+#'
+#' Functions that take a \code{seed} argument restore the caller's stream on
+#' exit, so a seeded call leaves later random draws unchanged.
+#'
+#' @keywords internal
+#' @noRd
+.irw_get_seed <- function() {
+  if (exists(".Random.seed", envir = globalenv(), inherits = FALSE)) {
+    get(".Random.seed", envir = globalenv(), inherits = FALSE)
+  } else {
+    NULL
+  }
+}
+
+#' @keywords internal
+#' @noRd
+.irw_restore_seed <- function(old) {
+  if (is.null(old)) {
+    if (exists(".Random.seed", envir = globalenv(), inherits = FALSE)) {
+      rm(".Random.seed", envir = globalenv())
+    }
+  } else {
+    assign(".Random.seed", old, envir = globalenv())
+  }
+}

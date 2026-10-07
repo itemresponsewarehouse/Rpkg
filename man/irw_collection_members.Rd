@@ -41,7 +41,7 @@ basis starts with \code{"wording"}, not rows equal to it.
 }
 
 \examples{
-\dontshow{if (requireNamespace("redivis", quietly = TRUE)) withAutoprint(\{ # examplesIf}
+\dontshow{if (irw_has_credentials()) withAutoprint(\{ # examplesIf}
 \donttest{
 irw_collection_members(tables = "frac20")
 irw_collection_members(collection = "q_matrix")

@@ -45,6 +45,7 @@ local_irw_core_specs <- function(core, env = parent.frame()) {
     ".irw_env",
     ".irw_open_dataset",
     ".irw_redivis_dataset",
+    ".irw_require_redivis",
     ".irw_open_dataset_at_version",
     ".irw_live_table_names"
   )

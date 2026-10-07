@@ -255,7 +255,7 @@
 #' @seealso [irw_use_version()] to read a whole IRW version,
 #'   [irw_set_version()] to pin one dataset, [irw_get_version()] for the
 #'   versions the current session is actually reading.
-#' @examplesIf requireNamespace("redivis", quietly = TRUE)
+#' @examplesIf irw_has_credentials()
 #' \donttest{
 #' irw_version()                # the newest IRW version, and its eleven pins
 #' irw_version(version = 332)   # exactly what v332 held
@@ -373,7 +373,7 @@ irw_version <- function(date = NULL, version = NULL) {
 #' @return Invisibly, a data frame of `dataset` and `version` as pinned, with
 #'   the IRW version number in the attribute `irw_version`.
 #' @seealso [irw_version()], [irw_get_version()], [irw_reset_version()]
-#' @examplesIf requireNamespace("redivis", quietly = TRUE)
+#' @examplesIf irw_has_credentials()
 #' \donttest{
 #' irw_use_version(332)              # read the corpus as v332 held it
 #' irw_use_version()                 # freeze today's version; record the number

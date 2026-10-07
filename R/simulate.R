@@ -44,7 +44,11 @@ irw_simdata <- function(n_id = 1000,
     stop("model must be one of '1PL', '2PL', or '3PL'", call. = FALSE)
   }
   
-  if (!is.null(seed)) set.seed(seed)
+  if (!is.null(seed)) {
+    old_seed <- .irw_get_seed()
+    on.exit(.irw_restore_seed(old_seed), add = TRUE)
+    set.seed(seed)
+  }
   
   if (!is.null(theta)) {
     theta <- as.numeric(theta)
@@ -186,7 +190,11 @@ irw_simdata_comp <- function(n_agent = 100,
                           theta_sd = 1,
                           seed = NULL,
                           return_params = FALSE) {
-  if (!is.null(seed)) set.seed(seed)
+  if (!is.null(seed)) {
+    old_seed <- .irw_get_seed()
+    on.exit(.irw_restore_seed(old_seed), add = TRUE)
+    set.seed(seed)
+  }
   
   # simulate theta
   if (is.null(theta)) {

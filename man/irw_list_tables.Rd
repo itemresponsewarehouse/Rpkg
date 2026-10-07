@@ -26,7 +26,7 @@ Retrieves a summary of available tables in the IRW database, including their nam
 number of rows, and variable count, sorted alphabetically by table name.
 }
 \examples{
-\dontshow{if (requireNamespace("redivis", quietly = TRUE)) withAutoprint(\{ # examplesIf}
+\dontshow{if (irw_has_credentials()) withAutoprint(\{ # examplesIf}
 \donttest{
 irw_list_tables()               # Main IRW database
 irw_list_tables(source = "sim")   # Simulation dataset

@@ -39,7 +39,7 @@ Use \code{details = TRUE} to also print a per-dataset breakdown (main IRW only).
 If a table name is provided, shows details for that table.
 }
 \examples{
-\dontshow{if (requireNamespace("redivis", quietly = TRUE)) withAutoprint(\{ # examplesIf}
+\dontshow{if (irw_has_credentials()) withAutoprint(\{ # examplesIf}
 \donttest{
 irw_info()                 # Combined totals
 irw_info(details = TRUE)   # Combined + per-dataset breakdown

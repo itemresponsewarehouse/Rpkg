@@ -21,7 +21,7 @@
 #' rights holders, and users are responsible for obtaining any permissions their
 #' intended use requires.
 #'
-#' @examplesIf requireNamespace("redivis", quietly = TRUE)
+#' @examplesIf irw_has_credentials()
 #' \donttest{
 #'   irw_list_itemtext_tables()
 #' }
@@ -62,7 +62,7 @@ irw_list_itemtext_tables <- function() {
 #' rights holders, and users are responsible for obtaining any permissions their
 #' intended use requires.
 #'
-#' @examplesIf requireNamespace("redivis", quietly = TRUE)
+#' @examplesIf irw_has_credentials()
 #' \donttest{
 #'   irw_itemtext("gilbert_meta_49")
 #' }
