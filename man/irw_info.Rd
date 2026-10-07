@@ -19,7 +19,7 @@ irw_info(
 \item{details}{Logical. When \code{TRUE} and \code{table_name} is \code{NULL}, also
 prints a breakdown by dataset. Defaults to \code{FALSE}.}
 
-\item{source}{Character. Data source: \code{"core"} (default), \code{"nom"}, \code{"sim"}, or \code{"comp"}.}
+\item{source}{Character. Data source: \code{"core"} (default), \code{"nom"}, \code{"sim"}, \code{"comp"}, or \code{"conj"} (conjoint experiments; experimental, see \code{\link{irw_conj_long}}).}
 
 \item{comp}{Deprecated. Use \code{source = "comp"} instead.}
 

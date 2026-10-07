@@ -153,6 +153,7 @@ irw_license_options <- function(source = "core", comp = FALSE, sim = FALSE, nom 
 }
 
 .irw_filter_biblio <- function(source) {
+  if (source == "conj") .irw_conj_not_yet("irw_filter()")
   switch(source,
          core = .fetch_biblio_table(),
          sim = .fetch_simsyn_biblio_table(),

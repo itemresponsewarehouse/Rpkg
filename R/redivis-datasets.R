@@ -63,11 +63,11 @@
 
 
 # helper for multiple redivis datasets
-.irw_sources <- c("core", "nom", "sim", "comp")
+.irw_sources <- c("core", "nom", "sim", "comp", "conj")
 
 #' Resolve data source from \code{source} or deprecated \code{nom}/\code{sim}/\code{comp}
 #'
-#' @param source Character. One of \code{"core"}, \code{"nom"}, \code{"sim"}, \code{"comp"}.
+#' @param source Character. One of \code{"core"}, \code{"nom"}, \code{"sim"}, \code{"comp"}, \code{"conj"}.
 #' @param sim Deprecated. Use \code{source = "sim"} instead.
 #' @param comp Deprecated. Use \code{source = "comp"} instead.
 #' @param nom Deprecated. Use \code{source = "nom"} instead.
