@@ -31,6 +31,7 @@ reference:
   - irw_merge
   - irw_download
   - irw_save_bibtex
+  - irw_has_credentials
 - title: Local cache
   desc: >
     Tables fetched with `irw_fetch()` and `irw_itemtext()` are kept on disk,
