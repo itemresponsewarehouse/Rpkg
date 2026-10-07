@@ -23,6 +23,12 @@
   ),
   nom = list(
     list(user = "datapages", dataset = "irw_nominal:614n")
+  ),
+  ## Conjoint experiments: one row per respondent x task x profile, no item/resp
+  ## (see irw_conj_long()). Experimental; metadata, biblio and filters are not
+  ## published for it yet.
+  conj = list(
+    list(user = "datapages", dataset = "irw_conjoint:5wjx")
   )
 )
 
@@ -166,5 +172,6 @@
          sim = "sim_datasource",
          comp = "comp_datasource",
          nom = "nom_datasource",
+         conj = "conj_datasource",
          stop("Unknown single datasource: ", source, call. = FALSE))
 }

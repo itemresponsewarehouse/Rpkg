@@ -87,6 +87,10 @@ irw_table_sets <- function(name, source = "core", per_item = FALSE) {
     stop("`name` must be one or more table names.", call. = FALSE)
   }
   source <- .irw_resolve_source(source = source)
+  if (source == "conj") {
+    stop("irw_table_sets() needs item/resp columns, which a conjoint table does not have. ",
+         "Convert it first with irw_conj_long().", call. = FALSE)
+  }
 
   if (length(name) == 1L) {
     return(.irw_table_sets_one(name, source = source, per_item = per_item))

@@ -59,7 +59,9 @@ fetch_single_data <- function(table_id, source = "core", dedup = FALSE, sim = FA
     }
 
     # Deduplication logic
-    if (dedup) {
+    if (dedup && source == "conj") {
+      message(sprintf("Deduplication skipped for dataset '%s': conjoint tables have one row per id, task and profile.", table_id))
+    } else if (dedup) {
       n_before <- nrow(df)
 
       if ("date" %in% names(df)) {
@@ -140,7 +142,7 @@ fetch_single_data <- function(table_id, source = "core", dedup = FALSE, sim = FA
 #' Silence it with `options(irw.source_note = FALSE)` or `IRW_SOURCE_NOTE=0`.
 #'
 #' @param name Character vector of one or more table names (IRW table IDs).
-#' @param source Character. Data source: \code{"core"} (default), \code{"nom"}, \code{"sim"}, or \code{"comp"}.
+#' @param source Character. Data source: \code{"core"} (default), \code{"nom"}, \code{"sim"}, \code{"comp"}, or \code{"conj"} (conjoint experiments; experimental, see \code{\link{irw_conj_long}}).
 #' @param sim Deprecated. Use \code{source = "sim"} instead.
 #' @param dedup Logical, optional. If TRUE, deduplicates responses based on timing variables. Defaults to FALSE.
 #'   If a \code{date} column is present, no deduplication is performed.
@@ -214,7 +216,7 @@ irw_fetch <- function(name, source = "core", dedup = FALSE, sim = FALSE, comp = 
 #' Fetches the metadata table from Redivis and returns it as a tibble.
 #' Automatically checks for updates and refreshes only when needed.
 #'
-#' @param source Character. Data source: \code{"core"} (default), \code{"nom"}, \code{"sim"}, or \code{"comp"}.
+#' @param source Character. Data source: \code{"core"} (default), \code{"nom"}, \code{"sim"}, \code{"comp"}, or \code{"conj"} (conjoint experiments; experimental, see \code{\link{irw_conj_long}}).
 #' @param sim Deprecated. Use \code{source = "sim"} instead.
 #' @param comp Deprecated. Use \code{source = "comp"} instead.
 #' @param nom Deprecated. Use \code{source = "nom"} instead.
@@ -227,6 +229,7 @@ irw_metadata <- function(source = "core", sim = FALSE, comp = FALSE, nom = FALSE
   if (source == "comp") return(.fetch_comps_metadata_table())
   if (source == "sim")  return(.fetch_simsyn_metadata_table())
   if (source == "nom")  return(.fetch_nominal_metadata_table())
+  if (source == "conj") .irw_conj_not_yet("irw_metadata()")
   .fetch_metadata_table()
 }
 

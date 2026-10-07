@@ -101,6 +101,7 @@ irw_save_bibtex <- function(table_names,
   missing_bib_tables <- character()
   missing_doi_tables <- character()
   
+  if (source == "conj") .irw_conj_not_yet("irw_save_bibtex()")
   # Fetch the full biblio table once (by source)
   biblio <- if (source == "comp") {
     .fetch_comps_biblio_table()
