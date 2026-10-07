@@ -44,7 +44,8 @@ for large tables: computing the item set of a 68-million-row table with
 consume the Redivis export quota.
 }
 \examples{
-\dontrun{
+\dontshow{if (irw_has_credentials()) withAutoprint(\{ # examplesIf}
+\donttest{
 sets <- irw_table_sets("rosenberg_selfesteem")
 sets$items
 sets$resp
@@ -55,5 +56,5 @@ irw_table_sets("condon_2024_sapa_personality", per_item = TRUE)$per_item
 sweep <- irw_table_sets(c("rosenberg_selfesteem", "environment_ltm"))
 lengths(lapply(sweep, `[[`, "items"))
 }
-
+\dontshow{\}) # examplesIf}
 }

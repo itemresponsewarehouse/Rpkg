@@ -35,10 +35,11 @@ irw_meta's \code{covariate_labels} table. It does not touch the response
 data, and \code{irw_fetch()} output is unchanged.
 }
 \examples{
-\dontrun{
+\dontshow{if (irw_has_credentials()) withAutoprint(\{ # examplesIf}
+\donttest{
   irw_covariate_labels("cucchi_2018_rfq")
 }
-
+\dontshow{\}) # examplesIf}
 }
 \seealso{
 \code{\link{irw_covariates}}, whose \code{labels = TRUE} applies

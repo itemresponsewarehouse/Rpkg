@@ -42,10 +42,12 @@ of their members was identified.}
 }
 
 \examples{
-\dontrun{
+\dontshow{if (irw_has_credentials()) withAutoprint(\{ # examplesIf}
+\donttest{
 irw_collections()
 irw_collections(kind = "instrument")
 }
+\dontshow{\}) # examplesIf}
 }
 \seealso{
 \code{\link[=irw_collection]{irw_collection()}}, \code{\link[=irw_collection_members]{irw_collection_members()}}, \code{\link[=irw_filter]{irw_filter()}}

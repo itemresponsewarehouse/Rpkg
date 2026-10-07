@@ -46,7 +46,6 @@ This method is based on Zhang et al. (2025), which constructs realistic
 empirical distributions by accounting for uncertainty around item difficulty estimates.
 }
 \examples{
-\dontrun{
 # Use all IRW data (default)
 irw_simu_diff(num_items = 5)
 
@@ -62,7 +61,6 @@ irw_simu_diff(num_items = 5, difficulty_pool = my_pool)
 # Explore built-in IRW difficulty pool
 head(diff_long)
 unique(diff_long$dataset)
-}
 
 }
 \references{

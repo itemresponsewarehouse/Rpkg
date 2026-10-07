@@ -21,8 +21,10 @@ Link to Redivis table: https://redivis.com/datasets/bdxt-4fqe5tyf4/tables/7nkh-6
 Automatically checks for updates and refreshes only when needed.
 }
 \examples{
-\dontrun{
+\dontshow{if (irw_has_credentials()) withAutoprint(\{ # examplesIf}
+\donttest{
 irw_tags()                  # core
 irw_tags(source = "nom")    # nominal
 }
+\dontshow{\}) # examplesIf}
 }

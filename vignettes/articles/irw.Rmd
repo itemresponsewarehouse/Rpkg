@@ -127,12 +127,12 @@ Save datasets locally.
 
 Save as CSV:
 ```{r, eval=FALSE}
-irw_download("gilbert_meta_48")
+irw_download("gilbert_meta_48", path = "gilbert_meta_48.csv")
 ```
 
 Save dataset metadata as a BibTeX citation:
 ```{r, eval=FALSE}
-irw_save_bibtex("gilbert_meta_48")
+irw_save_bibtex("gilbert_meta_48", output_file = "refs.bib")
 ```
 
 ---

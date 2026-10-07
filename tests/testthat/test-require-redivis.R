@@ -1,5 +1,6 @@
 test_that(".irw_require_redivis() passes when the client is installed", {
   skip_if_not_installed("redivis")
+  withr::local_envvar(REDIVIS_API_TOKEN = "x")
   expect_true(irw:::.irw_require_redivis())
 })
 

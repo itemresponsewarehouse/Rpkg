@@ -21,10 +21,8 @@ Record these tags to make an analysis reproducible; replay them with
 \code{\link{irw_set_version}}.
 }
 \examples{
-\dontrun{
 irw_get_version()
 irw_get_version("item_response_warehouse")
-}
 }
 \seealso{
 \code{\link{irw_set_version}}, \code{\link{irw_reset_version}}

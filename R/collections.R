@@ -28,8 +28,8 @@
 #'   and/or `"construct"`.
 #' @return A tibble, one row per collection.
 #' @seealso [irw_collection()], [irw_collection_members()], [irw_filter()]
-#' @examples
-#' \dontrun{
+#' @examplesIf irw_has_credentials()
+#' \donttest{
 #' irw_collections()
 #' irw_collections(kind = "instrument")
 #' }
@@ -76,10 +76,10 @@ irw_collections <- function(kind = NULL) {
 #' @param quiet Logical. Suppress the definition/coverage message.
 #' @return A sorted character vector of table names.
 #' @seealso [irw_collections()], [irw_filter()]
-#' @examples
-#' \dontrun{
+#' @examplesIf irw_has_credentials()
+#' \donttest{
 #' tabs <- irw_collection("depression")
-#' irw_save_bibtex(tabs, output_file = "depression.bib")
+#' irw_save_bibtex(head(tabs, 3), output_file = file.path(tempdir(), "depression.bib"))
 #'
 #' # Compose with the numeric filters
 #' irw_filter(collection = "depression", n_participants = c(500, Inf))
@@ -156,8 +156,8 @@ irw_collection <- function(name, quiet = FALSE) {
 #' @param collection Optional character vector. Restrict to these collections.
 #' @return A tibble with columns `table`, `collection`, `basis`.
 #' @seealso [irw_collections()], [irw_collection()]
-#' @examples
-#' \dontrun{
+#' @examplesIf irw_has_credentials()
+#' \donttest{
 #' irw_collection_members(tables = "frac20")
 #' irw_collection_members(collection = "q_matrix")
 #'

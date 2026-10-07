@@ -151,7 +151,8 @@ and \code{"sim"} have no tags by design and reject them.
 }
 }
 \examples{
-\dontrun{
+\dontshow{if (irw_has_credentials()) withAutoprint(\{ # examplesIf}
+\donttest{
 # Numeric filters
 irw_filter(n_responses = c(1000, Inf), n_items = c(10, 50))
 irw_filter(n_participants = c(500, Inf), density = c(0.3, 0.9))
@@ -181,4 +182,5 @@ irw_filter(n_categories = c(10, Inf), density = NULL)  # large category sets
 irw_filter(source = "sim", n_items = c(10, Inf))
 irw_filter(source = "comp", n_actors = c(2, 10))
 }
+\dontshow{\}) # examplesIf}
 }

@@ -47,11 +47,13 @@ affected. This is why a paper should cite the number, not the date.
 }
 
 \examples{
-\dontrun{
+\dontshow{if (irw_has_credentials()) withAutoprint(\{ # examplesIf}
+\donttest{
 irw_version()                # the newest IRW version, and its eleven pins
 irw_version(version = 332)   # exactly what v332 held
 irw_version("2026-08-01")    # what was live on 1 August 2026
 }
+\dontshow{\}) # examplesIf}
 }
 \seealso{
 \code{\link[=irw_use_version]{irw_use_version()}} to read a whole IRW version,

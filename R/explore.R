@@ -11,8 +11,8 @@
 #'   \item{name}{The name of the table, sorted alphabetically.}
 #'   \item{numRows}{The number of rows in the table.}
 #'   \item{variableCount}{The number of variables in the table.}
-#' @examples
-#' \dontrun{
+#' @examplesIf irw_has_credentials()
+#' \donttest{
 #' irw_list_tables()               # Main IRW database
 #' irw_list_tables(source = "sim")   # Simulation dataset
 #' irw_list_tables(source = "comp")  # Competition dataset
@@ -58,8 +58,8 @@ irw_list_tables <- function(source = "core", sim = FALSE, comp = FALSE, nom = FA
 #' @param nom Deprecated. Use \code{source = "nom"} instead.
 #'
 #' @return Invisibly returns \code{NULL}.
-#' @examples
-#' \dontrun{
+#' @examplesIf irw_has_credentials()
+#' \donttest{
 #' irw_info()                 # Combined totals
 #' irw_info(details = TRUE)   # Combined + per-dataset breakdown
 #' irw_info("frac20")      # Specific IRW table

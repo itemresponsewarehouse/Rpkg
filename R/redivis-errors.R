@@ -187,27 +187,93 @@
   paste("\nAn error occurred while accessing IRW:", paste(clean, collapse = "; "))
 }
 
-#' Stop unless the redivis client is installed
+#' Whether Redivis credentials are available without a login prompt
 #'
-#' redivis is not on CRAN, so it lives in Suggests and is resolved through the
-#' \code{Remotes:} field. Installers that ignore that field (\code{R CMD
-#' INSTALL}, a plain tarball, r-universe) leave the package usable but without a
-#' client, so the two functions that touch \code{redivis::} check here first
+#' Mirrors the redivis client's own check: an API token in the environment, a
+#' cached-credentials file, or credentials already loaded this session. The
+#' client is read, never modified. Older redivis builds (before 0.12.14) fixed
+#' the credentials path when the package was built, so that path is checked
+#' too.
+#'
+#' @keywords internal
+#' @noRd
+.irw_redivis_credentials_available <- function() {
+  if (nzchar(Sys.getenv("REDIVIS_API_TOKEN"))) {
+    return(TRUE)
+  }
+  if (file.exists(file.path(Sys.getenv("HOME"), ".redivis", "r_credentials"))) {
+    return(TRUE)
+  }
+  auth_vars <- tryCatch(
+    get("auth_vars", envir = asNamespace("redivis")),
+    error = function(e) NULL
+  )
+  if (is.environment(auth_vars)) {
+    if (!is.null(auth_vars$cached_credentials)) {
+      return(TRUE)
+    }
+    cf <- auth_vars$credentials_file
+    if (is.character(cf) && length(cf) == 1 && file.exists(cf)) {
+      return(TRUE)
+    }
+  }
+  FALSE
+}
+
+#' Check whether irw can read from the warehouse without a login prompt
+#'
+#' Reading from the Item Response Warehouse needs the \pkg{redivis} client and a
+#' Redivis login. In an interactive session irw opens the browser login when
+#' needed; in a script or other non-interactive session it stops with
+#' instructions instead. This function reports whether both are already in
+#' place, so code can skip warehouse calls that would otherwise stop.
+#'
+#' @return \code{TRUE} if \pkg{redivis} is installed and credentials are
+#'   available (a \code{REDIVIS_API_TOKEN} environment variable or a cached
+#'   login), otherwise \code{FALSE}.
+#' @examples
+#' irw_has_credentials()
+#' @export
+irw_has_credentials <- function() {
+  requireNamespace("redivis", quietly = TRUE) &&
+    .irw_redivis_credentials_available()
+}
+
+#' Stop unless the redivis client is installed and can authenticate
+#'
+#' redivis is not on CRAN, so it lives in Suggests and is installed from
+#' r-universe. Every call into \code{redivis::} goes through this check first,
 #' rather than failing with "there is no package called 'redivis'".
+#'
+#' Without credentials the client starts a browser login and waits for it. That
+#' is right in an interactive session but hangs a script, a CI job, or a CRAN
+#' check, so outside an interactive session this stops with instructions
+#' before the client is touched.
 #'
 #' @keywords internal
 #' @noRd
 .irw_require_redivis <- function() {
-  if (requireNamespace("redivis", quietly = TRUE)) {
-    return(invisible(TRUE))
+  if (!requireNamespace("redivis", quietly = TRUE)) {
+    stop(
+      "\nThis function needs the redivis package, which is not installed.\n",
+      "redivis is not on CRAN; install it from r-universe with:\n",
+      "  install.packages(\"redivis\", repos = c(\"https://redivis.r-universe.dev\", getOption(\"repos\")))\n\n",
+      "The parts of irw that do not download from the warehouse work without it:\n",
+      "  irw_simdata(), irw_simdata_comp(), irw_simu_diff(), irw_imv(), irw_predict(),\n",
+      "  irw_long2resp(), irw_resp2long(), irw_check_resp(), irw_covariates().",
+      call. = FALSE
+    )
   }
-  stop(
-    "\nThis function needs the redivis package, which is not installed.\n",
-    "redivis is not on CRAN; install it from r-universe with:\n",
-    "  install.packages(\"redivis\", repos = c(\"https://redivis.r-universe.dev\", getOption(\"repos\")))\n\n",
-    "The parts of irw that do not download from the warehouse work without it:\n",
-    "  irw_simdata(), irw_simdata_comp(), irw_simu_diff(), irw_imv(), irw_predict(),\n",
-    "  irw_long2resp(), irw_resp2long(), irw_check_resp(), irw_covariates().",
-    call. = FALSE
-  )
+  if (!interactive() && !.irw_redivis_credentials_available()) {
+    stop(
+      "\nReading from the Item Response Warehouse needs a Redivis login, and ",
+      "none was found.\n",
+      "Run any irw function once in an interactive R session to log in through ",
+      "the browser; the login is cached for later scripts.\n",
+      "For a server or CI job, set the REDIVIS_API_TOKEN environment variable ",
+      "to a Redivis API token instead.",
+      call. = FALSE
+    )
+  }
+  invisible(TRUE)
 }

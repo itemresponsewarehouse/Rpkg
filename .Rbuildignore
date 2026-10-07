@@ -16,3 +16,4 @@
 ^cran-comments\.md$
 ^paper\.md
 ^\.pytest_cache$
+^\.git$

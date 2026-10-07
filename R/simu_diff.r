@@ -27,7 +27,6 @@
 #' with `replication` and `difficulty` columns (if `num_replications > 1`).
 #'
 #' @examples
-#' \dontrun{
 #' # Use all IRW data (default)
 #' irw_simu_diff(num_items = 5)
 #'
@@ -43,7 +42,6 @@
 #' # Explore built-in IRW difficulty pool
 #' head(diff_long)
 #' unique(diff_long$dataset)
-#' }
 #'
 #' @references
 #' Zhang, L., Liu, Y., Molenaar, D., & Domingue, B. (2025). *Realistic Simulation of Item Difficulties*.

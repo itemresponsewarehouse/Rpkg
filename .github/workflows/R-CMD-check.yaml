@@ -65,7 +65,52 @@ jobs:
           extra-packages: any::rcmdcheck
           needs: check
 
+      # check-r-package sets NOT_CRAN=true by default; run as CRAN does. There
+      # are no Redivis credentials here, so the warehouse examples are skipped
+      # by irw_has_credentials() rather than waiting on a browser login.
       - uses: r-lib/actions/check-r-package@v2
+        env:
+          NOT_CRAN: "false"
         with:
           upload-snapshots: true
+          build_args: 'c("--no-manual","--compact-vignettes=gs+qpdf")'
+
+  # CRAN does not install from Additional_repositories, so its machines check
+  # irw without redivis. Reproduce that: install every dependency except it.
+  cran-no-redivis:
+    runs-on: ubuntu-latest
+    name: ubuntu-latest (release, no redivis)
+
+    env:
+      GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+      R_KEEP_PKG_SOURCE: yes
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: r-lib/actions/setup-pandoc@v2
+
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          use-public-rspm: true
+
+      - uses: r-lib/actions/setup-r-dependencies@v2
+        with:
+          dependencies: '"hard"'
+          extra-packages: |
+            any::rcmdcheck
+            any::arrow
+            any::testthat
+            any::withr
+            any::evaluate
+            any::mirt
+            any::gnm
+            any::BradleyTerry2
+          needs: check
+
+      - uses: r-lib/actions/check-r-package@v2
+        env:
+          NOT_CRAN: "false"
+          _R_CHECK_FORCE_SUGGESTS_: "false"
+        with:
           build_args: 'c("--no-manual","--compact-vignettes=gs+qpdf")'

@@ -77,9 +77,11 @@
 #' irw_covariates(df, align = wide)
 #'
 #' # With the source's value labels (cov_gender 1/2 -> female/male)
-#' \dontrun{
+#' \donttest{
+#' if (irw_has_credentials()) {
 #'   df <- irw_fetch("cucchi_2018_rfq")
 #'   irw_covariates(df, labels = TRUE, table = "cucchi_2018_rfq")
+#' }
 #' }
 #'
 #' @export

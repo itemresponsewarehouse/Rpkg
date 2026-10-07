@@ -6,9 +6,9 @@
 #'
 #' @param table_name A character string specifying the name of the Redivis table
 #'        to download.
-#' @param path A string specifying the file path where the data should be saved.
-#'        If `NULL`, the dataset will be saved in the current working directory
-#'        with the table's name as the file name.
+#' @param path A string giving the file path the data are saved to. There is
+#'        no default: name the file yourself, e.g. `"frac20.csv"`, or use
+#'        `tempfile(fileext = ".csv")` for a throwaway copy.
 #' @param overwrite Logical. Whether to overwrite an existing file.
 #' @param source Character. Data source: \code{"core"} (default), \code{"nom"}, \code{"sim"}, or \code{"comp"}.
 #' @param sim Deprecated. Use \code{source = "sim"} instead.
@@ -18,7 +18,7 @@
 #' @return A message confirming the file download location.
 #' @export
 irw_download <- function(table_name,
-                         path = NULL,
+                         path,
                          overwrite = FALSE,
                          source = "core",
                          sim = FALSE,
@@ -26,6 +26,9 @@ irw_download <- function(table_name,
                          nom = FALSE) {
   if (!is.character(table_name) || length(table_name) != 1) {
     stop("'table_name' must be a single character string.")
+  }
+  if (missing(path) || !is.character(path) || length(path) != 1 || is.na(path)) {
+    stop("'path' must be a single file path, e.g. path = \"", table_name, ".csv\".")
   }
   if (!is.logical(overwrite) || length(overwrite) != 1) {
     stop("'overwrite' must be a single TRUE or FALSE value.")
@@ -54,11 +57,7 @@ irw_download <- function(table_name,
   }
   
   table$download(path = path, overwrite = overwrite)
-  
-  if (is.null(path)) {
-    path <- file.path(getwd(), table$name)
-  }
-  
+
   message("Dataset downloaded to: ", path)
 }
 
@@ -72,7 +71,8 @@ irw_download <- function(table_name,
 #' however many of its tables are requested.
 #'
 #' @param table_names A character vector of table names for which BibTeX entries are generated.
-#' @param output_file A character string specifying the file path to save BibTeX entries. Default is "refs.bib".
+#' @param output_file A character string giving the file path the BibTeX
+#'   entries are written to, e.g. `"refs.bib"`. There is no default.
 #' @param source Character. Data source: \code{"core"} (default), \code{"nom"}, \code{"sim"}, or \code{"comp"}.
 #' @param comp Deprecated. Use \code{source = "comp"} instead.
 #' @param sim Deprecated. Use \code{source = "sim"} instead.
@@ -81,7 +81,7 @@ irw_download <- function(table_name,
 #' @return Invisibly returns BibTeX entries as a character vector.
 #' @export
 irw_save_bibtex <- function(table_names,
-                            output_file = "refs.bib",
+                            output_file,
                             source = "core",
                             comp = FALSE,
                             sim = FALSE,
@@ -89,7 +89,7 @@ irw_save_bibtex <- function(table_names,
   if (!is.character(table_names) || length(table_names) < 1) {
     stop("'table_names' must be a non-empty character vector.")
   }
-  if (!is.character(output_file) || length(output_file) != 1) {
+  if (missing(output_file) || !is.character(output_file) || length(output_file) != 1) {
     stop("'output_file' must be a single character string.")
   }
   source <- .irw_resolve_source(source = source, sim = sim, comp = comp, nom = nom)
@@ -225,4 +225,31 @@ irw_save_bibtex <- function(table_names,
   }
   
   invisible(valid_entries)
+}
+
+#' Save and restore the global random number stream around a seeded section
+#'
+#' Functions that take a \code{seed} argument restore the caller's stream on
+#' exit, so a seeded call leaves later random draws unchanged.
+#'
+#' @keywords internal
+#' @noRd
+.irw_get_seed <- function() {
+  if (exists(".Random.seed", envir = globalenv(), inherits = FALSE)) {
+    get(".Random.seed", envir = globalenv(), inherits = FALSE)
+  } else {
+    NULL
+  }
+}
+
+#' @keywords internal
+#' @noRd
+.irw_restore_seed <- function(old) {
+  if (is.null(old)) {
+    if (exists(".Random.seed", envir = globalenv(), inherits = FALSE)) {
+      rm(".Random.seed", envir = globalenv())
+    }
+  } else {
+    assign(".Random.seed", old, envir = globalenv())
+  }
 }

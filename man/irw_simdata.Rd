@@ -51,13 +51,11 @@ Simulates item response data from 1PL, 2PL, or 3PL logistic IRT models.
 Returns a long-format data frame with \code{id}, \code{item}, and \code{resp} columns.
 }
 \examples{
-\dontrun{
 # 1PL (default)
 dat <- irw_simdata(n_item = 5)
 
 # 3PL with latent traits drawn from N(-0.5, 1)
 sim <- irw_simdata(n_item = 5, model = "3PL", theta_mean = -0.5, return_params = TRUE)
 head(sim$data)
-}
 
 }

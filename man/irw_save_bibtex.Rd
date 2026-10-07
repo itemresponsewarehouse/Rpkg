@@ -6,7 +6,7 @@
 \usage{
 irw_save_bibtex(
   table_names,
-  output_file = "refs.bib",
+  output_file,
   source = "core",
   comp = FALSE,
   sim = FALSE,
@@ -16,7 +16,8 @@ irw_save_bibtex(
 \arguments{
 \item{table_names}{A character vector of table names for which BibTeX entries are generated.}
 
-\item{output_file}{A character string specifying the file path to save BibTeX entries. Default is "refs.bib".}
+\item{output_file}{A character string giving the file path the BibTeX
+entries are written to, e.g. \code{"refs.bib"}. There is no default.}
 
 \item{source}{Character. Data source: \code{"core"} (default), \code{"nom"}, \code{"sim"}, or \code{"comp"}.}
 
