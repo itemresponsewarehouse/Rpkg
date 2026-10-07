@@ -17,3 +17,4 @@
 ^paper\.md
 ^\.pytest_cache$
 ^\.git$
+^CRAN-SUBMISSION$
