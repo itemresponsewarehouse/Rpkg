@@ -17,10 +17,8 @@ Invisibly, the named character vector of pins still in effect.
 Returns one dataset, or the whole session, to reading the current release.
 }
 \examples{
-\dontrun{
 irw_reset_version("item_response_warehouse")
 irw_reset_version()   # unpin everything
-}
 }
 \seealso{
 \code{\link{irw_set_version}}, \code{\link{irw_get_version}}

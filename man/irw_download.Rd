@@ -6,7 +6,7 @@
 \usage{
 irw_download(
   table_name,
-  path = NULL,
+  path,
   overwrite = FALSE,
   source = "core",
   sim = FALSE,
@@ -18,9 +18,9 @@ irw_download(
 \item{table_name}{A character string specifying the name of the Redivis table
 to download.}
 
-\item{path}{A string specifying the file path where the data should be saved.
-If \code{NULL}, the dataset will be saved in the current working directory
-with the table's name as the file name.}
+\item{path}{A string giving the file path the data are saved to. There is
+no default: name the file yourself, e.g. \code{"frac20.csv"}, or use
+\code{tempfile(fileext = ".csv")} for a throwaway copy.}
 
 \item{overwrite}{Logical. Whether to overwrite an existing file.}
 

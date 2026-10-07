@@ -19,8 +19,6 @@ table is unchanged on Redivis, and replaced when it changes. See
 \code{\link[=irw_cache_dir]{irw_cache_dir()}} for where the files are and how to switch this off.
 }
 \examples{
-\dontrun{
 info <- irw_cache_info()
 sum(info$size_mb)
-}
 }

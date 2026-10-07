@@ -37,8 +37,9 @@ intended use requires.
 }
 
 \examples{
-\dontrun{
+\dontshow{if (requireNamespace("redivis", quietly = TRUE)) withAutoprint(\{ # examplesIf}
+\donttest{
   irw_itemtext("gilbert_meta_49")
 }
-
+\dontshow{\}) # examplesIf}
 }

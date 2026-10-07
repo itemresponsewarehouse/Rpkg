@@ -12,14 +12,14 @@ Path to the cache folder (it may not exist yet).
 \description{
 \code{irw_fetch()} and \code{irw_itemtext()} keep each table they download in this
 folder, so later sessions do not export it again -- every export counts
-against the Redivis 30-day export cap. The Python package uses the same
-folder and files, so a table fetched in either language is reused by the
-other.
+against the Redivis 30-day export cap.
 }
 \details{
 The folder is the \code{IRW_CACHE_DIR} environment variable if set, otherwise
-\verb{~/.cache/irw} on Linux (or \verb{$XDG_CACHE_HOME/irw}), \verb{~/Library/Caches/irw}
-on macOS and \verb{\%LOCALAPPDATA\%/irw/Cache} on Windows.
+\code{tools::R_user_dir("irw", "cache")} (e.g. \verb{~/.cache/R/irw} on Linux). The
+Python package reads and writes the same files, but its default folder is
+\verb{~/.cache/irw}; to share one cache between the two languages, set
+\code{IRW_CACHE_DIR} to the same folder for both.
 
 Switch the cache off with \code{options(irw.cache = FALSE)} for a session, or
 \code{IRW_CACHE=0} for all of them.

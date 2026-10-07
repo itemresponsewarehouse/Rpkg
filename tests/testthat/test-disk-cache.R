@@ -200,14 +200,9 @@ test_that("item text is cached under its own kind and cleared with its table", {
   expect_length(cache_files(), 0L)
 })
 
-test_that("the cache folder follows the platform rule", {
-  withr::local_envvar(IRW_CACHE_DIR = NA, XDG_CACHE_HOME = "/xdg")
-  if (.Platform$OS.type == "windows" || identical(Sys.info()[["sysname"]], "Darwin")) {
-    skip("Linux rule")
-  }
-  expect_equal(irw_cache_dir(), "/xdg/irw")
-  withr::local_envvar(XDG_CACHE_HOME = NA)
-  expect_equal(irw_cache_dir(), file.path(path.expand("~"), ".cache", "irw"))
+test_that("the cache folder is R's user cache folder unless IRW_CACHE_DIR says otherwise", {
+  withr::local_envvar(IRW_CACHE_DIR = NA)
+  expect_equal(irw_cache_dir(), tools::R_user_dir("irw", which = "cache"))
   withr::local_envvar(IRW_CACHE_DIR = "/somewhere")
   expect_equal(irw_cache_dir(), "/somewhere")
 })

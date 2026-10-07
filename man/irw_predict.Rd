@@ -51,13 +51,12 @@ data, predict the rest.
 Requires the \pkg{mirt} package.
 }
 \examples{
-\dontrun{
+\dontshow{if (requireNamespace("mirt", quietly = TRUE)) withAutoprint(\{ # examplesIf}
 df <- irw_simdata(n_id = 200, n_item = 10, model = "2PL", seed = 1)
 wide <- irw_long2resp(df)
 fit <- mirt::mirt(wide[setdiff(names(wide), "id")], 1, "Rasch")
 preds <- irw_predict(fit, wide)
-}
-
+\dontshow{\}) # examplesIf}
 }
 \seealso{
 \code{\link{irw_imv}}, \code{\link{irw_long2resp}}

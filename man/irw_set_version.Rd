@@ -37,7 +37,8 @@ silent fetch from the current release: quietly mixing versions would break
 the reproducibility the pin exists to provide.
 }
 \examples{
-\dontrun{
+\dontshow{if (requireNamespace("redivis", quietly = TRUE)) withAutoprint(\{ # examplesIf}
+\donttest{
 irw_set_version("item_response_warehouse", "v32.0")
 irw_set_version("item_response_warehouse_2", "v1.8")
 
@@ -45,6 +46,7 @@ df <- irw_fetch("kfcovid_fear_Li2020")   # served from v32.0
 
 irw_reset_version()                      # back to the current release
 }
+\dontshow{\}) # examplesIf}
 }
 \seealso{
 \code{\link{irw_get_version}}, \code{\link{irw_reset_version}}

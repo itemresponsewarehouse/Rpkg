@@ -1,4 +1,11 @@
-# irw (development version)
+# irw 1.3.1
+
+Changes asked for in CRAN's review of the first submission:
+
+- **Breaking:** irw_download() and irw_save_bibtex() no longer have a default output path; name the file with `path` / `output_file`. Nothing is written to the working directory by default.
+- The table cache now defaults to `tools::R_user_dir("irw", "cache")` (e.g. `~/.cache/R/irw`) instead of `~/.cache/irw`, per CRAN policy. Tables cached by 1.3.0 are fetched again once. The Python package still defaults to `~/.cache/irw`; set `IRW_CACHE_DIR` for both to share one cache.
+- Examples: the ones that need no network run as-is; the ones that query Redivis are in `\donttest{}` instead of `\dontrun{}`.
+- `gnm` and `BradleyTerry2` added to Suggests (used by the irw_simdata_comp() example).
 
 - irw_covariate_labels() and irw_covariates(labels = TRUE): the source's value labels for coded covariates, from irw_meta's new `covariate_labels` table; opt-in, irw_fetch() unchanged (ben-domingue/irw#1775)
 - Docs: the exact-instrument collections (`phq9`, `gad7`, ...) and what their `basis` values mean, in `irw_collection_members()` and `irw_collections()` (ben-domingue/irw#1712)

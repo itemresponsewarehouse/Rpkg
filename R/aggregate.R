@@ -68,8 +68,8 @@
 #'   For several names, a named list of those lists, one per table, in the
 #'   order given. Each element is exactly what the single-name call returns.
 #'
-#' @examples
-#' \dontrun{
+#' @examplesIf requireNamespace("redivis", quietly = TRUE)
+#' \donttest{
 #' sets <- irw_table_sets("rosenberg_selfesteem")
 #' sets$items
 #' sets$resp

@@ -212,8 +212,8 @@
 #'
 #' @return Invisibly, the named character vector of all pins in effect.
 #' @seealso \code{\link{irw_get_version}}, \code{\link{irw_reset_version}}
-#' @examples
-#' \dontrun{
+#' @examplesIf requireNamespace("redivis", quietly = TRUE)
+#' \donttest{
 #' irw_set_version("item_response_warehouse", "v32.0")
 #' irw_set_version("item_response_warehouse_2", "v1.8")
 #'
@@ -270,10 +270,8 @@ irw_set_version <- function(dataset, version) {
 #'   \code{pinned}.
 #' @seealso \code{\link{irw_set_version}}, \code{\link{irw_reset_version}}
 #' @examples
-#' \dontrun{
 #' irw_get_version()
 #' irw_get_version("item_response_warehouse")
-#' }
 #' @export
 irw_get_version <- function(dataset = NULL) {
   specs <- .irw_pinnable_specs()
@@ -328,10 +326,8 @@ irw_get_version <- function(dataset = NULL) {
 #' @return Invisibly, the named character vector of pins still in effect.
 #' @seealso \code{\link{irw_set_version}}, \code{\link{irw_get_version}}
 #' @examples
-#' \dontrun{
 #' irw_reset_version("item_response_warehouse")
 #' irw_reset_version()   # unpin everything
-#' }
 #' @export
 irw_reset_version <- function(dataset = NULL) {
   pins <- .irw_pins()

@@ -77,9 +77,11 @@ wide <- irw_long2resp(df, id_density_threshold = NULL)
 irw_covariates(df, align = wide)
 
 # With the source's value labels (cov_gender 1/2 -> female/male)
-\dontrun{
+\donttest{
+if (requireNamespace("redivis", quietly = TRUE)) {
   df <- irw_fetch("cucchi_2018_rfq")
   irw_covariates(df, labels = TRUE, table = "cucchi_2018_rfq")
+}
 }
 
 }

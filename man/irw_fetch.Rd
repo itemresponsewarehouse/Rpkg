@@ -56,7 +56,8 @@ that collection's note and citation once per session per collection.
 Silence it with \code{options(irw.source_note = FALSE)} or \code{IRW_SOURCE_NOTE=0}.
 }
 \examples{
-\dontrun{
+\dontshow{if (requireNamespace("redivis", quietly = TRUE)) withAutoprint(\{ # examplesIf}
+\donttest{
 # Main IRW data
 irw_fetch("environment_ltm")
 
@@ -69,7 +70,7 @@ irw_fetch("gilbert_meta_3", source = "sim")
 # Competition data
 irw_fetch("collegefb_2021and2022", source = "comp")
 }
-
+\dontshow{\}) # examplesIf}
 }
 \seealso{
 \code{\link[=irw_table_sets]{irw_table_sets()}} for value sets and summaries without a download;

@@ -68,12 +68,14 @@ has to.
 }
 
 \examples{
-\dontrun{
+\dontshow{if (requireNamespace("redivis", quietly = TRUE)) withAutoprint(\{ # examplesIf}
+\donttest{
 irw_use_version(332)              # read the corpus as v332 held it
 irw_use_version()                 # freeze today's version; record the number
 irw_use_version(date = "2026-08-01")
 irw_reset_version()               # back to the current release
 }
+\dontshow{\}) # examplesIf}
 }
 \seealso{
 \code{\link[=irw_version]{irw_version()}}, \code{\link[=irw_get_version]{irw_get_version()}}, \code{\link[=irw_reset_version]{irw_reset_version()}}

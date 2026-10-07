@@ -32,8 +32,9 @@ intended use requires.
 }
 
 \examples{
-\dontrun{
+\dontshow{if (requireNamespace("redivis", quietly = TRUE)) withAutoprint(\{ # examplesIf}
+\donttest{
   irw_list_itemtext_tables()
 }
-
+\dontshow{\}) # examplesIf}
 }

@@ -5,7 +5,8 @@
 # same irw_fetch() twice exported the table twice. The cache keeps each
 # downloaded table as a Parquet file that the Python package
 # (src/irw/utils/redivis/disk_cache.py) reads and writes too, so a table fetched
-# in either language is not exported again until it changes.
+# in either language is not exported again until it changes -- once
+# IRW_CACHE_DIR points both at one folder, since their default folders differ.
 #
 # The format is a contract between the two packages -- change it in both, or
 # start a new tree beside v1. Spec: ben-domingue/irw#2253.
@@ -34,13 +35,13 @@
 #'
 #' `irw_fetch()` and `irw_itemtext()` keep each table they download in this
 #' folder, so later sessions do not export it again -- every export counts
-#' against the Redivis 30-day export cap. The Python package uses the same
-#' folder and files, so a table fetched in either language is reused by the
-#' other.
+#' against the Redivis 30-day export cap.
 #'
 #' The folder is the `IRW_CACHE_DIR` environment variable if set, otherwise
-#' `~/.cache/irw` on Linux (or `$XDG_CACHE_HOME/irw`), `~/Library/Caches/irw`
-#' on macOS and `%LOCALAPPDATA%/irw/Cache` on Windows.
+#' `tools::R_user_dir("irw", "cache")` (e.g. `~/.cache/R/irw` on Linux). The
+#' Python package reads and writes the same files, but its default folder is
+#' `~/.cache/irw`; to share one cache between the two languages, set
+#' `IRW_CACHE_DIR` to the same folder for both.
 #'
 #' Switch the cache off with `options(irw.cache = FALSE)` for a session, or
 #' `IRW_CACHE=0` for all of them.
@@ -53,19 +54,8 @@ irw_cache_dir <- function() {
   if (nzchar(override)) {
     return(path.expand(override))
   }
-  # Computed by hand rather than with tools::R_user_dir(), which adds an R/
-  # level the Python package would not find.
-  if (.Platform$OS.type == "windows") {
-    base <- Sys.getenv("LOCALAPPDATA", "")
-    if (!nzchar(base)) base <- file.path(path.expand("~"), "AppData", "Local")
-    return(file.path(base, "irw", "Cache"))
-  }
-  if (identical(Sys.info()[["sysname"]], "Darwin")) {
-    return(file.path(path.expand("~"), "Library", "Caches", "irw"))
-  }
-  base <- Sys.getenv("XDG_CACHE_HOME", "")
-  if (!nzchar(base)) base <- file.path(path.expand("~"), ".cache")
-  file.path(base, "irw")
+  # CRAN policy allows cache files only under tools::R_user_dir().
+  tools::R_user_dir("irw", which = "cache")
 }
 
 #' Whether fetches read and write the disk cache
@@ -282,10 +272,8 @@ irw_cache_dir <- function() {
 #'   whether the copy is current), `version` (the dataset release it was
 #'   fetched from), `reference`, `size_mb`, `fetched_at` and `path`.
 #' @examples
-#' \dontrun{
 #' info <- irw_cache_info()
 #' sum(info$size_mb)
-#' }
 #' @export
 irw_cache_info <- function() {
   paths <- .irw_cache_entries()

@@ -1,7 +1,7 @@
 Package: irw
 Type: Package
 Title: Access and Analyze Data from the Item Response Warehouse
-Version: 1.3.0
+Version: 1.3.1
 Authors@R: c(
   person("Hansol", "Lee", email = "hansol@stanford.edu", role = c("aut")),
 	person("Michael", "Hardy", email = "hardym@stanford.edu",role = c("aut")),
@@ -10,8 +10,8 @@ Authors@R: c(
 Maintainer: Ben Domingue <ben.domingue@gmail.com>
 URL: https://itemresponsewarehouse.github.io/Rpkg/
 Contact: mailto:itemresponsewarehouse@stanford.edu
-Description: Tools for finding, downloading, and analyzing datasets from the
-    Item Response Warehouse, a harmonized collection of item response data
+Description: Find, download, and analyze datasets from the Item Response
+    Warehouse, a harmonized collection of item response data
     from educational and psychological measurement described in Nadela et al.
     (2026) <doi:10.59863/cijg4549>. Functions search tables by metadata,
     fetch them in a common long format, reshape between long and wide
@@ -23,6 +23,7 @@ Imports:
     httr,
     imv,
     tibble,
+    tools,
     utils,
     stats
 Suggests:
@@ -31,7 +32,9 @@ Suggests:
     testthat (>= 3.0.0),
     withr,
     evaluate,
-    mirt
+    mirt,
+    gnm,
+    BradleyTerry2
 Additional_repositories: https://redivis.r-universe.dev
 License: MIT + file LICENSE
 Encoding: UTF-8

@@ -46,13 +46,11 @@
 #'
 #' @seealso \code{\link{irw_imv}}, \code{\link{irw_long2resp}}
 #'
-#' @examples
-#' \dontrun{
+#' @examplesIf requireNamespace("mirt", quietly = TRUE)
 #' df <- irw_simdata(n_id = 200, n_item = 10, model = "2PL", seed = 1)
 #' wide <- irw_long2resp(df)
 #' fit <- mirt::mirt(wide[setdiff(names(wide), "id")], 1, "Rasch")
 #' preds <- irw_predict(fit, wide)
-#' }
 #'
 #' @export
 irw_predict <- function(model, resp, newdata = NULL, ability = "EAP") {

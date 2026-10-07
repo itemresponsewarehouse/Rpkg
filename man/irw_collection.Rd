@@ -25,9 +25,10 @@ the whole warehouse, says so — see the Coverage section of
 \code{\link[=irw_collections]{irw_collections()}}. Suppress with \code{quiet = TRUE}.
 }
 \examples{
-\dontrun{
+\dontshow{if (requireNamespace("redivis", quietly = TRUE)) withAutoprint(\{ # examplesIf}
+\donttest{
 tabs <- irw_collection("depression")
-irw_save_bibtex(tabs, output_file = "depression.bib")
+irw_save_bibtex(head(tabs, 3), output_file = file.path(tempdir(), "depression.bib"))
 
 # Compose with the numeric filters
 irw_filter(collection = "depression", n_participants = c(500, Inf))
@@ -35,6 +36,7 @@ irw_filter(collection = "depression", n_participants = c(500, Inf))
 # Cross-collection: math assessments administered in booklets
 intersect(irw_collection("math"), irw_collection("multistage"))
 }
+\dontshow{\}) # examplesIf}
 }
 \seealso{
 \code{\link[=irw_collections]{irw_collections()}}, \code{\link[=irw_filter]{irw_filter()}}
