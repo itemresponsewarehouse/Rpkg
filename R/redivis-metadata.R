@@ -68,6 +68,30 @@
   .irw_env$nominal_metadata_tibble
 }
 
+## The conjoint source's metadata (irw_meta conj_metadata, published
+## 2026-10-07): one row per table with design counts (respondents, tasks,
+## profiles, attributes, outcomes, opt-out tasks) and design facts (country,
+## languages, randomization restrictions, whether task/profile were recorded).
+## Its own shape, as every non-core source has.
+.fetch_conj_metadata_table <- function() {
+  dataset <- .irw_open_meta_dataset()
+  latest_version_tag <- dataset$properties$version$tag
+
+  if (!is.null(latest_version_tag) &&
+      exists("conj_metadata_tibble", envir = .irw_env) &&
+      exists("conj_metadata_version", envir = .irw_env) &&
+      identical(.irw_env$conj_metadata_version, latest_version_tag)) {
+    return(.irw_env$conj_metadata_tibble)
+  }
+
+  table <- dataset$table("conj_metadata")
+  metadata_tibble <- table$to_tibble()
+  .irw_env$conj_metadata_tibble <- .irw_filter_rows_to_live_tables(metadata_tibble, source = "conj")
+  .irw_env$conj_metadata_version <- latest_version_tag
+
+  .irw_env$conj_metadata_tibble
+}
+
 #' Fetch Competition Metadata Table
 #'
 #' Retrieves the comps_metadata table from Redivis user("datapages")$dataset("irw_meta").

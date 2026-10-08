@@ -185,7 +185,7 @@ irw_info <- function(table_name = NULL, details = FALSE, source = "core", comp =
       }, error = function(e) "None")
     }
 
-    # Biblio: main + comp only (sim has none)
+    # Biblio: every source has its own (core, comp, sim, nom, conj)
     description <- NA
     doi <- NA
     url_data <- NA
@@ -201,7 +201,7 @@ irw_info <- function(table_name = NULL, details = FALSE, source = "core", comp =
     } else if (source == "nom") {
       .fetch_nominal_biblio_table()
     } else if (source == "conj") {
-      data.frame(table = character(0))   # no conj biblio published yet
+      .fetch_conj_biblio_table()
     } else {
       .fetch_biblio_table()
     }

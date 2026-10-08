@@ -23,6 +23,39 @@ test_that("irw_save_bibtex(source = \"conj\") reads conj_biblio", {
   expect_identical(out, "@article{kreps_2020_covid_vaccine, title={Vaccine}}")
 })
 
+test_that("the conj metadata fetcher reads conj_metadata, filtered to live tables", {
+  # Not via irw_metadata(): test-collections.R's mock of it outlives that file (Rpkg#187).
+  local_irw_binding(".irw_env", new.env())
+  read <- character()
+  local_mocked_bindings(
+    .irw_open_meta_dataset = function() list(
+      properties = list(version = list(tag = "v37.1")),
+      table = function(name) { read <<- c(read, name)
+        list(to_tibble = function() tibble::tibble(table = c("kreps_2020_covid_vaccine", "gone_2020")))}),
+    .irw_filter_rows_to_live_tables = function(df, source) {
+      expect_identical(source, "conj"); df[df$table != "gone_2020", ] })
+  m <- irw:::.fetch_conj_metadata_table()
+  expect_identical(read, "conj_metadata")
+  expect_identical(m$table, "kreps_2020_covid_vaccine")
+})
+
+test_that("irw_info() on a conj table reads conj_biblio", {
+  local_mocked_bindings(
+    .fetch_redivis_table = function(...) structure(
+      list(properties = list(numRows = 10, numBytes = 2048, variableCount = 5, url = "u")),
+      dataset_version = "v2.0"),
+    .irw_table_variable_names = function(...) c("id", "task"),
+    .fetch_conj_biblio_table = function() tibble::tibble(
+      table = "kreps_2020_covid_vaccine", DOI__for_paper_ = "10.1/x", URL__for_data_ = "d",
+      Derived_License = "CC0 1.0", Custom_License_Terms = NA_character_,
+      Description = "Vaccine conjoint", Reference_x = "Kreps et al. (2020)"),
+    .fetch_biblio_table = function() stop("read the core biblio"))
+  msgs <- capture_messages(irw_info("kreps_2020_covid_vaccine", source = "conj"))
+  expect_true(any(grepl("Vaccine conjoint", msgs)))
+  expect_true(any(grepl("CC0 1.0", msgs)))
+  expect_false(any(grepl("No bibliography row", msgs)))
+})
+
 conj_df <- function() {
   data.frame(id = rep(1:2, each = 4), task = rep(c(1, 1, 2, 2), 2), profile = rep(1:2, 4),
              choice = c(1, 0, 0, 1, 1, 0, 0, 0), rating = c(5, 3, NA, 6, 7, 2, 4, 4),
