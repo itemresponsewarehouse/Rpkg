@@ -73,7 +73,7 @@ irw_download <- function(table_name,
 #' @param table_names A character vector of table names for which BibTeX entries are generated.
 #' @param output_file A character string giving the file path the BibTeX
 #'   entries are written to, e.g. `"refs.bib"`. There is no default.
-#' @param source Character. Data source: \code{"core"} (default), \code{"nom"}, \code{"sim"}, or \code{"comp"}.
+#' @param source Character. Data source: \code{"core"} (default), \code{"nom"}, \code{"sim"}, \code{"comp"}, or \code{"conj"}.
 #' @param comp Deprecated. Use \code{source = "comp"} instead.
 #' @param sim Deprecated. Use \code{source = "sim"} instead.
 #' @param nom Deprecated. Use \code{source = "nom"} instead.
@@ -101,7 +101,6 @@ irw_save_bibtex <- function(table_names,
   missing_bib_tables <- character()
   missing_doi_tables <- character()
   
-  if (source == "conj") .irw_conj_not_yet("irw_save_bibtex()")
   # Fetch the full biblio table once (by source)
   biblio <- if (source == "comp") {
     .fetch_comps_biblio_table()
@@ -109,6 +108,8 @@ irw_save_bibtex <- function(table_names,
     .fetch_simsyn_biblio_table()
   } else if (source == "nom") {
     .fetch_nominal_biblio_table()
+  } else if (source == "conj") {
+    .fetch_conj_biblio_table()
   } else {
     .fetch_biblio_table()
   }
