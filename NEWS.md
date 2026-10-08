@@ -1,3 +1,7 @@
+# irw (development version)
+
+- irw_save_bibtex(source = "conj"): citations for conjoint tables, from irw_meta's new `conj_biblio` table. irw_metadata() and irw_filter() still refuse `source = "conj"`, since its metadata has a different shape.
+
 # irw 1.3.1
 
 Changes asked for in CRAN's review of the first submission:

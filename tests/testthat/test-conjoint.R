@@ -11,6 +11,18 @@ test_that("features without published conj metadata say so", {
   expect_error(irw_table_sets("x", source = "conj"), "irw_conj_long")
 })
 
+test_that("irw_save_bibtex(source = \"conj\") reads conj_biblio", {
+  local_mocked_bindings(
+    .fetch_conj_biblio_table = function() tibble::tibble(
+      table = "kreps_2020_covid_vaccine", BibTex = "@article{Kreps2020, title={Vaccine}}",
+      DOI__for_paper_ = NA_character_),
+    .fetch_biblio_table = function() stop("read the core biblio"),
+    .fetch_redivis_table = function(...) TRUE)
+  f <- withr::local_tempfile(fileext = ".bib")
+  out <- suppressMessages(irw_save_bibtex("kreps_2020_covid_vaccine", output_file = f, source = "conj"))
+  expect_identical(out, "@article{kreps_2020_covid_vaccine, title={Vaccine}}")
+})
+
 conj_df <- function() {
   data.frame(id = rep(1:2, each = 4), task = rep(c(1, 1, 2, 2), 2), profile = rep(1:2, 4),
              choice = c(1, 0, 0, 1, 1, 0, 0, 0), rating = c(5, 3, NA, 6, 7, 2, 4, 4),

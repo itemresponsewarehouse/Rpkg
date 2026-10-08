@@ -163,6 +163,29 @@
   filtered_biblio
 }
 
+## The conjoint source's bibliography (irw_meta conj_biblio, published
+## 2026-10-07). Same columns as the other biblios; only its metadata table
+## differs in shape, which is why irw_metadata() still refuses source = "conj".
+.fetch_conj_biblio_table <- function() {
+  dataset <- .irw_open_meta_dataset()
+  latest_version_tag <- dataset$properties$version$tag
+
+  if (!is.null(latest_version_tag) &&
+      exists("conj_biblio_tibble", envir = .irw_env) &&
+      exists("conj_biblio_version", envir = .irw_env) &&
+      identical(.irw_env$conj_biblio_version, latest_version_tag)) {
+    return(.irw_env$conj_biblio_tibble)
+  }
+
+  table <- dataset$table("conj_biblio")
+  biblio_tibble <- table$to_tibble()
+  filtered_biblio <- .irw_filter_rows_to_live_tables(biblio_tibble, source = "conj")
+
+  .irw_env$conj_biblio_version <- latest_version_tag
+  .irw_env$conj_biblio_tibble <- filtered_biblio
+  filtered_biblio
+}
+
 
 #' Fetch Metadata Table
 #'
