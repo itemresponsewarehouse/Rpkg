@@ -23,6 +23,10 @@ irw_filter(
   primary_language_s_ = NULL,
   longitudinal = NULL,
   n_actors = NULL,
+  n_respondents = NULL,
+  n_attributes = NULL,
+  outcome = NULL,
+  country = NULL,
   source = "core",
   comp = FALSE,
   sim = FALSE,
@@ -97,7 +101,23 @@ See \code{irw_tag_options("primary_language_s_")}.}
 \item{n_actors}{Numeric vector of length 1 or 2. Competition-only filter for the
 number of actors. Only used when \code{source = "comp"}.}
 
-\item{source}{Character. Data source: \code{"core"} (default), \code{"nom"}, \code{"sim"}, or \code{"comp"}.
+\item{n_respondents}{Numeric vector of length 1 or 2. Conjoint-only: number of
+respondents. Only used when \code{source = "conj"}.}
+
+\item{n_attributes}{Numeric vector of length 1 or 2. Conjoint-only: number of
+attributes varied on each profile.}
+
+\item{outcome}{Character, \code{"choice"} and/or \code{"rating"}. Conjoint-only: keep
+tables that have every outcome type named (a table with both matches either).}
+
+\item{country}{Character vector of ISO 3166 alpha-2 codes (e.g. \code{"US"}).
+Conjoint-only: keep tables fielded in any of them; a table pooling several
+countries matches each.}
+
+\item{source}{Character. Data source: \code{"core"} (default), \code{"nom"}, \code{"sim"}, \code{"comp"}, or \code{"conj"}.
+For \code{"conj"} the filters are \code{n_respondents}, \code{n_attributes}, \code{outcome},
+\code{country} and \code{license}; see \code{\link[=irw_metadata]{irw_metadata()}} with \code{source = "conj"} for the
+other design facts.
 Tag filters require \code{"core"} or \code{"nom"}.}
 
 \item{comp}{Deprecated. Use \code{source = "comp"} instead.}
@@ -181,6 +201,7 @@ irw_filter(n_categories = c(3, 5), density = NULL)     # small multi-category
 irw_filter(n_categories = c(10, Inf), density = NULL)  # large category sets
 irw_filter(source = "sim", n_items = c(10, Inf))
 irw_filter(source = "comp", n_actors = c(2, 10))
+irw_filter(source = "conj", outcome = "rating", country = c("US", "GB"))
 }
 \dontshow{\}) # examplesIf}
 }

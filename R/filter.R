@@ -66,7 +66,7 @@ irw_tag_options <- function(column, source = "core") {
 #' Returns a data frame showing the number of datasets associated with each license.
 #'
 #' @param source Character. Data source: \code{"core"} (default), \code{"sim"},
-#'   \code{"nom"}, or \code{"comp"}.
+#'   \code{"nom"}, \code{"comp"}, or \code{"conj"}.
 #' @param comp Deprecated. Use \code{source = "comp"} instead.
 #' @param sim Deprecated. Use \code{source = "sim"} instead.
 #' @param nom Deprecated. Use \code{source = "nom"} instead.
@@ -153,12 +153,69 @@ irw_license_options <- function(source = "core", comp = FALSE, sim = FALSE, nom 
 }
 
 .irw_filter_biblio <- function(source) {
-  if (source == "conj") .irw_conj_not_yet("irw_filter()")
   switch(source,
          core = .fetch_biblio_table(),
          sim = .fetch_simsyn_biblio_table(),
          nom = .fetch_nominal_biblio_table(),
-         comp = .fetch_comps_biblio_table())
+         comp = .fetch_comps_biblio_table(),
+         conj = .fetch_conj_biblio_table())
+}
+
+## Conjoint filters (source = "conj"), over conj_metadata:
+##   n_respondents, n_attributes  numeric ranges, as n_responses;
+##   outcome   "choice" and/or "rating": the table has EVERY type named
+##             (choice_<name>/rating_<name> columns count as their type);
+##   country   ISO 3166 codes: the table was fielded in ANY of them (a pooled
+##             table's "AT;CZ;..." counts for each);
+##   license   as for every source, from conj_biblio.
+.irw_conj_filters <- c("n_respondents", "n_attributes", "outcome", "country", "license")
+
+.irw_filter_conj_impl <- function(n_respondents = NULL, n_attributes = NULL,
+                                  outcome = NULL, country = NULL, license = NULL) {
+  meta <- .fetch_conj_metadata_table()
+  need <- c("table", "n_respondents", "n_attributes", "outcomes", "country")
+  if (!all(need %in% names(meta))) {
+    stop("Conjoint metadata table must contain columns: ",
+         paste0("'", need, "'", collapse = ", "), ".")
+  }
+
+  if (!is.null(license)) {
+    bib <- .fetch_conj_biblio_table()
+    keep <- !is.na(bib$Derived_License) & bib$Derived_License %in% license
+    meta <- meta[meta$table %in% bib$table[keep], , drop = FALSE]
+    if (nrow(meta) == 0L) return(.irw_filter_no_match("license", license))
+  }
+
+  if (!is.null(outcome)) {
+    bad <- setdiff(outcome, c("choice", "rating"))
+    if (length(bad)) stop("'outcome' must be \"choice\" and/or \"rating\", not: ",
+                          paste(bad, collapse = ", "), ".")
+    types <- lapply(strsplit(meta$outcomes, ";", fixed = TRUE),
+                    function(o) unique(sub("_.*$", "", o)))
+    meta <- meta[vapply(types, function(t) all(outcome %in% t), logical(1)), , drop = FALSE]
+    if (nrow(meta) == 0L) return(.irw_filter_no_match("outcome", outcome))
+  }
+
+  if (!is.null(country)) {
+    if (!is.character(country)) stop("'country' must be a character vector of ISO 3166 codes, e.g. \"US\".")
+    want <- toupper(country)
+    has <- lapply(strsplit(meta$country, ";", fixed = TRUE), toupper)
+    meta <- meta[vapply(has, function(h) any(want %in% h), logical(1)), , drop = FALSE]
+    if (nrow(meta) == 0L) return(.irw_filter_no_match("country", country))
+  }
+
+  numeric_filters <- list(n_respondents = n_respondents, n_attributes = n_attributes)
+  numeric_filters <- numeric_filters[vapply(numeric_filters, Negate(is.null), logical(1))]
+  for (nm in names(numeric_filters)) {
+    rng <- numeric_filters[[nm]]
+    if (!is.numeric(rng)) stop(sprintf("'%s' must be numeric.", nm))
+    if (length(rng) == 1L) rng <- rep(rng, 2)
+    if (length(rng) != 2L) stop(sprintf("'%s' must be length 1 or 2.", nm))
+    meta <- meta[!is.na(meta[[nm]]) & meta[[nm]] >= rng[1] & meta[[nm]] <= rng[2], , drop = FALSE]
+    if (nrow(meta) == 0L) return(.irw_filter_no_match(nm, rng))
+  }
+
+  sort(unique(meta$table))
 }
 
 .irw_filter_comp_impl <- function(n_responses = NULL,
@@ -273,7 +330,19 @@ irw_license_options <- function(source = "core", comp = FALSE, sim = FALSE, nom 
 #'   See `irw_tag_options("primary_language_s_")`.
 #' @param n_actors Numeric vector of length 1 or 2. Competition-only filter for the
 #'   number of actors. Only used when `source = "comp"`.
-#' @param source Character. Data source: `"core"` (default), `"nom"`, `"sim"`, or `"comp"`.
+#' @param n_respondents Numeric vector of length 1 or 2. Conjoint-only: number of
+#'   respondents. Only used when `source = "conj"`.
+#' @param n_attributes Numeric vector of length 1 or 2. Conjoint-only: number of
+#'   attributes varied on each profile.
+#' @param outcome Character, `"choice"` and/or `"rating"`. Conjoint-only: keep
+#'   tables that have every outcome type named (a table with both matches either).
+#' @param country Character vector of ISO 3166 alpha-2 codes (e.g. `"US"`).
+#'   Conjoint-only: keep tables fielded in any of them; a table pooling several
+#'   countries matches each.
+#' @param source Character. Data source: `"core"` (default), `"nom"`, `"sim"`, `"comp"`, or `"conj"`.
+#'   For `"conj"` the filters are `n_respondents`, `n_attributes`, `outcome`,
+#'   `country` and `license`; see [irw_metadata()] with `source = "conj"` for the
+#'   other design facts.
 #'   Tag filters require `"core"` or `"nom"`.
 #' @param comp Deprecated. Use `source = "comp"` instead.
 #' @param sim Deprecated. Use `source = "sim"` instead.
@@ -319,6 +388,7 @@ irw_license_options <- function(source = "core", comp = FALSE, sim = FALSE, nom 
 #' irw_filter(n_categories = c(10, Inf), density = NULL)  # large category sets
 #' irw_filter(source = "sim", n_items = c(10, Inf))
 #' irw_filter(source = "comp", n_actors = c(2, 10))
+#' irw_filter(source = "conj", outcome = "rating", country = c("US", "GB"))
 #' }
 #' @export
 irw_filter <- function(n_responses = NULL,
@@ -339,6 +409,10 @@ irw_filter <- function(n_responses = NULL,
                        primary_language_s_ = NULL,
                        longitudinal = NULL,
                        n_actors = NULL,
+                       n_respondents = NULL,
+                       n_attributes = NULL,
+                       outcome = NULL,
+                       country = NULL,
                        source = "core",
                        comp = FALSE,
                        sim = FALSE,
@@ -352,6 +426,14 @@ irw_filter <- function(n_responses = NULL,
     stop("`n_actors` is only available when `source = \"comp\"`.")
   }
 
+  conj_only <- list(n_respondents = n_respondents, n_attributes = n_attributes,
+                    outcome = outcome, country = country)
+  conj_only <- conj_only[vapply(conj_only, Negate(is.null), logical(1))]
+  if (length(conj_only) > 0L && source != "conj") {
+    stop("These filters are only available when `source = \"conj\"`: ",
+         paste(names(conj_only), collapse = ", "), ".")
+  }
+
   tag_filters <- list(
     age_range = age_range,
     child_age__for_child_focused_studies_ = child_age__for_child_focused_studies_,
@@ -363,6 +445,25 @@ irw_filter <- function(n_responses = NULL,
     primary_language_s_ = primary_language_s_
   )
   tag_filters <- tag_filters[vapply(tag_filters, Negate(is.null), logical(1))]
+
+  if (source == "conj") {
+    other <- list(
+      n_responses = n_responses, n_categories = n_categories, n_participants = n_participants,
+      n_items = n_items, responses_per_participant = responses_per_participant,
+      responses_per_item = responses_per_item,
+      density = if (density_supplied) density else NULL, var = var,
+      longitudinal = longitudinal, n_actors = n_actors, collection = collection
+    )
+    other <- c(other, tag_filters)
+    other <- other[vapply(other, Negate(is.null), logical(1))]
+    if (length(other) > 0L) {
+      stop("These filters are not available for `source = \"conj\"`: ",
+           paste(names(other), collapse = ", "), ". Conjoint filters: ",
+           paste(.irw_conj_filters, collapse = ", "), ".")
+    }
+    return(.irw_filter_conj_impl(n_respondents = n_respondents, n_attributes = n_attributes,
+                                 outcome = outcome, country = country, license = license))
+  }
 
   if (source == "comp") {
     unsupported_filters <- list(
