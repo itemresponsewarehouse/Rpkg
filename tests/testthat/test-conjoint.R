@@ -4,9 +4,7 @@ test_that("conj is a known source", {
   expect_true(grepl("^irw_conjoint:", irw:::.irw_datasource_specs$conj[[1]]$dataset))
 })
 
-test_that("features without published conj metadata say so", {
-  # Not via irw_metadata(): test-collections.R's mock of it outlives that file.
-  expect_error(irw:::.irw_conj_not_yet("irw_metadata()"), "not available for the conjoint source")
+test_that("irw_table_sets() points conj users to irw_conj_long()", {
   expect_error(irw_table_sets("x", source = "conj"), "irw_conj_long")
 })
 

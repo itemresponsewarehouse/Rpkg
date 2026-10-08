@@ -188,8 +188,7 @@
 }
 
 ## The conjoint source's bibliography (irw_meta conj_biblio, published
-## 2026-10-07). Same columns as the other biblios; only its metadata table
-## differs in shape, which is why irw_metadata() still refuses source = "conj".
+## 2026-10-07). Same columns as the other biblios.
 .fetch_conj_biblio_table <- function() {
   dataset <- .irw_open_meta_dataset()
   latest_version_tag <- dataset$properties$version$tag
