@@ -7,7 +7,6 @@ test_that("conj is a known source", {
 test_that("features without published conj metadata say so", {
   # Not via irw_metadata(): test-collections.R's mock of it outlives that file.
   expect_error(irw:::.irw_conj_not_yet("irw_metadata()"), "not available for the conjoint source")
-  expect_error(irw:::.irw_filter_biblio("conj"), "not available for the conjoint source")
   expect_error(irw_table_sets("x", source = "conj"), "irw_conj_long")
 })
 
@@ -54,6 +53,46 @@ test_that("irw_info() on a conj table reads conj_biblio", {
   expect_true(any(grepl("Vaccine conjoint", msgs)))
   expect_true(any(grepl("CC0 1.0", msgs)))
   expect_false(any(grepl("No bibliography row", msgs)))
+})
+
+fake_conj_meta <- function() tibble::tibble(
+  table = c("a_us_choice", "b_pooled_both", "c_gb_rating", "d_named"),
+  n_respondents = c(300, 18000, 900, 2000), n_attributes = c(4, 9, 6, 11),
+  outcomes = c("choice", "choice;rating", "rating", "choice_neighbor;rating_neighbor"),
+  country = c("US", "AT;DE;GB", "GB", "TR"))
+fake_conj_bib <- function() tibble::tibble(
+  table = c("a_us_choice", "b_pooled_both", "c_gb_rating", "d_named"),
+  Derived_License = c("CC0 1.0", "CC0 1.0", "CC BY 4.0", "CC0 1.0"))
+
+test_that("irw_filter(source = \"conj\") filters on its design metadata", {
+  local_mocked_bindings(.fetch_conj_metadata_table = fake_conj_meta,
+                        .fetch_conj_biblio_table = fake_conj_bib)
+  f <- function(...) suppressMessages(irw_filter(source = "conj", ...))
+  expect_identical(f(), c("a_us_choice", "b_pooled_both", "c_gb_rating", "d_named"))
+  expect_identical(f(outcome = "rating"), c("b_pooled_both", "c_gb_rating", "d_named"))
+  expect_identical(f(outcome = c("choice", "rating")), c("b_pooled_both", "d_named"))
+  expect_identical(f(country = "gb"), c("b_pooled_both", "c_gb_rating"))
+  expect_identical(f(n_respondents = c(1000, Inf)), c("b_pooled_both", "d_named"))
+  expect_identical(f(n_attributes = 9), "b_pooled_both")
+  expect_identical(f(license = "CC BY 4.0"), "c_gb_rating")
+  expect_identical(f(country = "US", outcome = "rating"), character(0))
+  expect_error(f(outcome = "vote"), "choice")
+})
+
+test_that("conj filters and other sources' filters do not cross", {
+  local_mocked_bindings(.fetch_conj_metadata_table = fake_conj_meta,
+                        .fetch_conj_biblio_table = fake_conj_bib)
+  expect_error(irw_filter(source = "conj", n_items = c(5, 10)), "not available for `source = \"conj\"`")
+  expect_error(irw_filter(source = "conj", construct_type = "x"), "not available for `source = \"conj\"`")
+  expect_error(irw_filter(country = "US"), "only available when `source = \"conj\"`")
+  expect_error(irw_filter(source = "comp", outcome = "choice"), "only available when `source = \"conj\"`")
+})
+
+test_that("irw_license_options(source = \"conj\") reads conj_biblio", {
+  local_mocked_bindings(.fetch_conj_biblio_table = fake_conj_bib)
+  lo <- irw_license_options(source = "conj")
+  expect_identical(lo$license[1], "CC0 1.0")
+  expect_identical(lo$count[1], 3L)
 })
 
 conj_df <- function() {
