@@ -103,7 +103,7 @@
 
 #' Pins that apply to a given data source
 #'
-#' @param source One of \code{"core"}, \code{"nom"}, \code{"sim"}, \code{"comp"}.
+#' @param source Data family, one of \code{"core"}, \code{"nom"}, \code{"sim"}, \code{"comp"}.
 #' @return Named character vector of pins for that source's datasets.
 #' @keywords internal
 #' @noRd

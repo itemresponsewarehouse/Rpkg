@@ -19,7 +19,7 @@ irw_save_bibtex(
 \item{output_file}{A character string giving the file path the BibTeX
 entries are written to, e.g. \code{"refs.bib"}. There is no default.}
 
-\item{source}{Character. Data source: \code{"core"} (default), \code{"nom"}, \code{"sim"}, \code{"comp"}, or \code{"conj"}.}
+\item{source}{Character. The data family: \code{"core"} (default), \code{"nom"}, \code{"sim"}, \code{"comp"}, or \code{"conj"}.}
 
 \item{comp}{Deprecated. Use \code{source = "comp"} instead.}
 

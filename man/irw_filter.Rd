@@ -114,7 +114,7 @@ tables that have every outcome type named (a table with both matches either).}
 Conjoint-only: keep tables fielded in any of them; a table pooling several
 countries matches each.}
 
-\item{source}{Character. Data source: \code{"core"} (default), \code{"nom"}, \code{"sim"}, \code{"comp"}, or \code{"conj"}.
+\item{source}{Character. The data family: \code{"core"} (default), \code{"nom"}, \code{"sim"}, \code{"comp"}, or \code{"conj"}.
 For \code{"conj"} the filters are \code{n_respondents}, \code{n_attributes}, \code{outcome},
 \code{country} and \code{license}; see \code{\link[=irw_metadata]{irw_metadata()}} with \code{source = "conj"} for the
 other design facts.

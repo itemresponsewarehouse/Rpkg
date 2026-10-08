@@ -47,7 +47,7 @@
 #' @param name Character vector of one or more IRW table names. Several names
 #'   run the same queries once per table, still without an export, so this is
 #'   the way to sweep many tables.
-#' @param source Character. Data source: \code{"core"} (default), \code{"nom"},
+#' @param source Character. The data family: \code{"core"} (default), \code{"nom"},
 #'   \code{"sim"}, or \code{"comp"}.
 #' @param per_item Logical. If TRUE, also return a per-item summary (row count,
 #'   response minimum, maximum, and number of distinct response values). One

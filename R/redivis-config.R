@@ -25,8 +25,7 @@
     list(user = "datapages", dataset = "irw_nominal:614n")
   ),
   ## Conjoint experiments: one row per respondent x task x profile, no item/resp
-  ## (see irw_conj_long()). Experimental; metadata, biblio and filters are not
-  ## published for it yet.
+  ## (see irw_conj_long()).
   conj = list(
     list(user = "datapages", dataset = "irw_conjoint:5wjx")
   )
@@ -164,7 +163,7 @@
 
 #' Session cache key for a non-core datasource
 #'
-#' @param source One of \code{"sim"}, \code{"comp"}, \code{"nom"}.
+#' @param source Data family, one of \code{"sim"}, \code{"comp"}, \code{"nom"}.
 #' @keywords internal
 #' @noRd
 .irw_single_datasource_cache_key <- function(source) {

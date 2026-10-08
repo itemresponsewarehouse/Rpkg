@@ -24,7 +24,7 @@ no default: name the file yourself, e.g. \code{"frac20.csv"}, or use
 
 \item{overwrite}{Logical. Whether to overwrite an existing file.}
 
-\item{source}{Character. Data source: \code{"core"} (default), \code{"nom"}, \code{"sim"}, or \code{"comp"}.}
+\item{source}{Character. The data family: \code{"core"} (default), \code{"nom"}, \code{"sim"}, or \code{"comp"}.}
 
 \item{sim}{Deprecated. Use \code{source = "sim"} instead.}
 

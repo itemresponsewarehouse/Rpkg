@@ -10,7 +10,7 @@
 #'        no default: name the file yourself, e.g. `"frac20.csv"`, or use
 #'        `tempfile(fileext = ".csv")` for a throwaway copy.
 #' @param overwrite Logical. Whether to overwrite an existing file.
-#' @param source Character. Data source: \code{"core"} (default), \code{"nom"}, \code{"sim"}, or \code{"comp"}.
+#' @param source Character. The data family: \code{"core"} (default), \code{"nom"}, \code{"sim"}, or \code{"comp"}.
 #' @param sim Deprecated. Use \code{source = "sim"} instead.
 #' @param comp Deprecated. Use \code{source = "comp"} instead.
 #' @param nom Deprecated. Use \code{source = "nom"} instead.
@@ -73,7 +73,7 @@ irw_download <- function(table_name,
 #' @param table_names A character vector of table names for which BibTeX entries are generated.
 #' @param output_file A character string giving the file path the BibTeX
 #'   entries are written to, e.g. `"refs.bib"`. There is no default.
-#' @param source Character. Data source: \code{"core"} (default), \code{"nom"}, \code{"sim"}, \code{"comp"}, or \code{"conj"}.
+#' @param source Character. The data family: \code{"core"} (default), \code{"nom"}, \code{"sim"}, \code{"comp"}, or \code{"conj"}.
 #' @param comp Deprecated. Use \code{source = "comp"} instead.
 #' @param sim Deprecated. Use \code{source = "sim"} instead.
 #' @param nom Deprecated. Use \code{source = "nom"} instead.

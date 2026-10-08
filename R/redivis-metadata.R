@@ -436,7 +436,7 @@
 #' Central dispatch so callers never hardcode which sources have tags.
 #' Errors for \code{comp}/\code{sim}, which have none by design.
 #'
-#' @param source One of \code{"core"} or \code{"nom"}.
+#' @param source Data family, one of \code{"core"} or \code{"nom"}.
 #' @return A tibble of tags for that source.
 #' @keywords internal
 .irw_tags_for_source <- function(source = "core") {

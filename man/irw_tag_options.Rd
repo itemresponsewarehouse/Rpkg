@@ -9,7 +9,7 @@ irw_tag_options(column, source = "core")
 \arguments{
 \item{column}{A character string specifying the tag column name.}
 
-\item{source}{Character. Data source: \code{"core"} (default) or \code{"nom"}.
+\item{source}{Character. The data family: \code{"core"} (default) or \code{"nom"}.
 \code{"comp"} and \code{"sim"} have no tags by design and error.}
 }
 \value{

@@ -29,7 +29,7 @@
 #' comma-joined list; no tag value contains a comma (see \code{.irw_split_tags}).
 #'
 #' @param column A character string specifying the tag column name.
-#' @param source Character. Data source: \code{"core"} (default) or \code{"nom"}.
+#' @param source Character. The data family: \code{"core"} (default) or \code{"nom"}.
 #'   \code{"comp"} and \code{"sim"} have no tags by design and error.
 #' @return A data.frame with columns: `tag` and `count`, sorted by descending frequency.
 #' @export
@@ -65,7 +65,7 @@ irw_tag_options <- function(column, source = "core") {
 #'
 #' Returns a data frame showing the number of datasets associated with each license.
 #'
-#' @param source Character. Data source: \code{"core"} (default), \code{"sim"},
+#' @param source Character. The data family: \code{"core"} (default), \code{"sim"},
 #'   \code{"nom"}, \code{"comp"}, or \code{"conj"}.
 #' @param comp Deprecated. Use \code{source = "comp"} instead.
 #' @param sim Deprecated. Use \code{source = "sim"} instead.
@@ -339,7 +339,7 @@ irw_license_options <- function(source = "core", comp = FALSE, sim = FALSE, nom 
 #' @param country Character vector of ISO 3166 alpha-2 codes (e.g. `"US"`).
 #'   Conjoint-only: keep tables fielded in any of them; a table pooling several
 #'   countries matches each.
-#' @param source Character. Data source: `"core"` (default), `"nom"`, `"sim"`, `"comp"`, or `"conj"`.
+#' @param source Character. The data family: `"core"` (default), `"nom"`, `"sim"`, `"comp"`, or `"conj"`.
 #'   For `"conj"` the filters are `n_respondents`, `n_attributes`, `outcome`,
 #'   `country` and `license`; see [irw_metadata()] with `source = "conj"` for the
 #'   other design facts.

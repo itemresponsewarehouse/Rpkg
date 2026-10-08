@@ -16,7 +16,7 @@ fetch_single_data(
 \arguments{
 \item{table_id}{Character. Name of the table.}
 
-\item{source}{Character. One of \code{"core"}, \code{"nom"}, \code{"sim"}, \code{"comp"}.}
+\item{source}{Character. The data family, one of \code{"core"}, \code{"nom"}, \code{"sim"}, \code{"comp"}.}
 
 \item{dedup}{Logical. If TRUE, apply deduplication logic to responses.}
 
