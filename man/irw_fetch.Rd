@@ -17,7 +17,7 @@ irw_fetch(
 \arguments{
 \item{name}{Character vector of one or more table names (IRW table IDs).}
 
-\item{source}{Character. Data source: \code{"core"} (default), \code{"nom"}, \code{"sim"}, \code{"comp"}, or \code{"conj"} (conjoint experiments; experimental, see \code{\link{irw_conj_long}}).}
+\item{source}{Character. The data family: \code{"core"} (default), \code{"nom"}, \code{"sim"}, \code{"comp"}, or \code{"conj"} (conjoint experiments; see \code{\link{irw_conj_long}}).}
 
 \item{dedup}{Logical, optional. If TRUE, deduplicates responses based on timing variables. Defaults to FALSE.
 If a \code{date} column is present, no deduplication is performed.

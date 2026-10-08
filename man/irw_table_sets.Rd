@@ -11,7 +11,7 @@ irw_table_sets(name, source = "core", per_item = FALSE)
 run the same queries once per table, still without an export, so this is
 the way to sweep many tables.}
 
-\item{source}{Character. Data source: \code{"core"} (default), \code{"nom"},
+\item{source}{Character. The data family: \code{"core"} (default), \code{"nom"},
 \code{"sim"}, or \code{"comp"}.}
 
 \item{per_item}{Logical. If TRUE, also return a per-item summary (row count,

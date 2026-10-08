@@ -4,7 +4,7 @@
 #' converts it to a tibble, and applies response recoding and optional deduplication.
 #'
 #' @param table_id Character. Name of the table.
-#' @param source Character. One of \code{"core"}, \code{"nom"}, \code{"sim"}, \code{"comp"}.
+#' @param source Character. The data family, one of \code{"core"}, \code{"nom"}, \code{"sim"}, \code{"comp"}.
 #' @param dedup Logical. If TRUE, apply deduplication logic to responses.
 #' @param sim Deprecated. Use \code{source = "sim"} instead.
 #' @param comp Deprecated. Use \code{source = "comp"} instead.
@@ -142,7 +142,7 @@ fetch_single_data <- function(table_id, source = "core", dedup = FALSE, sim = FA
 #' Silence it with `options(irw.source_note = FALSE)` or `IRW_SOURCE_NOTE=0`.
 #'
 #' @param name Character vector of one or more table names (IRW table IDs).
-#' @param source Character. Data source: \code{"core"} (default), \code{"nom"}, \code{"sim"}, \code{"comp"}, or \code{"conj"} (conjoint experiments; experimental, see \code{\link{irw_conj_long}}).
+#' @param source Character. The data family: \code{"core"} (default), \code{"nom"}, \code{"sim"}, \code{"comp"}, or \code{"conj"} (conjoint experiments; see \code{\link{irw_conj_long}}).
 #' @param sim Deprecated. Use \code{source = "sim"} instead.
 #' @param dedup Logical, optional. If TRUE, deduplicates responses based on timing variables. Defaults to FALSE.
 #'   If a \code{date} column is present, no deduplication is performed.
@@ -225,7 +225,7 @@ irw_fetch <- function(name, source = "core", dedup = FALSE, sim = FALSE, comp = 
 #' \code{restrictions_note}, \code{task_source} and \code{profile_source}
 #' (\code{recorded} or \code{inferred} from row order).
 #'
-#' @param source Character. Data source: \code{"core"} (default), \code{"nom"}, \code{"sim"}, \code{"comp"}, or \code{"conj"} (conjoint experiments; experimental, see \code{\link{irw_conj_long}}).
+#' @param source Character. The data family: \code{"core"} (default), \code{"nom"}, \code{"sim"}, \code{"comp"}, or \code{"conj"} (conjoint experiments; see \code{\link{irw_conj_long}}).
 #' @param sim Deprecated. Use \code{source = "sim"} instead.
 #' @param comp Deprecated. Use \code{source = "comp"} instead.
 #' @param nom Deprecated. Use \code{source = "nom"} instead.
@@ -252,7 +252,7 @@ irw_metadata <- function(source = "core", sim = FALSE, comp = FALSE, nom = FALSE
 #' Automatically checks for updates and refreshes only when needed.
 #'
 #' @param tables Optional. A character vector of table name(s) to filter by.
-#' @param source Character. Data source: \code{"core"} (default) or \code{"nom"}.
+#' @param source Character. The data family: \code{"core"} (default) or \code{"nom"}.
 #'   \code{"comp"} and \code{"sim"} have no tags by design and error.
 #'
 #' @return A tibble containing tags information.

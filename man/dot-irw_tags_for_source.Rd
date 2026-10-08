@@ -7,7 +7,7 @@
 .irw_tags_for_source(source = "core")
 }
 \arguments{
-\item{source}{One of \code{"core"} or \code{"nom"}.}
+\item{source}{Data family, one of \code{"core"} or \code{"nom"}.}
 }
 \value{
 A tibble of tags for that source.

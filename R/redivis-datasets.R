@@ -67,7 +67,7 @@
 
 #' Resolve data source from \code{source} or deprecated \code{nom}/\code{sim}/\code{comp}
 #'
-#' @param source Character. One of \code{"core"}, \code{"nom"}, \code{"sim"}, \code{"comp"}, \code{"conj"}.
+#' @param source Character. The data family, one of \code{"core"}, \code{"nom"}, \code{"sim"}, \code{"comp"}, \code{"conj"}.
 #' @param sim Deprecated. Use \code{source = "sim"} instead.
 #' @param comp Deprecated. Use \code{source = "comp"} instead.
 #' @param nom Deprecated. Use \code{source = "nom"} instead.
@@ -264,7 +264,7 @@
 #' - If \code{source = "nom"}, returns the IRW nominal dataset (\code{irw_nominal:614n})
 #' - If \code{source = "core"} (default), returns all main IRW production datasets
 #'
-#' @param source Character. One of \code{"core"}, \code{"nom"}, \code{"sim"}, \code{"comp"}.
+#' @param source Character. The data family, one of \code{"core"}, \code{"nom"}, \code{"sim"}, \code{"comp"}.
 #'   Default is \code{"core"}.
 #' @param sim Deprecated. Use \code{source = "sim"} instead.
 #' @param comp Deprecated. Use \code{source = "comp"} instead.
@@ -293,7 +293,7 @@
 
 #' Table names currently listed in Redivis for a source
 #'
-#' @param source Character. One of \code{"core"}, \code{"nom"}, \code{"sim"}, \code{"comp"}.
+#' @param source Character. The data family, one of \code{"core"}, \code{"nom"}, \code{"sim"}, \code{"comp"}.
 #' @return Lowercase character vector of unique table names.
 #' @keywords internal
 #' @noRd

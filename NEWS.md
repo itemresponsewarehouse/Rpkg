@@ -1,5 +1,6 @@
 # irw (development version)
 
+- Documentation: the `source` argument is described as selecting the *data family* (core, nominal, competitions, simsyn, conjoint), and conjoint is no longer called experimental.
 - irw_save_bibtex(source = "conj"): citations for conjoint tables, from irw_meta's new `conj_biblio` table.
 - irw_metadata(source = "conj") returns irw_meta's `conj_metadata` (design counts and design facts per experiment), and irw_info() on a conjoint table now shows its description, DOI, licence and reference. irw_filter(source = "conj") filters on `n_respondents`, `n_attributes`, `outcome` ("choice"/"rating"), `country` and `license`, and irw_license_options(source = "conj") lists its licences.
 

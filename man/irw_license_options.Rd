@@ -7,7 +7,7 @@
 irw_license_options(source = "core", comp = FALSE, sim = FALSE, nom = FALSE)
 }
 \arguments{
-\item{source}{Character. Data source: \code{"core"} (default), \code{"sim"},
+\item{source}{Character. The data family: \code{"core"} (default), \code{"sim"},
 \code{"nom"}, \code{"comp"}, or \code{"conj"}.}
 
 \item{comp}{Deprecated. Use \code{source = "comp"} instead.}

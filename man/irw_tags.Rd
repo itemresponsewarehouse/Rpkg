@@ -9,7 +9,7 @@ irw_tags(tables = NULL, source = "core")
 \arguments{
 \item{tables}{Optional. A character vector of table name(s) to filter by.}
 
-\item{source}{Character. Data source: \code{"core"} (default) or \code{"nom"}.
+\item{source}{Character. The data family: \code{"core"} (default) or \code{"nom"}.
 \code{"comp"} and \code{"sim"} have no tags by design and error.}
 }
 \value{

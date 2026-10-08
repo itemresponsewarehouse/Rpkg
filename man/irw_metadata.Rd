@@ -7,7 +7,7 @@
 irw_metadata(source = "core", sim = FALSE, comp = FALSE, nom = FALSE)
 }
 \arguments{
-\item{source}{Character. Data source: \code{"core"} (default), \code{"nom"}, \code{"sim"}, \code{"comp"}, or \code{"conj"} (conjoint experiments; experimental, see \code{\link{irw_conj_long}}).}
+\item{source}{Character. The data family: \code{"core"} (default), \code{"nom"}, \code{"sim"}, \code{"comp"}, or \code{"conj"} (conjoint experiments; see \code{\link{irw_conj_long}}).}
 
 \item{sim}{Deprecated. Use \code{source = "sim"} instead.}
 

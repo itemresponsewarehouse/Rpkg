@@ -15,7 +15,7 @@
 \arguments{
 \item{name}{A character string specifying the table name.}
 
-\item{source}{Character. One of \code{"core"}, \code{"nom"}, \code{"sim"}, \code{"comp"}.}
+\item{source}{Character. The data family, one of \code{"core"}, \code{"nom"}, \code{"sim"}, \code{"comp"}.}
 
 \item{sim}{Deprecated. Use \code{source = "sim"} instead.}
 
