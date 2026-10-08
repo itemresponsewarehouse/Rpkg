@@ -22,3 +22,13 @@ A tibble containing metadata information.
 Fetches the metadata table from Redivis and returns it as a tibble.
 Automatically checks for updates and refreshes only when needed.
 }
+\details{
+Each source has its own columns. For \code{source = "conj"} a row is one
+conjoint experiment: \code{n_respondents}, \code{n_rows}, \code{n_tasks},
+\code{n_profiles}, \code{n_attributes}, \code{outcomes},
+\code{n_optout_tasks}, and the design facts \code{country},
+\code{display_language}, \code{label_language}, \code{restrictions}
+(\code{none}, \code{yes}, \code{observed} or \code{unknown}),
+\code{restrictions_note}, \code{task_source} and \code{profile_source}
+(\code{recorded} or \code{inferred} from row order).
+}

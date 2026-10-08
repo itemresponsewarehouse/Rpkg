@@ -216,6 +216,15 @@ irw_fetch <- function(name, source = "core", dedup = FALSE, sim = FALSE, comp = 
 #' Fetches the metadata table from Redivis and returns it as a tibble.
 #' Automatically checks for updates and refreshes only when needed.
 #'
+#' Each source has its own columns. For \code{source = "conj"} a row is one
+#' conjoint experiment: \code{n_respondents}, \code{n_rows}, \code{n_tasks},
+#' \code{n_profiles}, \code{n_attributes}, \code{outcomes},
+#' \code{n_optout_tasks}, and the design facts \code{country},
+#' \code{display_language}, \code{label_language}, \code{restrictions}
+#' (\code{none}, \code{yes}, \code{observed} or \code{unknown}),
+#' \code{restrictions_note}, \code{task_source} and \code{profile_source}
+#' (\code{recorded} or \code{inferred} from row order).
+#'
 #' @param source Character. Data source: \code{"core"} (default), \code{"nom"}, \code{"sim"}, \code{"comp"}, or \code{"conj"} (conjoint experiments; experimental, see \code{\link{irw_conj_long}}).
 #' @param sim Deprecated. Use \code{source = "sim"} instead.
 #' @param comp Deprecated. Use \code{source = "comp"} instead.
@@ -229,7 +238,7 @@ irw_metadata <- function(source = "core", sim = FALSE, comp = FALSE, nom = FALSE
   if (source == "comp") return(.fetch_comps_metadata_table())
   if (source == "sim")  return(.fetch_simsyn_metadata_table())
   if (source == "nom")  return(.fetch_nominal_metadata_table())
-  if (source == "conj") .irw_conj_not_yet("irw_metadata()")
+  if (source == "conj") return(.fetch_conj_metadata_table())
   .fetch_metadata_table()
 }
 

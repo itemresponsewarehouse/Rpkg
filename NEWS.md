@@ -1,6 +1,7 @@
 # irw (development version)
 
-- irw_save_bibtex(source = "conj"): citations for conjoint tables, from irw_meta's new `conj_biblio` table. irw_metadata() and irw_filter() still refuse `source = "conj"`, since its metadata has a different shape.
+- irw_save_bibtex(source = "conj"): citations for conjoint tables, from irw_meta's new `conj_biblio` table.
+- irw_metadata(source = "conj") returns irw_meta's `conj_metadata` (design counts and design facts per experiment), and irw_info() on a conjoint table now shows its description, DOI, licence and reference. irw_filter(source = "conj") is not available yet.
 
 # irw 1.3.1
 
