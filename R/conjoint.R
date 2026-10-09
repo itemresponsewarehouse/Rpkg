@@ -1,18 +1,3 @@
-#' Error for features the conjoint source does not support yet
-#'
-#' The conjoint source (\code{source = "conj"}) can be listed, fetched and cited
-#' (\code{irw_save_bibtex(source = "conj")}), but its metadata table has a
-#' different shape from the other sources', so the functions that read metadata
-#' stop here with a message rather than failing obscurely.
-#'
-#' @keywords internal
-#' @noRd
-.irw_conj_not_yet <- function(what) {
-  stop(what, " is not available for the conjoint source (source = \"conj\") yet: ",
-       "its metadata is not in the shape this function reads. irw_list_tables(source = \"conj\"), ",
-       "irw_fetch(..., source = \"conj\") and irw_save_bibtex(..., source = \"conj\") work.", call. = FALSE)
-}
-
 #' Convert a conjoint table to the IRW long format
 #'
 #' Conjoint tables (\code{source = "conj"}) have one row per respondent, task
