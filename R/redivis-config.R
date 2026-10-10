@@ -29,7 +29,8 @@
   ## is near Redivis' 1000-table cap. Append the next shard here only once it has
   ## a published release (inst/developer/warehouses.md, "Adding a conjoint shard").
   conj = list(
-    list(user = "datapages", dataset = "irw_conjoint:5wjx")
+    list(user = "datapages", dataset = "irw_conjoint:5wjx"),
+    list(user = "datapages", dataset = "irw_conjoint_2:142p")
   )
 )
 
