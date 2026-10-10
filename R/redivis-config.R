@@ -25,7 +25,9 @@
     list(user = "datapages", dataset = "irw_nominal:614n")
   ),
   ## Conjoint experiments: one row per respondent x task x profile, no item/resp
-  ## (see irw_conj_long()).
+  ## (see irw_conj_long()). A shard list, oldest to newest, like $core: irw_conjoint
+  ## is near Redivis' 1000-table cap. Append the next shard here only once it has
+  ## a published release (inst/developer/warehouses.md, "Adding a conjoint shard").
   conj = list(
     list(user = "datapages", dataset = "irw_conjoint:5wjx")
   )
@@ -163,7 +165,10 @@
 
 #' Session cache key for a non-core datasource
 #'
-#' @param source Data family, one of \code{"sim"}, \code{"comp"}, \code{"nom"}.
+#' The cached value is the opened shard list for that source (one dataset for
+#' sim, comp and nom; one or more for conj), in config order.
+#'
+#' @param source Data family, one of \code{"sim"}, \code{"comp"}, \code{"nom"}, \code{"conj"}.
 #' @keywords internal
 #' @noRd
 .irw_single_datasource_cache_key <- function(source) {

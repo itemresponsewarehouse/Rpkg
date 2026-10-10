@@ -64,7 +64,12 @@ section.
 5. **Make the same change in the other two repositories** — see the last section.
    A pull request that stops at step 4 leaves the shard reachable from R only.
 
-Simulation, competition, and nominal sources each use a single dataset spec under their respective keys in the same config object.
+Simulation, competition, and nominal sources each use a single dataset spec
+under their respective keys in the same config object. The conjoint source
+(`$conj`) is a shard list like `$core` -- see [Adding a conjoint
+shard](#adding-a-conjoint-shard). Every key is a *list* of specs, and
+`.initialize_datasource()` opens all of them, so turning another source into a
+shard list is a config edit, not a code change.
 
 ## Why warehouses are a list at all
 
@@ -121,6 +126,26 @@ shard-aware; the cutover is config plus a Redivis click.
 7. **Do not move existing tables.** Newest-first resolution keeps every table
    reachable where it already is; moving one *creates* the shadowing problem
    rather than solving it.
+
+### Adding a conjoint shard
+
+`irw_conjoint` reached ~800 tables in October 2026, so the conjoint source
+became a shard list (`.irw_datasource_specs$conj`, `IRW_CONJ_DATASETS` in
+`irw/metadata/redivis_config.R`, `CONJ_REFS` in `Python-pkg/src/irw/config.py`),
+oldest to newest, with the same newest-first resolution as core. The
+checklist is the item text one above, with these differences:
+
+1. Create `irw_conjoint_2` under `datapages`, upload at least one conjoint
+   table and **publish a release before touching any config** -- the same trap
+   as for item text. Read the reference id off Redivis *after* the release.
+2. Append the shard to all three configs and ship them in the order Rpkg,
+   Python-pkg, irw (the parity check compares order for `conj`).
+3. `red_up` keeps sending NEW conjoint tables to `CONJ_DEFAULT` in
+   `red_up/targets.py` (`irw_conjoint`) until Ben flips it; an existing table
+   is always updated in the shard that holds it, never duplicated.
+4. `src/metadata/16_conjoint.R` lists every shard and warns when a name is in
+   two of them; `irw_list_tables(source = "conj")` does the same here.
+5. Re-run `red_up.manifest` as for item text.
 
 ## Changing the Redivis owner
 

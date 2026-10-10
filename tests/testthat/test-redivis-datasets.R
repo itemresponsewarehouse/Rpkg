@@ -63,10 +63,14 @@ test_that(".irw_sanitize_redivis_error strips internal dataset paths", {
   expect_false(grepl("5xaj", clean, fixed = TRUE))
 })
 
-test_that(".irw_order_datasources reverses core warehouses only", {
+test_that(".irw_order_datasources searches any shard list newest-first", {
   ds <- list("wh1", "wh2", "wh3")
   expect_equal(irw:::.irw_order_datasources(ds, "core"), list("wh3", "wh2", "wh1"))
-  expect_equal(irw:::.irw_order_datasources(ds, "sim"), ds)
+  # Every spec list is declared oldest-to-newest, so conj (a shard list since
+  # irw_conjoint neared the cap) reverses the same way ...
+  expect_equal(irw:::.irw_order_datasources(list("conj1", "conj2"), "conj"), list("conj2", "conj1"))
+  # ... and a single-dataset source is returned as is.
+  expect_equal(irw:::.irw_order_datasources(list("sim"), "sim"), list("sim"))
 })
 
 test_that(".irw_dedup_table_info keeps the first row per table name", {

@@ -33,6 +33,7 @@ irw_list_tables <- function(source = "core", sim = FALSE, comp = FALSE, nom = FA
   })
   
   tables_info <- do.call(rbind, tables_info_list)
+  .irw_warn_shard_duplicates(tables_info, source)
   tables_info <- .irw_dedup_table_info(tables_info)
   tables_info <- tables_info[order(tables_info$name), ]
   rownames(tables_info) <- NULL

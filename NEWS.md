@@ -1,5 +1,6 @@
 # irw (development version)
 
+- The conjoint source (`source = "conj"`) is now a shard list like core and item text, because `irw_conjoint` is near Redivis' 1000-table cap. Every shard is opened and searched newest-first; an unreleased shard is skipped with a warning. irw_list_tables(source = "conj") warns when a table name is published in more than one shard instead of merging the copies silently. One shard is configured until the second has a published release, so nothing changes for users yet (ben-domingue/irw#1975 did the same for item text).
 - Documentation: the `source` argument is described as selecting the *data family* (core, nominal, competitions, simsyn, conjoint), and conjoint is no longer called experimental.
 - irw_save_bibtex(source = "conj"): citations for conjoint tables, from irw_meta's new `conj_biblio` table.
 - irw_metadata(source = "conj") returns irw_meta's `conj_metadata` (design counts and design facts per experiment), and irw_info() on a conjoint table now shows its description, DOI, licence and reference. irw_filter(source = "conj") filters on `n_respondents`, `n_attributes`, `outcome` ("choice"/"rating"), `country` and `license`, and irw_license_options(source = "conj") lists its licences.
