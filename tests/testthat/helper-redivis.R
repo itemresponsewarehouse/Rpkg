@@ -28,7 +28,8 @@ local_irw_core_specs <- function(core, env = parent.frame()) {
       core = core,
       sim = irw:::.irw_datasource_specs$sim,
       comp = irw:::.irw_datasource_specs$comp,
-      nom = irw:::.irw_datasource_specs$nom
+      nom = irw:::.irw_datasource_specs$nom,
+      conj = irw:::.irw_datasource_specs$conj
     ),
     env = env
   )

@@ -116,3 +116,67 @@ test_that("irw_conj_long keeps named extra outcomes and can select outcomes", {
   expect_error(irw_conj_long(d, outcomes = "resp"), "Not outcome columns")
   expect_error(irw_conj_long(d[, -3]), "missing profile")
 })
+
+# conj is a shard list (irw_conjoint is near Redivis' 1000-table cap), with the
+# same semantics as core: every shard is opened, an unreleased one is skipped
+# with a warning, and lookups search newest-first.
+
+local_two_conj_shards <- function(env = parent.frame()) {
+  specs <- irw:::.irw_datasource_specs
+  specs$conj <- list(
+    list(user = "datapages", dataset = "irw_conjoint:5wjx"),
+    list(user = "datapages", dataset = "irw_conjoint_2:zzzz")
+  )
+  local_irw_binding(".irw_datasource_specs", specs, env = env)
+  withr::defer(suppressWarnings(rm(
+    list = c("conj_datasource", "conj_datasource_fingerprint"), envir = irw:::.irw_env
+  )), envir = env)
+}
+
+test_that(".initialize_datasource(\"conj\") opens every conj shard, cached, searched newest-first", {
+  local_two_conj_shards()
+  opened <- character(0)
+  local_mocked_bindings(
+    .irw_open_dataset = function(spec) { opened <<- c(opened, spec$dataset); spec$dataset },
+    .env = asNamespace("irw")
+  )
+  ds <- irw:::.initialize_datasource("conj")
+  expect_equal(ds, list("irw_conjoint:5wjx", "irw_conjoint_2:zzzz"))
+  expect_equal(irw:::.irw_order_datasources(ds, "conj"),
+               list("irw_conjoint_2:zzzz", "irw_conjoint:5wjx"))
+  irw:::.initialize_datasource("conj")
+  expect_length(opened, 2L)   # second call served from the session cache
+})
+
+test_that("an unreleased conj shard is skipped with a warning rather than failing every lookup", {
+  local_two_conj_shards()
+  local_mocked_bindings(
+    .irw_open_dataset = function(spec) {
+      if (grepl("_2", spec$dataset, fixed = TRUE)) {
+        stop("[403 insufficient_scope] missing the required scope(s): data.edit")
+      }
+      spec$dataset
+    },
+    .env = asNamespace("irw")
+  )
+  expect_warning(ds <- irw:::.initialize_datasource("conj"), "unavailable IRW datasource")
+  expect_equal(ds, list("irw_conjoint:5wjx"))
+})
+
+test_that("irw_list_tables(source = \"conj\") flags a table name present in two shards", {
+  fake_ds <- function(names) {
+    list(list_tables = function() lapply(names, function(n)
+      list(name = n, properties = list(numRows = 10, variableCount = 5))))
+  }
+  local_mocked_bindings(
+    .initialize_datasource = function(source = "core", ...) {
+      list(fake_ds(c("alpha_2024", "shared_2025")), fake_ds(c("shared_2025", "zeta_2026")))
+    },
+    .env = asNamespace("irw")
+  )
+  expect_warning(out <- irw_list_tables(source = "conj"),
+                 "appear in more than one conj shard: shared_2025")
+  expect_equal(out$name, c("alpha_2024", "shared_2025", "zeta_2026"))
+  # Core keeps resolving silently to the newest copy.
+  expect_silent(irw_list_tables(source = "core"))
+})
