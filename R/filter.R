@@ -167,16 +167,68 @@ irw_license_options <- function(source = "core", comp = FALSE, sim = FALSE, nom 
 ##             (choice_<name>/rating_<name> columns count as their type);
 ##   country   ISO 3166 codes: the table was fielded in ANY of them (a pooled
 ##             table's "AT;CZ;..." counts for each);
+##   domain    topic tags (data/conjoint/tags.csv in the irw repo, "Topic tags"
+##             in data/conjoint/README.md): the study's setting, one or more
+##             values joined with ";", primary first. A table matches when ANY
+##             requested value is among its tags;
+##   choice_object  what one profile represents (person, policy, ...), one
+##             value per table; ANY of the requested values matches;
 ##   license   as for every source, from conj_biblio.
-.irw_conj_filters <- c("n_respondents", "n_attributes", "outcome", "country", "license")
+## The two tag vocabularies are closed sets kept in the irw repo, not here: a
+## requested value that no table carries is an error naming the values that
+## exist, since "0 tables matched" would read as an absence of data.
+.irw_conj_filters <- c("n_respondents", "n_attributes", "outcome", "country",
+                       "domain", "choice_object", "license")
+
+.irw_split_conj_tags <- function(x) {
+  lapply(strsplit(.irw_na_to_empty(x), ";", fixed = TRUE), function(h) tolower(trimws(h)))
+}
+
+## `full` is the unfiltered metadata: the vocabulary check must see every table,
+## not the ones earlier filters left, or a valid value can read as unknown.
+.irw_filter_conj_tag <- function(meta, full, column, value) {
+  if (!is.character(value) || !length(value) || anyNA(value) || !all(nzchar(value))) {
+    stop(sprintf("'%s' must be a character vector of tag values, e.g. ", column),
+         if (column == "domain") "\"immigration_asylum\"." else "\"person\".")
+  }
+  want <- tolower(trimws(value))
+  has <- .irw_split_conj_tags(meta[[column]])
+  known <- sort(unique(unlist(.irw_split_conj_tags(full[[column]]), use.names = FALSE)))
+  known <- known[nzchar(known)]
+  unknown <- setdiff(want, known)
+  if (length(unknown)) {
+    stop(sprintf("Unknown %s value(s): %s. The %s tags in use are: %s.",
+                 column, paste0("\"", unknown, "\"", collapse = ", "), column,
+                 paste(known, collapse = ", ")))
+  }
+  meta[vapply(has, function(h) any(want %in% h), logical(1)), , drop = FALSE]
+}
+
+.irw_na_to_empty <- function(x) {
+  x <- as.character(x)
+  x[is.na(x)] <- ""
+  x
+}
 
 .irw_filter_conj_impl <- function(n_respondents = NULL, n_attributes = NULL,
-                                  outcome = NULL, country = NULL, license = NULL) {
+                                  outcome = NULL, country = NULL,
+                                  domain = NULL, choice_object = NULL, license = NULL) {
   meta <- .fetch_conj_metadata_table()
   need <- c("table", "n_respondents", "n_attributes", "outcomes", "country")
   if (!all(need %in% names(meta))) {
     stop("Conjoint metadata table must contain columns: ",
          paste0("'", need, "'", collapse = ", "), ".")
+  }
+  full <- meta
+  for (column in c("domain", "choice_object")) {
+    value <- get(column)
+    if (is.null(value)) next
+    if (!column %in% names(meta)) {
+      stop(sprintf("The conjoint metadata in this irw_meta release has no '%s' column; ", column),
+           "topic tags were published on 2026-10-13. Call irw_use_version() with a newer release.")
+    }
+    meta <- .irw_filter_conj_tag(meta, full, column, value)
+    if (nrow(meta) == 0L) return(.irw_filter_no_match(column, value))
   }
 
   if (!is.null(license)) {
@@ -339,10 +391,29 @@ irw_license_options <- function(source = "core", comp = FALSE, sim = FALSE, nom 
 #' @param country Character vector of ISO 3166 alpha-2 codes (e.g. `"US"`).
 #'   Conjoint-only: keep tables fielded in any of them; a table pooling several
 #'   countries matches each.
+#' @param domain Character vector. Conjoint-only: what the study is about, its
+#'   setting rather than the attribute it manipulates (a candidate conjoint that
+#'   varies gender is `"candidate_choice"`). A table carries one or more domains,
+#'   primary first; it matches when any value named is among them. The
+#'   vocabulary: `candidate_choice`, `immigration_asylum`,
+#'   `climate_energy_environment`, `international_economy`,
+#'   `democracy_institutions`, `foreign_policy_security`, `health_covid`,
+#'   `tax_welfare_economy`, `consumer_products`, `social_identity_interpersonal`,
+#'   `labour_hiring`, `crime_justice_policing`, `technology_ai_privacy`,
+#'   `political_communication`, `parties_platforms`, `public_administration`,
+#'   `corruption_accountability`, `housing_neighbourhoods`, `other`. A value no
+#'   table carries is an error that lists the values in use.
+#'   `table(irw_metadata(source = "conj")$domain)` gives the counts.
+#' @param choice_object Character vector. Conjoint-only: what one profile
+#'   represents, one value per table: `person` (candidate, applicant, patient,
+#'   neighbour), `policy`, `scenario` (a situation or case), `product_service`,
+#'   `place`, `organisation` or `message` (a text or media artefact judged as
+#'   such). Any value named matches.
 #' @param source Character. The data family: `"core"` (default), `"nom"`, `"sim"`, `"comp"`, or `"conj"`.
 #'   For `"conj"` the filters are `n_respondents`, `n_attributes`, `outcome`,
-#'   `country` and `license`; see [irw_metadata()] with `source = "conj"` for the
-#'   other design facts.
+#'   `country`, `domain`, `choice_object` and `license`; see [irw_metadata()]
+#'   with `source = "conj"` for the other design facts. The two tag columns are
+#'   defined in the irw repo's `data/conjoint/README.md` ("Topic tags").
 #'   Tag filters require `"core"` or `"nom"`.
 #' @param comp Deprecated. Use `source = "comp"` instead.
 #' @param sim Deprecated. Use `source = "sim"` instead.
@@ -389,6 +460,9 @@ irw_license_options <- function(source = "core", comp = FALSE, sim = FALSE, nom 
 #' irw_filter(source = "sim", n_items = c(10, Inf))
 #' irw_filter(source = "comp", n_actors = c(2, 10))
 #' irw_filter(source = "conj", outcome = "rating", country = c("US", "GB"))
+#' irw_filter(source = "conj", domain = "immigration_asylum")          # the immigration conjoints
+#' irw_filter(source = "conj", domain = c("candidate_choice", "parties_platforms"),
+#'            choice_object = "person")
 #' }
 #' @export
 irw_filter <- function(n_responses = NULL,
@@ -413,6 +487,8 @@ irw_filter <- function(n_responses = NULL,
                        n_attributes = NULL,
                        outcome = NULL,
                        country = NULL,
+                       domain = NULL,
+                       choice_object = NULL,
                        source = "core",
                        comp = FALSE,
                        sim = FALSE,
@@ -427,7 +503,8 @@ irw_filter <- function(n_responses = NULL,
   }
 
   conj_only <- list(n_respondents = n_respondents, n_attributes = n_attributes,
-                    outcome = outcome, country = country)
+                    outcome = outcome, country = country,
+                    domain = domain, choice_object = choice_object)
   conj_only <- conj_only[vapply(conj_only, Negate(is.null), logical(1))]
   if (length(conj_only) > 0L && source != "conj") {
     stop("These filters are only available when `source = \"conj\"`: ",
@@ -462,7 +539,9 @@ irw_filter <- function(n_responses = NULL,
            paste(.irw_conj_filters, collapse = ", "), ".")
     }
     return(.irw_filter_conj_impl(n_respondents = n_respondents, n_attributes = n_attributes,
-                                 outcome = outcome, country = country, license = license))
+                                 outcome = outcome, country = country,
+                                 domain = domain, choice_object = choice_object,
+                                 license = license))
   }
 
   if (source == "comp") {

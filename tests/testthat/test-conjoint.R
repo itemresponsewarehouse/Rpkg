@@ -57,7 +57,10 @@ fake_conj_meta <- function() tibble::tibble(
   table = c("a_us_choice", "b_pooled_both", "c_gb_rating", "d_named"),
   n_respondents = c(300, 18000, 900, 2000), n_attributes = c(4, 9, 6, 11),
   outcomes = c("choice", "choice;rating", "rating", "choice_neighbor;rating_neighbor"),
-  country = c("US", "AT;DE;GB", "GB", "TR"))
+  country = c("US", "AT;DE;GB", "GB", "TR"),
+  domain = c("candidate_choice", "immigration_asylum", "health_covid;consumer_products",
+             "social_identity_interpersonal"),
+  choice_object = c("person", "person", "product_service", "person"))
 fake_conj_bib <- function() tibble::tibble(
   table = c("a_us_choice", "b_pooled_both", "c_gb_rating", "d_named"),
   Derived_License = c("CC0 1.0", "CC0 1.0", "CC BY 4.0", "CC0 1.0"))
@@ -75,6 +78,31 @@ test_that("irw_filter(source = \"conj\") filters on its design metadata", {
   expect_identical(f(license = "CC BY 4.0"), "c_gb_rating")
   expect_identical(f(country = "US", outcome = "rating"), character(0))
   expect_error(f(outcome = "vote"), "choice")
+})
+
+test_that("irw_filter(source = \"conj\") filters on the topic tags", {
+  local_mocked_bindings(.fetch_conj_metadata_table = fake_conj_meta,
+                        .fetch_conj_biblio_table = fake_conj_bib)
+  f <- function(...) suppressMessages(irw_filter(source = "conj", ...))
+  expect_identical(f(domain = "immigration_asylum"), "b_pooled_both")
+  # a secondary domain counts, and any of several values matches
+  expect_identical(f(domain = "consumer_products"), "c_gb_rating")
+  expect_identical(f(domain = c("candidate_choice", "Health_Covid")), c("a_us_choice", "c_gb_rating"))
+  expect_identical(f(choice_object = "person"), c("a_us_choice", "b_pooled_both", "d_named"))
+  expect_identical(f(domain = "candidate_choice", choice_object = "product_service"), character(0))
+  expect_identical(f(domain = "health_covid", outcome = "rating", country = "GB"), "c_gb_rating")
+  # a value no table carries is an error naming the vocabulary, not an empty match
+  expect_error(f(domain = "immigration"), "immigration_asylum")
+  expect_error(f(choice_object = "people"), "product_service")
+  expect_error(f(domain = 3), "character")
+  expect_error(irw_filter(domain = "health_covid"), "only available when `source = \"conj\"`")
+})
+
+test_that("the topic-tag filters explain an irw_meta release without the columns", {
+  old <- function() fake_conj_meta()[, setdiff(names(fake_conj_meta()), c("domain", "choice_object"))]
+  local_mocked_bindings(.fetch_conj_metadata_table = old, .fetch_conj_biblio_table = fake_conj_bib)
+  expect_error(irw_filter(source = "conj", domain = "health_covid"), "no 'domain' column")
+  expect_identical(suppressMessages(irw_filter(source = "conj", country = "US")), "a_us_choice")
 })
 
 test_that("conj filters and other sources' filters do not cross", {

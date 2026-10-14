@@ -1,5 +1,7 @@
 # irw (development version)
 
+- irw_filter(source = "conj") gains `domain` (what a conjoint study is about: `"immigration_asylum"`, `"candidate_choice"`, ... ; a table can carry more than one) and `choice_object` (what one profile represents: `"person"`, `"policy"`, ...). Both columns are in irw_metadata(source = "conj") from the irw_meta release of 2026-10-13; the vocabulary and the tagging rules are in the irw repo's `data/conjoint/README.md` (ben-domingue/irw#2956).
+
 - The conjoint source (`source = "conj"`) is now a shard list like core and item text, because `irw_conjoint` is near Redivis' 1000-table cap. Every shard is opened and searched newest-first; an unreleased shard is skipped with a warning. irw_list_tables(source = "conj") warns when a table name is published in more than one shard instead of merging the copies silently. One shard is configured until the second has a published release, so nothing changes for users yet (ben-domingue/irw#1975 did the same for item text).
 - Documentation: the `source` argument is described as selecting the *data family* (core, nominal, competitions, simsyn, conjoint), and conjoint is no longer called experimental.
 - irw_save_bibtex(source = "conj"): citations for conjoint tables, from irw_meta's new `conj_biblio` table.

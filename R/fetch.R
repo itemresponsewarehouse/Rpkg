@@ -223,7 +223,11 @@ irw_fetch <- function(name, source = "core", dedup = FALSE, sim = FALSE, comp = 
 #' \code{display_language}, \code{label_language}, \code{restrictions}
 #' (\code{none}, \code{yes}, \code{observed} or \code{unknown}),
 #' \code{restrictions_note}, \code{task_source} and \code{profile_source}
-#' (\code{recorded} or \code{inferred} from row order).
+#' (\code{recorded} or \code{inferred} from row order), and the topic tags
+#' \code{domain} (what the study is about; one or more values joined with
+#' \code{";"}, primary first) and \code{choice_object} (what one profile
+#' represents). Both are filters in \code{\link{irw_filter}}, which documents
+#' their vocabularies.
 #'
 #' @param source Character. The data family: \code{"core"} (default), \code{"nom"}, \code{"sim"}, \code{"comp"}, or \code{"conj"} (conjoint experiments; see \code{\link{irw_conj_long}}).
 #' @param sim Deprecated. Use \code{source = "sim"} instead.

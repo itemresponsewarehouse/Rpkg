@@ -27,6 +27,8 @@ irw_filter(
   n_attributes = NULL,
   outcome = NULL,
   country = NULL,
+  domain = NULL,
+  choice_object = NULL,
   source = "core",
   comp = FALSE,
   sim = FALSE,
@@ -114,10 +116,31 @@ tables that have every outcome type named (a table with both matches either).}
 Conjoint-only: keep tables fielded in any of them; a table pooling several
 countries matches each.}
 
+\item{domain}{Character vector. Conjoint-only: what the study is about, its
+setting rather than the attribute it manipulates (a candidate conjoint that
+varies gender is \code{"candidate_choice"}). A table carries one or more domains,
+primary first; it matches when any value named is among them. The
+vocabulary: \code{candidate_choice}, \code{immigration_asylum},
+\code{climate_energy_environment}, \code{international_economy},
+\code{democracy_institutions}, \code{foreign_policy_security}, \code{health_covid},
+\code{tax_welfare_economy}, \code{consumer_products}, \code{social_identity_interpersonal},
+\code{labour_hiring}, \code{crime_justice_policing}, \code{technology_ai_privacy},
+\code{political_communication}, \code{parties_platforms}, \code{public_administration},
+\code{corruption_accountability}, \code{housing_neighbourhoods}, \code{other}. A value no
+table carries is an error that lists the values in use.
+\code{table(irw_metadata(source = "conj")$domain)} gives the counts.}
+
+\item{choice_object}{Character vector. Conjoint-only: what one profile
+represents, one value per table: \code{person} (candidate, applicant, patient,
+neighbour), \code{policy}, \code{scenario} (a situation or case), \code{product_service},
+\code{place}, \code{organisation} or \code{message} (a text or media artefact judged as
+such). Any value named matches.}
+
 \item{source}{Character. The data family: \code{"core"} (default), \code{"nom"}, \code{"sim"}, \code{"comp"}, or \code{"conj"}.
 For \code{"conj"} the filters are \code{n_respondents}, \code{n_attributes}, \code{outcome},
-\code{country} and \code{license}; see \code{\link[=irw_metadata]{irw_metadata()}} with \code{source = "conj"} for the
-other design facts.
+\code{country}, \code{domain}, \code{choice_object} and \code{license}; see \code{\link[=irw_metadata]{irw_metadata()}}
+with \code{source = "conj"} for the other design facts. The two tag columns are
+defined in the irw repo's \code{data/conjoint/README.md} ("Topic tags").
 Tag filters require \code{"core"} or \code{"nom"}.}
 
 \item{comp}{Deprecated. Use \code{source = "comp"} instead.}
@@ -202,6 +225,9 @@ irw_filter(n_categories = c(10, Inf), density = NULL)  # large category sets
 irw_filter(source = "sim", n_items = c(10, Inf))
 irw_filter(source = "comp", n_actors = c(2, 10))
 irw_filter(source = "conj", outcome = "rating", country = c("US", "GB"))
+irw_filter(source = "conj", domain = "immigration_asylum")          # the immigration conjoints
+irw_filter(source = "conj", domain = c("candidate_choice", "parties_platforms"),
+           choice_object = "person")
 }
 \dontshow{\}) # examplesIf}
 }
