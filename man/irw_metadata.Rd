@@ -30,5 +30,9 @@ conjoint experiment: \code{n_respondents}, \code{n_rows}, \code{n_tasks},
 \code{display_language}, \code{label_language}, \code{restrictions}
 (\code{none}, \code{yes}, \code{observed} or \code{unknown}),
 \code{restrictions_note}, \code{task_source} and \code{profile_source}
-(\code{recorded} or \code{inferred} from row order).
+(\code{recorded} or \code{inferred} from row order), and the topic tags
+\code{domain} (what the study is about; one or more values joined with
+\code{";"}, primary first) and \code{choice_object} (what one profile
+represents). Both are filters in \code{\link{irw_filter}}, which documents
+their vocabularies.
 }
