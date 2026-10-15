@@ -33,7 +33,9 @@ Note also that the licenses recorded for IRW response data do not extend to
 the instruments themselves. Inclusion of item text here implies no license to
 reuse an instrument; copyright and related rights remain with the original
 rights holders, and users are responsible for obtaining any permissions their
-intended use requires.
+intended use requires. The exception is a table whose wording its source
+released under an open licence: that licence is printed after the fetch and
+is returned by \code{\link{irw_itemtext_licence}}.
 }
 
 \examples{
