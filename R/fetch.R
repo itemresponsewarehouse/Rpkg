@@ -61,6 +61,8 @@ fetch_single_data <- function(table_id, source = "core", dedup = FALSE, sim = FA
     # Deduplication logic
     if (dedup && source == "conj") {
       message(sprintf("Deduplication skipped for dataset '%s': conjoint tables have one row per id, task and profile.", table_id))
+    } else if (dedup && source == "rank") {
+      message(sprintf("Deduplication skipped for dataset '%s': a rankings table keeps duplicate marks as recorded; see irw_rank_compress().", table_id))
     } else if (dedup) {
       n_before <- nrow(df)
 
@@ -142,7 +144,7 @@ fetch_single_data <- function(table_id, source = "core", dedup = FALSE, sim = FA
 #' Silence it with `options(irw.source_note = FALSE)` or `IRW_SOURCE_NOTE=0`.
 #'
 #' @param name Character vector of one or more table names (IRW table IDs).
-#' @param source Character. The data family: \code{"core"} (default), \code{"nom"}, \code{"sim"}, \code{"comp"}, or \code{"conj"} (conjoint experiments; see \code{\link{irw_conj_long}}).
+#' @param source Character. The data family: \code{"core"} (default), \code{"nom"}, \code{"sim"}, \code{"comp"}, \code{"conj"} (conjoint experiments; see \code{\link{irw_conj_long}}), or \code{"rank"} (rankings; see \code{\link{irw_rank_compress}}).
 #' @param sim Deprecated. Use \code{source = "sim"} instead.
 #' @param dedup Logical, optional. If TRUE, deduplicates responses based on timing variables. Defaults to FALSE.
 #'   If a \code{date} column is present, no deduplication is performed.
@@ -229,7 +231,15 @@ irw_fetch <- function(name, source = "core", dedup = FALSE, sim = FALSE, comp = 
 #' represents). Both are filters in \code{\link{irw_filter}}, which documents
 #' their vocabularies.
 #'
-#' @param source Character. The data family: \code{"core"} (default), \code{"nom"}, \code{"sim"}, \code{"comp"}, or \code{"conj"} (conjoint experiments; see \code{\link{irw_conj_long}}).
+#' For \code{source = "rank"} a row is one rankings table: the counts
+#' \code{n_respondents}, \code{n_rows}, \code{n_tasks}, \code{n_items},
+#' \code{max_resp} (highest position marked) and \code{n_duplicate_marks},
+#' and the design record (\code{method}, \code{seats}, \code{n_positions},
+#' \code{n_candidates}, \code{n_ballots_cast}, \code{n_ballots_with_marks},
+#' \code{jurisdiction}, \code{date}, \code{office}, ...), whose codes are
+#' documented in the irw repo's \code{data/rankings/README.md}.
+#'
+#' @param source Character. The data family: \code{"core"} (default), \code{"nom"}, \code{"sim"}, \code{"comp"}, \code{"conj"} (conjoint experiments; see \code{\link{irw_conj_long}}), or \code{"rank"} (rankings; see \code{\link{irw_rank_compress}}).
 #' @param sim Deprecated. Use \code{source = "sim"} instead.
 #' @param comp Deprecated. Use \code{source = "comp"} instead.
 #' @param nom Deprecated. Use \code{source = "nom"} instead.
@@ -243,6 +253,7 @@ irw_metadata <- function(source = "core", sim = FALSE, comp = FALSE, nom = FALSE
   if (source == "sim")  return(.fetch_simsyn_metadata_table())
   if (source == "nom")  return(.fetch_nominal_metadata_table())
   if (source == "conj") return(.fetch_conj_metadata_table())
+  if (source == "rank") return(.fetch_rank_metadata_table())
   .fetch_metadata_table()
 }
 

@@ -6,7 +6,7 @@
 #' @param sim Deprecated. Use \code{source = "sim"} instead.
 #' @param comp Deprecated. Use \code{source = "comp"} instead.
 #' @param nom Deprecated. Use \code{source = "nom"} instead.
-#' @param source Character. The data family: \code{"core"} (default), \code{"nom"}, \code{"sim"}, \code{"comp"}, or \code{"conj"} (conjoint experiments; see \code{\link{irw_conj_long}}).
+#' @param source Character. The data family: \code{"core"} (default), \code{"nom"}, \code{"sim"}, \code{"comp"}, \code{"conj"} (conjoint experiments; see \code{\link{irw_conj_long}}), or \code{"rank"} (rankings; see \code{\link{irw_rank_compress}}).
 #' @return A data frame with the following columns:
 #'   \item{name}{The name of the table, sorted alphabetically.}
 #'   \item{numRows}{The number of rows in the table.}
@@ -53,7 +53,7 @@ irw_list_tables <- function(source = "core", sim = FALSE, comp = FALSE, nom = FA
 #' @param table_name Optional. Table name to describe; if \code{NULL}, prints database‑level info.
 #' @param details Logical. When \code{TRUE} and \code{table_name} is \code{NULL}, also
 #'   prints a breakdown by dataset. Defaults to \code{FALSE}.
-#' @param source Character. The data family: \code{"core"} (default), \code{"nom"}, \code{"sim"}, \code{"comp"}, or \code{"conj"} (conjoint experiments; see \code{\link{irw_conj_long}}).
+#' @param source Character. The data family: \code{"core"} (default), \code{"nom"}, \code{"sim"}, \code{"comp"}, \code{"conj"} (conjoint experiments; see \code{\link{irw_conj_long}}), or \code{"rank"} (rankings; see \code{\link{irw_rank_compress}}).
 #' @param comp Deprecated. Use \code{source = "comp"} instead.
 #' @param sim Deprecated. Use \code{source = "sim"} instead.
 #' @param nom Deprecated. Use \code{source = "nom"} instead.
@@ -88,6 +88,8 @@ irw_info <- function(table_name = NULL, details = FALSE, source = "core", comp =
     "IRW Nominal Database Information"
   } else if (source == "conj") {
     "IRW Conjoint Database Information"
+  } else if (source == "rank") {
+    "IRW Rankings Database Information"
   } else {
     "IRW Database Information (Combined)"
   }
@@ -186,7 +188,7 @@ irw_info <- function(table_name = NULL, details = FALSE, source = "core", comp =
       }, error = function(e) "None")
     }
 
-    # Biblio: every source has its own (core, comp, sim, nom, conj)
+    # Biblio: every source has its own (core, comp, sim, nom, conj, rank)
     description <- NA
     doi <- NA
     url_data <- NA
@@ -203,6 +205,8 @@ irw_info <- function(table_name = NULL, details = FALSE, source = "core", comp =
       .fetch_nominal_biblio_table()
     } else if (source == "conj") {
       .fetch_conj_biblio_table()
+    } else if (source == "rank") {
+      .fetch_rank_biblio_table()
     } else {
       .fetch_biblio_table()
     }
@@ -226,7 +230,7 @@ irw_info <- function(table_name = NULL, details = FALSE, source = "core", comp =
     
     message(strrep("-", 50))
     message("Table Information for: ", table_name,
-            if (source == "sim") " (simulation)" else if (source == "comp") " (competition)" else if (source == "nom") " (nominal)" else if (source == "conj") " (conjoint)" else "")
+            if (source == "sim") " (simulation)" else if (source == "comp") " (competition)" else if (source == "nom") " (nominal)" else if (source == "conj") " (conjoint)" else if (source == "rank") " (rankings)" else "")
     message(strrep("-", 50))
     message(strrep("-", 50))
     message(sprintf("%-25s %s", "Description:", description))

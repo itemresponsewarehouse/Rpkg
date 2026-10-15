@@ -66,7 +66,7 @@ irw_tag_options <- function(column, source = "core") {
 #' Returns a data frame showing the number of datasets associated with each license.
 #'
 #' @param source Character. The data family: \code{"core"} (default), \code{"sim"},
-#'   \code{"nom"}, \code{"comp"}, or \code{"conj"}.
+#'   \code{"nom"}, \code{"comp"}, \code{"conj"}, or \code{"rank"}.
 #' @param comp Deprecated. Use \code{source = "comp"} instead.
 #' @param sim Deprecated. Use \code{source = "sim"} instead.
 #' @param nom Deprecated. Use \code{source = "nom"} instead.
@@ -158,7 +158,8 @@ irw_license_options <- function(source = "core", comp = FALSE, sim = FALSE, nom 
          sim = .fetch_simsyn_biblio_table(),
          nom = .fetch_nominal_biblio_table(),
          comp = .fetch_comps_biblio_table(),
-         conj = .fetch_conj_biblio_table())
+         conj = .fetch_conj_biblio_table(),
+         rank = .fetch_rank_biblio_table())
 }
 
 ## Conjoint filters (source = "conj"), over conj_metadata:
@@ -409,7 +410,11 @@ irw_license_options <- function(source = "core", comp = FALSE, sim = FALSE, nom 
 #'   neighbour), `policy`, `scenario` (a situation or case), `product_service`,
 #'   `place`, `organisation` or `message` (a text or media artefact judged as
 #'   such). Any value named matches.
-#' @param source Character. The data family: `"core"` (default), `"nom"`, `"sim"`, `"comp"`, or `"conj"`.
+#' @param source Character. The data family: `"core"` (default), `"nom"`, `"sim"`, `"comp"`, `"conj"`, or `"rank"`.
+#'   For `"rank"` the usable filter is `license`; the other criteria name columns
+#'   its metadata does not have and are refused by name. Filter on the design
+#'   facts (method, seats, positions offered, ...) with
+#'   `irw_metadata(source = "rank")` directly.
 #'   For `"conj"` the filters are `n_respondents`, `n_attributes`, `outcome`,
 #'   `country`, `domain`, `choice_object` and `license`; see [irw_metadata()]
 #'   with `source = "conj"` for the other design facts. The two tag columns are

@@ -29,7 +29,8 @@ local_irw_core_specs <- function(core, env = parent.frame()) {
       sim = irw:::.irw_datasource_specs$sim,
       comp = irw:::.irw_datasource_specs$comp,
       nom = irw:::.irw_datasource_specs$nom,
-      conj = irw:::.irw_datasource_specs$conj
+      conj = irw:::.irw_datasource_specs$conj,
+      rank = irw:::.irw_datasource_specs$rank
     ),
     env = env
   )
@@ -48,7 +49,9 @@ local_irw_core_specs <- function(core, env = parent.frame()) {
     ".irw_redivis_dataset",
     ".irw_require_redivis",
     ".irw_open_dataset_at_version",
-    ".irw_live_table_names"
+    ".irw_live_table_names",
+    ".initialize_datasource",
+    "irw_metadata"
   )
   stats::setNames(lapply(nms, get, envir = ns), nms)
 })

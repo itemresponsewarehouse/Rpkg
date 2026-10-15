@@ -67,9 +67,10 @@ section.
    A pull request that stops at step 4 leaves the shard reachable from R only.
 
 Simulation, competition, and nominal sources each use a single dataset spec
-under their respective keys in the same config object. The conjoint source
-(`$conj`) is a shard list like `$core` -- see [Adding a conjoint
-shard](#adding-a-conjoint-shard). Every key is a *list* of specs, and
+under their respective keys in the same config object. The conjoint and
+rankings sources (`$conj`, `$rank`) are shard lists like `$core` -- see [Adding
+a conjoint shard](#adding-a-conjoint-shard) and [Adding a rankings
+shard](#adding-a-rankings-shard). Every key is a *list* of specs, and
 `.initialize_datasource()` opens all of them, so turning another source into a
 shard list is a config edit, not a code change.
 
@@ -148,6 +149,21 @@ checklist is the item text one above, with these differences:
 4. `src/metadata/16_conjoint.R` lists every shard and warns when a name is in
    two of them; `irw_list_tables(source = "conj")` does the same here.
 5. Re-run `red_up.manifest` as for item text.
+
+### Adding a rankings shard
+
+The rankings source (`source = "rank"`, `.irw_datasource_specs$rank`,
+`IRW_RANK_DATASETS` in `irw/metadata/redivis_config.R`, `RANK_REFS` in
+`Python-pkg/src/irw/config.py`) was registered as a shard list from day one
+(October 2026, ben-domingue/irw#3024): FairVote's cast vote records alone are
+657 contests, so the 1000-table cap is a matter of time. One shard, `irw_rank`
+(the dataset's display name on Redivis is `IRW_rank`; the reference id `93f5`
+is what resolves it). The checklist is the conjoint one above, with
+`irw_rank_2`, `RANK_DEFAULT` in `red_up/targets.py` and
+`src/metadata/18_rankings.R` in place of their conjoint twins. Rankings
+tables do have `id`/`item`/`resp`, so a table that strays into a core shard
+would pass the core validator's column check; `red_up` tells the two apart by
+destination (it runs `irw_validate.rankings` for a rank shard), not by shape.
 
 ## Changing the Redivis owner
 

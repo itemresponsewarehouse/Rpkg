@@ -32,6 +32,15 @@
   conj = list(
     list(user = "datapages", dataset = "irw_conjoint:5wjx"),
     list(user = "datapages", dataset = "irw_conjoint_2:142p")
+  ),
+  ## Rankings: one row per respondent x task x marked position, resp a rank
+  ## (see irw_rank_compress()). A shard list from day one, like $conj: the
+  ## family will pass Redivis' 1000-table cap (FairVote alone is 657 contests).
+  ## The dataset's display name on Redivis is IRW_rank; the reference id is
+  ## what resolves it. Append the next shard here only once it has a published
+  ## release (inst/developer/warehouses.md, "Adding a rankings shard").
+  rank = list(
+    list(user = "datapages", dataset = "irw_rank:93f5")
   )
 )
 
@@ -168,9 +177,9 @@
 #' Session cache key for a non-core datasource
 #'
 #' The cached value is the opened shard list for that source (one dataset for
-#' sim, comp and nom; one or more for conj), in config order.
+#' sim, comp and nom; one or more for conj and rank), in config order.
 #'
-#' @param source Data family, one of \code{"sim"}, \code{"comp"}, \code{"nom"}, \code{"conj"}.
+#' @param source Data family, one of \code{"sim"}, \code{"comp"}, \code{"nom"}, \code{"conj"}, \code{"rank"}.
 #' @keywords internal
 #' @noRd
 .irw_single_datasource_cache_key <- function(source) {
@@ -179,5 +188,6 @@
          comp = "comp_datasource",
          nom = "nom_datasource",
          conj = "conj_datasource",
+         rank = "rank_datasource",
          stop("Unknown single datasource: ", source, call. = FALSE))
 }

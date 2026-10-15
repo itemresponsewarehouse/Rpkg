@@ -136,7 +136,11 @@ neighbour), \code{policy}, \code{scenario} (a situation or case), \code{product_
 \code{place}, \code{organisation} or \code{message} (a text or media artefact judged as
 such). Any value named matches.}
 
-\item{source}{Character. The data family: \code{"core"} (default), \code{"nom"}, \code{"sim"}, \code{"comp"}, or \code{"conj"}.
+\item{source}{Character. The data family: \code{"core"} (default), \code{"nom"}, \code{"sim"}, \code{"comp"}, \code{"conj"}, or \code{"rank"}.
+For \code{"rank"} the usable filter is \code{license}; the other criteria name columns
+its metadata does not have and are refused by name. Filter on the design
+facts (method, seats, positions offered, ...) with
+\code{irw_metadata(source = "rank")} directly.
 For \code{"conj"} the filters are \code{n_respondents}, \code{n_attributes}, \code{outcome},
 \code{country}, \code{domain}, \code{choice_object} and \code{license}; see \code{\link[=irw_metadata]{irw_metadata()}}
 with \code{source = "conj"} for the other design facts. The two tag columns are

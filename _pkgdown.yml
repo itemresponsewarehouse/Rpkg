@@ -63,6 +63,7 @@ reference:
 - contents:
   - irw_long2resp
   - irw_conj_long
+  - irw_rank_compress
   - irw_resp2long
   - irw_check_resp
   - irw_recode

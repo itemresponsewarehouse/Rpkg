@@ -7,7 +7,7 @@
 irw_metadata(source = "core", sim = FALSE, comp = FALSE, nom = FALSE)
 }
 \arguments{
-\item{source}{Character. The data family: \code{"core"} (default), \code{"nom"}, \code{"sim"}, \code{"comp"}, or \code{"conj"} (conjoint experiments; see \code{\link{irw_conj_long}}).}
+\item{source}{Character. The data family: \code{"core"} (default), \code{"nom"}, \code{"sim"}, \code{"comp"}, \code{"conj"} (conjoint experiments; see \code{\link{irw_conj_long}}), or \code{"rank"} (rankings; see \code{\link{irw_rank_compress}}).}
 
 \item{sim}{Deprecated. Use \code{source = "sim"} instead.}
 
@@ -35,4 +35,12 @@ conjoint experiment: \code{n_respondents}, \code{n_rows}, \code{n_tasks},
 \code{";"}, primary first) and \code{choice_object} (what one profile
 represents). Both are filters in \code{\link{irw_filter}}, which documents
 their vocabularies.
+
+For \code{source = "rank"} a row is one rankings table: the counts
+\code{n_respondents}, \code{n_rows}, \code{n_tasks}, \code{n_items},
+\code{max_resp} (highest position marked) and \code{n_duplicate_marks},
+and the design record (\code{method}, \code{seats}, \code{n_positions},
+\code{n_candidates}, \code{n_ballots_cast}, \code{n_ballots_with_marks},
+\code{jurisdiction}, \code{date}, \code{office}, ...), whose codes are
+documented in the irw repo's \code{data/rankings/README.md}.
 }
