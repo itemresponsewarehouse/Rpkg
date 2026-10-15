@@ -13,7 +13,8 @@
     list(user = "datapages", dataset = "item_response_warehouse_3:5xaj"),
     list(user = "datapages", dataset = "item_response_warehouse_4:980f"),
     list(user = "datapages", dataset = "item_response_warehouse_5:3ykx"),
-    list(user = "datapages", dataset = "item_response_warehouse_6:fpe6")
+    list(user = "datapages", dataset = "item_response_warehouse_6:fpe6"),
+    list(user = "datapages", dataset = "item_response_warehouse_7:ej0d")
   ),
   sim = list(
     list(user = "datapages", dataset = "irw_simsyn:0btg")
