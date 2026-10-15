@@ -1,0 +1,10 @@
+id,task,item,resp,cov_precinct
+1,1,c01,1,A
+1,1,c03,2,A
+1,1,c01,3,A
+1,1,c02,4,A
+2,1,c02,1,B
+2,1,(write-in),2,B
+2,1,(write-in),3,B
+2,2,c01,1,B
+3,1,c03,1,A

@@ -7,7 +7,7 @@
 irw_list_tables(source = "core", sim = FALSE, comp = FALSE, nom = FALSE)
 }
 \arguments{
-\item{source}{Character. The data family: \code{"core"} (default), \code{"nom"}, \code{"sim"}, \code{"comp"}, or \code{"conj"} (conjoint experiments; see \code{\link{irw_conj_long}}).}
+\item{source}{Character. The data family: \code{"core"} (default), \code{"nom"}, \code{"sim"}, \code{"comp"}, \code{"conj"} (conjoint experiments; see \code{\link{irw_conj_long}}), or \code{"rank"} (rankings; see \code{\link{irw_rank_compress}}).}
 
 \item{sim}{Deprecated. Use \code{source = "sim"} instead.}
 

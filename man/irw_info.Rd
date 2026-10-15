@@ -19,7 +19,7 @@ irw_info(
 \item{details}{Logical. When \code{TRUE} and \code{table_name} is \code{NULL}, also
 prints a breakdown by dataset. Defaults to \code{FALSE}.}
 
-\item{source}{Character. The data family: \code{"core"} (default), \code{"nom"}, \code{"sim"}, \code{"comp"}, or \code{"conj"} (conjoint experiments; see \code{\link{irw_conj_long}}).}
+\item{source}{Character. The data family: \code{"core"} (default), \code{"nom"}, \code{"sim"}, \code{"comp"}, \code{"conj"} (conjoint experiments; see \code{\link{irw_conj_long}}), or \code{"rank"} (rankings; see \code{\link{irw_rank_compress}}).}
 
 \item{comp}{Deprecated. Use \code{source = "comp"} instead.}
 

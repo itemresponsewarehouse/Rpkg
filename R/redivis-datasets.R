@@ -63,7 +63,7 @@
 
 
 # helper for multiple redivis datasets
-.irw_sources <- c("core", "nom", "sim", "comp", "conj")
+.irw_sources <- c("core", "nom", "sim", "comp", "conj", "rank")
 
 #' Resolve data source from \code{source} or deprecated \code{nom}/\code{sim}/\code{comp}
 #'
@@ -266,6 +266,7 @@
 #' - If \code{source = "comp"}, returns the IRW competition dataset (\code{irw_competitions:cmd7})
 #' - If \code{source = "nom"}, returns the IRW nominal dataset (\code{irw_nominal:614n})
 #' - If \code{source = "conj"}, returns every conjoint shard (\code{irw_conjoint}, ...)
+#' - If \code{source = "rank"}, returns every rankings shard (\code{irw_rank}, ...)
 #' - If \code{source = "core"} (default), returns all main IRW production datasets
 #'
 #' The list is in config order (oldest first); callers pass it through
@@ -292,7 +293,7 @@
   }
 
   # Every non-core source is a spec list too. sim, comp and nom have one entry;
-  # conj has one per shard. Opening them all through .irw_open_datasources()
+  # conj and rank have one per shard. Opening them all through .irw_open_datasources()
   # gives a shard list the same semantics as core: an unreleased shard is
   # skipped with a warning instead of failing every lookup. The list is
   # re-opened when the configured specs change (package upgrade, load_all()).
@@ -316,6 +317,7 @@
   switch(source,
          core = "warehouse",
          conj = "conjoint shard",
+         rank = "rankings shard",
          paste(source, "dataset"))
 }
 
@@ -323,7 +325,7 @@
 #'
 #' Core resolves such a name to its newest copy silently (ARCHITECTURE.md
 #' section 2, and the daily drift report watches for it). For the other shard
-#' lists -- conj today -- a duplicate is an upload mistake that must not be
+#' lists -- conj and rank today -- a duplicate is an upload mistake that must not be
 #' merged away without a word, so \code{irw_list_tables()} says which names
 #' it saw twice before keeping the newest copy.
 #'

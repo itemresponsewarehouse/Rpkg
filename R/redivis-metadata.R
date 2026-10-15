@@ -92,6 +92,31 @@
   .irw_env$conj_metadata_tibble
 }
 
+## The rankings source's metadata (irw_meta rank_metadata, written by
+## src/metadata/18_rankings.R): one row per table with counts from the data
+## (respondents, rows, tasks, items, highest position, duplicate marks) and the
+## design record from data/rankings/design_tables.csv (method, seats,
+## positions offered, candidates, ballots cast and with marks, ...). Its own
+## shape, as every non-core source has.
+.fetch_rank_metadata_table <- function() {
+  dataset <- .irw_open_meta_dataset()
+  latest_version_tag <- dataset$properties$version$tag
+
+  if (!is.null(latest_version_tag) &&
+      exists("rank_metadata_tibble", envir = .irw_env) &&
+      exists("rank_metadata_version", envir = .irw_env) &&
+      identical(.irw_env$rank_metadata_version, latest_version_tag)) {
+    return(.irw_env$rank_metadata_tibble)
+  }
+
+  table <- dataset$table("rank_metadata")
+  metadata_tibble <- table$to_tibble()
+  .irw_env$rank_metadata_tibble <- .irw_filter_rows_to_live_tables(metadata_tibble, source = "rank")
+  .irw_env$rank_metadata_version <- latest_version_tag
+
+  .irw_env$rank_metadata_tibble
+}
+
 #' Fetch Competition Metadata Table
 #'
 #' Retrieves the comps_metadata table from Redivis user("datapages")$dataset("irw_meta").
@@ -206,6 +231,28 @@
 
   .irw_env$conj_biblio_version <- latest_version_tag
   .irw_env$conj_biblio_tibble <- filtered_biblio
+  filtered_biblio
+}
+
+## The rankings source's bibliography (irw_meta rank_biblio, from the
+## automated dictionary file alone, as conj). Same columns as the other biblios.
+.fetch_rank_biblio_table <- function() {
+  dataset <- .irw_open_meta_dataset()
+  latest_version_tag <- dataset$properties$version$tag
+
+  if (!is.null(latest_version_tag) &&
+      exists("rank_biblio_tibble", envir = .irw_env) &&
+      exists("rank_biblio_version", envir = .irw_env) &&
+      identical(.irw_env$rank_biblio_version, latest_version_tag)) {
+    return(.irw_env$rank_biblio_tibble)
+  }
+
+  table <- dataset$table("rank_biblio")
+  biblio_tibble <- table$to_tibble()
+  filtered_biblio <- .irw_filter_rows_to_live_tables(biblio_tibble, source = "rank")
+
+  .irw_env$rank_biblio_version <- latest_version_tag
+  .irw_env$rank_biblio_tibble <- filtered_biblio
   filtered_biblio
 }
 
