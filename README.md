@@ -9,21 +9,28 @@ what, where the data lives, and which document is authoritative when two disagre
 
 ## Installation
 
-``` r
-# Install the development version of irw from GitHub
-# install.packages("pak")  # if you don't already have pak
-pak::pak("itemresponsewarehouse/Rpkg")
+`irw` is on [CRAN](https://cran.R-project.org/package=irw):
 
-# Load the package
+``` r
+install.packages("irw")
 library(irw)
 ```
 
 Downloading tables also needs [redivis](https://github.com/redivis/redivis-r),
-the client for the warehouse itself. It is not on CRAN and `pak` does not install
-it for you; get it from r-universe:
+the client for the warehouse itself. It is not on CRAN and is not installed for
+you; get it from r-universe:
 
 ``` r
 install.packages("redivis", repos = c("https://redivis.r-universe.dev", getOption("repos")))
+```
+
+The development version carries features that are not yet in the CRAN release
+--- currently the rankings source (`irw_fetch(source = "rank")` and
+`irw_rank_compress()`). If you need those, install from GitHub instead:
+
+``` r
+# install.packages("pak")  # if you don't already have pak
+pak::pak("itemresponsewarehouse/Rpkg")
 ```
 
 The functions that do not touch the warehouse --- `irw_simdata()`,
