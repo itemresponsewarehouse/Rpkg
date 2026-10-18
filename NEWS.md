@@ -11,6 +11,8 @@
 
 # irw 1.3.1
 
+First CRAN release (accepted 2026-10-18).
+
 Changes asked for in CRAN's review of the first submission:
 
 - **Breaking:** irw_download() and irw_save_bibtex() no longer have a default output path; name the file with `path` / `output_file`. Nothing is written to the working directory by default.
