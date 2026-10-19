@@ -60,6 +60,27 @@
   out[!is.na(out)]
 }
 
+# biblio stores an absent Source_via as the literal string "NA" -- it is written
+# from R -- not as SQL NULL, so neither IS NOT NULL nor a non-empty test excludes
+# those rows. Without this every table carries a via of "NA" and fetching any of
+# them prints "was found via NA." (ben-domingue/irw#2421). Applied to the cache
+# as well as the query -- the filter sits in .irw_source_note_lookup(), the one
+# seam both paths pass through. Keep in step with the Python twin,
+# src/irw/utils/redivis/source_note.py.
+.irw_not_a_source <- c("", "na", "nan", "null", "none")
+
+.irw_is_a_source <- function(via) {
+  !is.na(via) & !tolower(trimws(via)) %in% .irw_not_a_source
+}
+
+# The query's exclusion, built from the same vector, so the SQL and the R-side
+# filter cannot disagree. The empty string is left to TRIM(Source_via) != ''.
+.irw_source_note_sql_exclusion <- function() {
+  values <- setdiff(.irw_not_a_source, "")
+  sprintf("LOWER(TRIM(Source_via)) NOT IN (%s)",
+          paste(sprintf("'%s'", values), collapse = ", "))
+}
+
 .irw_source_note_cache_file <- "source_via.csv"
 .irw_source_note_ttl_seconds <- 7 * 24 * 3600
 
@@ -107,7 +128,8 @@
     ref <- .irw_open_meta_dataset()$table("biblio")$qualified_reference
     out <- suppressWarnings(redivis::redivis$query(sprintf(paste(
       "SELECT `table`, Source_via, URL__for_data_ FROM `%s`",
-      "WHERE Source_via IS NOT NULL AND TRIM(Source_via) != ''"), ref))$to_tibble())
+      "WHERE Source_via IS NOT NULL AND TRIM(Source_via) != ''",
+      paste("AND", .irw_source_note_sql_exclusion())), ref))$to_tibble())
     url <- as.character(out$URL__for_data_)
     url[is.na(url) | trimws(url) %in% c("", "NA")] <- ""
     data.frame(table = tolower(as.character(out$table)),
@@ -123,6 +145,9 @@
     lookup <- .irw_source_note_query()
     .irw_source_note_write_cache(lookup)
   }
+  # One seam for both paths, so a cache written before this fix heals on read
+  # rather than mislabelling for the rest of its week.
+  lookup <- lookup[.irw_is_a_source(lookup$via), , drop = FALSE]
   .irw_env$source_note_lookup <- lookup
   lookup
 }
