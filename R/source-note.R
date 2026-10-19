@@ -73,6 +73,14 @@
   !is.na(via) & !tolower(trimws(via)) %in% .irw_not_a_source
 }
 
+# The query's exclusion, built from the same vector, so the SQL and the R-side
+# filter cannot disagree. The empty string is left to TRIM(Source_via) != ''.
+.irw_source_note_sql_exclusion <- function() {
+  values <- setdiff(.irw_not_a_source, "")
+  sprintf("LOWER(TRIM(Source_via)) NOT IN (%s)",
+          paste(sprintf("'%s'", values), collapse = ", "))
+}
+
 .irw_source_note_cache_file <- "source_via.csv"
 .irw_source_note_ttl_seconds <- 7 * 24 * 3600
 
@@ -121,7 +129,7 @@
     out <- suppressWarnings(redivis::redivis$query(sprintf(paste(
       "SELECT `table`, Source_via, URL__for_data_ FROM `%s`",
       "WHERE Source_via IS NOT NULL AND TRIM(Source_via) != ''",
-      "AND LOWER(TRIM(Source_via)) NOT IN ('na', 'nan', 'null', 'none')"), ref))$to_tibble())
+      paste("AND", .irw_source_note_sql_exclusion())), ref))$to_tibble())
     url <- as.character(out$URL__for_data_)
     url[is.na(url) | trimws(url) %in% c("", "NA")] <- ""
     data.frame(table = tolower(as.character(out$table)),

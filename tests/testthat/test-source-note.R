@@ -154,12 +154,16 @@ test_that("a cache written before the NA fix heals on read", {
   expect_length(notes(.irw_source_note("bailon_2020_covidaffect")), 1)
 })
 
-test_that("the query names the NA string, in step with the Python twin", {
-  # The real query is not run here; this pins the SQL so the two packages
-  # cannot drift apart silently.
-  src <- paste(readLines(test_path("..", "..", "R", "source-note.R"),
-                         warn = FALSE), collapse = "\n")
-  expect_match(src, "NOT IN \\('na', 'nan', 'null', 'none'\\)")
+test_that("the query's exclusion is built from the same vector as the filter", {
+  # Not a pinned string: the SQL is generated from .irw_not_a_source, so the
+  # clause and the R-side filter cannot drift apart. Keep the vector in step
+  # with the Python twin's _NOT_A_SOURCE.
+  clause <- .irw_source_note_sql_exclusion()
+  expect_match(clause, "LOWER(TRIM(Source_via)) NOT IN", fixed = TRUE)
+  for (value in setdiff(.irw_not_a_source, "")) {
+    expect_match(clause, sprintf("'%s'", value), fixed = TRUE)
+  }
+  expect_false(grepl("''", clause, fixed = TRUE))
 })
 
 test_that("the cache file is the one the Python package writes", {
