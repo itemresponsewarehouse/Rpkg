@@ -122,6 +122,46 @@ test_that("the lookup is kept on disk for a week, then refreshed", {
   expect_equal(calls, 2)
 })
 
+test_that("the literal string \"NA\" is not a source", {
+  # biblio writes an absent Source_via as "NA", not SQL NULL, so the query's
+  # filter has to name it -- otherwise every table prints "found via NA".
+  fresh_session()
+  with_nas <- function() {
+    data.frame(
+      table = c("bailon_2020_covidaffect", "environment_ltm", "pks_probability"),
+      via = c("openESM", "NA", "  na  "),
+      url = c("https://zenodo.org/records/22763396", "", ""),
+      stringsAsFactors = FALSE
+    )
+  }
+  local_mocked_bindings(.irw_source_note_query = function() with_nas())
+  expect_length(notes(.irw_source_note("environment_ltm")), 0)
+  expect_length(notes(.irw_source_note("pks_probability")), 0)
+  n <- notes(.irw_source_note("bailon_2020_covidaffect"))
+  expect_length(n, 1)
+  expect_match(n, "openESM")
+})
+
+test_that("a cache written before the NA fix heals on read", {
+  fresh_session()
+  path <- .irw_source_note_path()
+  dir.create(dirname(path), recursive = TRUE, showWarnings = FALSE)
+  writeLines(c("table,via,url",
+               "environment_ltm,NA,",
+               "bailon_2020_covidaffect,openESM,"), path, useBytes = TRUE)
+  local_mocked_bindings(.irw_source_note_query = function() stop("should read the file"))
+  expect_length(notes(.irw_source_note("environment_ltm")), 0)
+  expect_length(notes(.irw_source_note("bailon_2020_covidaffect")), 1)
+})
+
+test_that("the query names the NA string, in step with the Python twin", {
+  # The real query is not run here; this pins the SQL so the two packages
+  # cannot drift apart silently.
+  src <- paste(readLines(test_path("..", "..", "R", "source-note.R"),
+                         warn = FALSE), collapse = "\n")
+  expect_match(src, "NOT IN \\('na', 'nan', 'null', 'none'\\)")
+})
+
 test_that("the cache file is the one the Python package writes", {
   fresh_session()
   path <- .irw_source_note_path()
