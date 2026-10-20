@@ -1,5 +1,6 @@
-# Opens a release PR: bumps the version in DESCRIPTION and writes the NEWS.md
-# entry from the pull requests merged since the last release tag.
+# Opens a release PR: bumps the version in DESCRIPTION, names the NEWS.md
+# development section after it, and appends the pull requests merged since the
+# last release tag to that section.
 #
 # Run it from the Actions tab (release-prepare.yaml -> Run workflow) and pick
 # patch, minor or major. Merging the PR it opens is what actually releases:
@@ -40,15 +41,22 @@ jobs:
           # No `| head -1` anywhere in this workflow: head exits early, git and
           # sed take SIGPIPE, and `set -o pipefail` turns that into exit 141.
           current=$(awk '/^Version:/ {sub(/^Version:[[:space:]]*/, ""); print; exit}' DESCRIPTION)
-          if ! printf '%s' "$current" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+$'; then
+          # A fourth component is a development version: usethis writes
+          # 1.3.1.9001 for "1.3.1 plus unreleased work", which is what
+          # DESCRIPTION carries between releases. It is parsed and then
+          # discarded, so a patch bump from 1.3.1.9001 is 1.3.2 and a minor
+          # bump is 1.4.0. The guard itself stays: a version this cannot
+          # parse must stop the run rather than be bumped to something wrong.
+          if ! printf '%s' "$current" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+(\.[0-9]+)?$'; then
             echo "DESCRIPTION has a version this workflow cannot bump: '$current'" >&2
-            echo "Expected major.minor.patch." >&2
+            echo "Expected major.minor.patch, optionally with a development suffix." >&2
             exit 1
           fi
           major=${current%%.*}
           rest=${current#*.}
           minor=${rest%%.*}
-          patch=${rest#*.}
+          rest=${rest#*.}
+          patch=${rest%%.*}
           case "${{ inputs.bump }}" in
             major) major=$((major + 1)); minor=0; patch=0 ;;
             minor) minor=$((minor + 1)); patch=0 ;;
@@ -107,12 +115,42 @@ jobs:
           set -euo pipefail
           next="${{ steps.version.outputs.next }}"
           sed -i "s/^Version:.*/Version: $next/" DESCRIPTION
-          {
-            printf '# irw %s\n\n' "$next"
-            cat changelog.md
-            printf '\n'
-            if [ -f NEWS.md ]; then cat NEWS.md; fi
-          } > NEWS.md.tmp
+          # NEWS.md opens with "# irw (development version)" whenever anything
+          # has been written by hand since the last release, and those notes
+          # are the notes for *this* release. So that section is renamed in
+          # place and the generated list appended at the end of it. Prepending
+          # a second section instead would label the hand-written notes as
+          # unreleased and leave the release itself carrying only PR titles.
+          # With no development section there is nothing to orphan, and the
+          # generated section goes on top as before.
+          dev='# irw (development version)'
+          # No `head`: sed and awk here read the whole file, so nothing can
+          # exit early and take SIGPIPE under `set -o pipefail`.
+          first=$(sed -n '1p' NEWS.md 2>/dev/null || true)
+          if [ -f NEWS.md ] && [ "$first" = "$dev" ]; then
+            # First line of the next top-level section, empty if there is none.
+            boundary=$(awk 'NR > 1 && /^# irw / { print NR; exit }' NEWS.md)
+            {
+              printf '# irw %s\n' "$next"
+              if [ -n "$boundary" ]; then
+                sed -n "2,$((boundary - 1))p" NEWS.md
+              else
+                sed -n '2,$p' NEWS.md
+              fi
+              cat changelog.md
+              printf '\n'
+              if [ -n "$boundary" ]; then
+                sed -n "$boundary,\$p" NEWS.md
+              fi
+            } > NEWS.md.tmp
+          else
+            {
+              printf '# irw %s\n\n' "$next"
+              cat changelog.md
+              printf '\n'
+              if [ -f NEWS.md ]; then cat NEWS.md; fi
+            } > NEWS.md.tmp
+          fi
           mv NEWS.md.tmp NEWS.md
           rm changelog.md
 
@@ -127,7 +165,7 @@ jobs:
           git add DESCRIPTION NEWS.md
           git commit -m "Release irw $next"
           git push --force origin "$branch"
-          body=$(printf 'Bumps `DESCRIPTION` to %s and adds the `NEWS.md` entry below, generated from the pull requests merged since the last release.\n\nEdit `NEWS.md` on this branch if the generated list needs tidying. Merging tags `v%s` and publishes the release automatically.\n' "$next" "$next")
+          body=$(printf 'Bumps `DESCRIPTION` to %s. The `NEWS.md` development section is renamed to `# irw %s`, and the pull requests merged since the last release are listed at the end of it.\n\nThat generated list is there to catch merges nobody wrote a note for: fold anything it turns up into the notes above it, then delete the list before merging. Merging tags `v%s` and publishes the release automatically.\n' "$next" "$next" "$next")
 
           # Creating the PR needs "Allow GitHub Actions to create and approve
           # pull requests" (Settings -> Actions -> General), which an org can
