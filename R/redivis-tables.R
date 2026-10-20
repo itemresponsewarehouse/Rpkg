@@ -15,10 +15,19 @@
 .fetch_redivis_table <- function(name, source = "core", sim = FALSE, comp = FALSE, nom = FALSE) {
   if (!is.character(name) || length(name) != 1) stop("The 'name' parameter must be a single character string.")
   source <- .irw_resolve_source(source = source, sim = sim, comp = comp, nom = nom)
-  ds_list <- .irw_order_datasources(.initialize_datasource(source = source), source = source)
+  ds_list <- .irw_shard_first(
+    .irw_order_datasources(.initialize_datasource(source = source), source = source),
+    name = name, source = source, build = FALSE
+  )
   errors <- .irw_new_error_collector()
 
-  for (ds in ds_list) {
+  i <- 0L
+  while (i < length(ds_list)) {
+    i <- i + 1L
+    if (i == 2L) {
+      ds_list <- .irw_shard_first_after_miss(ds_list, name = name, source = source)
+    }
+    ds <- ds_list[[i]]
     ds$get()
     result <- tryCatch(
       {
