@@ -1,0 +1,112 @@
+# Weekly R-devel check (ben-domingue/irw#3091, item 7).
+#
+# Why this exists separately from R-CMD-check.yaml: that workflow fires only on
+# pushes to main and on pull requests. Under a quarterly CRAN cadence that
+# leaves ten-to-twelve-week stretches with no devel signal at all, which is
+# precisely the window of greatest exposure -- CRAN cuts R x.y.0 every April,
+# and a package whose check ERRORs on a new x.y.0 "will be archived". The cost
+# of being slow to notice is archival; the cost of this job is one runner-hour
+# a month.
+#
+# Why it checks WITHOUT Suggests, unlike the devel job in the matrix: CRAN does
+# not install from Additional_repositories, so its machines check irw without
+# redivis, and that is the configuration whose failure can archive us. Checking
+# hard dependencies only also keeps the job off the Suggests chain that is
+# breaking the matrix devel job today -- CRAN published a future.apply needing
+# future >= 1.80.0, reached through mirt, and the devel runner's binary
+# snapshot carries 1.75.0, so that job dies in dependency setup before R CMD
+# check starts. Nothing here resolves mirt, so nothing here can die that way.
+#
+# Why the dependency solve is allowed to fail softly: a devel runner installs
+# from a binary snapshot that is somebody else's, and a death there says
+# nothing about this package. A cron that mails a weekly failure with no
+# bearing on the code teaches its one reader to route the mail to a folder,
+# which destroys the signal the job exists to carry. So a death in setup
+# reports green with a loud job summary, and only a real R CMD check failure
+# goes red. Narrowly: continue-on-error sits on that one step, in this
+# scheduled workflow alone. Pull requests still gate on a real dependency
+# failure through R-CMD-check.yaml, which has no such escape.
+#
+# Mondays 07:00 UTC, which is nothing in particular -- the deadline this
+# watches is in April, so the day of the week is free.
+
+name: r-devel-weekly.yaml
+
+on:
+  schedule:
+    - cron: "0 7 * * 1"
+  workflow_dispatch:
+
+permissions: read-all
+
+jobs:
+  r-devel:
+    runs-on: ubuntu-latest
+    name: ubuntu-latest (devel, no redivis)
+    timeout-minutes: 45
+
+    env:
+      GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+      R_KEEP_PKG_SOURCE: yes
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: r-lib/actions/setup-pandoc@v2
+
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          r-version: 'devel'
+          http-user-agent: 'release'
+          use-public-rspm: true
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libcurl4-openssl-dev
+
+      - uses: r-lib/actions/setup-r-dependencies@v2
+        id: deps
+        continue-on-error: true
+        with:
+          dependencies: '"hard"'
+          extra-packages: |
+            any::rcmdcheck
+            any::testthat
+            any::withr
+            any::evaluate
+          needs: check
+
+      # A dependency-setup death is this job reporting that it could not run,
+      # not that the package is broken. Say so where someone looking at the run
+      # will see it, and stop -- running the check on a half-installed library
+      # would produce a failure that means even less.
+      - name: Report a dependency-setup death
+        if: steps.deps.outcome == 'failure'
+        run: |
+          {
+            echo "## R-devel check did not run"
+            echo
+            echo "\`setup-r-dependencies\` failed on the R-devel runner, so"
+            echo "\`R CMD check\` never started. That is almost always the"
+            echo "devel binary snapshot, not this package -- see the header of"
+            echo "\`.github/workflows/r-devel-weekly.yaml\`. This job is green"
+            echo "because a weekly mail about somebody else's snapshot is a"
+            echo "mail that stops being read, **not** because the check passed."
+            echo
+            echo "If this is the third week in a row, the snapshot is not the"
+            echo "problem any more. Read the setup log."
+          } >> "$GITHUB_STEP_SUMMARY"
+          echo "::warning title=R-devel check skipped::Dependency setup failed; R CMD check did not run."
+
+      # _R_CHECK_FORCE_SUGGESTS_ is what makes a hard-dependency-only library a
+      # legitimate check rather than a check that fails on missing Suggests;
+      # NOT_CRAN=false makes it CRAN's check rather than ours.
+      - uses: r-lib/actions/check-r-package@v2
+        if: steps.deps.outcome == 'success'
+        env:
+          NOT_CRAN: "false"
+          _R_CHECK_FORCE_SUGGESTS_: "false"
+        with:
+          upload-snapshots: true
+          build_args: 'c("--no-manual","--compact-vignettes=gs+qpdf")'
