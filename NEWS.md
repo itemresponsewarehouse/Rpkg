@@ -1,4 +1,4 @@
-# irw (development version)
+# irw 1.4.0
 
 - The core, item text, conjoint and rankings shard lists are now a floor rather than the whole truth: once per session irw reads the Redivis organization catalog and includes any shard that continues a family it already knows about. A shard seeded after a release used to be invisible to every installed copy, and invisible *silently* — a shard absent from the spec list produces no loop iteration, so neither warning path could fire, and `irw_list_tables()`, `irw_metadata()` and `irw_filter()` just came back short. The seventh core warehouse released on 2026-10-15 with 761 tables and no released client could see any of them. Discovery extends a family but never invents one, so a genuinely new data family still errors as before; it adopts a shard only once that shard has a published version and is publicly readable; it appends and never reorders; and it needs no login. A discovered shard is pinnable by `irw_use_version()` like any other dataset. Switch it off with `options(irw.shard_discovery = FALSE)` or `IRW_SHARD_DISCOVERY=0` (ben-domingue/irw#3091).
 
@@ -14,6 +14,9 @@
 - irw_metadata(source = "conj") returns irw_meta's `conj_metadata` (design counts and design facts per experiment), and irw_info() on a conjoint table now shows its description, DOI, licence and reference. irw_filter(source = "conj") filters on `n_respondents`, `n_attributes`, `outcome` ("choice"/"rating"), `country` and `license`, and irw_license_options(source = "conj") lists its licences.
 
 - The error for a missing `redivis` client now prints an install command that works where it is pasted. `getOption("repos")` is the unresolved placeholder `"@CRAN@"` in a session with no profile, so under `Rscript` the command we told people to run failed with "trying to use CRAN without setting a mirror"; the message now resolves the mirror itself (reported by Padma Korsepati).
+
+- The seventh core warehouse (`item_response_warehouse_7`) is in the configured shard list. 1.3.1's list stopped at the sixth, so its table listings were short by that shard's 761 tables with nothing to say so (itemresponsewarehouse/Rpkg#197).
+- `irw_info()` no longer reports the string `"NA"` as a table's source. A missing source note read back from the metadata as the two characters `NA` rather than as a missing value, and was printed as though it were a source (itemresponsewarehouse/Rpkg#200).
 
 # irw 1.3.1
 
