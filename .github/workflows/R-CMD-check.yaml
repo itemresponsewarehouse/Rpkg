@@ -109,20 +109,27 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y libcurl4-openssl-dev
 
+      # Before the dependency solve, because pak resolves the Suggests on
+      # redivis as `installed::` -- it is in no repo pak reads, so a solve
+      # without it on disk fails outright.
+      - name: Install Redivis from GitHub
+        run: |
+          Rscript -e "if (!requireNamespace('remotes', quietly = TRUE)) install.packages('remotes')"
+          Rscript -e "remotes::install_github('redivis/redivis-r', ref='main')"
+          Rscript -e "if (!requireNamespace('redivis', quietly = TRUE)) stop('redivis failed to install; see the build output above')"
+
       - uses: r-lib/actions/setup-r-dependencies@v2
         with:
           extra-packages: any::testthat
           needs: check
 
-      # After the dependency solve, not before: pak installs redivis from its
-      # own cache, which can hold a build older than the 0.12.14 that reads
-      # anonymously, and it would overwrite anything installed earlier. The
-      # version check is the point of the job -- without it a stale client
-      # makes the test skip and the job go green on nothing.
-      - name: Install Redivis from GitHub
+      # And again after it. pak installs redivis from its own cache, which can
+      # hold a build older than the 0.12.14 that reads anonymously, over the
+      # one above. The version check is the point of the job: without it a
+      # stale client makes the test skip and the job goes green on nothing.
+      - name: Pin Redivis to a build that reads anonymously
         run: |
-          Rscript -e "if (!requireNamespace('remotes', quietly = TRUE)) install.packages('remotes')"
-          Rscript -e "remotes::install_github('redivis/redivis-r', ref='main', upgrade = 'never')"
+          Rscript -e "remotes::install_github('redivis/redivis-r', ref='main', upgrade = 'never', force = TRUE)"
           Rscript -e 'v <- utils::packageVersion("redivis"); cat("redivis", format(v), "\n"); if (v < "0.12.14") stop("redivis ", format(v), " authenticates every request; this job needs >= 0.12.14")'
 
       - name: Install irw
