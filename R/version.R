@@ -69,10 +69,21 @@
 #' @keywords internal
 #' @noRd
 .irw_pinnable_specs <- function() {
+  # The effective lists, not the configured ones: a shard found by discovery
+  # has to be pinnable like any other dataset, or `irw_use_version()` would
+  # read it at its current release while every configured shard honoured the
+  # pin -- mixing today's data into a run meant to reproduce an old one. The
+  # manifest is built from the warehouse rather than from this package, so it
+  # already carries rows for shards the installed version has never heard of,
+  # and one that did not exist at the pinned version drops out through
+  # `.irw_absent_version` exactly as a configured shard would.
   specs <- c(
-    unlist(.irw_datasource_specs, recursive = FALSE, use.names = FALSE),
+    unlist(
+      lapply(names(.irw_datasource_specs), .irw_effective_specs),
+      recursive = FALSE, use.names = FALSE
+    ),
     list(.irw_meta_spec),
-    .irw_itemtext_specs
+    .irw_effective_specs("text")
   )
   names(specs) <- vapply(specs, function(s) .irw_dataset_key(s$dataset), character(1))
   specs

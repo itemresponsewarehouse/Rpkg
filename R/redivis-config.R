@@ -163,7 +163,7 @@
 #' @keywords internal
 #' @noRd
 .irw_core_warehouse_fingerprint <- function() {
-  .irw_specs_fingerprint(.irw_datasource_specs$core)
+  .irw_specs_fingerprint(.irw_effective_specs("core"))
 }
 
 #' Fingerprint of configured item text shards (for session cache invalidation)
@@ -171,7 +171,7 @@
 #' @keywords internal
 #' @noRd
 .irw_itemtext_fingerprint <- function() {
-  .irw_specs_fingerprint(.irw_itemtext_specs)
+  .irw_specs_fingerprint(.irw_effective_specs("text"))
 }
 
 #' Session cache key for a non-core datasource

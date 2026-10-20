@@ -10,6 +10,38 @@ This note is for package maintainers only (not included in the user-facing READM
 > See [Adding a warehouse everywhere else](#adding-a-warehouse-everywhere-else)
 > at the bottom before you open a pull request.
 
+## Discovery means this is no longer a race against a release
+
+Since 2026-10-20 the shard lists are a **floor, not the whole truth**. Once per
+session `R/shard-discovery.R` reads the Redivis organization catalog
+(`GET /api/v1/organizations/datapages/datasets`, public, no credentials) and
+appends any shard that continues a family already in the config. So a shard
+seeded after a release is reachable from the released package, and the counts
+stop silently going short between CRAN cycles (ben-domingue/irw#3091).
+
+Verified against the live warehouse with the core list truncated to six:
+
+| configured | discovery | tables listed |
+|---|---|---|
+| 6 shards | off | 5,689 |
+| 6 shards | **on** | **6,450** |
+| 7 shards | off | 6,450 |
+
+**Still edit the list anyway.** Discovery is a safety net for users on an old
+release, not a substitute for the config:
+
+- it extends a family, it never invents one, so a *new family* still needs all
+  the work below;
+- it adopts a shard only once that shard has a published version and is
+  publicly readable;
+- the package's filter vocabularies, documentation and `irw_fetch()` shard
+  ordering still come from the config;
+- it is off under `options(irw.shard_discovery = FALSE)` or
+  `IRW_SHARD_DISCOVERY=0`, and silently inert with no network.
+
+A user whose session discovers a shard is told once, by `message()`, that their
+irw predates it.
+
 ## Where to edit
 
 Within this package, all Redivis dataset identifiers live in one place:

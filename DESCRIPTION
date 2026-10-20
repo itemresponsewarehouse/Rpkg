@@ -22,6 +22,7 @@ Imports:
     glue,
     httr,
     imv,
+    jsonlite,
     tibble,
     tools,
     utils,

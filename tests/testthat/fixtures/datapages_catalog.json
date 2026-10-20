@@ -1,0 +1,243 @@
+{
+ "kind": "datasetList",
+ "results": [
+  {
+   "referenceId": "07b6",
+   "tableCount": 903,
+   "scopedReference": "irw_text:07b6:v37_0",
+   "name": "IRW_text",
+   "publicAccessLevel": "data"
+  },
+  {
+   "referenceId": "0btg",
+   "tableCount": 17,
+   "scopedReference": "irw_simsyn:0btg:v1_4",
+   "name": "IRW_simsyn",
+   "publicAccessLevel": "data"
+  },
+  {
+   "referenceId": "142p",
+   "tableCount": 337,
+   "scopedReference": "irw_conjoint_2:142p:v1_4",
+   "name": "IRW_conjoint 2",
+   "publicAccessLevel": "data"
+  },
+  {
+   "referenceId": "20k3",
+   "tableCount": 6,
+   "scopedReference": "many_babies_4:20k3:v1_0",
+   "name": "Many Babies 4",
+   "publicAccessLevel": "data"
+  },
+  {
+   "referenceId": "2zy7",
+   "tableCount": 14,
+   "scopedReference": "refbank:2zy7:v13_4",
+   "name": "refbank",
+   "publicAccessLevel": "data"
+  },
+  {
+   "referenceId": "3ykx",
+   "tableCount": 962,
+   "scopedReference": "item_response_warehouse_5:3ykx:v9_0",
+   "name": "Item Response Warehouse 5",
+   "publicAccessLevel": "data"
+  },
+  {
+   "referenceId": "5wjx",
+   "tableCount": 806,
+   "scopedReference": "irw_conjoint:5wjx:v4_2",
+   "name": "IRW_conjoint",
+   "publicAccessLevel": "data"
+  },
+  {
+   "referenceId": "5xaj",
+   "tableCount": 957,
+   "scopedReference": "item_response_warehouse_3:5xaj:v14_0",
+   "name": "Item Response Warehouse 3",
+   "publicAccessLevel": "data"
+  },
+  {
+   "referenceId": "614n",
+   "tableCount": 140,
+   "scopedReference": "irw_nominal:614n:v5_0",
+   "name": "IRW_nominal",
+   "publicAccessLevel": "data"
+  },
+  {
+   "referenceId": "627v",
+   "tableCount": 13,
+   "scopedReference": "wordbank:627v:v3_4",
+   "name": "Wordbank",
+   "publicAccessLevel": "data"
+  },
+  {
+   "referenceId": "81tq",
+   "tableCount": 4,
+   "scopedReference": "metalab:81tq:v1_1",
+   "name": "metalab",
+   "publicAccessLevel": "data"
+  },
+  {
+   "referenceId": "93f5",
+   "tableCount": 371,
+   "scopedReference": "irw_rank:93f5:v1_3",
+   "name": "IRW_rank",
+   "publicAccessLevel": "data"
+  },
+  {
+   "referenceId": "980f",
+   "tableCount": 979,
+   "scopedReference": "item_response_warehouse_4:980f:v14_0",
+   "name": "Item Response Warehouse 4",
+   "publicAccessLevel": "data"
+  },
+  {
+   "referenceId": "9esa",
+   "tableCount": 4,
+   "scopedReference": "many_babies_1:9esa:v2_0",
+   "name": "Many Babies 1",
+   "publicAccessLevel": "data"
+  },
+  {
+   "referenceId": "9g3v",
+   "tableCount": 1,
+   "scopedReference": "palmerpenguins:9g3v:v1_0",
+   "name": "palmerpenguins",
+   "publicAccessLevel": "data"
+  },
+  {
+   "referenceId": "9g4m",
+   "tableCount": 883,
+   "scopedReference": "irw_text_3:9g4m:v5_2",
+   "name": "IRW_text 3",
+   "publicAccessLevel": "data"
+  },
+  {
+   "referenceId": "a1c7",
+   "tableCount": 4,
+   "scopedReference": "acceleration:a1c7:v1_1",
+   "name": "Acceleration",
+   "publicAccessLevel": "data"
+  },
+  {
+   "referenceId": "a3v0",
+   "tableCount": 11,
+   "scopedReference": "peekbank:a3v0:v2_0",
+   "name": "peekbank",
+   "publicAccessLevel": "data"
+  },
+  {
+   "referenceId": "ae47",
+   "tableCount": 930,
+   "scopedReference": "irw_text_2:ae47:v17_0",
+   "name": "IRW_text 2",
+   "publicAccessLevel": "data"
+  },
+  {
+   "referenceId": "as2e",
+   "tableCount": 980,
+   "scopedReference": "item_response_warehouse:as2e:v74_0",
+   "name": "Item Response Warehouse",
+   "publicAccessLevel": "data"
+  },
+  {
+   "referenceId": "b6q6",
+   "tableCount": 10,
+   "scopedReference": "childes_db:b6q6:v1_4",
+   "name": "childes-db",
+   "publicAccessLevel": "data"
+  },
+  {
+   "referenceId": "b9wm",
+   "tableCount": 1,
+   "scopedReference": "erw:b9wm:v1_0",
+   "name": "erw",
+   "publicAccessLevel": "data"
+  },
+  {
+   "referenceId": "bdxt",
+   "tableCount": 19,
+   "scopedReference": "irw_meta:bdxt:v45_0",
+   "name": "IRW_meta",
+   "publicAccessLevel": "data"
+  },
+  {
+   "referenceId": "cmd7",
+   "tableCount": 110,
+   "scopedReference": "irw_competitions:cmd7:v6_3",
+   "name": "IRW_competitions",
+   "publicAccessLevel": "data"
+  },
+  {
+   "referenceId": "cyfn",
+   "tableCount": 1,
+   "scopedReference": "harmonized_learning_outcomes:cyfn:v1_0",
+   "name": "Harmonized Learning Outcomes",
+   "publicAccessLevel": "data"
+  },
+  {
+   "referenceId": "d351",
+   "tableCount": 1,
+   "scopedReference": "subsidy_map:d351:v1_0",
+   "name": "Subsidy Map",
+   "publicAccessLevel": "data"
+  },
+  {
+   "referenceId": "d4xv",
+   "tableCount": 3,
+   "scopedReference": "numberbank:d4xv:v2_1",
+   "name": "Numberbank",
+   "publicAccessLevel": "data"
+  },
+  {
+   "referenceId": "e7we",
+   "tableCount": 2,
+   "scopedReference": "babyview_imu:e7we:v1_2",
+   "name": "BabyView IMU",
+   "publicAccessLevel": "data"
+  },
+  {
+   "referenceId": "ej0d",
+   "tableCount": 761,
+   "scopedReference": "item_response_warehouse_7:ej0d:v1_3",
+   "name": "Item Response Warehouse 7",
+   "publicAccessLevel": "data"
+  },
+  {
+   "referenceId": "epbx",
+   "tableCount": 885,
+   "scopedReference": "item_response_warehouse_2:epbx:v34_0",
+   "name": "Item Response Warehouse 2",
+   "publicAccessLevel": "data"
+  },
+  {
+   "referenceId": "fpe6",
+   "tableCount": 926,
+   "scopedReference": "item_response_warehouse_6:fpe6:v5_11",
+   "name": "Item Response Warehouse 6",
+   "publicAccessLevel": "data"
+  },
+  {
+   "referenceId": "frvk",
+   "tableCount": 1,
+   "scopedReference": "peekbank_files:frvk:v1_0",
+   "name": "peekbank_files",
+   "publicAccessLevel": "data"
+  },
+  {
+   "scopedReference": "item_response_warehouse_9:zzz9",
+   "referenceId": "zzz9",
+   "name": "Item Response Warehouse 9",
+   "publicAccessLevel": "data",
+   "tableCount": 0
+  },
+  {
+   "scopedReference": "irw_rank_3:priv:v1_0",
+   "referenceId": "priv",
+   "name": "IRW_rank 3",
+   "publicAccessLevel": "metadata",
+   "tableCount": 5
+  }
+ ]
+}
