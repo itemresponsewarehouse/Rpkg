@@ -14,10 +14,19 @@
 #' @keywords internal
 fetch_single_data <- function(table_id, source = "core", dedup = FALSE, sim = FALSE, comp = FALSE, nom = FALSE) {
   source <- .irw_resolve_source(source = source, sim = sim, comp = comp, nom = nom)
-  ds_list <- .irw_order_datasources(.initialize_datasource(source = source), source = source)
+  ds_list <- .irw_shard_first(
+    .irw_order_datasources(.initialize_datasource(source = source), source = source),
+    name = table_id, source = source, build = FALSE
+  )
   errors <- .irw_new_error_collector()
 
-  for (ds in ds_list) {
+  i <- 0L
+  while (i < length(ds_list)) {
+    i <- i + 1L
+    if (i == 2L) {
+      ds_list <- .irw_shard_first_after_miss(ds_list, name = table_id, source = source)
+    }
+    ds <- ds_list[[i]]
     df <- tryCatch(
       {
         withCallingHandlers({
