@@ -250,6 +250,23 @@ irw_has_credentials <- function() {
 #' check, so outside an interactive session this stops with instructions
 #' before the client is touched.
 #'
+# The install command we print has to work where it is pasted. A fresh
+# non-interactive session (Rscript, a CI job) has no CRAN mirror set:
+# getOption("repos") is the placeholder "@CRAN@", and install.packages() then
+# stops with "trying to use CRAN without setting a mirror". So resolve the
+# mirror here and print a literal URL rather than a getOption() call
+# (reported by a user hitting it under Rscript).
+.irw_redivis_install_cmd <- function() {
+  cran <- as.character(getOption("repos")["CRAN"])
+  if (length(cran) != 1 || is.na(cran) || !nzchar(cran) || cran == "@CRAN@") {
+    cran <- "https://cloud.r-project.org"
+  }
+  sprintf(
+    'install.packages("redivis", repos = c("https://redivis.r-universe.dev", "%s"))',
+    cran
+  )
+}
+
 #' @keywords internal
 #' @noRd
 .irw_require_redivis <- function() {
@@ -257,7 +274,7 @@ irw_has_credentials <- function() {
     stop(
       "\nThis function needs the redivis package, which is not installed.\n",
       "redivis is not on CRAN; install it from r-universe with:\n",
-      "  install.packages(\"redivis\", repos = c(\"https://redivis.r-universe.dev\", getOption(\"repos\")))\n\n",
+      "  ", .irw_redivis_install_cmd(), "\n\n",
       "The parts of irw that do not download from the warehouse work without it:\n",
       "  irw_simdata(), irw_simdata_comp(), irw_simu_diff(), irw_imv(), irw_predict(),\n",
       "  irw_long2resp(), irw_resp2long(), irw_check_resp(), irw_covariates().",

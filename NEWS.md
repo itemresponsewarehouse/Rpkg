@@ -9,6 +9,8 @@
 - irw_save_bibtex(source = "conj"): citations for conjoint tables, from irw_meta's new `conj_biblio` table.
 - irw_metadata(source = "conj") returns irw_meta's `conj_metadata` (design counts and design facts per experiment), and irw_info() on a conjoint table now shows its description, DOI, licence and reference. irw_filter(source = "conj") filters on `n_respondents`, `n_attributes`, `outcome` ("choice"/"rating"), `country` and `license`, and irw_license_options(source = "conj") lists its licences.
 
+- The error for a missing `redivis` client now prints an install command that works where it is pasted. `getOption("repos")` is the unresolved placeholder `"@CRAN@"` in a session with no profile, so under `Rscript` the command we told people to run failed with "trying to use CRAN without setting a mirror"; the message now resolves the mirror itself (reported by Padma Korsepati).
+
 # irw 1.3.1
 
 First CRAN release (accepted 2026-10-18).
