@@ -24,8 +24,25 @@ you; get it from r-universe:
 install.packages("redivis", repos = c("https://redivis.r-universe.dev", "https://cloud.r-project.org"))
 ```
 
-Every feature documented here is in 1.4.0. To follow `main` between
-releases, install from GitHub instead:
+This README documents 1.4.0, which has been submitted to CRAN. **Until it is
+accepted, `install.packages("irw")` installs 1.3.1**, which was tagged before
+several features landed and so lacks:
+
+-   the conjoint source --- `irw_fetch(source = "conj")`, `irw_conj_long()`,
+    and the conjoint filters, metadata and citations
+-   the rankings source --- `irw_fetch(source = "rank")` and
+    `irw_rank_compress()`
+-   `irw_itemtext_licence()`, the licence on a table's item wording
+-   the seventh core warehouse shard. 1.3.1's shard list stops at the sixth,
+    and a shard it does not know about is dropped from `irw_list_tables()`,
+    `irw_metadata()` and `irw_filter()` with no warning, so **table counts
+    from 1.3.1 are short**. 1.4.0 also reads the warehouse catalog each
+    session, so a shard published after a release can no longer go missing
+    this way.
+-   reading the warehouse without a Redivis login (see below). Outside an
+    interactive session 1.3.1 stops when no login is cached.
+
+Install from GitHub for those, or to follow `main` between releases:
 
 ``` r
 # install.packages("pak")  # if you don't already have pak
