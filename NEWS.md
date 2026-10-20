@@ -1,4 +1,4 @@
-# irw (development version)
+# irw 1.4.0
 
 - **Breaking (column names):** `irw_long2resp()` names each item column by the item id itself — `q1`, `item10`, `1` — instead of prefixing it with `item_`. The item id is the key that joins a wide matrix back to the item text, to `irw_itemtext()` and to anything else keyed by item, so every such merge previously needed a strip step, and on a table whose items are already called `item10` the column came back as `item_item10` — two strips that are not the same one. The Python client already returned the ids, so the same table gave the two clients different column names, and a client-specific column name is a client-specific join (ben-domingue/irw#3221). The prefix is still applied internally, unconditionally, so that a numeric item id does not become a numeric column label mid-reshape and so that items named `a` and `item_a` cannot collide; it is mapped back rather than stripped, which is what keeps `myitem_x` from returning as `myx`. Two consequences for callers: a numeric item id now yields a column named by that number, which needs backticks in a formula (`` `1` ``) and must be renamed outright for `lavaan`, whose model-syntax parser rejects a name beginning with a digit even in backticks (the `sem-multilevel` article shows the rename; `mirt` and `ltm` take a matrix by position and need none), and `irw_check_resp()` reports the item names the caller passed or will see rather than prefixed ones. `irw_decode()` still understands an `item_` prefix, so a matrix built by an older version of this package decodes as before.
 
@@ -30,6 +30,9 @@
 - irw_metadata(source = "conj") returns irw_meta's `conj_metadata` (design counts and design facts per experiment), and irw_info() on a conjoint table now shows its description, DOI, licence and reference. irw_filter(source = "conj") filters on `n_respondents`, `n_attributes`, `outcome` ("choice"/"rating"), `country` and `license`, and irw_license_options(source = "conj") lists its licences.
 
 - The error for a missing `redivis` client now prints an install command that works where it is pasted. `getOption("repos")` is the unresolved placeholder `"@CRAN@"` in a session with no profile, so under `Rscript` the command we told people to run failed with "trying to use CRAN without setting a mirror"; the message now resolves the mirror itself (reported by Padma Korsepati).
+
+- The seventh core warehouse (`item_response_warehouse_7`) is in the configured shard list. 1.3.1's list stopped at the sixth, so its table listings were short by that shard's 761 tables with nothing to say so (itemresponsewarehouse/Rpkg#197).
+- `irw_info()` no longer reports the string `"NA"` as a table's source. A missing source note read back from the metadata as the two characters `NA` rather than as a missing value, and was printed as though it were a source (itemresponsewarehouse/Rpkg#200).
 
 # irw 1.3.1
 
