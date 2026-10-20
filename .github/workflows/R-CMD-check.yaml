@@ -75,6 +75,73 @@ jobs:
           upload-snapshots: true
           build_args: 'c("--no-manual","--compact-vignettes=gs+qpdf")'
 
+  # Reading IRW needs no Redivis account (Rpkg#202). Nothing in the matrix
+  # above proves that: those jobs run with NOT_CRAN=false, so the warehouse
+  # examples and this check are skipped. This job has no credentials either --
+  # which is exactly the environment the claim is about -- and runs the one
+  # networked test. timeout-minutes is the backstop: a regression here shows up
+  # as a login prompt nobody can answer, i.e. a job that waits.
+  anonymous-read:
+    runs-on: ubuntu-latest
+    name: ubuntu-latest (release, no login)
+    timeout-minutes: 25
+
+    env:
+      GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+      R_KEEP_PKG_SOURCE: yes
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # Without pandoc on PATH, setup-r-dependencies decides whether it is
+      # needed by running pak::pkg_deps("."), which resolves Suggests from the
+      # configured repos only -- and redivis is not in any of them, installed
+      # or not. Installing pandoc skips that branch, as it does in the jobs
+      # above.
+      - uses: r-lib/actions/setup-pandoc@v2
+
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          use-public-rspm: true
+
+      - name: Install system dependencies for redivis
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libcurl4-openssl-dev
+
+      # Before the dependency solve, because pak resolves the Suggests on
+      # redivis as `installed::` -- it is in no repo pak reads, so a solve
+      # without it on disk fails outright.
+      - name: Install Redivis from GitHub
+        run: |
+          Rscript -e "if (!requireNamespace('remotes', quietly = TRUE)) install.packages('remotes')"
+          Rscript -e "remotes::install_github('redivis/redivis-r', ref='main')"
+          Rscript -e "if (!requireNamespace('redivis', quietly = TRUE)) stop('redivis failed to install; see the build output above')"
+
+      - uses: r-lib/actions/setup-r-dependencies@v2
+        with:
+          extra-packages: any::testthat
+          needs: check
+
+      # And again after it. pak installs redivis from its own cache, which can
+      # hold a build older than the 0.12.14 that reads anonymously, over the
+      # one above. The version check is the point of the job: without it a
+      # stale client makes the test skip and the job goes green on nothing.
+      - name: Pin Redivis to a build that reads anonymously
+        run: |
+          Rscript -e "remotes::install_github('redivis/redivis-r', ref='main', upgrade = 'never', force = TRUE)"
+          Rscript -e 'v <- utils::packageVersion("redivis"); cat("redivis", format(v), "\n"); if (v < "0.12.14") stop("redivis ", format(v), " authenticates every request; this job needs >= 0.12.14")'
+
+      - name: Install irw
+        run: R CMD INSTALL --no-multiarch --with-keep.source .
+
+      - name: Anonymous read, no credentials
+        env:
+          IRW_TEST_ANONYMOUS: "true"
+          NOT_CRAN: "true"
+        run: |
+          Rscript -e 'res <- as.data.frame(testthat::test_dir("tests/testthat", package = "irw", load_package = "installed", filter = "anonymous-read", stop_on_failure = TRUE)); stopifnot(sum(res$failed) == 0, !any(as.logical(res$skipped)), sum(res$passed) > 0)'
+
   # CRAN does not install from Additional_repositories, so its machines check
   # irw without redivis. Reproduce that: install every dependency except it.
   cran-no-redivis:

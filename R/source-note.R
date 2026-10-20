@@ -124,7 +124,9 @@
 
 .irw_source_note_query <- function() {
   tryCatch({
-    .irw_require_redivis()
+    # A query, so a login is needed even though fetching tables no longer is.
+    # Without one this returns the empty lookup and no note is printed.
+    .irw_require_redivis_query()
     ref <- .irw_open_meta_dataset()$table("biblio")$qualified_reference
     out <- suppressWarnings(redivis::redivis$query(sprintf(paste(
       "SELECT `table`, Source_via, URL__for_data_ FROM `%s`",

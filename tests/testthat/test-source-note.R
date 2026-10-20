@@ -90,8 +90,9 @@ test_that("a failed lookup is silent, and cached so the next session does not pa
   calls <- 0
   local_mocked_bindings(
     # Pass the redivis guard (client installed, login available) so the
-    # failure comes from the dataset itself, as on a real failed lookup.
-    .irw_require_redivis = function() invisible(TRUE),
+    # failure comes from the dataset itself, as on a real failed lookup. The
+    # note's lookup is a query, so the gate it passes is the query one.
+    .irw_require_redivis_query = function() invisible(TRUE),
     .irw_open_meta_dataset = function() {
       calls <<- calls + 1
       stop("no Source_via column in this release")
