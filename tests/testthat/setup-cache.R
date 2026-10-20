@@ -11,3 +11,8 @@ withr::local_options(irw.cache = NULL, .local_envir = testthat::teardown_env())
 # Keep irw_fetch()'s credit note from querying the live biblio in tests;
 # test-source-note.R turns it back on and replaces the lookup itself.
 withr::local_envvar(IRW_SOURCE_NOTE = "0", .local_envir = testthat::teardown_env())
+
+# Shard discovery reads the Redivis organization catalog over the network
+# (see R/shard-discovery.R). Off for the suite, so nothing here makes a
+# request; test-shard-discovery.R turns it on and supplies a fixture catalog.
+withr::local_envvar(IRW_SHARD_DISCOVERY = "0", .local_envir = testthat::teardown_env())

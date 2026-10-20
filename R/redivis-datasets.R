@@ -256,7 +256,7 @@
 #' @keywords internal
 #' @noRd
 .irw_open_core_datasources <- function() {
-  .irw_open_datasources(.irw_datasource_specs$core, noun = "warehouse")
+  .irw_open_datasources(.irw_effective_specs("core"), noun = "warehouse")
 }
 
 #' Initialize Redivis Datasource(s)
@@ -297,7 +297,7 @@
   # gives a shard list the same semantics as core: an unreleased shard is
   # skipped with a warning instead of failing every lookup. The list is
   # re-opened when the configured specs change (package upgrade, load_all()).
-  specs <- .irw_datasource_specs[[source]]
+  specs <- .irw_effective_specs(source)
   cache_key <- .irw_single_datasource_cache_key(source)
   fp_key <- paste0(cache_key, "_fingerprint")
   fp <- .irw_specs_fingerprint(specs)

@@ -531,7 +531,7 @@
   if (!exists("itemtext_datasource_list", envir = .irw_env) ||
       is.null(.irw_env$itemtext_datasource_list)) {
     .irw_env$itemtext_datasource_list <- .irw_order_datasources(
-      .irw_open_datasources(.irw_itemtext_specs, noun = "item text dataset"),
+      .irw_open_datasources(.irw_effective_specs("text"), noun = "item text dataset"),
       source = "text"
     )
   }
