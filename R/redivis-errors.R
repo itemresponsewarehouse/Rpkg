@@ -222,11 +222,15 @@
 
 #' Check whether irw can read from the warehouse without a login prompt
 #'
-#' Reading from the Item Response Warehouse needs the \pkg{redivis} client and a
-#' Redivis login. In an interactive session irw opens the browser login when
-#' needed; in a script or other non-interactive session it stops with
-#' instructions instead. This function reports whether both are already in
-#' place, so code can skip warehouse calls that would otherwise stop.
+#' Fetching and listing IRW tables needs no Redivis login: the warehouse is
+#' public, and \pkg{redivis} 0.12.14 and later send those requests
+#' anonymously. A login is still needed for the server-side queries behind
+#' \code{\link{irw_table_sets}}, and for every warehouse call on an older
+#' \pkg{redivis}, which authenticates unconditionally. In an interactive
+#' session irw opens the browser login when one is needed; in a script or other
+#' non-interactive session it stops with instructions instead. This function
+#' reports whether the \pkg{redivis} client and a login are already in place,
+#' so code can skip the calls that would otherwise stop.
 #'
 #' @return \code{TRUE} if \pkg{redivis} is installed and credentials are
 #'   available (a \code{REDIVIS_API_TOKEN} environment variable or a cached
@@ -239,17 +243,44 @@ irw_has_credentials <- function() {
     .irw_redivis_credentials_available()
 }
 
-#' Stop unless the redivis client is installed and can authenticate
+#' Whether the installed redivis client reads public data anonymously
 #'
-#' redivis is not on CRAN, so it lives in Suggests and is installed from
-#' r-universe. Every call into \code{redivis::} goes through this check first,
-#' rather than failing with "there is no package called 'redivis'".
+#' redivis 0.12.14 (redivis/redivis-r#47) stopped attaching a bearer token to
+#' every request: with no credentials on hand the request goes out anonymously,
+#' and the client logs in only if the server rejects it. Before that the client
+#' fetched a token first, so in a session with no cached login the very first
+#' read started the browser flow and waited. Redivis then opened the
+#' dataset-level endpoints to anonymous reads (redivis/redivis-r#49), so from
+#' 0.12.14 on, opening a dataset, listing its tables and exporting a table all
+#' succeed with no account at all.
 #'
-#' Without credentials the client starts a browser login and waits for it. That
-#' is right in an interactive session but hangs a script, a CI job, or a CRAN
-#' check, so outside an interactive session this stops with instructions
-#' before the client is touched.
+#' @keywords internal
+#' @noRd
+.irw_redivis_supports_anonymous <- function() {
+  if (!requireNamespace("redivis", quietly = TRUE)) {
+    return(FALSE)
+  }
+  isTRUE(tryCatch(
+    utils::packageVersion("redivis") >= "0.12.14",
+    error = function(e) FALSE
+  ))
+}
+
+#' Instructions for a session that has no cached Redivis login
 #'
+#' @param what Text naming what needs the login, ending in a full stop.
+#' @keywords internal
+#' @noRd
+.irw_no_login_message <- function(what) {
+  paste0(
+    "\n", what, "\n",
+    "Run any irw function once in an interactive R session to log in through ",
+    "the browser; the login is cached for later scripts.\n",
+    "For a server or CI job, set the REDIVIS_API_TOKEN environment variable ",
+    "to a Redivis API token instead."
+  )
+}
+
 # The install command we print has to work where it is pasted. A fresh
 # non-interactive session (Rscript, a CI job) has no CRAN mirror set:
 # getOption("repos") is the placeholder "@CRAN@", and install.packages() then
@@ -267,9 +298,15 @@ irw_has_credentials <- function() {
   )
 }
 
+#' Stop unless the redivis client is installed
+#'
+#' redivis is not on CRAN, so it lives in Suggests and is installed from
+#' r-universe. Every call into \code{redivis::} goes through this check first,
+#' rather than failing with "there is no package called 'redivis'".
+#'
 #' @keywords internal
 #' @noRd
-.irw_require_redivis <- function() {
+.irw_require_redivis_client <- function() {
   if (!requireNamespace("redivis", quietly = TRUE)) {
     stop(
       "\nThis function needs the redivis package, which is not installed.\n",
@@ -281,14 +318,60 @@ irw_has_credentials <- function() {
       call. = FALSE
     )
   }
+  invisible(TRUE)
+}
+
+#' Stop unless a warehouse read can run without a login prompt
+#'
+#' The gate every dataset handle passes through. On redivis 0.12.14 and later
+#' this is a plain install check: the endpoints behind opening a dataset,
+#' listing its tables and exporting one are public and the client asks for them
+#' anonymously. An older client authenticates every request, and with no
+#' credentials that means a browser login, which is right in an interactive
+#' session but hangs a script, a CI job or a CRAN check -- the hang this guard
+#' was added for. So the stop stays, narrowed to the clients that need it, and
+#' names upgrading as the other way out.
+#'
+#' @keywords internal
+#' @noRd
+.irw_require_redivis <- function() {
+  .irw_require_redivis_client()
+  if (!.irw_redivis_supports_anonymous() && !interactive() &&
+        !.irw_redivis_credentials_available()) {
+    stop(
+      .irw_no_login_message(paste0(
+        "Reading from the Item Response Warehouse needs a Redivis login on ",
+        "redivis ", utils::packageVersion("redivis"), ", and none was found.\n",
+        "redivis 0.12.14 and later read public IRW tables with no account, so ",
+        "upgrading is the other way out:\n  ", .irw_redivis_install_cmd()
+      )),
+      call. = FALSE
+    )
+  }
+  invisible(TRUE)
+}
+
+#' Stop unless a server-side Redivis query can run without a login prompt
+#'
+#' Reading tables is anonymous (see \code{.irw_require_redivis()}), but
+#' \code{POST /queries} is not: Redivis rejects it without credentials, and the
+#' client answers a 401 by logging in, which in a script waits for a browser
+#' that never comes. So the query path keeps the gate that reading no longer
+#' needs. Keeping the boundary here, rather than at the dataset handle, is what
+#' lets anonymous reading work while \code{R CMD check} still cannot hang.
+#'
+#' @keywords internal
+#' @noRd
+.irw_require_redivis_query <- function() {
+  .irw_require_redivis_client()
   if (!interactive() && !.irw_redivis_credentials_available()) {
     stop(
-      "\nReading from the Item Response Warehouse needs a Redivis login, and ",
-      "none was found.\n",
-      "Run any irw function once in an interactive R session to log in through ",
-      "the browser; the login is cached for later scripts.\n",
-      "For a server or CI job, set the REDIVIS_API_TOKEN environment variable ",
-      "to a Redivis API token instead.",
+      .irw_no_login_message(paste0(
+        "This runs a server-side Redivis query, which needs a Redivis login, ",
+        "and none was found.\n",
+        "Reading tables does not: irw_fetch(), irw_list_tables() and ",
+        "irw_info() work without an account."
+      )),
       call. = FALSE
     )
   }

@@ -4,12 +4,16 @@
 #' the Redivis export quota, unlike \code{table$to_tibble()}, which materialises
 #' every row of the table.
 #'
+#' Unlike reading a table, a query needs a Redivis login: this is the one
+#' warehouse path that \code{.irw_require_redivis_query()} gates, and the only
+#' place in the package where a missing login can start a browser flow.
+#'
 #' @param sql A single SQL string.
 #' @return A tibble with the query result.
 #' @keywords internal
 #' @noRd
 .irw_query_tibble <- function(sql) {
-  .irw_require_redivis()
+  .irw_require_redivis_query()
   tryCatch(
     suppressWarnings(redivis::redivis$query(sql)$to_tibble()),
     error = function(e) {

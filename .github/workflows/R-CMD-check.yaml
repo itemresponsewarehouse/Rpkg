@@ -75,6 +75,54 @@ jobs:
           upload-snapshots: true
           build_args: 'c("--no-manual","--compact-vignettes=gs+qpdf")'
 
+  # Reading IRW needs no Redivis account (Rpkg#202). Nothing in the matrix
+  # above proves that: those jobs run with NOT_CRAN=false, so the warehouse
+  # examples and this check are skipped. This job has no credentials either --
+  # which is exactly the environment the claim is about -- and runs the one
+  # networked test. timeout-minutes is the backstop: a regression here shows up
+  # as a login prompt nobody can answer, i.e. a job that waits.
+  anonymous-read:
+    runs-on: ubuntu-latest
+    name: ubuntu-latest (release, no login)
+    timeout-minutes: 25
+
+    env:
+      GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+      R_KEEP_PKG_SOURCE: yes
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          use-public-rspm: true
+
+      - name: Install system dependencies for redivis
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libcurl4-openssl-dev
+
+      - name: Install Redivis from GitHub
+        run: |
+          Rscript -e "if (!requireNamespace('remotes', quietly = TRUE)) install.packages('remotes')"
+          Rscript -e "remotes::install_github('redivis/redivis-r', ref='main')"
+          Rscript -e "if (!requireNamespace('redivis', quietly = TRUE)) stop('redivis failed to install; see the build output above')"
+
+      - uses: r-lib/actions/setup-r-dependencies@v2
+        with:
+          extra-packages: any::testthat
+          needs: check
+
+      - name: Install irw
+        run: R CMD INSTALL --no-multiarch --with-keep.source .
+
+      - name: Anonymous read, no credentials
+        env:
+          IRW_TEST_ANONYMOUS: "true"
+          NOT_CRAN: "true"
+        run: |
+          Rscript -e 'testthat::test_dir("tests/testthat", package = "irw", load_package = "installed", filter = "anonymous-read", stop_on_failure = TRUE)'
+
   # CRAN does not install from Additional_repositories, so its machines check
   # irw without redivis. Reproduce that: install every dependency except it.
   cran-no-redivis:

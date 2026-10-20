@@ -12,11 +12,15 @@ available (a \code{REDIVIS_API_TOKEN} environment variable or a cached
 login), otherwise \code{FALSE}.
 }
 \description{
-Reading from the Item Response Warehouse needs the \pkg{redivis} client and a
-Redivis login. In an interactive session irw opens the browser login when
-needed; in a script or other non-interactive session it stops with
-instructions instead. This function reports whether both are already in
-place, so code can skip warehouse calls that would otherwise stop.
+Fetching and listing IRW tables needs no Redivis login: the warehouse is
+public, and \pkg{redivis} 0.12.14 and later send those requests
+anonymously. A login is still needed for the server-side queries behind
+\code{\link{irw_table_sets}}, and for every warehouse call on an older
+\pkg{redivis}, which authenticates unconditionally. In an interactive
+session irw opens the browser login when one is needed; in a script or other
+non-interactive session it stops with instructions instead. This function
+reports whether the \pkg{redivis} client and a login are already in place,
+so code can skip the calls that would otherwise stop.
 }
 \examples{
 irw_has_credentials()
