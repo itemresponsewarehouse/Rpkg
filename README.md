@@ -21,7 +21,7 @@ the client for the warehouse itself. It is not on CRAN and is not installed for
 you; get it from r-universe:
 
 ``` r
-install.packages("redivis", repos = c("https://redivis.r-universe.dev", getOption("repos")))
+install.packages("redivis", repos = c("https://redivis.r-universe.dev", "https://cloud.r-project.org"))
 ```
 
 The development version carries features that are not yet in the CRAN release
