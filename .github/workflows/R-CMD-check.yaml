@@ -93,6 +93,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # Without pandoc on PATH, setup-r-dependencies decides whether it is
+      # needed by running pak::pkg_deps("."), which resolves Suggests from the
+      # configured repos only -- and redivis is not in any of them, installed
+      # or not. Installing pandoc skips that branch, as it does in the jobs
+      # above.
+      - uses: r-lib/actions/setup-pandoc@v2
+
       - uses: r-lib/actions/setup-r@v2
         with:
           use-public-rspm: true
