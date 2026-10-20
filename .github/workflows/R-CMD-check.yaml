@@ -109,16 +109,21 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y libcurl4-openssl-dev
 
-      - name: Install Redivis from GitHub
-        run: |
-          Rscript -e "if (!requireNamespace('remotes', quietly = TRUE)) install.packages('remotes')"
-          Rscript -e "remotes::install_github('redivis/redivis-r', ref='main')"
-          Rscript -e "if (!requireNamespace('redivis', quietly = TRUE)) stop('redivis failed to install; see the build output above')"
-
       - uses: r-lib/actions/setup-r-dependencies@v2
         with:
           extra-packages: any::testthat
           needs: check
+
+      # After the dependency solve, not before: pak installs redivis from its
+      # own cache, which can hold a build older than the 0.12.14 that reads
+      # anonymously, and it would overwrite anything installed earlier. The
+      # version check is the point of the job -- without it a stale client
+      # makes the test skip and the job go green on nothing.
+      - name: Install Redivis from GitHub
+        run: |
+          Rscript -e "if (!requireNamespace('remotes', quietly = TRUE)) install.packages('remotes')"
+          Rscript -e "remotes::install_github('redivis/redivis-r', ref='main', upgrade = 'never')"
+          Rscript -e 'v <- utils::packageVersion("redivis"); cat("redivis", format(v), "\n"); if (v < "0.12.14") stop("redivis ", format(v), " authenticates every request; this job needs >= 0.12.14")'
 
       - name: Install irw
         run: R CMD INSTALL --no-multiarch --with-keep.source .
@@ -128,7 +133,7 @@ jobs:
           IRW_TEST_ANONYMOUS: "true"
           NOT_CRAN: "true"
         run: |
-          Rscript -e 'testthat::test_dir("tests/testthat", package = "irw", load_package = "installed", filter = "anonymous-read", stop_on_failure = TRUE)'
+          Rscript -e 'res <- as.data.frame(testthat::test_dir("tests/testthat", package = "irw", load_package = "installed", filter = "anonymous-read", stop_on_failure = TRUE)); stopifnot(sum(res$failed) == 0, !any(as.logical(res$skipped)), sum(res$passed) > 0)'
 
   # CRAN does not install from Additional_repositories, so its machines check
   # irw without redivis. Reproduce that: install every dependency except it.
