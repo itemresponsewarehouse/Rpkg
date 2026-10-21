@@ -27,6 +27,13 @@ Verified against the live warehouse with the core list truncated to six:
 | 6 shards | **on** | **6,450** |
 | 7 shards | off | 6,450 |
 
+Re-verified on 2026-10-21 when `item_response_warehouse_8` was seeded: with
+seven shards configured and discovery on, and with eight configured and
+discovery off, both clients list 6,651 tables. The two routes to a shard agree
+table for table, which is the property worth re-checking each time -- a
+discrepancy would mean discovery and the config disagree about what the family
+holds.
+
 **Still edit the list anyway.** Discovery is a safety net for users on an old
 release, not a substitute for the config:
 
@@ -60,7 +67,8 @@ Main production warehouses are listed under `$core` in **oldest-to-newest** orde
     list(user = "datapages", dataset = "item_response_warehouse_5:3ykx"),
     list(user = "datapages", dataset = "item_response_warehouse_6:fpe6"),
     list(user = "datapages", dataset = "item_response_warehouse_7:ej0d"),
-    list(user = "datapages", dataset = "item_response_warehouse_8:XXXX")  # example
+    list(user = "datapages", dataset = "item_response_warehouse_8:8b1m"),
+    list(user = "datapages", dataset = "item_response_warehouse_9:XXXX")  # example
   ),
   ...
 )
