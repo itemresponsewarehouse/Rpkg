@@ -44,7 +44,7 @@ for large tables: computing the item set of a 68-million-row table with
 consume the Redivis export quota.
 }
 \examples{
-\dontshow{if (irw_has_credentials()) withAutoprint(\{ # examplesIf}
+\dontshow{if (irw_has_credentials() || nzchar(Sys.getenv("IRW_RUN_EXAMPLES"))) withAutoprint(\{ # examplesIf}
 \donttest{
 sets <- irw_table_sets("rosenberg_selfesteem")
 sets$items

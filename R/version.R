@@ -223,7 +223,7 @@
 #'
 #' @return Invisibly, the named character vector of all pins in effect.
 #' @seealso \code{\link{irw_get_version}}, \code{\link{irw_reset_version}}
-#' @examplesIf irw_has_credentials()
+#' @examplesIf irw_has_credentials() || nzchar(Sys.getenv("IRW_RUN_EXAMPLES"))
 #' \donttest{
 #' irw_set_version("item_response_warehouse", "v32.0")
 #' irw_set_version("item_response_warehouse_2", "v1.8")

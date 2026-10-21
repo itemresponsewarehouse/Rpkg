@@ -434,7 +434,7 @@ irw_license_options <- function(source = "core", comp = FALSE, sim = FALSE, nom 
 #'   Core source only.
 #' @return A sorted character vector of dataset names that match all specified filters, or `character(0)` if no match is found.
 #'
-#' @examplesIf irw_has_credentials()
+#' @examplesIf irw_has_credentials() || nzchar(Sys.getenv("IRW_RUN_EXAMPLES"))
 #' \donttest{
 #' # Numeric filters
 #' irw_filter(n_responses = c(1000, Inf), n_items = c(10, 50))

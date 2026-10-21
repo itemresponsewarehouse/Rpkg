@@ -21,7 +21,7 @@
 #' rights holders, and users are responsible for obtaining any permissions their
 #' intended use requires.
 #'
-#' @examplesIf irw_has_credentials()
+#' @examplesIf irw_has_credentials() || nzchar(Sys.getenv("IRW_RUN_EXAMPLES"))
 #' \donttest{
 #'   irw_list_itemtext_tables()
 #' }
@@ -64,7 +64,7 @@ irw_list_itemtext_tables <- function() {
 #' released under an open licence: that licence is printed after the fetch and
 #' is returned by \code{\link{irw_itemtext_licence}}.
 #'
-#' @examplesIf irw_has_credentials()
+#' @examplesIf irw_has_credentials() || nzchar(Sys.getenv("IRW_RUN_EXAMPLES"))
 #' \donttest{
 #'   irw_itemtext("gilbert_meta_49")
 #' }

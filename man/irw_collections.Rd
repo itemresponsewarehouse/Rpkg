@@ -42,7 +42,7 @@ of their members was identified.}
 }
 
 \examples{
-\dontshow{if (irw_has_credentials()) withAutoprint(\{ # examplesIf}
+\dontshow{if (irw_has_credentials() || nzchar(Sys.getenv("IRW_RUN_EXAMPLES"))) withAutoprint(\{ # examplesIf}
 \donttest{
 irw_collections()
 irw_collections(kind = "instrument")

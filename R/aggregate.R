@@ -72,7 +72,7 @@
 #'   For several names, a named list of those lists, one per table, in the
 #'   order given. Each element is exactly what the single-name call returns.
 #'
-#' @examplesIf irw_has_credentials()
+#' @examplesIf irw_has_credentials() || nzchar(Sys.getenv("IRW_RUN_EXAMPLES"))
 #' \donttest{
 #' sets <- irw_table_sets("rosenberg_selfesteem")
 #' sets$items

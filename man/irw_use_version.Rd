@@ -68,7 +68,7 @@ has to.
 }
 
 \examples{
-\dontshow{if (irw_has_credentials()) withAutoprint(\{ # examplesIf}
+\dontshow{if (irw_has_credentials() || nzchar(Sys.getenv("IRW_RUN_EXAMPLES"))) withAutoprint(\{ # examplesIf}
 \donttest{
 irw_use_version(332)              # read the corpus as v332 held it
 irw_use_version()                 # freeze today's version; record the number
