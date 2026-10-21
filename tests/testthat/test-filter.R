@@ -242,3 +242,95 @@ test_that("irw_filter skips the density default when nom metadata has no density
   expect_error(irw_filter(source = "nom", var = "wave", longitudinal = TRUE),
                "var, longitudinal", fixed = TRUE)
 })
+
+##Tier-0 psychometric filters (ben-domingue/irw#1710). These columns differ from
+##every other numeric filter in one way that matters: they can be NA, because a
+##table whose responses are all one value has no difficulty spread and a
+##single-item table has no rest score. `metadata[NA, ]` does not drop a row, it
+##invents an all-NA one, so the NA guard is the thing these tests are really about.
+.tier0_metadata <- function() {
+  data.frame(
+    table = c("tab_coherent", "tab_reverse_keyed", "tab_floor", "tab_constant"),
+    n_responses = c(1000, 1000, 1000, 1000),
+    n_categories = c(2, 5, 2, 1),
+    n_participants = c(100, 100, 100, 100),
+    n_items = c(10, 10, 10, 10),
+    responses_per_participant = c(10, 10, 10, 10),
+    responses_per_item = c(100, 100, 100, 100),
+    density = c(0.9, 0.9, 0.9, 0.9),
+    difficulty_spread = c(0.6, 0.5, 0.2, NA),
+    mean_item_rest_r = c(0.55, 0.01, 0.30, NA),
+    mean_abs_item_rest_r = c(0.55, 0.42, 0.30, NA),
+    prop_items_extreme = c(0, 0, 0.8, NA),
+    variables = c("id| item| resp", "id| item| resp", "id| item| resp", "id| item| resp"),
+    stringsAsFactors = FALSE
+  )
+}
+
+test_that("tier-0 filters select on psychometric properties", {
+  local_mocked_bindings(
+    irw_metadata = function(source = "core", sim = FALSE, comp = FALSE, nom = FALSE) .tier0_metadata(),
+    .env = asNamespace("irw")
+  )
+
+  expect_equal(irw_filter(mean_abs_item_rest_r = c(0.4, 1)),
+               c("tab_coherent", "tab_reverse_keyed"))
+  expect_equal(irw_filter(prop_items_extreme = c(0, 0)),
+               c("tab_coherent", "tab_reverse_keyed"))
+  expect_equal(irw_filter(difficulty_spread = c(0.55, 1)), "tab_coherent")
+})
+
+test_that("a reverse-keyed scale is found by the gap between signed and absolute r", {
+  local_mocked_bindings(
+    irw_metadata = function(source = "core", sim = FALSE, comp = FALSE, nom = FALSE) .tier0_metadata(),
+    .env = asNamespace("irw")
+  )
+
+  expect_equal(
+    irw_filter(mean_item_rest_r = c(-1, 0.1), mean_abs_item_rest_r = c(0.3, 1)),
+    "tab_reverse_keyed"
+  )
+})
+
+test_that("tables whose tier-0 columns are NA are dropped, not returned as NA rows", {
+  local_mocked_bindings(
+    irw_metadata = function(source = "core", sim = FALSE, comp = FALSE, nom = FALSE) .tier0_metadata(),
+    .env = asNamespace("irw")
+  )
+
+  out <- irw_filter(difficulty_spread = c(0, 1))
+  expect_false(any(is.na(out)))
+  expect_false("tab_constant" %in% out)
+  expect_length(out, 3L)
+})
+
+test_that("a tier-0 filter against metadata that predates the columns errors", {
+  local_mocked_bindings(
+    irw_metadata = function(source = "core", sim = FALSE, comp = FALSE, nom = FALSE) {
+      m <- .tier0_metadata()
+      m[, setdiff(names(m), c("difficulty_spread", "mean_item_rest_r",
+                              "mean_abs_item_rest_r", "prop_items_extreme"))]
+    },
+    .env = asNamespace("irw")
+  )
+
+  expect_error(irw_filter(difficulty_spread = c(0, 1)),
+               "not a column of the published metadata")
+})
+
+test_that("tier-0 filters are rejected for sources whose metadata lacks them", {
+  local_mocked_bindings(
+    irw_metadata = function(source = "core", sim = FALSE, comp = FALSE, nom = FALSE) {
+      data.frame(table = c("nom_a", "nom_b"), n_responses = c(10, 20),
+                 stringsAsFactors = FALSE)
+    },
+    .env = asNamespace("irw")
+  )
+
+  expect_error(irw_filter(source = "nom", mean_abs_item_rest_r = c(0.4, 1)),
+               "mean_abs_item_rest_r")
+  expect_error(irw_filter(source = "comp", difficulty_spread = c(0, 1)),
+               "difficulty_spread")
+  expect_error(irw_filter(source = "conj", prop_items_extreme = c(0, 0)),
+               "prop_items_extreme")
+})
