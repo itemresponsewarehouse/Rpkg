@@ -127,3 +127,23 @@ local_no_pins <- function(env = parent.frame()) {
   )
   e$pinned_versions <- stats::setNames(character(0), character(0))
 }
+
+# The session cache is a package-level environment rather than a binding, so it
+# is set directly and removed on exit: `local_mocked_bindings()` would not
+# restore a mocked `.irw_core_shard_map()` for the files that run after this one
+# (see helper-redivis.R). Setting the cache also exercises the real lookup.
+local_shard_map <- function(map, env = parent.frame()) {
+  cache <- irw:::.irw_env
+  had <- exists("core_shard_map", envir = cache)
+  old <- if (had) get("core_shard_map", envir = cache) else NULL
+  assign("core_shard_map", map, envir = cache)
+  withr::defer(
+    if (had) {
+      assign("core_shard_map", old, envir = cache)
+    } else {
+      rm("core_shard_map", envir = cache)
+    },
+    envir = env
+  )
+  invisible(NULL)
+}

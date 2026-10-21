@@ -125,6 +125,19 @@ fetch_single_data <- function(table_id, source = "core", dedup = FALSE, sim = FA
     return(invisible(NULL))
   }
 
+  # Which of the two reasons applies is worth the lookup: a table the user has
+  # just seen in a listing and cannot fetch needs the explanation, not a bare
+  # not-found (ben-domingue/irw#3127).
+  if (.irw_table_listed_in_metadata(table_id, source = source)) {
+    message(
+      "Error fetching dataset ",
+      shQuote(table_id),
+      ":",
+      .irw_metadata_only_table_message(table_id)
+    )
+    return(invisible(NULL))
+  }
+
   message(
     "Error fetching dataset ",
     shQuote(table_id),
