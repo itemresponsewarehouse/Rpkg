@@ -114,12 +114,16 @@
 
 #' Pins that apply to a given data source
 #'
+#' The effective list, not the configured one: \code{.irw_pinnable_specs()} pins
+#' discovered shards like any other dataset, so a message built from the
+#' configured list would omit a shard the pin is in force for.
+#'
 #' @param source Data family, one of \code{"core"}, \code{"nom"}, \code{"sim"}, \code{"comp"}.
 #' @return Named character vector of pins for that source's datasets.
 #' @keywords internal
 #' @noRd
 .irw_source_pins <- function(source) {
-  keys <- vapply(.irw_datasource_specs[[source]], function(s) .irw_dataset_key(s$dataset), character(1))
+  keys <- vapply(.irw_effective_specs(source), function(s) .irw_dataset_key(s$dataset), character(1))
   pins <- .irw_pins()
   pins[names(pins) %in% keys]
 }
