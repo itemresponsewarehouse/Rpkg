@@ -23,6 +23,15 @@ if (!nzchar(Sys.getenv("IRW_RUN_EXAMPLES"))) {
 files <- if (length(args)) args else list.files("man", pattern = "[.]Rd$", full.names = TRUE)
 if (!length(files)) stop("No Rd files found; run this from the package root.")
 
+# The one page that cannot run here, and why. `irw_table_sets()` answers with a
+# server-side query, and a query needs a Redivis login even though reading a
+# table does not -- tests/testthat/test-anonymous-read.R pins that as the one
+# remaining path that must ask for one. Its example therefore keeps the
+# credentials-only gate. This list is deliberately explicit rather than a
+# pattern: an exception should have to be named and justified, because every
+# name on it is a page nothing runs.
+credentials_only <- c("irw_table_sets.Rd")
+
 # A page still carrying the old gate would skip silently while every other
 # page ran, and the job would stay green on partial coverage -- the same
 # failure shape as the gate itself. Catch it as a gate problem, by name,
@@ -35,6 +44,7 @@ if (!length(files)) stop("No Rd files found; run this from the package root.")
 # `irw_has_credentials()` is not flagged for calling it.
 stale <- Filter(
   function(rd) {
+    if (basename(rd) %in% credentials_only) return(FALSE)
     lines <- grep("if *\\(.*irw_has_credentials\\(\\)", readLines(rd, warn = FALSE), value = TRUE)
     length(lines) > 0 && !all(grepl("IRW_RUN_EXAMPLES", lines, fixed = TRUE))
   },
@@ -70,7 +80,17 @@ for (rd in sort(files)) {
       source(script, echo = TRUE, max.deparse.length = 500)
       "ok"
     },
-    error = function(e) conditionMessage(e)
+    # The message alone is not always enough: the first real failure here came
+    # back with an empty one, which named the page and said nothing about it.
+    error = function(e) {
+      msg <- conditionMessage(e)
+      call <- if (is.null(conditionCall(e))) "" else paste(deparse(conditionCall(e)), collapse = " ")
+      paste0(
+        "<", paste(class(e), collapse = "/"), "> ",
+        if (nzchar(msg)) msg else "(no message)",
+        if (nzchar(call)) paste0(" [in: ", substr(call, 1, 200), "]") else ""
+      )
+    }
   )
   ran <- c(ran, basename(rd))
   if (!identical(result, "ok")) {
