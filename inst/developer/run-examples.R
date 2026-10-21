@@ -27,10 +27,16 @@ if (!length(files)) stop("No Rd files found; run this from the package root.")
 # page ran, and the job would stay green on partial coverage -- the same
 # failure shape as the gate itself. Catch it as a gate problem, by name,
 # rather than letting it hide in a pass.
+# A gate, not a mention: `if (` ... `irw_has_credentials()`. That matches both
+# forms in use -- the `@examplesIf` condition roxygen writes into \dontshow,
+# and an inline `if (irw_has_credentials()) { ... }` around one snippet, which
+# is how man/irw_covariates.Rd hid a warehouse example from this runner. It
+# does not match a bare call, so the page that documents
+# `irw_has_credentials()` is not flagged for calling it.
 stale <- Filter(
   function(rd) {
-    lines <- grep("irw_has_credentials()", readLines(rd, warn = FALSE), fixed = TRUE, value = TRUE)
-    length(lines) > 0 && !any(grepl("IRW_RUN_EXAMPLES", lines, fixed = TRUE))
+    lines <- grep("if *\\(.*irw_has_credentials\\(\\)", readLines(rd, warn = FALSE), value = TRUE)
+    length(lines) > 0 && !all(grepl("IRW_RUN_EXAMPLES", lines, fixed = TRUE))
   },
   files
 )
