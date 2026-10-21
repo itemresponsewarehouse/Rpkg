@@ -78,7 +78,7 @@
 #'
 #' # With the source's value labels (cov_gender 1/2 -> female/male)
 #' \donttest{
-#' if (irw_has_credentials()) {
+#' if (irw_has_credentials() || nzchar(Sys.getenv("IRW_RUN_EXAMPLES"))) {
 #'   df <- irw_fetch("cucchi_2018_rfq")
 #'   irw_covariates(df, labels = TRUE, table = "cucchi_2018_rfq")
 #' }

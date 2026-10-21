@@ -198,7 +198,7 @@ and \code{"sim"} have no tags by design and reject them.
 }
 }
 \examples{
-\dontshow{if (irw_has_credentials()) withAutoprint(\{ # examplesIf}
+\dontshow{if (irw_has_credentials() || nzchar(Sys.getenv("IRW_RUN_EXAMPLES"))) withAutoprint(\{ # examplesIf}
 \donttest{
 # Numeric filters
 irw_filter(n_responses = c(1000, Inf), n_items = c(10, 50))

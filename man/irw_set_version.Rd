@@ -37,7 +37,7 @@ silent fetch from the current release: quietly mixing versions would break
 the reproducibility the pin exists to provide.
 }
 \examples{
-\dontshow{if (irw_has_credentials()) withAutoprint(\{ # examplesIf}
+\dontshow{if (irw_has_credentials() || nzchar(Sys.getenv("IRW_RUN_EXAMPLES"))) withAutoprint(\{ # examplesIf}
 \donttest{
 irw_set_version("item_response_warehouse", "v32.0")
 irw_set_version("item_response_warehouse_2", "v1.8")
