@@ -329,6 +329,23 @@ irw_license_options <- function(source = "core", comp = FALSE, sim = FALSE, nom 
 #' - **Variable presence**: e.g., `rt`, `wave`, `cov_`
 #' - **License type**: e.g., `"CC BY 4.0"`, `"CC0 1.0"`
 #'
+#' ## Psychometric Filtering
+#'
+#' Four columns describe how a table behaves rather than how big it is:
+#' `difficulty_spread`, `mean_item_rest_r`, `mean_abs_item_rest_r` and
+#' `prop_items_extreme`. They are classical and model-free -- no IRT model is
+#' fitted anywhere -- so they are defined for every core table, polytomous and
+#' sparse included, and they take no position on what the items measure. They
+#' are computed per item and published per table; the per-item rows behind them
+#' are the `item_classical` table of `irw_meta`.
+#'
+#' Two cautions. Response direction is not harmonised across IRW, so a signed
+#' mean item-rest correlation near zero can mean a reverse-keyed scale rather
+#' than an incoherent one -- compare it with the absolute version. And where a
+#' respondent sees a handful of items out of thousands, rest scores are nearly
+#' disjoint between respondents, so the correlation is a weaker statement about
+#' a sparse bank than about a 20-item questionnaire.
+#'
 #' ## Metadata and Tag-Based Filtering
 #'
 #' To explore available metadata:
@@ -352,6 +369,21 @@ irw_license_options <- function(source = "core", comp = FALSE, sim = FALSE, nom 
 #' @param n_items Numeric vector of length 1 or 2. Filters by number of unique items.
 #' @param responses_per_participant Numeric vector of length 1 or 2. Filters by average responses per participant.
 #' @param responses_per_item Numeric vector of length 1 or 2. Filters by average responses per item.
+#' @param difficulty_spread Numeric vector of length 1 or 2. Filters by the share of
+#'   the table's observed response range that its item means cover -- the range of
+#'   item p-values on a dichotomous table, and normalised by the response range so a
+#'   1-5 Likert table is comparable. Near 0 means every item sits at the same
+#'   difficulty; near 1 means they span the scale. `core` only.
+#' @param mean_item_rest_r Numeric vector of length 1 or 2. Filters by the mean
+#'   item-rest correlation, SIGNED. IRW does not harmonise response direction, so a
+#'   scale with reverse-keyed items averages toward zero here; use
+#'   `mean_abs_item_rest_r` to ask whether the items hang together at all. `core` only.
+#' @param mean_abs_item_rest_r Numeric vector of length 1 or 2. Filters by the mean
+#'   ABSOLUTE item-rest correlation, which is direction-invariant. A wide gap between
+#'   this and `mean_item_rest_r` indicates reverse-keyed items. `core` only.
+#' @param prop_items_extreme Numeric vector of length 1 or 2. Filters by the share of
+#'   items whose mean sits within 5% of either end of the response range, i.e. floor
+#'   or ceiling items. `prop_items_extreme = c(0, 0)` keeps tables with none. `core` only.
 #' @param density Numeric vector of length 1 or 2, or `NULL`. Filters by matrix density.
 #'   - Default is `c(0.5, 1)` to exclude sparse matrices.
 #'   - Use `NULL` to disable this filter.
@@ -462,6 +494,12 @@ irw_license_options <- function(source = "core", comp = FALSE, sim = FALSE, nom 
 #' irw_filter(n_categories = 2, density = NULL)           # binary
 #' irw_filter(n_categories = c(3, 5), density = NULL)     # small multi-category
 #' irw_filter(n_categories = c(10, Inf), density = NULL)  # large category sets
+#' # Filter by psychometric property, not just shape (irw_meta tier-0 columns)
+#' irw_filter(mean_abs_item_rest_r = c(0.4, 1))            # items that hang together
+#' irw_filter(prop_items_extreme = c(0, 0),                # no floor or ceiling items
+#'            difficulty_spread = c(0.3, 1))               # spanning the scale
+#' irw_filter(mean_item_rest_r = c(-1, 0.1),               # signed near zero but
+#'            mean_abs_item_rest_r = c(0.3, 1))            # absolute high: reverse-keyed
 #' irw_filter(source = "sim", n_items = c(10, Inf))
 #' irw_filter(source = "comp", n_actors = c(2, 10))
 #' irw_filter(source = "conj", outcome = "rating", country = c("US", "GB"))
@@ -476,6 +514,10 @@ irw_filter <- function(n_responses = NULL,
                        n_items = NULL,
                        responses_per_participant = NULL,
                        responses_per_item = NULL,
+                       difficulty_spread = NULL,
+                       mean_item_rest_r = NULL,
+                       mean_abs_item_rest_r = NULL,
+                       prop_items_extreme = NULL,
                        density = c(0.5, 1),
                        var = NULL,
                        age_range = NULL,
@@ -533,6 +575,9 @@ irw_filter <- function(n_responses = NULL,
       n_responses = n_responses, n_categories = n_categories, n_participants = n_participants,
       n_items = n_items, responses_per_participant = responses_per_participant,
       responses_per_item = responses_per_item,
+      difficulty_spread = difficulty_spread, mean_item_rest_r = mean_item_rest_r,
+      mean_abs_item_rest_r = mean_abs_item_rest_r,
+      prop_items_extreme = prop_items_extreme,
       density = if (density_supplied) density else NULL, var = var,
       longitudinal = longitudinal, n_actors = n_actors, collection = collection
     )
@@ -556,6 +601,10 @@ irw_filter <- function(n_responses = NULL,
       n_items = n_items,
       responses_per_participant = responses_per_participant,
       responses_per_item = responses_per_item,
+      difficulty_spread = difficulty_spread,
+      mean_item_rest_r = mean_item_rest_r,
+      mean_abs_item_rest_r = mean_abs_item_rest_r,
+      prop_items_extreme = prop_items_extreme,
       density = if (density_supplied) density else NULL,
       var = var,
       age_range = age_range,
@@ -619,6 +668,10 @@ irw_filter <- function(n_responses = NULL,
       n_items = n_items,
       responses_per_participant = responses_per_participant,
       responses_per_item = responses_per_item,
+      difficulty_spread = difficulty_spread,
+      mean_item_rest_r = mean_item_rest_r,
+      mean_abs_item_rest_r = mean_abs_item_rest_r,
+      prop_items_extreme = prop_items_extreme,
       density = if (density_supplied) density else NULL,
       var = var,
       longitudinal = longitudinal
@@ -748,7 +801,16 @@ irw_filter <- function(n_responses = NULL,
     n_participants = n_participants,
     n_items = n_items,
     responses_per_participant = responses_per_participant,
-    responses_per_item = responses_per_item
+    responses_per_item = responses_per_item,
+    ##Tier-0 psychometric columns (ben-domingue/irw#1710). Unlike the structural
+    ##columns above these can legitimately be NA -- a table whose responses are
+    ##all one value has no difficulty spread to report, and a single-item table
+    ##has no rest score -- which is why the subset below guards on is.na(). An
+    ##unguarded `metadata[NA, ]` does not drop those rows, it invents all-NA ones.
+    difficulty_spread = difficulty_spread,
+    mean_item_rest_r = mean_item_rest_r,
+    mean_abs_item_rest_r = mean_abs_item_rest_r,
+    prop_items_extreme = prop_items_extreme
   )
   
   numeric_filters <- numeric_filters[vapply(numeric_filters, Negate(is.null), logical(1))]
@@ -756,7 +818,16 @@ irw_filter <- function(n_responses = NULL,
   for (filter_name in names(numeric_filters)) {
     filter_value <- numeric_filters[[filter_name]]
     if (length(filter_value) == 1) filter_value <- rep(filter_value, 2)
-    metadata <- metadata[metadata[[filter_name]] >= filter_value[1] &
+    if (!filter_name %in% names(metadata)) {
+      ##A released client reading an irw_meta version from before the column
+      ##existed. Say so rather than returning every table as if unfiltered.
+      stop(sprintf(paste0("`%s` is not a column of the published metadata. It ",
+                          "arrived with irw_meta's tier-0 columns; update the ",
+                          "package or drop this filter."), filter_name),
+           call. = FALSE)
+    }
+    metadata <- metadata[!is.na(metadata[[filter_name]]) &
+                           metadata[[filter_name]] >= filter_value[1] &
                            metadata[[filter_name]] <= filter_value[2], ]
     if (nrow(metadata) == 0L) {
       return(.irw_filter_no_match(filter_name, filter_value))
