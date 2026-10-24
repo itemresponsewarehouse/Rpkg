@@ -7,11 +7,12 @@
 .fetch_biblio_table()
 }
 \value{
-A tibble containing filtered biblio information, with only the tables that exist in the IRW database.
+A tibble containing biblio information as published in irw_meta.
 }
 \description{
 Retrieves the metadata table from Redivis user("datapages")$dataset("irw_meta")$table("biblio").
 Only fetches new data if the table version tag has changed.
-This version filters out any tables that do not exist in the IRW database.
+Rows stand as published: see .fetch_metadata_table() for why the live-table
+intersection was removed (ben-domingue/irw#3127).
 }
 \keyword{internal}

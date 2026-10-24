@@ -61,5 +61,5 @@
     stop(pinned, call. = FALSE)
   }
 
-  stop(.irw_table_not_found_message(name), call. = FALSE)
+  stop(.irw_missing_table_message(name, source = source), call. = FALSE)
 }
