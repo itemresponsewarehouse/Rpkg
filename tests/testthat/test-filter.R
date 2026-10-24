@@ -334,3 +334,24 @@ test_that("tier-0 filters are rejected for sources whose metadata lacks them", {
   expect_error(irw_filter(source = "conj", prop_items_extreme = c(0, 0)),
                "prop_items_extreme")
 })
+
+
+# A type error must not surface as an empty result (review R-22, irw#3221).
+# `irw_filter(n_responses = "abc")` reported "0 tables matched", which reads as
+# a finding about the corpus rather than a mistake in the call -- and the Python
+# client raises for the same input. Checked before any metadata is fetched, so
+# these need no network and no mocks.
+test_that("a non-numeric numeric filter errors rather than matching nothing", {
+  expect_error(irw_filter(n_responses = "abc"), "must be numeric")
+  expect_error(irw_filter(n_items = TRUE), "must be numeric")
+  expect_error(irw_filter(density = "0.5"), "must be numeric")
+  expect_error(irw_filter(n_participants = c(1, 2, 3)), "single value or")
+  expect_error(irw_filter(n_items = NA_real_), "cannot be NA")
+})
+
+test_that("the check is the same one for every source's numeric filters", {
+  expect_error(irw_filter(n_actors = "many", source = "comp"), "must be numeric")
+  expect_error(irw_filter(n_respondents = "many", source = "conj"), "must be numeric")
+  expect_null(irw:::.irw_check_numeric_filter("n_items", NULL))
+  expect_null(irw:::.irw_check_numeric_filter("n_items", c(10, 50)))
+})
