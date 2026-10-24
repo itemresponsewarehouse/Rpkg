@@ -7,6 +7,7 @@
 irw_long2resp(
   df,
   wave = NULL,
+  occasion = NULL,
   id_density_threshold = 0.1,
   agg_method = NULL,
   check_resp = FALSE,
@@ -17,10 +18,25 @@ irw_long2resp(
 \item{df}{A data frame containing IRW-compliant item response data in long
 format.}
 
-\item{wave}{(Optional) A numeric value specifying which wave to filter.
-If the dataset does not have a \code{wave} column, this input is
-ignored.
-Defaults to the most frequent wave if \code{NULL}.}
+\item{wave}{(Optional) The occasion to keep, matched against
+\code{df$wave} as a string so that labelled waves
+(\code{"pre"}/\code{"post"}) work as well as numbered ones. If
+the dataset does not have a \code{wave} column, this input is
+ignored. Defaults to the most frequent wave if \code{NULL}. A wave
+that is not present in the table is an error: reshaping without
+filtering would aggregate every occasion together.}
+
+\item{occasion}{(Optional) Named vector or list giving the occasion to keep
+for any other occasion column the standard defines -- \code{rater},
+\code{session}, \code{trial_number}, \code{order}, \code{period},
+\code{block}, \code{subtest}, \code{timepoint}, \code{occasion} --
+e.g. \code{occasion = c(rater = "2")}. Matched as a string, exactly
+as \code{wave} is. An occasion column present in the table and not
+named here defaults to its most frequent value, which is reported;
+\strong{nothing is ever pooled across occasions}, because the
+aggregation step below would average them into a value that exists in
+no respondent's data. The occasions kept are recorded on the result as
+the \code{"occasion"} attribute.}
 
 \item{id_density_threshold}{A numeric value between \code{0.0} and
 \code{1.0} specifying the minimum response density required for an \code{id}
