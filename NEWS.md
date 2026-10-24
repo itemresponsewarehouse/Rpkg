@@ -1,4 +1,4 @@
-# irw (development version)
+# irw 1.4.0
 
 - irw_filter() gains four psychometric filters for `source = "core"`: `difficulty_spread` (the share of a table's observed response range that its item means cover — the p-value range on a dichotomous test, normalised so a 1–5 Likert table is comparable), `mean_item_rest_r`, `mean_abs_item_rest_r` and `prop_items_extreme` (the share of items at floor or ceiling). Until now the catalogue could only be filtered by shape — how many responses, items, participants — so "tables whose items hang together, spanning the scale, with no floor effects" was not an askable question. The columns are classical and model-free, with no IRT model fitted anywhere, so they are defined for every core table rather than the dichotomous sixth, and they take no position on what the items measure. Two cautions documented on the arguments: response direction is not harmonised across IRW, so a signed mean item-rest correlation near zero can mean a reverse-keyed scale rather than an incoherent one (compare it with the absolute version, whose gap from the signed one is the tell), and rest scores are a weaker statement about a sparse bank, where respondents see almost disjoint item sets, than about a 20-item questionnaire. The per-item rows behind the summaries are irw_meta's new `item_classical` table, one row per table-item. Requires the irw_meta release of 2026-10-21 or later (ben-domingue/irw#1710).
 
@@ -16,6 +16,9 @@
 - irw_metadata(source = "conj") returns irw_meta's `conj_metadata` (design counts and design facts per experiment), and irw_info() on a conjoint table now shows its description, DOI, licence and reference. irw_filter(source = "conj") filters on `n_respondents`, `n_attributes`, `outcome` ("choice"/"rating"), `country` and `license`, and irw_license_options(source = "conj") lists its licences.
 
 - The error for a missing `redivis` client now prints an install command that works where it is pasted. `getOption("repos")` is the unresolved placeholder `"@CRAN@"` in a session with no profile, so under `Rscript` the command we told people to run failed with "trying to use CRAN without setting a mirror"; the message now resolves the mirror itself (reported by Padma Korsepati).
+
+- The seventh core warehouse (`item_response_warehouse_7`) is in the configured shard list. 1.3.1's list stopped at the sixth, so its table listings were short by that shard's 761 tables with nothing to say so (itemresponsewarehouse/Rpkg#197).
+- `irw_info()` no longer reports the string `"NA"` as a table's source. A missing source note read back from the metadata as the two characters `NA` rather than as a missing value, and was printed as though it were a source (itemresponsewarehouse/Rpkg#200).
 
 # irw 1.3.1
 
