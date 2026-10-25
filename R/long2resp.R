@@ -136,10 +136,13 @@ irw_check_resp <- function(x, min_count = 5L, min_prop = 0.01, resp_col = "resp"
 #'
 #' @param df A data frame containing IRW-compliant item response data in long
 #' format.
-#' @param wave (Optional) A numeric value specifying which wave to filter.
-#'        If the dataset does not have a \code{wave} column, this input is
-#'        ignored.
-#'        Defaults to the most frequent wave if \code{NULL}.
+#' @param wave (Optional) The occasion to keep, matched against
+#'        \code{df$wave} as a string so that labelled waves
+#'        (\code{"pre"}/\code{"post"}) work as well as numbered ones. If
+#'        the dataset does not have a \code{wave} column, this input is
+#'        ignored. Defaults to the most frequent wave if \code{NULL}. A wave
+#'        that is not present in the table is an error: reshaping without
+#'        filtering would aggregate every occasion together.
 #' @param id_density_threshold A numeric value between \code{0.0} and
 #' \code{1.0} specifying the minimum response density required for an \code{id}
 #'  to be included. Default is \code{0.1}. Set to \code{NULL} to disable
@@ -222,20 +225,53 @@ irw_long2resp <- function(df,
   df <- df[, intersect(names(df), essential_cols), drop = FALSE]
   df$resp <- resp_raw
 
+  # ---- Occasion selection ----
+  #
+  # The wave is matched as a STRING and a wave that cannot be matched is an
+  # error. Both of those are deliberate, and the reason is that the previous
+  # version silently fabricated data.
+  #
+  # It read the default wave with as.numeric(names(table(df$wave))), which on a
+  # labelled wave column -- "pre"/"post", "baseline"/"followup", a condition
+  # name -- returns NA. `NA %in% df$wave` is FALSE, so the filter was skipped,
+  # the function went on to the aggregation step, and with the default
+  # agg_method = "mean" on a numeric response EVERY OCCASION WAS AVERAGED
+  # TOGETHER. On live lozano_2018_participation that made 22% of the returned
+  # cells the mean of a pre and a post response on a 1-5 scale: a number that
+  # exists in no respondent's data, returned without an error. The only cues
+  # were an R coercion warning and the line "Wave NA not found in data. No
+  # filtering applied.", and a caller that captured messages saw neither.
+  #
+  # So: no coercion, and no path through this block that pools occasions. A
+  # reshape that cannot honour the occasion argument it was given stops instead.
   if ("wave" %in% names(df)) {
+    observed <- df$wave[!is.na(df$wave)]
+    if (length(observed) == 0L) {
+      stop("Column 'wave' is present but missing on every row, so no occasion ",
+           "can be chosen. Drop the column before reshaping if the table is ",
+           "not longitudinal.")
+    }
     if (is.null(wave)) {
-      # Find the most frequent wave
-      wave_counts <- table(df$wave)
-      wave <- as.numeric(names(wave_counts)[which.max(wave_counts)])
-      messages <- c(messages, paste0("Defaulting to the most frequent wave: ", wave))
+      wave_counts <- table(as.character(observed))
+      wave <- names(wave_counts)[which.max(wave_counts)]
+      messages <- c(messages,
+                    paste0("Defaulting to the most frequent wave: ", wave))
     }
-    
-    if (wave %in% df$wave) {
-      df <- df[df$wave == wave, , drop = FALSE]
-      messages <- c(messages, paste0("Filtering applied: Keeping only responses from wave ", wave))
-    } else {
-      messages <- c(messages, paste0("Wave ", wave, " not found in data. No filtering applied."))
+    keep <- !is.na(df$wave) & as.character(df$wave) == as.character(wave)
+    if (!any(keep)) {
+      shown <- unique(as.character(observed))
+      if (length(shown) > 10L) {
+        shown <- c(shown[seq_len(10L)], paste0("... (", length(shown), " in all)"))
+      }
+      stop("wave = ", paste(as.character(wave), collapse = ", "),
+           " is not present in this table. Observed waves: ",
+           paste(shown, collapse = ", "),
+           ". Reshaping without filtering would aggregate every occasion ",
+           "together, so this is an error rather than a warning.")
     }
+    df <- df[keep, , drop = FALSE]
+    messages <- c(messages, paste0(
+      "Filtering applied: Keeping only responses from wave ", as.character(wave)))
   }
   
   # Ensure item names have "item_" prefix
