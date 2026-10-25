@@ -214,12 +214,17 @@ irw_check_resp <- function(x, min_count = 5L, min_prop = 0.01, resp_col = "resp"
 #'        \code{session}, \code{trial_number}, \code{order}, \code{period},
 #'        \code{block}, \code{subtest}, \code{timepoint}, \code{occasion} --
 #'        e.g. \code{occasion = c(rater = "2")}. Matched as a string, exactly
-#'        as \code{wave} is. An occasion column present in the table and not
-#'        named here defaults to its most frequent value, which is reported;
-#'        \strong{nothing is ever pooled across occasions}, because the
-#'        aggregation step below would average them into a value that exists in
-#'        no respondent's data. The occasions kept are recorded on the result as
-#'        the \code{"occasion"} attribute.
+#'        as \code{wave} is. An occasion column present in the table, not named
+#'        here, and keying a repeated \code{id}-\code{item} pair is
+#'        \strong{never chosen for you}: either pass \code{agg_method}, which
+#'        says aggregating across it is what you want, or this errors and names
+#'        the column. Both halves matter -- the aggregation step below would
+#'        otherwise average occasions into a value that exists in no
+#'        respondent's data, and picking one occasion unasked is the same defect
+#'        wearing different clothes (on a 651-rater panel it returns one rater).
+#'        The occasions kept are recorded on the result as the
+#'        \code{"occasion"} attribute, and any aggregated across as
+#'        \code{"occasion_pooled"}.
 #' @param id_density_threshold A numeric value between \code{0.0} and
 #' \code{1.0} specifying the minimum response density required for an \code{id}
 #'  to be included. Default is \code{0.1}. Set to \code{NULL} to disable
@@ -326,18 +331,30 @@ irw_long2resp <- function(df,
   request <- .irw_occasion_request(wave, occasion, occasion_cols)
   chosen <- character(0)
 
-  # One occasion is kept per column, and no path through this block may pool
-  # them. Three rules, in this order:
+  # One occasion is kept per column, and no path through this block pools them
+  # without being asked to. Four rules, in this order:
   #
   #   1. `wave` is always resolved, explicitly or by default, which is what it
   #      has always done.
   #   2. Any column named in `occasion` is resolved, because the caller asked.
-  #   3. Any OTHER occasion column is resolved only while an id+item pair still
-  #      repeats -- i.e. only while something would otherwise be aggregated.
-  #      That distinction matters: `subtest` and `block` are in the standard's
-  #      occasion list because they can key a repeat, but on a table where they
-  #      do not, filtering to one of their values would throw away items rather
-  #      than choose an occasion.
+  #   3. Any OTHER occasion column is considered only while an id+item pair
+  #      still repeats -- i.e. only while something would otherwise be
+  #      aggregated. That distinction matters: `subtest` and `block` are in the
+  #      standard's occasion list because they can key a repeat, but on a table
+  #      where they do not, filtering to one of their values would throw away
+  #      items rather than choose an occasion.
+  #   4. Such a column is NEVER chosen for the caller. Either `agg_method` was
+  #      passed, in which case aggregating across it is what was asked for and
+  #      it is pooled and reported; or it was not, and this stops.
+  #
+  # Rule 4 is a correction to the first version of this fix, which defaulted to
+  # the most frequent value. On `swmd_mokken` -- a 651-rater panel, and the
+  # subject of vignettes/articles/scaling-reliability.Rmd -- that returned the
+  # one rater who happened to appear most often: a 30 x 7 matrix became a
+  # single row. Silently choosing an occasion is the same class of defect as
+  # silently pooling them, and on a rater panel it is the more destructive of
+  # the two. `wave` keeps its default because it has always had one and a wave
+  # is a table-wide occasion; a rater is not.
   resolve <- function(df, col, want, messages) {
     observed <- df[[col]][!is.na(df[[col]])]
     if (length(observed) == 0L) {
@@ -377,9 +394,35 @@ irw_long2resp <- function(df,
 
   repeats_remain <- function(df) any(duplicated(df[, c("id", "item")]))
 
+  pooled <- character(0)
+
   for (col in occasion_cols) {
     explicit <- col %in% names(request)
-    if (!explicit && !identical(col, "wave") && !repeats_remain(df)) next
+    if (!explicit && !identical(col, "wave")) {
+      if (!repeats_remain(df)) next
+      observed <- df[[col]][!is.na(df[[col]])]
+      if (length(observed) == 0L) {
+        stop("Column '", col, "' is present but missing on every row, so no ",
+             "occasion can be chosen from it. Drop the column before reshaping ",
+             "if it does not index repeated responses.")
+      }
+      values <- unique(as.character(observed))
+      if (!agg_method_defaulted) {
+        # The caller named an aggregation, so aggregating across this column is
+        # the request, not an accident. Say which column is being pooled: that
+        # is the fact a reader of the result needs and cannot recover from it.
+        pooled <- c(pooled, col)
+        messages <- c(messages, paste0(
+          "Aggregating across ", col, " (", length(values), " values) with ",
+          "agg_method = '", agg_method, "', as given."))
+        next
+      }
+      stop("Column '", col, "' keys repeated id+item responses (",
+           length(values), " values), and this reshape will not choose one ",
+           "for you. Either keep one occasion -- occasion = c(", col, " = \"",
+           values[1L], "\") -- or aggregate across them deliberately by ",
+           "passing agg_method, for example agg_method = \"mode\".")
+    }
     out <- resolve(df, col, if (explicit) request[[col]] else NULL, messages)
     df <- out$df
     messages <- out$messages
@@ -582,6 +625,11 @@ irw_long2resp <- function(df,
   # messages -- the MCP server discards them entirely -- so the choice has to
   # be readable off the object as well as printed (R-25, and R-19 for why).
   attr(wide_df, "occasion") <- chosen
+  # Which occasion columns were aggregated across rather than chosen from. A
+  # caller reading `occasion` alone would otherwise see nothing for them.
+  if (length(pooled) > 0L) {
+    attr(wide_df, "occasion_pooled") <- pooled
+  }
   if (check_resp) {
     attr(wide_df, "resp_checks") <- resp_checks
   }

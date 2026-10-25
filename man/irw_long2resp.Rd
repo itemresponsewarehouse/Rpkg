@@ -31,12 +31,17 @@ for any other occasion column the standard defines -- \code{rater},
 \code{session}, \code{trial_number}, \code{order}, \code{period},
 \code{block}, \code{subtest}, \code{timepoint}, \code{occasion} --
 e.g. \code{occasion = c(rater = "2")}. Matched as a string, exactly
-as \code{wave} is. An occasion column present in the table and not
-named here defaults to its most frequent value, which is reported;
-\strong{nothing is ever pooled across occasions}, because the
-aggregation step below would average them into a value that exists in
-no respondent's data. The occasions kept are recorded on the result as
-the \code{"occasion"} attribute.}
+as \code{wave} is. An occasion column present in the table, not named
+here, and keying a repeated \code{id}-\code{item} pair is
+\strong{never chosen for you}: either pass \code{agg_method}, which
+says aggregating across it is what you want, or this errors and names
+the column. Both halves matter -- the aggregation step below would
+otherwise average occasions into a value that exists in no
+respondent's data, and picking one occasion unasked is the same defect
+wearing different clothes (on a 651-rater panel it returns one rater).
+The occasions kept are recorded on the result as the
+\code{"occasion"} attribute, and any aggregated across as
+\code{"occasion_pooled"}.}
 
 \item{id_density_threshold}{A numeric value between \code{0.0} and
 \code{1.0} specifying the minimum response density required for an \code{id}

@@ -103,11 +103,35 @@ rater_frame <- function() {
   )
 }
 
-test_that("a repeated rater returns one rater's responses, never their mean", {
-  out <- suppressMessages(irw_long2resp(rater_frame(), id_density_threshold = NULL))
-  # r1 and r2 disagree by 4 points; a mean would be 3, which no rater gave.
-  expect_false(any(unlist(out[, c("item_q1", "item_q2")]) == 3))
-  expect_equal(attr(out, "occasion"), c(rater = "r1"))
+test_that("a repeated rater is neither pooled nor chosen for the caller", {
+  # r1 and r2 disagree by 4 points, so a mean would be 3, which no rater gave.
+  # The first version of this fix kept the most frequent rater instead; on
+  # swmd_mokken's 651-rater panel that returned a single respondent, so the
+  # answer is to stop and name both ways forward.
+  expect_error(
+    suppressMessages(irw_long2resp(rater_frame(), id_density_threshold = NULL)),
+    "keys repeated id\\+item responses \\(2 values\\)"
+  )
+  expect_error(
+    suppressMessages(irw_long2resp(rater_frame(), id_density_threshold = NULL)),
+    'occasion = c\\(rater = "r1"\\)'
+  )
+})
+
+test_that("an explicit agg_method pools the rater panel and names the column", {
+  msgs <- character(0)
+  out <- withCallingHandlers(
+    irw_long2resp(rater_frame(), agg_method = "mode", id_density_threshold = NULL),
+    message = function(m) {
+      msgs <<- c(msgs, conditionMessage(m))
+      invokeRestart("muffleMessage")
+    }
+  )
+  # Both raters' rows are still present to be aggregated, so both ids survive.
+  expect_equal(nrow(out), 2L)
+  expect_equal(attr(out, "occasion_pooled"), "rater")
+  expect_equal(length(attr(out, "occasion")), 0L)
+  expect_match(paste(msgs, collapse = "\n"), "Aggregating across rater \\(2 values\\)")
 })
 
 test_that("the occasion argument chooses, for any occasion column", {
@@ -136,12 +160,14 @@ test_that("trial columns count as occasions", {
     trial_number = rep(c(1, 2), each = 2),
     resp = c(0, 0, 1, 1), stringsAsFactors = FALSE
   )
-  out <- suppressMessages(irw_long2resp(df, id_density_threshold = NULL))
-  expect_equal(attr(out, "occasion"), c(trial_number = "1"))
-  expect_equal(unname(unlist(out[, c("item_q1", "item_q2")])), c(0, 0))
+  expect_error(
+    suppressMessages(irw_long2resp(df, id_density_threshold = NULL)),
+    "Column 'trial_number' keys repeated id\\+item responses"
+  )
   out2 <- suppressMessages(irw_long2resp(df, occasion = c(trial_number = 2),
                                          id_density_threshold = NULL))
   expect_equal(unname(unlist(out2[, c("item_q1", "item_q2")])), c(1, 1))
+  expect_equal(attr(out2, "occasion"), c(trial_number = "2"))
 })
 
 test_that("a column that does not key a repeat is left alone", {
