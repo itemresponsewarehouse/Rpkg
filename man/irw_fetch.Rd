@@ -8,6 +8,8 @@ irw_fetch(
   name,
   source = "core",
   dedup = FALSE,
+  max_rows = NULL,
+  columns = NULL,
   sim = FALSE,
   comp = FALSE,
   nom = FALSE,
@@ -24,6 +26,18 @@ If a \code{date} column is present, no deduplication is performed.
 If only a \code{wave} column is present, one random response is retained per (id, item) group within each wave.
 If neither \code{date} nor \code{wave} is present, one random response is retained per (id, item) pair.}
 
+\item{max_rows}{Integer, optional. Stop after this many rows. Pushed to
+Redivis, so only those rows are exported and counted against the account's
+export quota -- which is the point: 326 IRW tables are over a million rows,
+and a cap applied after the download has already cost the quota. A slice is
+never written to the disk cache, because it cannot stand in for the table;
+a cached whole table does serve a slice.}
+
+\item{columns}{Character vector, optional. Fetch only these columns, also
+pushed to Redivis. A column the table does not have is an error. Ignored
+for the download when \code{dedup = TRUE} (deduplication needs every
+column); the columns are then dropped after deduplicating.}
+
 \item{sim}{Deprecated. Use \code{source = "sim"} instead.}
 
 \item{comp}{Deprecated. Use \code{source = "comp"} instead.}
@@ -38,9 +52,12 @@ of tibbles (or error messages, if retrieval failed).
 }
 \description{
 Retrieves one or more tables from IRW and returns them as tibbles.
-This downloads every row of each table and counts against the Redivis export
-quota; if you only need the item or response value sets, or per-item counts
-and ranges, use \code{\link[=irw_table_sets]{irw_table_sets()}}, which answers with a server-side query.
+By default this downloads every row of each table and counts against the
+Redivis export quota. Pass \code{max_rows} and/or \code{columns} to transfer a page
+rather than a table -- both are pushed to Redivis, so the rest is never
+exported. If you only need the item or response value sets, or per-item
+counts and ranges, use \code{\link[=irw_table_sets]{irw_table_sets()}}, which answers with a server-side
+query.
 If the table includes a character \code{resp} column, the function attempts to
 coerce it into numeric. Strings like \code{"NA"}, \code{""}, and \code{NA} are treated as missing values.
 A warning is issued only if other non-numeric values are encountered.
@@ -60,6 +77,10 @@ Silence it with \code{options(irw.source_note = FALSE)} or \code{IRW_SOURCE_NOTE
 \donttest{
 # Main IRW data
 irw_fetch("environment_ltm")
+
+# A look at a large table without exporting all of it
+irw_fetch("neurips_2020", max_rows = 100)
+irw_fetch("neurips_2020", columns = c("id", "item", "resp"), max_rows = 1000)
 
 # Deduplicated
 irw_fetch("pks_probability", dedup = TRUE)

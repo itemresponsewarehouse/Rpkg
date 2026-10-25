@@ -6,13 +6,17 @@
 #' @param table_id Character. Name of the table.
 #' @param source Character. The data family, one of \code{"core"}, \code{"nom"}, \code{"sim"}, \code{"comp"}.
 #' @param dedup Logical. If TRUE, apply deduplication logic to responses.
+#' @param max_rows Integer or NULL. Stop after this many rows, pushed to Redivis.
+#' @param columns Character vector or NULL. Fetch only these columns, pushed to Redivis.
 #' @param sim Deprecated. Use \code{source = "sim"} instead.
 #' @param comp Deprecated. Use \code{source = "comp"} instead.
 #' @param nom Deprecated. Use \code{source = "nom"} instead.
 #'
 #' @return A tibble representing the dataset.
 #' @keywords internal
-fetch_single_data <- function(table_id, source = "core", dedup = FALSE, sim = FALSE, comp = FALSE, nom = FALSE) {
+fetch_single_data <- function(table_id, source = "core", dedup = FALSE,
+                              max_rows = NULL, columns = NULL,
+                              sim = FALSE, comp = FALSE, nom = FALSE) {
   source <- .irw_resolve_source(source = source, sim = sim, comp = comp, nom = nom)
   ds_list <- .irw_shard_first(
     .irw_order_datasources(.initialize_datasource(source = source), source = source),
@@ -36,7 +40,11 @@ fetch_single_data <- function(table_id, source = "core", dedup = FALSE, sim = FA
           # Not retried: a retry would export the table again against the
           # 30-day export cap. See .retry_with_backoff(). Served from the disk
           # cache when this exact table (by content hash) was fetched before.
-          .irw_cached_download(tbl, "tables")
+          # Dedup needs every column -- it groups on id, item and wave -- so
+          # `columns` is not pushed down when it is set, and irw_fetch() drops
+          # the extra columns afterwards. Same rule as the Python client.
+          .irw_cached_download(tbl, "tables", max_rows = max_rows,
+                               columns = if (dedup) NULL else columns)
         },
         warning = function(w) {
           if (grepl("No reference id was provided for the table", conditionMessage(w))) {
@@ -45,6 +53,10 @@ fetch_single_data <- function(table_id, source = "core", dedup = FALSE, sim = FA
         })
       },
       error = function(e) {
+        # A bad column name is the caller's mistake, not a shard miss: trying
+        # the next warehouse would end in "table does not exist in IRW" for a
+        # table that exists.
+        if (inherits(e, "irw_bad_columns")) stop(e)
         .irw_handle_datasource_error(conditionMessage(e), table_name = table_id, ds_list = ds_list, errors = errors)
         NULL
       }
@@ -133,12 +145,50 @@ fetch_single_data <- function(table_id, source = "core", dedup = FALSE, sim = FA
   invisible(NULL)
 }
 
+#' Check `max_rows`/`columns` and normalise them
+#'
+#' The messages match the Python client's (`_validate_pushdown`), because the
+#' two clients are documented as interchangeable and a user who hits a type
+#' error in one should recognise it in the other (R-22).
+#'
+#' @keywords internal
+#' @noRd
+.irw_check_pushdown <- function(max_rows = NULL, columns = NULL) {
+  if (!is.null(max_rows)) {
+    # TRUE is not 1 here: irw_fetch(..., max_rows = TRUE) is a mistake, the
+    # same one the Python client rejects because bool subclasses int.
+    if (is.logical(max_rows) || !is.numeric(max_rows) || length(max_rows) != 1L ||
+        is.na(max_rows) || max_rows != as.integer(max_rows)) {
+      stop("max_rows must be a single whole number or NULL.", call. = FALSE)
+    }
+    if (max_rows < 1) {
+      stop(sprintf("max_rows must be at least 1; got %s.", max_rows), call. = FALSE)
+    }
+    max_rows <- as.integer(max_rows)
+  }
+  if (!is.null(columns)) {
+    if (!is.character(columns)) {
+      stop("columns must be a character vector of column names, or NULL.", call. = FALSE)
+    }
+    if (length(columns) == 0L) {
+      stop("columns cannot be empty; pass NULL for all columns.", call. = FALSE)
+    }
+    if (anyNA(columns) || any(!nzchar(trimws(columns)))) {
+      stop("All column names must be non-empty strings.", call. = FALSE)
+    }
+  }
+  list(max_rows = max_rows, columns = columns)
+}
+
 #' Fetch Table(s) from the Item Response Warehouse
 #'
 #' Retrieves one or more tables from IRW and returns them as tibbles.
-#' This downloads every row of each table and counts against the Redivis export
-#' quota; if you only need the item or response value sets, or per-item counts
-#' and ranges, use [irw_table_sets()], which answers with a server-side query.
+#' By default this downloads every row of each table and counts against the
+#' Redivis export quota. Pass `max_rows` and/or `columns` to transfer a page
+#' rather than a table -- both are pushed to Redivis, so the rest is never
+#' exported. If you only need the item or response value sets, or per-item
+#' counts and ranges, use [irw_table_sets()], which answers with a server-side
+#' query.
 #' If the table includes a character `resp` column, the function attempts to
 #' coerce it into numeric. Strings like `"NA"`, `""`, and `NA` are treated as missing values.
 #' A warning is issued only if other non-numeric values are encountered.
@@ -161,6 +211,16 @@ fetch_single_data <- function(table_id, source = "core", dedup = FALSE, sim = FA
 #'   If neither \code{date} nor \code{wave} is present, one random response is retained per (id, item) pair.
 #' @param comp Deprecated. Use \code{source = "comp"} instead.
 #' @param nom Deprecated. Use \code{source = "nom"} instead.
+#' @param max_rows Integer, optional. Stop after this many rows. Pushed to
+#'   Redivis, so only those rows are exported and counted against the account's
+#'   export quota -- which is the point: 326 IRW tables are over a million rows,
+#'   and a cap applied after the download has already cost the quota. A slice is
+#'   never written to the disk cache, because it cannot stand in for the table;
+#'   a cached whole table does serve a slice.
+#' @param columns Character vector, optional. Fetch only these columns, also
+#'   pushed to Redivis. A column the table does not have is an error. Ignored
+#'   for the download when \code{dedup = TRUE} (deduplication needs every
+#'   column); the columns are then dropped after deduplicating.
 #' @param resp Logical, optional. If TRUE, returns response matrix via \code{irw_long2resp()}. Defaults to FALSE.
 #'
 #' @return If a single name is provided, returns a tibble. If multiple, returns a named list
@@ -174,6 +234,10 @@ fetch_single_data <- function(table_id, source = "core", dedup = FALSE, sim = FA
 #' # Main IRW data
 #' irw_fetch("environment_ltm")
 #'
+#' # A look at a large table without exporting all of it
+#' irw_fetch("neurips_2020", max_rows = 100)
+#' irw_fetch("neurips_2020", columns = c("id", "item", "resp"), max_rows = 1000)
+#'
 #' # Deduplicated
 #' irw_fetch("pks_probability", dedup = TRUE)
 #'
@@ -185,7 +249,9 @@ fetch_single_data <- function(table_id, source = "core", dedup = FALSE, sim = FA
 #' }
 #'
 #' @export
-irw_fetch <- function(name, source = "core", dedup = FALSE, sim = FALSE, comp = FALSE, nom = FALSE, resp = FALSE) {
+irw_fetch <- function(name, source = "core", dedup = FALSE, max_rows = NULL,
+                      columns = NULL, sim = FALSE, comp = FALSE, nom = FALSE,
+                      resp = FALSE) {
   if (missing(name)) {
     stop(
       "Please provide the IRW table name(s) to fetch.\n",
@@ -195,9 +261,22 @@ irw_fetch <- function(name, source = "core", dedup = FALSE, sim = FALSE, comp = 
   }
 
   source <- .irw_resolve_source(source = source, sim = sim, comp = comp, nom = nom)
+  bounds <- .irw_check_pushdown(max_rows, columns)
+  max_rows <- bounds$max_rows
+  columns <- bounds$columns
 
   process_one <- function(nm) {
-    dat <- fetch_single_data(nm, source = source, dedup = dedup)
+    dat <- fetch_single_data(nm, source = source, dedup = dedup,
+                             max_rows = max_rows, columns = columns)
+    # Dedup grouped on columns the caller may not have asked for, so narrow now.
+    if (!is.null(dat) && !is.null(columns) && dedup) {
+      missing <- setdiff(columns, names(dat))
+      if (length(missing) > 0) {
+        stop(sprintf("Table %s has no column(s) %s.", shQuote(nm),
+                     paste(shQuote(missing), collapse = ", ")), call. = FALSE)
+      }
+      dat <- dat[, columns, drop = FALSE]
+    }
     # Credit a table found through an intermediary such as openESM (#2421).
     # Never raises and is silent on any failure.
     if (!is.null(dat)) .irw_source_note(nm, source)
