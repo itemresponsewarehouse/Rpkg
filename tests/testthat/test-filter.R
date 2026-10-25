@@ -355,3 +355,24 @@ test_that("the check is the same one for every source's numeric filters", {
   expect_null(irw:::.irw_check_numeric_filter("n_items", NULL))
   expect_null(irw:::.irw_check_numeric_filter("n_items", c(10, 50)))
 })
+
+test_that("the default density filter has no upper bound", {
+  # `density` is responses per person-item cell, so a repeated-measures table
+  # is legitimately above 1 -- 768 of 6,720 core tables are (#3222). The old
+  # default of c(0.5, 1) dropped every one of them.
+  local_mocked_bindings(
+    irw_metadata = function(source = "core", sim = FALSE, comp = FALSE, nom = FALSE) {
+      data.frame(
+        table = c("sparse", "full", "repeated", "panel"),
+        density = c(0.2, 0.9, 1.0, 12.5),
+        stringsAsFactors = FALSE
+      )
+    },
+    .env = asNamespace("irw")
+  )
+
+  expect_equal(suppressMessages(irw_filter()), c("full", "panel", "repeated"))
+  expect_equal(irw_filter(density = NULL), c("full", "panel", "repeated", "sparse"))
+  # An upper bound is still honoured when the caller asks for one.
+  expect_equal(irw_filter(density = c(0.5, 1)), c("full", "repeated"))
+})
