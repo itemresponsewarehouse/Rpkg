@@ -85,3 +85,131 @@ test_that("an all-missing wave column stops rather than pooling", {
   d$wave <- NA
   expect_error(irw_long2resp(d, id_density_threshold = NULL), "missing on every row")
 })
+
+
+# Occasion columns other than `wave` (review R-25, ben-domingue/irw#3223).
+# The standard defines nine ways a response can repeat; this reshape handled
+# one. `rater`, `trial_*` and `session` were dropped from the frame and then
+# averaged together by the default agg_method = "mean", with no argument a
+# caller could pass -- the same defect as the wave pooling, one layer down.
+
+rater_frame <- function() {
+  data.frame(
+    id = rep(c("p1", "p2"), each = 4),
+    item = rep(c("item_q1", "item_q2"), times = 4),
+    rater = rep(c("r1", "r1", "r2", "r2"), times = 2),
+    resp = c(1, 1, 5, 5, 2, 2, 4, 4),
+    stringsAsFactors = FALSE
+  )
+}
+
+test_that("a repeated rater is neither pooled nor chosen for the caller", {
+  # r1 and r2 disagree by 4 points, so a mean would be 3, which no rater gave.
+  # The first version of this fix kept the most frequent rater instead; on
+  # swmd_mokken's 651-rater panel that returned a single respondent, so the
+  # answer is to stop and name both ways forward.
+  expect_error(
+    suppressMessages(irw_long2resp(rater_frame(), id_density_threshold = NULL)),
+    "keys repeated id\\+item responses \\(2 values\\)"
+  )
+  expect_error(
+    suppressMessages(irw_long2resp(rater_frame(), id_density_threshold = NULL)),
+    'occasion = c\\(rater = "r1"\\)'
+  )
+})
+
+test_that("an explicit agg_method pools the rater panel and names the column", {
+  msgs <- character(0)
+  out <- withCallingHandlers(
+    irw_long2resp(rater_frame(), agg_method = "mode", id_density_threshold = NULL),
+    message = function(m) {
+      msgs <<- c(msgs, conditionMessage(m))
+      invokeRestart("muffleMessage")
+    }
+  )
+  # Both raters' rows are still present to be aggregated, so both ids survive.
+  expect_equal(nrow(out), 2L)
+  expect_equal(attr(out, "occasion_pooled"), "rater")
+  expect_equal(length(attr(out, "occasion")), 0L)
+  expect_match(paste(msgs, collapse = "\n"), "Aggregating across rater \\(2 values\\)")
+})
+
+test_that("the occasion argument chooses, for any occasion column", {
+  out <- suppressMessages(irw_long2resp(rater_frame(), occasion = c(rater = "r2"),
+                                        id_density_threshold = NULL))
+  expect_equal(unname(unlist(out[out$id == "p1", c("item_q1", "item_q2")])), c(5, 5))
+  expect_equal(attr(out, "occasion"), c(rater = "r2"))
+})
+
+test_that("an occasion that is not in the table is an error", {
+  expect_error(
+    suppressMessages(irw_long2resp(rater_frame(), occasion = c(rater = "r9"))),
+    "is not present in this table"
+  )
+})
+
+test_that("an occasion column that is empty on every row is an error", {
+  df <- rater_frame()
+  df$rater <- NA
+  expect_error(irw_long2resp(df), "missing on every row")
+})
+
+test_that("trial columns count as occasions", {
+  df <- data.frame(
+    id = rep("p1", 4), item = rep(c("item_q1", "item_q2"), 2),
+    trial_number = rep(c(1, 2), each = 2),
+    resp = c(0, 0, 1, 1), stringsAsFactors = FALSE
+  )
+  expect_error(
+    suppressMessages(irw_long2resp(df, id_density_threshold = NULL)),
+    "Column 'trial_number' keys repeated id\\+item responses"
+  )
+  out2 <- suppressMessages(irw_long2resp(df, occasion = c(trial_number = 2),
+                                         id_density_threshold = NULL))
+  expect_equal(unname(unlist(out2[, c("item_q1", "item_q2")])), c(1, 1))
+  expect_equal(attr(out2, "occasion"), c(trial_number = "2"))
+})
+
+test_that("a column that does not key a repeat is left alone", {
+  # `subtest` is in the standard's occasion list because it CAN key a repeat.
+  # Here it does not: each id+item appears once, and the subtests hold
+  # different items. Filtering to one subtest would throw away items rather
+  # than choose an occasion.
+  df <- data.frame(
+    id = rep(c("p1", "p2"), each = 4),
+    item = rep(c("a1", "a2", "b1", "b2"), 2),
+    subtest = rep(c("a", "a", "b", "b"), 2),
+    resp = c(1, 0, 1, 0, 0, 1, 0, 1), stringsAsFactors = FALSE
+  )
+  out <- suppressMessages(irw_long2resp(df, id_density_threshold = NULL))
+  expect_equal(sort(setdiff(names(out), "id")), c("item_a1", "item_a2", "item_b1", "item_b2"))
+  expect_equal(attr(out, "occasion"), character(0))
+})
+
+test_that("an explicit occasion is honoured even when nothing repeats", {
+  df <- data.frame(
+    id = rep(c("p1", "p2"), each = 4),
+    item = rep(c("a1", "a2", "b1", "b2"), 2),
+    subtest = rep(c("a", "a", "b", "b"), 2),
+    resp = c(1, 0, 1, 0, 0, 1, 0, 1), stringsAsFactors = FALSE
+  )
+  out <- suppressMessages(irw_long2resp(df, occasion = c(subtest = "a"),
+                                        id_density_threshold = NULL))
+  expect_equal(sort(setdiff(names(out), "id")), c("item_a1", "item_a2"))
+})
+
+test_that("occasion and wave cannot contradict each other", {
+  df <- data.frame(id = c("p1", "p1"), item = c("q1", "q1"),
+                   wave = c(1, 2), resp = c(0, 1), stringsAsFactors = FALSE)
+  expect_error(irw_long2resp(df, wave = 1, occasion = list(wave = 2)),
+               "disagree")
+})
+
+test_that("occasion names must be columns the table has an occasion for", {
+  expect_error(irw_long2resp(rater_frame(), occasion = c(session = "1")),
+               "no occasion for")
+  expect_error(irw_long2resp(rater_frame(), occasion = "r1"),
+               "named vector or list")
+  expect_error(irw_long2resp(rater_frame(), occasion = list(rater = c("r1", "r2"))),
+               "single value")
+})

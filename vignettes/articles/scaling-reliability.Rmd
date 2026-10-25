@@ -56,6 +56,14 @@ dim(wide)
 wide[1:3, ]
 ```
 
+Passing `agg_method` is also what permits the pooling. `rater` is one of the
+occasion columns the IRW standard defines, and on a table where it keys a
+repeated `id`-`item` pair `irw_long2resp()` will not choose a rater for you: with
+no `agg_method` and no `occasion` it stops rather than return one rater's scores
+or their mean. To analyse a single rater instead of the panel, name one --
+`irw_long2resp(df, occasion = c(rater = "1"))` -- and the choice is recorded on
+the result as the `"occasion"` attribute.
+
 ```{r}
 resp <- as.matrix(wide[, setdiff(names(wide), "id"), drop = FALSE])
 rownames(resp) <- wide$id
