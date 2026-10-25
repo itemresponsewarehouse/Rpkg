@@ -47,7 +47,9 @@ fetch_single_data <- function(table_id, source = "core", dedup = FALSE,
                                columns = if (dedup) NULL else columns)
         },
         warning = function(w) {
-          if (grepl("No reference id was provided for the table", conditionMessage(w))) {
+          # Both halves of it: the dataset read above warns too, and until
+          # 2026-10-25 only the table half was muffled here.
+          if (grepl(.irw_redivis_advice_pattern, conditionMessage(w))) {
             invokeRestart("muffleWarning")
           }
         })

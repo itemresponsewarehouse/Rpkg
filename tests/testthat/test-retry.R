@@ -58,3 +58,45 @@ test_that("the error classifier accepts the transient signatures Python retries"
   # A quota error that mentions a timeout is still quota, and is not retried.
   expect_false(irw:::.irw_is_transient_error("rate limit exceeded; request timed out"))
 })
+
+test_that("redivis' advice to pin a reference id is muffled, and nothing else is", {
+  # The advice is wrong for this package: a reference id names one VERSION's
+  # table and a release cut rotates them, so there is nothing a caller can do
+  # with it. See the comment on .irw_redivis_advice_pattern.
+  advice <- c(
+    paste("No reference id was provided for the dataset, which may cause your",
+          "code to break if the name changes. Consider using the qualified",
+          'reference "item_response_warehouse:as2e"'),
+    paste("No reference id was provided for the table, which may cause your",
+          'code to break if the name changes. Consider using "swmd_mokken:4nvd"')
+  )
+  for (msg in advice) {
+    expect_silent(irw:::.retry_with_backoff(function() {
+      warning(msg)
+      "value"
+    }))
+    expect_equal(
+      suppressWarnings(irw:::.retry_with_backoff(function() { warning(msg); "value" })),
+      "value"
+    )
+  }
+
+  # Every other redivis warning has to survive: the shard-list and
+  # duplicate-name warnings sit right beside this one.
+  expect_warning(irw:::.retry_with_backoff(function() {
+    warning("table name published in more than one shard")
+    "value"
+  }), "more than one shard")
+})
+
+test_that("muffling a warning does not swallow the retry behaviour", {
+  calls <- 0L
+  out <- irw:::.retry_with_backoff(function() {
+    calls <<- calls + 1L
+    warning("No reference id was provided for the dataset")
+    if (calls < 2L) stop("HTTP 504 Gateway Timeout")
+    "value"
+  })
+  expect_equal(out, "value")
+  expect_equal(calls, 2L)
+})
