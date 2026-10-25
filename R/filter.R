@@ -139,6 +139,36 @@ irw_license_options <- function(source = "core", comp = FALSE, sim = FALSE, nom 
   paste0("c(", paste(as.character(x), collapse = ", "), ")")
 }
 
+#' A numeric filter's value, checked before anything is fetched
+#'
+#' `irw_filter(n_responses = "abc")` used to compare a numeric column against a
+#' string: R coerces the column to character, compares lexicographically, finds
+#' nothing and reports "0 tables matched" -- a type error wearing the clothes of
+#' a finding about the corpus (review R-22, irw#3221). The Python client raises
+#' `InvalidFilterValue` for the same call, and a type error is the one kind of
+#' answer the two clients must not disagree about.
+#'
+#' Checked at the top of `irw_filter()`, before any metadata is downloaded, so
+#' a mistyped filter costs nothing.
+#' @keywords internal
+#' @noRd
+.irw_check_numeric_filter <- function(name, value) {
+  if (is.null(value)) return(invisible(NULL))
+  if (is.logical(value) || !is.numeric(value)) {
+    stop(sprintf("`%s` must be numeric: a single value, or c(min, max). Got %s.",
+                 name, paste(class(value), collapse = "/")), call. = FALSE)
+  }
+  if (!length(value) %in% c(1L, 2L)) {
+    stop(sprintf("`%s` must be a single value or c(min, max); got %d values.",
+                 name, length(value)), call. = FALSE)
+  }
+  if (anyNA(value)) {
+    stop(sprintf("`%s` cannot be NA; pass NULL to drop the filter.", name),
+         call. = FALSE)
+  }
+  invisible(NULL)
+}
+
 .irw_filter_describe <- function(name, value) {
   if (is.numeric(value) && length(value) == 2L) {
     return(sprintf("%s in [%s, %s]", name, value[1], value[2]))
@@ -261,7 +291,7 @@ irw_license_options <- function(source = "core", comp = FALSE, sim = FALSE, nom 
   numeric_filters <- numeric_filters[vapply(numeric_filters, Negate(is.null), logical(1))]
   for (nm in names(numeric_filters)) {
     rng <- numeric_filters[[nm]]
-    if (!is.numeric(rng)) stop(sprintf("'%s' must be numeric.", nm))
+    .irw_check_numeric_filter(nm, rng)
     if (length(rng) == 1L) rng <- rep(rng, 2)
     if (length(rng) != 2L) stop(sprintf("'%s' must be length 1 or 2.", nm))
     meta <- meta[!is.na(meta[[nm]]) & meta[[nm]] >= rng[1] & meta[[nm]] <= rng[2], , drop = FALSE]
@@ -303,7 +333,7 @@ irw_license_options <- function(source = "core", comp = FALSE, sim = FALSE, nom 
 
   for (nm in names(numeric_filters)) {
     rng <- numeric_filters[[nm]]
-    if (!is.numeric(rng)) stop(sprintf("'%s' must be numeric.", nm))
+    .irw_check_numeric_filter(nm, rng)
     if (length(rng) == 1L) rng <- rep(rng, 2)
     if (length(rng) != 2L) stop(sprintf("'%s' must be length 1 or 2.", nm))
 
@@ -544,6 +574,15 @@ irw_filter <- function(n_responses = NULL,
                        collection = NULL) {
   density_supplied <- !missing(density)
   source <- .irw_resolve_source(source = source, sim = sim, comp = comp, nom = nom)
+
+  # Type-check every numeric filter before a byte is fetched (R-22).
+  for (nm in c("n_responses", "n_categories", "n_participants", "n_items",
+               "responses_per_participant", "responses_per_item",
+               "difficulty_spread", "mean_item_rest_r", "mean_abs_item_rest_r",
+               "prop_items_extreme", "density", "n_actors", "n_respondents",
+               "n_attributes")) {
+    .irw_check_numeric_filter(nm, get(nm))
+  }
 
   if (!is.null(n_actors) && source != "comp") {
     stop("`n_actors` is only available when `source = \"comp\"`.")
