@@ -414,8 +414,18 @@ irw_license_options <- function(source = "core", comp = FALSE, sim = FALSE, nom 
 #' @param prop_items_extreme Numeric vector of length 1 or 2. Filters by the share of
 #'   items whose mean sits within 5% of either end of the response range, i.e. floor
 #'   or ceiling items. `prop_items_extreme = c(0, 0)` keeps tables with none. `core` only.
-#' @param density Numeric vector of length 1 or 2, or `NULL`. Filters by matrix density.
-#'   - Default is `c(0.5, 1)` to exclude sparse matrices.
+#' @param density Numeric vector of length 1 or 2, or `NULL`. Filters on
+#'   `density`, which is **responses per person-item cell** --
+#'   `n_responses / (n_participants * n_items)` -- and is therefore not bounded
+#'   by 1. A value above 1 means the table measures a person-item pair more than
+#'   once: 768 of 6,720 core tables are above 1 (measured 2026-10-25), 700 of
+#'   them carrying an occasion column (`wave`, `rater`, `trial_*`, `session`,
+#'   ...), and the largest is 3,624.6 for a go/no-go task. It is not the
+#'   proportion of cells that are filled, which is a different quantity IRW does
+#'   not publish (ben-domingue/irw#3222).
+#'   - Default is `c(0.5, Inf)`: a lower bound only, to exclude sparse matrices.
+#'     The default used to cap at 1, which silently dropped every
+#'     repeated-measures table in the corpus.
 #'   - Use `NULL` to disable this filter.
 #'   - The default is skipped for a source whose metadata has no `density` column
 #'     (`"nom"`). Passing `density`, `var`, `longitudinal` or a numeric filter
@@ -548,7 +558,7 @@ irw_filter <- function(n_responses = NULL,
                        mean_item_rest_r = NULL,
                        mean_abs_item_rest_r = NULL,
                        prop_items_extreme = NULL,
-                       density = c(0.5, 1),
+                       density = c(0.5, Inf),
                        var = NULL,
                        age_range = NULL,
                        child_age__for_child_focused_studies_ = NULL,
@@ -884,10 +894,10 @@ irw_filter <- function(n_responses = NULL,
     num_removed_by_density <- nrow(metadata_before_density) - nrow(metadata)
 
     if (!user_specified_density &&
-        identical(density, c(0.5, 1)) &&
+        identical(density, c(0.5, Inf)) &&
         num_removed_by_density > 0) {
       message(sprintf(
-        "Note: Default density filter (0.5-1) removed %d dataset(s). Set density = NULL to disable.",
+        "Note: Default density filter (>= 0.5 responses per person-item cell) removed %d dataset(s). Set density = NULL to disable.",
         num_removed_by_density
       ))
     }

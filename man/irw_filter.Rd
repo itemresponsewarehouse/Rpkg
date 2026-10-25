@@ -15,7 +15,7 @@ irw_filter(
   mean_item_rest_r = NULL,
   mean_abs_item_rest_r = NULL,
   prop_items_extreme = NULL,
-  density = c(0.5, 1),
+  density = c(0.5, Inf),
   var = NULL,
   age_range = NULL,
   child_age__for_child_focused_studies_ = NULL,
@@ -77,9 +77,19 @@ this and \code{mean_item_rest_r} indicates reverse-keyed items. \code{core} only
 items whose mean sits within 5\% of either end of the response range, i.e. floor
 or ceiling items. \code{prop_items_extreme = c(0, 0)} keeps tables with none. \code{core} only.}
 
-\item{density}{Numeric vector of length 1 or 2, or \code{NULL}. Filters by matrix density.
+\item{density}{Numeric vector of length 1 or 2, or \code{NULL}. Filters on
+\code{density}, which is \strong{responses per person-item cell} --
+\code{n_responses / (n_participants * n_items)} -- and is therefore not bounded
+by 1. A value above 1 means the table measures a person-item pair more than
+once: 768 of 6,720 core tables are above 1 (measured 2026-10-25), 700 of
+them carrying an occasion column (\code{wave}, \code{rater}, \verb{trial_*}, \code{session},
+...), and the largest is 3,624.6 for a go/no-go task. It is not the
+proportion of cells that are filled, which is a different quantity IRW does
+not publish (ben-domingue/irw#3222).
 \itemize{
-\item Default is \code{c(0.5, 1)} to exclude sparse matrices.
+\item Default is \code{c(0.5, Inf)}: a lower bound only, to exclude sparse matrices.
+The default used to cap at 1, which silently dropped every
+repeated-measures table in the corpus.
 \item Use \code{NULL} to disable this filter.
 \item The default is skipped for a source whose metadata has no \code{density} column
 (\code{"nom"}). Passing \code{density}, \code{var}, \code{longitudinal} or a numeric filter
