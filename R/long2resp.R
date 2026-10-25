@@ -116,6 +116,54 @@ irw_check_resp <- function(x, min_count = 5L, min_prop = 0.01, resp_col = "resp"
     "  - an object from irw_long2resp(check_resp = TRUE)."
   )
 }
+#' Natural order for the wide frame's item columns
+#'
+#' The one definition of column order, and it has a twin: `_natural_key()` in
+#' Python-pkg's `utils/long2resp.py` builds the same string, so the two clients
+#' return the same column order for the same table.
+#'
+#' Until 2026-10-25 they disagreed, and this half was worse than a
+#' disagreement. `stats::reshape()` orders columns BY FIRST APPEARANCE IN THE
+#' INPUT ROWS, so the same three items shuffled give `item10 item2 item1` from
+#' one row order and `item1 item10 item2` from another. Redivis does not
+#' guarantee row order, so the same table fetched twice could hand back its
+#' columns in a different order, with no error -- and a caller feeding the
+#' matrix into IRT code by column position has no way to notice. Python sorted,
+#' but lexicographically: item1, item10, item2.
+#'
+#' Natural order: a run of digits compares as a number, everything else as
+#' text, case-insensitively. Item names are overwhelmingly a stem plus a
+#' number, and lexicographic order puts item10 before item2, which is wrong in
+#' the only way a psychometrician will notice.
+#'
+#' The key is a padded string rather than a list of parts, because a string is
+#' what both languages can build identically: each digit run is left-padded
+#' with zeros to 20 characters and everything else is lowercased. A digit run
+#' longer than 20 characters is left alone -- it is not an item number. The raw
+#' name breaks ties, so the order is total.
+#' @keywords internal
+#' @noRd
+.irw_natural_key <- function(x) {
+  one <- function(name) {
+    parts <- regmatches(name, gregexpr("[0-9]+|[^0-9]+", name))[[1]]
+    if (length(parts) == 0L) return("")
+    numeric_part <- grepl("^[0-9]+$", parts)
+    pad <- function(p) if (nchar(p) >= 20L) p else paste0(strrep("0", 20L - nchar(p)), p)
+    parts[numeric_part] <- vapply(parts[numeric_part], pad, character(1), USE.NAMES = FALSE)
+    parts[!numeric_part] <- tolower(parts[!numeric_part])
+    paste0(parts, collapse = "")
+  }
+  vapply(as.character(x), one, character(1), USE.NAMES = FALSE)
+}
+
+#' Order names naturally, with the raw name as the tie-break
+#' @keywords internal
+#' @noRd
+.irw_natural_order <- function(x) {
+  x <- as.character(x)
+  order(.irw_natural_key(x), x, method = "radix")
+}
+
 
 #' The occasion columns the IRW standard defines
 #'
@@ -619,6 +667,12 @@ irw_long2resp <- function(df,
   
   # Remove "resp." prefix from column names
   colnames(wide_df) <- sub("^resp\\.", "", colnames(wide_df))
+
+  # ...then put the item columns in natural order. stats::reshape() orders them
+  # by first appearance in the input rows, which is not a stable property of a
+  # table (see .irw_natural_key). `id` stays first.
+  item_cols <- setdiff(colnames(wide_df), "id")
+  wide_df <- wide_df[, c("id", item_cols[.irw_natural_order(item_cols)]), drop = FALSE]
 
   attr(wide_df, "resp_col") <- resp_col
   # Which occasion each column was fixed at. The caller may have captured the
