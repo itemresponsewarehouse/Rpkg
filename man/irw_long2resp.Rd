@@ -64,8 +64,15 @@ For nominal data stored in a text column, use e.g. \code{resp_col = "text"}.}
 }
 \value{
 A data frame in wide format where rows represent \code{id} values
-and columns represent \code{item_*} responses. The column used for
-response values is recorded in the \code{"resp_col"} attribute.
+and each item column is named by the item id itself, as the long table
+spells it -- so the matrix joins back to the item text
+(\code{irw_itemtext()}) and anything else keyed by item without renaming
+anything. (Before #3221 these
+names carried an \code{item_} prefix.) A numeric item id becomes a column
+named by that number, which needs backticks in a formula and a rename for
+\code{lavaan}, whose model syntax rejects a name beginning with a digit
+even in backticks. The column used for response values is recorded in the
+\code{"resp_col"} attribute.
 If \code{check_resp = TRUE}, an attribute \code{"resp_checks"}
 is attached:
 \itemize{

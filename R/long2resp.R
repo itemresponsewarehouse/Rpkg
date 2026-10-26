@@ -96,8 +96,11 @@ irw_check_resp <- function(x, min_count = 5L, min_prop = 0.01, resp_col = "resp"
     if (!resp_col %in% names(x)) {
       stop("Column specified by `resp_col` not found in `x`: ", resp_col)
     }
+    # No prefixing: this reports on the long frame the caller passed, so it
+    # names the items that frame holds. The prefix only ever existed to keep a
+    # numeric item id from becoming a column label, and nothing here becomes a
+    # column. Python's check_resp() is the same.
     df <- x
-    df$item <- ifelse(grepl("^item_", df$item), df$item, paste0("item_", df$item))
     return(.irw_check_resp(
       df,
       min_count = min_count,
@@ -290,8 +293,15 @@ irw_check_resp <- function(x, min_count = 5L, min_prop = 0.01, resp_col = "resp"
 #'   For nominal data stored in a text column, use e.g. \code{resp_col = "text"}.
 #'
 #' @return A data frame in wide format where rows represent \code{id} values
-#' and columns represent \code{item_*} responses. The column used for
-#' response values is recorded in the \code{"resp_col"} attribute.
+#' and each item column is named by the item id itself, as the long table
+#' spells it -- so the matrix joins back to the item text
+#' (\code{irw_itemtext()}) and anything else keyed by item without renaming
+#' anything. (Before #3221 these
+#' names carried an \code{item_} prefix.) A numeric item id becomes a column
+#' named by that number, which needs backticks in a formula and a rename for
+#' \code{lavaan}, whose model syntax rejects a name beginning with a digit
+#' even in backticks. The column used for response values is recorded in the
+#' \code{"resp_col"} attribute.
 #'         If \code{check_resp = TRUE}, an attribute \code{"resp_checks"}
 #'          is attached:
 #'         \itemize{
@@ -485,8 +495,29 @@ irw_long2resp <- function(df,
       "so the responses are aggregated (see the next note)."))
   }
 
-  # Ensure item names have "item_" prefix
-  df$item <- ifelse(grepl("^item_", df$item), df$item, paste0("item_", df$item))
+  # Prefix the item ids for the reshape, remembering what each one was.
+  #
+  # The prefix is here so a numeric item id does not become a numeric column
+  # label, and it is stripped again after the reshape: the name a caller sees
+  # is the item id the corpus uses, which is what joins the matrix back to the
+  # item text (`irw_itemtext()`), `item_classical` in irw_meta, and anything
+  # else keyed by item. Until
+  # #3221 the prefix was returned, so every such merge needed a strip step, and
+  # a table whose items are already called `item10` came back as
+  # `item_item10` -- two strips that are not the same one. The twin in
+  # Python-pkg does the same thing (`original_item_name` in long2resp.py), and
+  # the two have to agree: a client-specific column name is a
+  # client-specific join.
+  #
+  # Prefix UNCONDITIONALLY, including an item already named `item_x`. Skipping
+  # those makes the map non-injective -- `a` and `item_a` would both become
+  # `item_a` and the reshape would fold two items into one. The doubled
+  # internal name (`item_item_a`) never reaches the caller.
+  prefixed <- paste0("item_", as.character(df$item))
+  original_item_name <- as.character(df$item)
+  names(original_item_name) <- prefixed
+  original_item_name <- original_item_name[!duplicated(prefixed)]
+  df$item <- prefixed
 
   if (agg_method %in% c("mean", "median")) {
     original_resp <- df$resp
@@ -587,8 +618,14 @@ irw_long2resp <- function(df,
   # ---- Optional response checks (on the deduped/numeric df) ----
   resp_checks <- NULL
   if (check_resp) {
-    resp_checks <- .irw_check_resp(df, min_count = 5L, min_prop = 0.01)
-    
+    # Under the item names the caller will see as columns, not the internal
+    # prefixed ones -- a diagnostic that names `item_7` for a column called `7`
+    # cannot be acted on, and Python's reports the same names (it maps through
+    # `original_item_name` for exactly this).
+    checked <- df
+    checked$item <- unname(original_item_name[checked$item])
+    resp_checks <- .irw_check_resp(checked, min_count = 5L, min_prop = 0.01)
+
     total_items_chk <- length(unique(df$item))
     n_single <- length(resp_checks$single_category_items)
     n_sparse <- length(resp_checks$sparse_category_items)
@@ -667,6 +704,16 @@ irw_long2resp <- function(df,
   
   # Remove "resp." prefix from column names
   colnames(wide_df) <- sub("^resp\\.", "", colnames(wide_df))
+
+  # ...restore the corpus's own item ids, by the map rather than by string
+  # surgery: stripping a leading `item_` would rename an item genuinely called
+  # `item_x`, and `sub("item_", "", ...)` would turn `item_myitem_x` into
+  # `myitem_x` only by luck of anchoring. `check.names` is off throughout, so a
+  # numeric item id survives as the column name it is.
+  item_pos <- colnames(wide_df) != "id"
+  restored <- original_item_name[colnames(wide_df)[item_pos]]
+  stopifnot(!anyNA(restored))
+  colnames(wide_df)[item_pos] <- unname(restored)
 
   # ...then put the item columns in natural order. stats::reshape() orders them
   # by first appearance in the input rows, which is not a stable property of a
