@@ -261,7 +261,15 @@
 #'
 #' Retrieves the metadata table from Redivis user("datapages")$dataset("irw_meta")$table("metadata").
 #' Only fetches new data if the table version tag has changed.
-#' Rows are filtered to tables that currently exist in the IRW production datasets.
+#'
+#' The published metadata is the authority for which core tables exist
+#' (ben-domingue/irw#3127). It is NOT intersected with a live listing of the
+#' warehouses: that intersection could only ever shorten the listing, and when
+#' a shard was invisible to the installed client it shortened it by 761 tables
+#' with no warning possible (irw#3091). The cost of trusting the metadata is
+#' the opposite failure, which is loud: for the two to seven days between a
+#' withdrawal and the next irw_meta publish, a withdrawn table stays listed and
+#' errors on fetch with an explanation.
 #'
 #' @return A cached or newly fetched tibble containing metadata information.
 #' @keywords internal
@@ -269,15 +277,12 @@
   dataset <- .irw_open_meta_dataset()
   # Retrieve version tag
   latest_version_tag <- dataset$properties$version$tag
-  catalog_fp <- .irw_core_live_catalog_fingerprint()
 
   # If metadata exists in cache and the version tag is the same, return cached tibble
   if (!is.null(latest_version_tag) &&
       exists("metadata_tibble", envir = .irw_env) &&
       exists("metadata_version", envir = .irw_env) &&
-      identical(.irw_env$metadata_version, latest_version_tag) &&
-      exists("core_live_catalog_fingerprint", envir = .irw_env) &&
-      identical(.irw_env$core_live_catalog_fingerprint, catalog_fp)) {
+      identical(.irw_env$metadata_version, latest_version_tag)) {
     return(.irw_env$metadata_tibble) # Return cached metadata tibble
   }
   
@@ -287,11 +292,10 @@
   metadata_tibble <- .retry_with_backoff(function() {
     table$to_tibble()
   })
-  .irw_env$metadata_tibble <- .irw_filter_rows_to_live_tables(metadata_tibble, source = "core")
+  .irw_env$metadata_tibble <- metadata_tibble
   
   # Store the new version tag
   .irw_env$metadata_version <- latest_version_tag
-  .irw_env$core_live_catalog_fingerprint <- catalog_fp
   
   return(.irw_env$metadata_tibble)
 }
@@ -301,56 +305,49 @@
 #'
 #' Retrieves the metadata table from Redivis user("datapages")$dataset("irw_meta")$table("biblio").
 #' Only fetches new data if the table version tag has changed.
-#' This version filters out any tables that do not exist in the IRW database.
+#' Rows stand as published: see .fetch_metadata_table() for why the live-table
+#' intersection was removed (ben-domingue/irw#3127).
 #'
-#' @return A tibble containing filtered biblio information, with only the tables that exist in the IRW database.
+#' @return A tibble containing biblio information as published in irw_meta.
 #' @keywords internal
 .fetch_biblio_table <- function() {
   dataset <- .irw_open_meta_dataset()
   latest_version_tag <- dataset$properties$version$tag
-  catalog_fp <- .irw_core_live_catalog_fingerprint()
   
   # Return cached if version unchanged
   if (!is.null(latest_version_tag) &&
       exists("biblio_tibble", envir = .irw_env) &&
-      identical(.irw_env$biblio_version, latest_version_tag) &&
-      exists("core_live_catalog_fingerprint", envir = .irw_env) &&
-      identical(.irw_env$core_live_catalog_fingerprint, catalog_fp)) {
+      identical(.irw_env$biblio_version, latest_version_tag)) {
     return(.irw_env$biblio_tibble)
   }
   
   # Fetch fresh biblio table
   table <- dataset$table("biblio")
   biblio_tibble <- .retry_with_backoff(function() table$to_tibble())
-  filtered_biblio <- .irw_filter_rows_to_live_tables(biblio_tibble, source = "core")
   
   # Cache
   .irw_env$biblio_version <- latest_version_tag
-  .irw_env$biblio_tibble <- filtered_biblio
-  .irw_env$core_live_catalog_fingerprint <- catalog_fp
+  .irw_env$biblio_tibble <- biblio_tibble
   
-  return(filtered_biblio)
+  return(biblio_tibble)
 }
 
 #' Fetch Tags Metadata Table
 #'
 #' Retrieves the tags metadata table from Redivis user("datapages")$dataset("irw_meta")$table("tags").
 #' Only fetches new data if the table version tag has changed.
-#' Filters out any tags referring to tables that do not exist in the IRW database.
+#' Rows stand as published: see .fetch_metadata_table() (ben-domingue/irw#3127).
 #'
-#' @return A tibble containing filtered tags information.
+#' @return A tibble containing tags information as published in irw_meta.
 #' @keywords internal
 .fetch_tags_table <- function() {
   dataset <- .irw_open_meta_dataset()
   latest_version_tag <- dataset$properties$version$tag
-  catalog_fp <- .irw_core_live_catalog_fingerprint()
   
   # Return cached if version unchanged
   if (!is.null(latest_version_tag) &&
       exists("tags_tibble", envir = .irw_env) &&
-      identical(.irw_env$tags_version, latest_version_tag) &&
-      exists("core_live_catalog_fingerprint", envir = .irw_env) &&
-      identical(.irw_env$core_live_catalog_fingerprint, catalog_fp)) {
+      identical(.irw_env$tags_version, latest_version_tag)) {
     return(.irw_env$tags_tibble)
   }
   
@@ -364,14 +361,12 @@
     col
   })
   tags_tibble <- tibble::as_tibble(tags_tibble)
-  filtered_tags <- .irw_filter_rows_to_live_tables(tags_tibble, source = "core")
   
   # Cache
   .irw_env$tags_version <- latest_version_tag
-  .irw_env$tags_tibble <- filtered_tags
-  .irw_env$core_live_catalog_fingerprint <- catalog_fp
+  .irw_env$tags_tibble <- tags_tibble
   
-  return(filtered_tags)
+  return(tags_tibble)
 }
 
 #' Fetch Nominal Tags Table
@@ -418,15 +413,13 @@
 ##Collections (issue #1633). Two tables, deliberately handled differently:
 ##
 ##  collections        the registry, one row per collection. Has NO `table`
-##                     column, so it must NOT go through
-##                     .irw_filter_rows_to_live_tables() -- that would error or
-##                     silently empty it.
-##  collection_members long, one row per (table, collection). Live-filtered like
-##                     every other per-table product.
+##                     column.
+##  collection_members long, one row per (table, collection).
 ##
-##Consequence: after live filtering, membership can be smaller than the
-##`n_tables` the registry published. irw_collections() recomputes rather than
-##trusting that column -- see the note there.
+##Since irw#3127 neither goes through a live-table intersection: the published
+##metadata is the authority. irw_collections() still recomputes `n_tables`
+##rather than trusting the registry column -- membership and the registry are
+##two tables and can disagree for their own reasons.
 .fetch_collections_table <- function() {
   dataset <- .irw_open_meta_dataset()
   latest_version_tag <- dataset$properties$version$tag
@@ -455,26 +448,21 @@
 .fetch_collection_members_table <- function() {
   dataset <- .irw_open_meta_dataset()
   latest_version_tag <- dataset$properties$version$tag
-  catalog_fp <- .irw_core_live_catalog_fingerprint()
 
   if (!is.null(latest_version_tag) &&
       exists("collection_members_tibble", envir = .irw_env) &&
-      identical(.irw_env$collection_members_version, latest_version_tag) &&
-      exists("core_live_catalog_fingerprint", envir = .irw_env) &&
-      identical(.irw_env$core_live_catalog_fingerprint, catalog_fp)) {
+      identical(.irw_env$collection_members_version, latest_version_tag)) {
     return(.irw_env$collection_members_tibble)
   }
 
   table <- dataset$table("collection_members")
   out <- .retry_with_backoff(function() table$to_tibble())
   out <- tibble::as_tibble(as.data.frame(out))
-  filtered <- .irw_filter_rows_to_live_tables(out, source = "core")
 
   .irw_env$collection_members_version <- latest_version_tag
-  .irw_env$collection_members_tibble <- filtered
-  .irw_env$core_live_catalog_fingerprint <- catalog_fp
+  .irw_env$collection_members_tibble <- out
 
-  filtered
+  out
 }
 
 #' Fetch the tags table for a datasource
