@@ -14,8 +14,8 @@ test_that("irw_check_resp supports custom response columns", {
   checks_standard <- irw_check_resp(x_standard, min_count = 2L)
 
   expect_identical(checks_custom, checks_standard)
-  expect_equal(checks_custom$single_category_items, "item_1")
-  expect_identical(names(checks_custom$sparse_category_items), "item_2")
+  expect_equal(checks_custom$single_category_items, "1")
+  expect_identical(names(checks_custom$sparse_category_items), "2")
 })
 
 test_that("irw_check_resp errors when resp_col is missing", {
@@ -53,7 +53,7 @@ test_that("a labelled wave column is filtered, never pooled", {
   out <- irw_long2resp(labelled_waves(), wave = "post", id_density_threshold = NULL)
   expect_equal(nrow(out), 3L)
   # The post responses themselves, not the mean of pre and post.
-  expect_equal(sort(out$item_q1), c(3, 4, 5))
+  expect_equal(sort(out$q1), c(3, 4, 5))
 })
 
 test_that("the default wave keeps one occasion of a labelled column", {
@@ -63,7 +63,7 @@ test_that("the default wave keeps one occasion of a labelled column", {
     out <- irw_long2resp(d, id_density_threshold = NULL),
     "Defaulting to the most frequent wave: pre"
   )
-  expect_equal(sort(out$item_q1), c(1, 1, 2))
+  expect_equal(sort(out$q1), c(1, 1, 2))
 })
 
 test_that("a wave that is not in the table is an error", {
@@ -77,7 +77,7 @@ test_that("a numeric wave argument matches an integer wave column", {
   d <- labelled_waves()
   d$wave <- rep(c(1L, 2L), 3)
   out <- irw_long2resp(d, wave = 2, id_density_threshold = NULL)
-  expect_equal(sort(out$item_q1), c(3, 4, 5))
+  expect_equal(sort(out$q1), c(3, 4, 5))
 })
 
 test_that("an all-missing wave column stops rather than pooling", {
@@ -182,7 +182,7 @@ test_that("a column that does not key a repeat is left alone", {
     resp = c(1, 0, 1, 0, 0, 1, 0, 1), stringsAsFactors = FALSE
   )
   out <- suppressMessages(irw_long2resp(df, id_density_threshold = NULL))
-  expect_equal(sort(setdiff(names(out), "id")), c("item_a1", "item_a2", "item_b1", "item_b2"))
+  expect_equal(sort(setdiff(names(out), "id")), c("a1", "a2", "b1", "b2"))
   expect_equal(attr(out, "occasion"), character(0))
 })
 
@@ -195,7 +195,7 @@ test_that("an explicit occasion is honoured even when nothing repeats", {
   )
   out <- suppressMessages(irw_long2resp(df, occasion = c(subtest = "a"),
                                         id_density_threshold = NULL))
-  expect_equal(sort(setdiff(names(out), "id")), c("item_a1", "item_a2"))
+  expect_equal(sort(setdiff(names(out), "id")), c("a1", "a2"))
 })
 
 test_that("occasion and wave cannot contradict each other", {
@@ -223,8 +223,7 @@ test_that("item columns come back in natural order", {
                   item = c("item10", "item2", "item1", "item20"),
                   resp = 1:4, stringsAsFactors = FALSE)
   out <- suppressMessages(irw_long2resp(d, id_density_threshold = NULL))
-  expect_equal(names(out), c("id", "item_item1", "item_item2",
-                             "item_item10", "item_item20"))
+  expect_equal(names(out), c("id", "item1", "item2", "item10", "item20"))
 })
 
 test_that("the column order does not depend on the row order", {
@@ -255,4 +254,78 @@ test_that("the natural key is the one Python-pkg builds", {
   # is total rather than arbitrary between `Item2` and `item2`.
   expect_equal(c("item2", "Item2")[.irw_natural_order(c("item2", "Item2"))],
                c("Item2", "item2"))
+})
+
+# Column names (review R-23, ben-domingue/irw#3221). The item id is the key
+# that joins a wide matrix back to the item text and the item metadata, so the
+# column name is that id and not a decoration of it. Python-pkg returns the
+# same names; these cases are the ones that distinguish a map from string
+# surgery, and each is also asserted there.
+
+test_that("the item id is the column name, not item_<id>", {
+  d <- data.frame(id = rep(c("p1", "p2"), each = 2),
+                  item = rep(c("q1", "q2"), 2),
+                  resp = c(1, 0, 0, 1), stringsAsFactors = FALSE)
+  out <- suppressMessages(irw_long2resp(d, id_density_threshold = NULL))
+  expect_equal(names(out), c("id", "q1", "q2"))
+})
+
+test_that("a numeric item id survives as the column name it is", {
+  d <- data.frame(id = rep(c("p1", "p2"), each = 2),
+                  item = rep(c(1L, 2L), 2),
+                  resp = c(1, 0, 0, 1))
+  out <- suppressMessages(irw_long2resp(d, id_density_threshold = NULL))
+  expect_equal(names(out), c("id", "1", "2"))
+})
+
+test_that("an item already called item10 is not prefixed twice", {
+  d <- data.frame(id = rep(c("p1", "p2"), each = 2),
+                  item = rep(c("item10", "item2"), 2),
+                  resp = c(1, 0, 0, 1), stringsAsFactors = FALSE)
+  out <- suppressMessages(irw_long2resp(d, id_density_threshold = NULL))
+  expect_equal(names(out), c("id", "item2", "item10"))
+})
+
+test_that("item_a and a stay two items", {
+  # The prefix is applied unconditionally for exactly this: skipping items
+  # already named `item_*` folded these two into one column and reported it as
+  # duplicate (id, item) rows in the caller's data.
+  d <- data.frame(id = rep(c("p1", "p2"), each = 2),
+                  item = rep(c("a", "item_a"), 2),
+                  resp = c(1, 0, 0, 1), stringsAsFactors = FALSE)
+  out <- suppressMessages(irw_long2resp(d, id_density_threshold = NULL))
+  expect_equal(names(out), c("id", "a", "item_a"))
+  expect_equal(out$a, c(1, 0))
+  expect_equal(out$item_a, c(0, 1))
+})
+
+test_that("an internal underscore is not eaten on the way back", {
+  # `sub("item_", "", "item_myitem_x")` is right only by anchoring and
+  # `gsub` turned it into `myx`; the map cannot get this wrong.
+  d <- data.frame(id = rep(c("p1", "p2"), each = 2),
+                  item = rep(c("myitem_x", "q2"), 2),
+                  resp = c(1, 0, 0, 1), stringsAsFactors = FALSE)
+  out <- suppressMessages(irw_long2resp(d, id_density_threshold = NULL))
+  expect_equal(sort(setdiff(names(out), "id")), c("myitem_x", "q2"))
+})
+
+test_that("resp2long round-trips the item ids exactly", {
+  d <- data.frame(id = rep(c("p1", "p2"), each = 2),
+                  item = rep(c(1L, 2L), 2),
+                  resp = c(1, 0, 0, 1))
+  out <- suppressMessages(irw_long2resp(d, id_density_threshold = NULL))
+  back <- irw_resp2long(out)
+  expect_setequal(back$item, c("1", "2"))
+  expect_equal(nrow(back), 4L)
+})
+
+test_that("check_resp names the items the caller will see as columns", {
+  d <- data.frame(id = rep(c("p1", "p2", "p3"), each = 2),
+                  item = rep(c(1L, 2L), 3),
+                  resp = c(1, 1, 1, 0, 1, 1))
+  out <- suppressMessages(irw_long2resp(d, check_resp = TRUE,
+                                        id_density_threshold = NULL))
+  checks <- attr(out, "resp_checks")
+  expect_equal(checks$single_category_items, "1")
+  expect_true("1" %in% names(out))
 })
