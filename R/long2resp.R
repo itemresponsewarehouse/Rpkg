@@ -298,8 +298,10 @@ irw_check_resp <- function(x, min_count = 5L, min_prop = 0.01, resp_col = "resp"
 #' (\code{irw_itemtext()}) and anything else keyed by item without renaming
 #' anything. (Before #3221 these
 #' names carried an \code{item_} prefix.) A numeric item id becomes a column
-#' named by that number, which needs backticks in a formula. The column used
-#' for response values is recorded in the \code{"resp_col"} attribute.
+#' named by that number, which needs backticks in a formula and a rename for
+#' \code{lavaan}, whose model syntax rejects a name beginning with a digit
+#' even in backticks. The column used for response values is recorded in the
+#' \code{"resp_col"} attribute.
 #'         If \code{check_resp = TRUE}, an attribute \code{"resp_checks"}
 #'          is attached:
 #'         \itemize{
