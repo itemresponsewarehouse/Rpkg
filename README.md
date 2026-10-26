@@ -33,12 +33,13 @@ several features landed and so lacks:
 -   the rankings source --- `irw_fetch(source = "rank")` and
     `irw_rank_compress()`
 -   `irw_itemtext_licence()`, the licence on a table's item wording
--   the seventh core warehouse shard. 1.3.1's shard list stops at the sixth,
-    and a shard it does not know about is dropped from `irw_list_tables()`,
-    `irw_metadata()` and `irw_filter()` with no warning, so **table counts
-    from 1.3.1 are short**. 1.4.0 also reads the warehouse catalog each
-    session, so a shard published after a release can no longer go missing
-    this way.
+-   the seventh and eighth core warehouse shards. 1.3.1's shard list stops at
+    the sixth, and a shard it does not know about is dropped from
+    `irw_list_tables()`, `irw_metadata()` and `irw_filter()` with no warning,
+    so **1.3.1's table counts are short by 1,031 tables, 15.3% of the
+    corpus** -- and new core tables are published into the newest shard, so
+    the gap grows. 1.4.0 also reads the warehouse catalog each session, so a
+    shard published after a release can no longer go missing this way.
 -   reading the warehouse without a Redivis login (see below). Outside an
     interactive session 1.3.1 stops when no login is cached.
 
