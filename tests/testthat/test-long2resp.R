@@ -213,3 +213,46 @@ test_that("occasion names must be columns the table has an occasion for", {
   expect_error(irw_long2resp(rater_frame(), occasion = list(rater = c("r1", "r2"))),
                "single value")
 })
+
+# Column order (review R-23, ben-domingue/irw#3221). stats::reshape() ordered
+# columns by first appearance in the input rows, which is not a stable property
+# of a Redivis table; Python sorted, but lexicographically.
+
+test_that("item columns come back in natural order", {
+  d <- data.frame(id = rep("p1", 4),
+                  item = c("item10", "item2", "item1", "item20"),
+                  resp = 1:4, stringsAsFactors = FALSE)
+  out <- suppressMessages(irw_long2resp(d, id_density_threshold = NULL))
+  expect_equal(names(out), c("id", "item_item1", "item_item2",
+                             "item_item10", "item_item20"))
+})
+
+test_that("the column order does not depend on the row order", {
+  d <- data.frame(id = rep("p1", 3),
+                  item = c("item10", "item2", "item1"),
+                  resp = 1:3, stringsAsFactors = FALSE)
+  orders <- lapply(list(c(1, 2, 3), c(3, 1, 2), c(2, 3, 1)), function(ix) {
+    names(suppressMessages(irw_long2resp(d[ix, ], id_density_threshold = NULL)))
+  })
+  expect_equal(orders[[1]], orders[[2]])
+  expect_equal(orders[[2]], orders[[3]])
+})
+
+test_that("the natural key is the one Python-pkg builds", {
+  # Pinned as a string, not as an order: Python's `_natural_key()` must produce
+  # the same characters, or the two clients' column orders drift apart.
+  expect_equal(.irw_natural_key("item2"), paste0("item", strrep("0", 19), "2"))
+  expect_equal(.irw_natural_key("Item2"), .irw_natural_key("item2"))
+  expect_equal(
+    c("item10", "Item3", "item1", "q2", "q10", "a")[
+      .irw_natural_order(c("item10", "Item3", "item1", "q2", "q10", "a"))],
+    c("a", "item1", "Item3", "item10", "q2", "q10")
+  )
+  # A digit run too long to be an item number is left alone rather than padded.
+  long_run <- paste0("x", strrep("9", 25))
+  expect_equal(.irw_natural_key(long_run), long_run)
+  # Case folds for the comparison and the raw name breaks the tie, so the order
+  # is total rather than arbitrary between `Item2` and `item2`.
+  expect_equal(c("item2", "Item2")[.irw_natural_order(c("item2", "Item2"))],
+               c("Item2", "item2"))
+})
