@@ -284,7 +284,7 @@ irw_set_version <- function(dataset, version) {
 #' @return A data frame with columns \code{dataset}, \code{version}, and
 #'   \code{pinned}.
 #' @seealso \code{\link{irw_set_version}}, \code{\link{irw_reset_version}}
-#' @examples
+#' @examplesIf irw_has_credentials() || nzchar(Sys.getenv("IRW_RUN_EXAMPLES"))
 #' irw_get_version()
 #' irw_get_version("item_response_warehouse")
 #' @export

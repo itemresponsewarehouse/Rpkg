@@ -24,22 +24,26 @@ you; get it from r-universe:
 install.packages("redivis", repos = c("https://redivis.r-universe.dev", "https://cloud.r-project.org"))
 ```
 
-The development version carries features that are not yet in the CRAN release.
-1.3.1 was tagged before several of them landed, so it lacks:
+This README documents 1.4.0, which has been submitted to CRAN. **Until it is
+accepted, `install.packages("irw")` installs 1.3.1**, which was tagged before
+several features landed and so lacks:
 
 -   the conjoint source --- `irw_fetch(source = "conj")`, `irw_conj_long()`,
     and the conjoint filters, metadata and citations
 -   the rankings source --- `irw_fetch(source = "rank")` and
     `irw_rank_compress()`
 -   `irw_itemtext_licence()`, the licence on a table's item wording
--   the seventh core warehouse shard. 1.3.1's shard list stops at the sixth,
-    and a shard it does not know about is dropped from `irw_list_tables()`,
-    `irw_metadata()` and `irw_filter()` with no warning, so table counts from
-    1.3.1 are short.
+-   the seventh and eighth core warehouse shards. 1.3.1's shard list stops at
+    the sixth, and a shard it does not know about is dropped from
+    `irw_list_tables()`, `irw_metadata()` and `irw_filter()` with no warning,
+    so **1.3.1's table counts are short by 1,031 tables, 15.3% of the
+    corpus** -- and new core tables are published into the newest shard, so
+    the gap grows. 1.4.0 also reads the warehouse catalog each session, so a
+    shard published after a release can no longer go missing this way.
 -   reading the warehouse without a Redivis login (see below). Outside an
     interactive session 1.3.1 stops when no login is cached.
 
-If you need those, install from GitHub instead:
+Install from GitHub for those, or to follow `main` between releases:
 
 ``` r
 # install.packages("pak")  # if you don't already have pak
@@ -58,9 +62,7 @@ platform. The warehouse is public, so **reading it from R needs no Redivis
 account**: `irw_info()`, `irw_list_tables()`, `irw_filter()`, `irw_fetch()`,
 `irw_itemtext()` and the metadata functions all work with no login, as long as
 the `redivis` client is version 0.12.14 or later (earlier versions
-authenticated every request). This is the development version; the CRAN
-release (1.3.1) still stops outside an interactive session when no login is
-cached. Two things still need an account:
+authenticated every request). Two things still need an account:
 
 - `irw_table_sets()`, which runs a server-side SQL query rather than reading a
   table. Redivis requires a login for queries.

@@ -21,8 +21,10 @@ Record these tags to make an analysis reproducible; replay them with
 \code{\link{irw_set_version}}.
 }
 \examples{
+\dontshow{if (irw_has_credentials() || nzchar(Sys.getenv("IRW_RUN_EXAMPLES"))) withAutoprint(\{ # examplesIf}
 irw_get_version()
 irw_get_version("item_response_warehouse")
+\dontshow{\}) # examplesIf}
 }
 \seealso{
 \code{\link{irw_set_version}}, \code{\link{irw_reset_version}}
