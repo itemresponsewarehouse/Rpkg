@@ -87,7 +87,8 @@
 .irw_itemtext_specs <- list(
   list(user = "datapages", dataset = "irw_text:07b6"),
   list(user = "datapages", dataset = "irw_text_2:ae47"),
-  list(user = "datapages", dataset = "irw_text_3:9g4m")
+  list(user = "datapages", dataset = "irw_text_3:9g4m"),
+  list(user = "datapages", dataset = "irw_text_4:ez5r")
 )
 
 #' Open the IRW metadata dataset
