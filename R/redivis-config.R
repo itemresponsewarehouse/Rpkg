@@ -35,13 +35,15 @@
     list(user = "datapages", dataset = "irw_conjoint_2:142p")
   ),
   ## Rankings: one row per respondent x task x marked position, resp a rank
-  ## (see irw_rank_compress()). A shard list from day one, like $conj: the
-  ## family will pass Redivis' 1000-table cap (FairVote alone is 657 contests).
-  ## The dataset's display name on Redivis is IRW_rank; the reference id is
-  ## what resolves it. Append the next shard here only once it has a published
+  ## (see irw_rank_compress()). A shard list, oldest to newest, like $conj: the
+  ## family passed Redivis' 1000-table cap with FairVote's cast vote records
+  ## (irw_rank_2 added 2026-11-01, irw_rank held at ~950). The datasets' display
+  ## names on Redivis are IRW_rank and IRW_rank 2; the reference id is what
+  ## resolves each. Append the next shard here only once it has a published
   ## release (inst/developer/warehouses.md, "Adding a rankings shard").
   rank = list(
-    list(user = "datapages", dataset = "irw_rank:93f5")
+    list(user = "datapages", dataset = "irw_rank:93f5"),
+    list(user = "datapages", dataset = "irw_rank_2:byyj")
   )
 )
 
@@ -87,7 +89,8 @@
 .irw_itemtext_specs <- list(
   list(user = "datapages", dataset = "irw_text:07b6"),
   list(user = "datapages", dataset = "irw_text_2:ae47"),
-  list(user = "datapages", dataset = "irw_text_3:9g4m")
+  list(user = "datapages", dataset = "irw_text_3:9g4m"),
+  list(user = "datapages", dataset = "irw_text_4:ez5r")
 )
 
 #' Open the IRW metadata dataset

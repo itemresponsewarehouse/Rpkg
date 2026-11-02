@@ -196,10 +196,11 @@ The rankings source (`source = "rank"`, `.irw_datasource_specs$rank`,
 `IRW_RANK_DATASETS` in `irw/metadata/redivis_config.R`, `RANK_REFS` in
 `Python-pkg/src/irw/config.py`) was registered as a shard list from day one
 (October 2026, ben-domingue/irw#3024): FairVote's cast vote records alone are
-657 contests, so the 1000-table cap is a matter of time. One shard, `irw_rank`
-(the dataset's display name on Redivis is `IRW_rank`; the reference id `93f5`
-is what resolves it). The checklist is the conjoint one above, with
-`irw_rank_2`, `RANK_DEFAULT` in `red_up/targets.py` and
+657 contests, so the 1000-table cap was a matter of time, and it arrived on
+2026-11-01: `irw_rank_2` (display name `IRW_rank 2`, reference id `byyj`) was
+added beside `irw_rank` (`IRW_rank`, `93f5`), with `irw_rank` held at about
+950 tables and new tables going to `irw_rank_2`. The checklist is the conjoint
+one above, with `irw_rank_3`, `RANK_DEFAULT` in `red_up/targets.py` and
 `src/metadata/18_rankings.R` in place of their conjoint twins. Rankings
 tables do have `id`/`item`/`resp`, so a table that strays into a core shard
 would pass the core validator's column check; `red_up` tells the two apart by
