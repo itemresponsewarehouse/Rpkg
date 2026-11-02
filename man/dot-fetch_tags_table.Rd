@@ -7,11 +7,11 @@
 .fetch_tags_table()
 }
 \value{
-A tibble containing filtered tags information.
+A tibble containing tags information as published in irw_meta.
 }
 \description{
 Retrieves the tags metadata table from Redivis user("datapages")$dataset("irw_meta")$table("tags").
 Only fetches new data if the table version tag has changed.
-Filters out any tags referring to tables that do not exist in the IRW database.
+Rows stand as published: see .fetch_metadata_table() (ben-domingue/irw#3127).
 }
 \keyword{internal}

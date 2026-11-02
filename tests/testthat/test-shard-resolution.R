@@ -1,25 +1,5 @@
 library(testthat)
 
-# The session cache is a package-level environment rather than a binding, so it
-# is set directly and removed on exit: `local_mocked_bindings()` would not
-# restore a mocked `.irw_core_shard_map()` for the files that run after this one
-# (see helper-redivis.R). Setting the cache also exercises the real lookup.
-local_shard_map <- function(map, env = parent.frame()) {
-  cache <- irw:::.irw_env
-  had <- exists("core_shard_map", envir = cache)
-  old <- if (had) get("core_shard_map", envir = cache) else NULL
-  assign("core_shard_map", map, envir = cache)
-  withr::defer(
-    if (had) {
-      assign("core_shard_map", old, envir = cache)
-    } else {
-      rm("core_shard_map", envir = cache)
-    },
-    envir = env
-  )
-  invisible(NULL)
-}
-
 # A stand-in for an opened Redivis dataset that records every round trip it is
 # asked to make: one for the dataset `get()`, one for the table `get()`.
 fake_shard <- function(key, tables, calls) {
@@ -263,7 +243,7 @@ test_that("a miss on the newest shard resolves the rest instead of walking it", 
   expect_equal(reads, 1L)
 })
 
-test_that("a table that exists nowhere fails exactly as it did before", {
+test_that("a table in no shard and no metadata fails exactly as it did before", {
   calls <- new.env(parent = emptyenv())
   calls$n <- 0L
   ds_list <- list(
@@ -278,11 +258,14 @@ test_that("a table that exists nowhere fails exactly as it did before", {
   local_shard_map(NULL)
   before <- tryCatch(irw:::.fetch_redivis_table("ghost"), error = conditionMessage)
 
-  # Resolution pointing at a shard the table has since left: the remaining
-  # shards are still searched and the same message comes back.
-  local_shard_map(c(ghost = "item_response_warehouse"))
+  # Resolution pointing at a shard that does not have the table either: the
+  # remaining shards are still searched and the same message comes back. (A
+  # name the *metadata* lists is a different case and says so -- see
+  # test-metadata-authority.R.)
+  local_shard_map(c(other_table = "item_response_warehouse"))
   after <- tryCatch(irw:::.fetch_redivis_table("ghost"), error = conditionMessage)
 
   expect_type(before, "character")
+  expect_match(before, "does not exist in IRW", fixed = TRUE)
   expect_identical(after, before)
 })

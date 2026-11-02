@@ -90,6 +90,62 @@
   paste0("\nTable ", shQuote(table_name), " does not exist in IRW.")
 }
 
+#' User-facing message when a table is listed in the metadata but absent
+#'
+#' The published metadata is the authority for which core tables exist
+#' (ben-domingue/irw#3127), so a table can be listed and no longer be in the
+#' warehouse for the two to seven days between a withdrawal and the next
+#' \code{irw_meta} publish. Saying only "does not exist in IRW" for a table
+#' the user has just seen in a listing is the worse half of that trade, and
+#' explaining it is the load-bearing part of the ruling, not a nicety.
+#'
+#' @param table_name Table name.
+#' @keywords internal
+#' @noRd
+.irw_metadata_only_table_message <- function(table_name) {
+  paste0(
+    "\nTable ", shQuote(table_name), " is in the IRW metadata but not in the ",
+    "warehouse. It was most likely withdrawn after the metadata was last ",
+    "published; the listing catches up on the next pipeline run."
+  )
+}
+
+#' Whether a name is listed in the core metadata
+#'
+#' Reads the table-to-shard map piece A already builds, so this costs nothing
+#' once a session has it. Never raises and never warns: it only chooses which
+#' of two messages to show, and a metadata read that fails must leave the
+#' original not-found message standing rather than replace one error with
+#' another.
+#'
+#' @param table_name Table name.
+#' @param source IRW data source; only \code{"core"} has the map.
+#' @keywords internal
+#' @noRd
+.irw_table_listed_in_metadata <- function(table_name, source = "core") {
+  if (!identical(source, "core")) {
+    return(FALSE)
+  }
+  map <- tryCatch(.irw_core_shard_map(build = TRUE), error = function(e) NULL)
+  if (is.null(map) || length(map) == 0L) {
+    return(FALSE)
+  }
+  tolower(table_name) %in% names(map)
+}
+
+#' User-facing message for a table that is missing, with the reason if known
+#'
+#' @param table_name Table name.
+#' @param source IRW data source.
+#' @keywords internal
+#' @noRd
+.irw_missing_table_message <- function(table_name, source = "core") {
+  if (.irw_table_listed_in_metadata(table_name, source = source)) {
+    return(.irw_metadata_only_table_message(table_name))
+  }
+  .irw_table_not_found_message(table_name)
+}
+
 #' User-facing message for Redivis authentication failures
 #'
 #' @keywords internal
