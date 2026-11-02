@@ -26,7 +26,11 @@ re-checking on account of it.
   family it already knows about. Discovery extends a family and never invents
   one, adopts a dataset only once it has a published version and is publicly
   readable, appends and never reorders, needs no login, and can be switched off
-  with options(irw.shard_discovery = FALSE).
+  with options(irw.shard_discovery = FALSE). The same release stops filtering
+  the published metadata against a live listing of those datasets, which was
+  the second place a dataset missing from the list shortened an answer with
+  no way to say so; a table withdrawn since the metadata was published now
+  stays listed briefly and fetching it gives an error that says exactly that.
 
 * **Four changes to returned values are breaking, and each replaces a silent
   wrong answer with a correct one or an error.** They are listed first in
