@@ -1,3 +1,5 @@
+# irw (development version)
+
 # irw 1.4.0
 
 - Second rankings shard: `irw_rank_2` joins `irw_rank` in `.irw_datasource_specs$rank`. FairVote's cast vote records took the family past Redivis' 1000-table cap, so `irw_rank` stops at about 950 tables and new rankings tables go to `irw_rank_2`. Nothing moves: every table stays in the shard that holds it, and `irw_fetch(source = "rank")`, `irw_list_tables(source = "rank")` and `irw_filter(source = "rank")` search both, newest first, as they already did for a single shard. A copy of this package older than this entry reaches the new shard through shard discovery once it has a published release (ben-domingue/irw#3024).
