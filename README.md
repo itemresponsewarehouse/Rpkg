@@ -36,8 +36,9 @@ several features landed and so lacks:
 -   the seventh and eighth core warehouse shards. 1.3.1's shard list stops at
     the sixth, and a shard it does not know about is dropped from
     `irw_list_tables()`, `irw_metadata()` and `irw_filter()` with no warning,
-    so **1.3.1's table counts are short by 1,031 tables, 15.3% of the
-    corpus** -- and new core tables are published into the newest shard, so
+    so **1.3.1's table counts are short by 1,455 tables, 20.4% of the
+    core corpus** (counted 2026-11-02) -- and new core tables are published
+    into the newest shard, so
     the gap grows. 1.4.0 also reads the warehouse catalog each session, so a
     shard published after a release can no longer go missing this way.
 -   reading the warehouse without a Redivis login (see below). Outside an

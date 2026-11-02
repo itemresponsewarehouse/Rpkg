@@ -13,12 +13,14 @@ re-checking on account of it.
   published on 2026-10-15, days before 1.3.1 was accepted, and an eighth on
   2026-10-21. A dataset absent from the list produces no loop iteration, so
   there is no code path on which a warning could be issued: irw_list_tables(),
-  irw_metadata() and irw_filter() simply came back short by 1,031 tables, 15.3%
-  of the warehouse (961 in the seventh and 70 in the eighth, counted
-  2026-10-26), with nothing to indicate it. New tables are published into
-  the newest dataset, so the gap grows rather than holds.
+  irw_metadata() and irw_filter() simply came back short by 1,455 tables, 20.4%
+  of the core warehouse (961 in the seventh and 494 in the eighth, counted
+  2026-11-02; it was 1,031 a week earlier), with nothing to indicate it. New
+  tables are published into the newest dataset, so the gap grows rather than
+  holds.
 
-  This version lists both, and stops the problem recurring: the list is now a
+  This version lists both (and a fourth item-text dataset and a second
+  rankings dataset published since), and stops the problem recurring: the list is now a
   floor rather than the whole truth, and the package reads the warehouse's
   public catalog once per session and includes any dataset that continues a
   family it already knows about. Discovery extends a family and never invents
