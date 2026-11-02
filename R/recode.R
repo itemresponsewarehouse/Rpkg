@@ -172,9 +172,11 @@ irw_recode_key <- function(x) {
 #' @details
 #' Works on long-format data (columns named in the key are decoded in place) and
 #' on the wide output of \code{irw_long2resp()}, where item codes appear as
-#' column names. \code{irw_long2resp()} prefixes item columns with
-#' \code{item_}; that prefix is handled and preserved. Values or column names
-#' that are not found in the key are left untouched.
+#' column names. An \code{item_} prefix on a column name is handled and
+#' preserved, which since #3221 matters only for a matrix built by an older
+#' version of this package -- \code{irw_long2resp()} now returns the item ids
+#' themselves. Values or column names that are not found in the key are left
+#' untouched.
 #'
 #' @param x A data frame returned by \code{irw_recode()}, or derived from one
 #'   (including the wide result of \code{irw_long2resp()}).

@@ -82,9 +82,9 @@ test_that("wide output of irw_long2resp can be decoded by column name", {
   d <- suppressMessages(irw_recode(df))
   key <- irw_recode_key(d)
   w <- suppressMessages(irw_long2resp(d, id_density_threshold = NULL))
-  expect_true(all(grepl("^item_I[0-9]{4}$", setdiff(names(w), "id"))))
+  expect_true(all(grepl("^I[0-9]{4}$", setdiff(names(w), "id"))))
   w2 <- suppressMessages(irw_decode(w, key = key))
-  expect_setequal(setdiff(names(w2), "id"), paste0("item_", unique(df$item)))
+  expect_setequal(setdiff(names(w2), "id"), unique(df$item))
   expect_setequal(w2$id, unique(df$id))
 })
 

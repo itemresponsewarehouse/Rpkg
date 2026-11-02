@@ -47,7 +47,7 @@ affected. This is why a paper should cite the number, not the date.
 }
 
 \examples{
-\dontshow{if (irw_has_credentials()) withAutoprint(\{ # examplesIf}
+\dontshow{if (irw_has_credentials() || nzchar(Sys.getenv("IRW_RUN_EXAMPLES"))) withAutoprint(\{ # examplesIf}
 \donttest{
 irw_version()                # the newest IRW version, and its eleven pins
 irw_version(version = 332)   # exactly what v332 held

@@ -39,7 +39,7 @@ is returned by \code{\link{irw_itemtext_licence}}.
 }
 
 \examples{
-\dontshow{if (irw_has_credentials()) withAutoprint(\{ # examplesIf}
+\dontshow{if (irw_has_credentials() || nzchar(Sys.getenv("IRW_RUN_EXAMPLES"))) withAutoprint(\{ # examplesIf}
 \donttest{
   irw_itemtext("gilbert_meta_49")
 }

@@ -9,6 +9,17 @@ test_that("rank is a known source", {
   expect_identical(irw:::.irw_source_noun("rank"), "rankings shard")
 })
 
+test_that("the rank shard list names irw_rank then irw_rank_2, oldest to newest", {
+  # Mirrors RANK_REFS in Python-pkg and IRW_RANK_DATASETS in ben-domingue/irw;
+  # the parity check there compares the order, since lookups search newest-first.
+  specs <- irw:::.irw_datasource_specs$rank
+  expect_equal(vapply(specs, function(s) s$user, character(1)), rep("datapages", 2L))
+  expect_equal(vapply(specs, function(s) irw:::.irw_dataset_key(s$dataset), character(1)),
+               c("irw_rank", "irw_rank_2"))
+  expect_equal(irw:::.irw_dataset_key(irw:::.irw_order_datasources(specs, "rank")[[1]]$dataset),
+               "irw_rank_2")
+})
+
 test_that("the rank metadata fetcher reads rank_metadata, filtered to live tables", {
   local_irw_binding(".irw_env", new.env())
   read <- character()
@@ -115,8 +126,10 @@ test_that("irw_rank_compress refuses what is not a rankings table", {
   expect_equal(nrow(empty), 0L)
 })
 
-# rank is a shard list from day one (the family will pass Redivis' 1000-table
-# cap), with the same semantics as core and conj.
+# rank is a shard list (two shards since 2026-11-01, when FairVote's cast vote
+# records took the family past Redivis' 1000-table cap), with the same
+# semantics as core and conj. The tests pin their own two-shard list rather
+# than reading the config, so the fake `zzzz` id below is deliberate.
 
 local_two_rank_shards <- function(env = parent.frame()) {
   specs <- irw:::.irw_datasource_specs

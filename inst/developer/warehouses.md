@@ -27,6 +27,13 @@ Verified against the live warehouse with the core list truncated to six:
 | 6 shards | **on** | **6,450** |
 | 7 shards | off | 6,450 |
 
+Re-verified on 2026-10-21 when `item_response_warehouse_8` was seeded: with
+seven shards configured and discovery on, and with eight configured and
+discovery off, both clients list 6,651 tables. The two routes to a shard agree
+table for table, which is the property worth re-checking each time -- a
+discrepancy would mean discovery and the config disagree about what the family
+holds.
+
 **Still edit the list anyway.** Discovery is a safety net for users on an old
 release, not a substitute for the config:
 
@@ -60,7 +67,8 @@ Main production warehouses are listed under `$core` in **oldest-to-newest** orde
     list(user = "datapages", dataset = "item_response_warehouse_5:3ykx"),
     list(user = "datapages", dataset = "item_response_warehouse_6:fpe6"),
     list(user = "datapages", dataset = "item_response_warehouse_7:ej0d"),
-    list(user = "datapages", dataset = "item_response_warehouse_8:XXXX")  # example
+    list(user = "datapages", dataset = "item_response_warehouse_8:8b1m"),
+    list(user = "datapages", dataset = "item_response_warehouse_9:XXXX")  # example
   ),
   ...
 )
@@ -188,10 +196,11 @@ The rankings source (`source = "rank"`, `.irw_datasource_specs$rank`,
 `IRW_RANK_DATASETS` in `irw/metadata/redivis_config.R`, `RANK_REFS` in
 `Python-pkg/src/irw/config.py`) was registered as a shard list from day one
 (October 2026, ben-domingue/irw#3024): FairVote's cast vote records alone are
-657 contests, so the 1000-table cap is a matter of time. One shard, `irw_rank`
-(the dataset's display name on Redivis is `IRW_rank`; the reference id `93f5`
-is what resolves it). The checklist is the conjoint one above, with
-`irw_rank_2`, `RANK_DEFAULT` in `red_up/targets.py` and
+657 contests, so the 1000-table cap was a matter of time, and it arrived on
+2026-11-01: `irw_rank_2` (display name `IRW_rank 2`, reference id `byyj`) was
+added beside `irw_rank` (`IRW_rank`, `93f5`), with `irw_rank` held at about
+950 tables and new tables going to `irw_rank_2`. The checklist is the conjoint
+one above, with `irw_rank_3`, `RANK_DEFAULT` in `red_up/targets.py` and
 `src/metadata/18_rankings.R` in place of their conjoint twins. Rankings
 tables do have `id`/`item`/`resp`, so a table that strays into a core shard
 would pass the core validator's column check; `red_up` tells the two apart by

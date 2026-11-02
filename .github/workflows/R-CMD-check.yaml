@@ -66,8 +66,10 @@ jobs:
           needs: check
 
       # check-r-package sets NOT_CRAN=true by default; run as CRAN does. There
-      # are no Redivis credentials here, so the warehouse examples are skipped
-      # by irw_has_credentials() rather than waiting on a browser login.
+      # are no Redivis credentials here and IRW_RUN_EXAMPLES is not set, so the
+      # warehouse examples are skipped by their own gate rather than waiting on
+      # a browser login. They are run in the no-login job below instead
+      # (Rpkg#208), which is the environment they are about.
       - uses: r-lib/actions/check-r-package@v2
         env:
           NOT_CRAN: "false"
@@ -79,12 +81,15 @@ jobs:
   # above proves that: those jobs run with NOT_CRAN=false, so the warehouse
   # examples and this check are skipped. This job has no credentials either --
   # which is exactly the environment the claim is about -- and runs the one
-  # networked test. timeout-minutes is the backstop: a regression here shows up
-  # as a login prompt nobody can answer, i.e. a job that waits.
+  # networked test, plus the warehouse examples (Rpkg#208): CRAN should not be
+  # downloading tables to check our manual, and this is the one job that can
+  # run them the way a reader of the manual would. timeout-minutes is the
+  # backstop: a regression here shows up as a login prompt nobody can answer,
+  # i.e. a job that waits.
   anonymous-read:
     runs-on: ubuntu-latest
     name: ubuntu-latest (release, no login)
-    timeout-minutes: 25
+    timeout-minutes: 40
 
     env:
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
@@ -141,6 +146,18 @@ jobs:
           NOT_CRAN: "true"
         run: |
           Rscript -e 'res <- as.data.frame(testthat::test_dir("tests/testthat", package = "irw", load_package = "installed", filter = "anonymous-read", stop_on_failure = TRUE)); stopifnot(sum(res$failed) == 0, !any(as.logical(res$skipped)), sum(res$passed) > 0)'
+
+      # The examples, here rather than on CRAN's machines (Rpkg#208). Each
+      # example's gate is left exactly as a user sees it and satisfied by
+      # IRW_RUN_EXAMPLES, so the condition still means what it says and CRAN
+      # still skips -- it sets no such variable. The runner refuses to pass on
+      # an empty run, and names any page still gated on credentials alone,
+      # because a job that is green because it executed nothing is the failure
+      # this replaces.
+      - name: Run the warehouse examples
+        env:
+          IRW_RUN_EXAMPLES: "1"
+        run: Rscript inst/developer/run-examples.R
 
   # CRAN does not install from Additional_repositories, so its machines check
   # irw without redivis. Reproduce that: install every dependency except it.

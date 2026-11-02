@@ -120,24 +120,107 @@ irw_cache_dir <- function() {
 #'
 #' @param tbl A Redivis table handle on which `get()` has been called.
 #' @param kind `"tables"` or `"itemtext"`.
+#' @param max_rows Integer or NULL. Stop after this many rows.
+#' @param columns Character vector or NULL. Return only these columns.
 #' @return A tibble, exactly as `tbl$to_tibble()` would return it: redivis
 #'   builds that with `tibble::as_tibble()` on the Arrow table, and so does a
 #'   read from the cache.
+#'
+#' `max_rows` and `columns` are pushed to Redivis, which is the whole point of
+#' them: a cap applied after the download has already cost the account's export
+#' quota, and 326 IRW tables are over a million rows.
+#'
+#' Only a WHOLE-table download is cached, because a slice cannot stand in for
+#' the table -- a later unbounded fetch reading a 100-row cache file would
+#' return 100 rows and call it the table. A cached whole table can serve a
+#' slice, though, so when there is a cache hit the bounds are applied locally
+#' and nothing is exported either way. Same rule as the Python client's
+#' `_download()`, so the two stay interchangeable.
 #' @keywords internal
 #' @noRd
-.irw_cached_download <- function(tbl, kind) {
+.irw_cached_download <- function(tbl, kind, max_rows = NULL, columns = NULL) {
+  bounded <- !is.null(max_rows) || !is.null(columns)
+  # Before any download: a column name the table does not have is the caller's
+  # mistake, and saying so costs one metadata request and no export. Without
+  # this the request reaches Redivis, fails there, and fetch_single_data's
+  # shard loop reports it as "table does not exist in IRW" -- the wrong
+  # diagnosis for a right table name.
+  if (!is.null(columns)) .irw_check_columns(tbl, columns)
   identity <- if (.irw_cache_enabled()) .irw_cache_identity(tbl) else NULL
   if (is.null(identity)) {
-    return(tbl$to_tibble())
+    return(.irw_slice(.irw_download(tbl, max_rows, columns), tbl, max_rows, columns, pushed = TRUE))
   }
   path <- .irw_cache_path(kind, identity$table, identity$hash)
   hit <- .irw_cache_read(path)
   if (!is.null(hit)) {
-    return(hit)
+    return(.irw_slice(hit, tbl, max_rows, columns, pushed = FALSE))
+  }
+  if (bounded) {
+    # Not cached: see above. The bounds go to Redivis instead.
+    return(.irw_slice(.irw_download(tbl, max_rows, columns), tbl, max_rows, columns, pushed = TRUE))
   }
   arrow_table <- tbl$to_arrow_table()
   .irw_cache_write(path, arrow_table, identity, kind)
   tibble::as_tibble(arrow_table)
+}
+
+#' Does the table have every column the caller asked for?
+#'
+#' Raises an `irw_bad_columns` condition, which fetch_single_data() re-raises
+#' rather than treating as a shard miss.
+#' @keywords internal
+#' @noRd
+.irw_check_columns <- function(tbl, columns) {
+  have <- tryCatch(
+    vapply(tbl$list_variables(), function(v) v$name, character(1)),
+    error = function(e) NULL
+  )
+  if (is.null(have)) return(invisible(NULL))   # cannot ask; let Redivis answer
+  missing <- setdiff(columns, have)
+  if (length(missing) > 0) .irw_stop_bad_columns(tbl, missing)
+  invisible(NULL)
+}
+
+#' @keywords internal
+#' @noRd
+.irw_stop_bad_columns <- function(tbl, missing) {
+  name <- tryCatch(tbl$properties$name, error = function(e) "")
+  stop(structure(
+    class = c("irw_bad_columns", "error", "condition"),
+    list(
+      message = sprintf("Table %s has no column(s) %s.", shQuote(name),
+                        paste(shQuote(missing), collapse = ", ")),
+      call = NULL
+    )
+  ))
+}
+
+#' One download, with the bounds pushed to Redivis
+#' @keywords internal
+#' @noRd
+.irw_download <- function(tbl, max_rows = NULL, columns = NULL) {
+  tbl$to_tibble(max_results = max_rows, variables = columns)
+}
+
+#' Apply the bounds to a frame that was not fetched with them
+#'
+#' Called on a cache hit, where the whole table is already on disk. A column
+#' the table does not have is an error rather than a silently narrower frame:
+#' the Python client raises `KeyError` for it, and a caller asking for
+#' `cov_age` on a table without one is asking the wrong question.
+#' @keywords internal
+#' @noRd
+.irw_slice <- function(df, tbl, max_rows = NULL, columns = NULL, pushed = FALSE) {
+  if (is.null(df)) return(df)
+  if (!is.null(columns)) {
+    missing <- setdiff(columns, names(df))
+    if (length(missing) > 0) .irw_stop_bad_columns(tbl, missing)
+    if (!pushed) df <- df[, columns, drop = FALSE]
+  }
+  if (!is.null(max_rows) && !pushed && nrow(df) > max_rows) {
+    df <- df[seq_len(max_rows), , drop = FALSE]
+  }
+  df
 }
 
 .irw_cache_read <- function(path) {

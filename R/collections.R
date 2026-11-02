@@ -16,9 +16,11 @@
 #'     documented table. Note this is not the same as the whole warehouse —
 #'     `irw_metadata()` itself has gaps.}
 #'   \item{`tagged-subset-only`}{The rule read the `construct name` tag, which
-#'     is filled for only about half of documented tables, and far fewer in the
-#'     newer warehouses. The definition states the exact count searched. These collections are biased toward older tables and should
-#'     not be described as exhaustive.}
+#'     is filled for only about half of documented tables, unevenly across the
+#'     warehouses --- and NOT by age: in October 2026 the newest shard was 100%
+#'     covered and the thinnest was shard 3 at 26%. The definition states the
+#'     exact count searched. These collections should not be described as
+#'     exhaustive, and `collections.html` on the site reports the current spread.}
 #'   \item{`curated-only`}{Every member was chosen by hand. The exact-instrument
 #'     collections are of this kind; see [irw_collection_members()] for how each
 #'     of their members was identified.}
@@ -28,7 +30,7 @@
 #'   and/or `"construct"`.
 #' @return A tibble, one row per collection.
 #' @seealso [irw_collection()], [irw_collection_members()], [irw_filter()]
-#' @examplesIf irw_has_credentials()
+#' @examplesIf irw_has_credentials() || nzchar(Sys.getenv("IRW_RUN_EXAMPLES"))
 #' \donttest{
 #' irw_collections()
 #' irw_collections(kind = "instrument")
@@ -76,7 +78,7 @@ irw_collections <- function(kind = NULL) {
 #' @param quiet Logical. Suppress the definition/coverage message.
 #' @return A sorted character vector of table names.
 #' @seealso [irw_collections()], [irw_filter()]
-#' @examplesIf irw_has_credentials()
+#' @examplesIf irw_has_credentials() || nzchar(Sys.getenv("IRW_RUN_EXAMPLES"))
 #' \donttest{
 #' tabs <- irw_collection("depression")
 #' irw_save_bibtex(head(tabs, 3), output_file = file.path(tempdir(), "depression.bib"))
@@ -156,7 +158,7 @@ irw_collection <- function(name, quiet = FALSE) {
 #' @param collection Optional character vector. Restrict to these collections.
 #' @return A tibble with columns `table`, `collection`, `basis`.
 #' @seealso [irw_collections()], [irw_collection()]
-#' @examplesIf irw_has_credentials()
+#' @examplesIf irw_has_credentials() || nzchar(Sys.getenv("IRW_RUN_EXAMPLES"))
 #' \donttest{
 #' irw_collection_members(tables = "frac20")
 #' irw_collection_members(collection = "q_matrix")

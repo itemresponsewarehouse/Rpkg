@@ -41,16 +41,25 @@ head(df, 3)
 ```{r}
 wide <- irw_long2resp(df)
 resp <- as.data.frame(wide[, setdiff(names(wide), "id"), drop = FALSE])
+names(resp)
 ```
 
-Because the item columns are already named `item_1` ... `item_8`, the model
-syntax can be built from `names(resp)` rather than typed out:
+`irw_long2resp()` names each column by the item id itself, which is what lets
+a fitted result join back to the item text and the item metadata. Here the
+item ids are the numbers 1 to 8, and `lavaan`'s model syntax cannot refer to a
+name that starts with a digit -- not even in backticks, which its parser
+rejects outright. So rename the columns for the model, keeping the map back:
 
 ```{r}
-items <- names(resp)
+items <- paste0("i", names(resp))
+names(resp) <- items
 model <- paste0("F =~ ", paste(items, collapse = " + "))
 model
 ```
+
+Many IRW tables have numeric item ids, so this is the general pattern rather
+than a quirk of simulated data; `mirt` and `ltm` take a matrix by position and
+need no renaming.
 
 Binary items must be declared `ordered`, which switches `lavaan` to a
 diagonally weighted least squares estimator with a probit link. A CFA fitted

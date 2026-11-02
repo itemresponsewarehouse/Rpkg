@@ -42,12 +42,41 @@
 #' @return The result of \code{expr()}.
 #' @keywords internal
 #' @noRd
+# `redivis` warns on every unpinned read that you should pass a qualified
+# reference id -- "No reference id was provided for the dataset, which may cause
+# your code to break if the name changes. Consider using the qualified reference
+# ...". That advice is correct in general and WRONG for this package, which must
+# never pin one: a reference id identifies one VERSION's table, and a release cut
+# rotates them. The v20.0 cut on 2026-09-04 minted new ids for all thirteen
+# irw_meta tables at once (`tags` 7nkh->q2w9), which is what broke the pinned
+# ids in irw_site; Python-pkg suppresses the same warning in its __init__ and
+# `config.py` says in as many words that they must not be pinned.
+#
+# So it is advice the user cannot act on, printed once per dataset and once per
+# table. A single irw_filter() call across eight core shards emits it dozens of
+# times, which trains people to ignore warnings from this package -- including
+# the ones that matter, like the shard-list and duplicate-name warnings next to
+# it. Only this exact message is muffled; every other redivis warning passes
+# through untouched.
+.irw_redivis_advice_pattern <- "No reference id was provided for the (table|dataset)"
+
+.irw_muffle_redivis_advice <- function(expr) {
+  withCallingHandlers(
+    expr(),
+    warning = function(w) {
+      if (grepl(.irw_redivis_advice_pattern, conditionMessage(w))) {
+        invokeRestart("muffleWarning")
+      }
+    }
+  )
+}
+
 .retry_with_backoff <- function(expr, attempts = 3L, base_delay = 1) {
   if (!is.function(expr)) {
     stop("`.retry_with_backoff()` now expects a function argument, e.g. `.retry_with_backoff(function() expr)`")
   }
   for (i in seq_len(attempts)) {
-    result <- tryCatch(expr(), error = function(e) e)
+    result <- tryCatch(.irw_muffle_redivis_advice(expr), error = function(e) e)
     if (!inherits(result, "error")) {
       return(result)
     }

@@ -41,7 +41,7 @@ basis starts with \code{"wording"}, not rows equal to it.
 }
 
 \examples{
-\dontshow{if (irw_has_credentials()) withAutoprint(\{ # examplesIf}
+\dontshow{if (irw_has_credentials() || nzchar(Sys.getenv("IRW_RUN_EXAMPLES"))) withAutoprint(\{ # examplesIf}
 \donttest{
 irw_collection_members(tables = "frac20")
 irw_collection_members(collection = "q_matrix")

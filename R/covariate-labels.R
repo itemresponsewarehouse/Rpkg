@@ -124,7 +124,7 @@
 #' @seealso \code{\link{irw_covariates}}, whose \code{labels = TRUE} applies
 #'   these labels.
 #'
-#' @examplesIf irw_has_credentials()
+#' @examplesIf irw_has_credentials() || nzchar(Sys.getenv("IRW_RUN_EXAMPLES"))
 #' \donttest{
 #'   irw_covariate_labels("cucchi_2018_rfq")
 #' }

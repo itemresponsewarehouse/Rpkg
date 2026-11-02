@@ -11,7 +11,11 @@ irw_filter(
   n_items = NULL,
   responses_per_participant = NULL,
   responses_per_item = NULL,
-  density = c(0.5, 1),
+  difficulty_spread = NULL,
+  mean_item_rest_r = NULL,
+  mean_abs_item_rest_r = NULL,
+  prop_items_extreme = NULL,
+  density = c(0.5, Inf),
   var = NULL,
   age_range = NULL,
   child_age__for_child_focused_studies_ = NULL,
@@ -54,9 +58,38 @@ irw_filter(
 
 \item{responses_per_item}{Numeric vector of length 1 or 2. Filters by average responses per item.}
 
-\item{density}{Numeric vector of length 1 or 2, or \code{NULL}. Filters by matrix density.
+\item{difficulty_spread}{Numeric vector of length 1 or 2. Filters by the share of
+the table's observed response range that its item means cover -- the range of
+item p-values on a dichotomous table, and normalised by the response range so a
+1-5 Likert table is comparable. Near 0 means every item sits at the same
+difficulty; near 1 means they span the scale. \code{core} only.}
+
+\item{mean_item_rest_r}{Numeric vector of length 1 or 2. Filters by the mean
+item-rest correlation, SIGNED. IRW does not harmonise response direction, so a
+scale with reverse-keyed items averages toward zero here; use
+\code{mean_abs_item_rest_r} to ask whether the items hang together at all. \code{core} only.}
+
+\item{mean_abs_item_rest_r}{Numeric vector of length 1 or 2. Filters by the mean
+ABSOLUTE item-rest correlation, which is direction-invariant. A wide gap between
+this and \code{mean_item_rest_r} indicates reverse-keyed items. \code{core} only.}
+
+\item{prop_items_extreme}{Numeric vector of length 1 or 2. Filters by the share of
+items whose mean sits within 5\% of either end of the response range, i.e. floor
+or ceiling items. \code{prop_items_extreme = c(0, 0)} keeps tables with none. \code{core} only.}
+
+\item{density}{Numeric vector of length 1 or 2, or \code{NULL}. Filters on
+\code{density}, which is \strong{responses per person-item cell} --
+\code{n_responses / (n_participants * n_items)} -- and is therefore not bounded
+by 1. A value above 1 means the table measures a person-item pair more than
+once: 768 of 6,720 core tables are above 1 (measured 2026-10-25), 700 of
+them carrying an occasion column (\code{wave}, \code{rater}, \verb{trial_*}, \code{session},
+...), and the largest is 3,624.6 for a go/no-go task. It is not the
+proportion of cells that are filled, which is a different quantity IRW does
+not publish (ben-domingue/irw#3222).
 \itemize{
-\item Default is \code{c(0.5, 1)} to exclude sparse matrices.
+\item Default is \code{c(0.5, Inf)}: a lower bound only, to exclude sparse matrices.
+The default used to cap at 1, which silently dropped every
+repeated-measures table in the corpus.
 \item Use \code{NULL} to disable this filter.
 \item The default is skipped for a source whose metadata has no \code{density} column
 (\code{"nom"}). Passing \code{density}, \code{var}, \code{longitudinal} or a numeric filter
@@ -179,6 +212,24 @@ Filtering is based on:
 \item \strong{Variable presence}: e.g., \code{rt}, \code{wave}, \code{cov_}
 \item \strong{License type}: e.g., \code{"CC BY 4.0"}, \code{"CC0 1.0"}
 }
+\subsection{Psychometric Filtering}{
+
+Four columns describe how a table behaves rather than how big it is:
+\code{difficulty_spread}, \code{mean_item_rest_r}, \code{mean_abs_item_rest_r} and
+\code{prop_items_extreme}. They are classical and model-free -- no IRT model is
+fitted anywhere -- so they are defined for every core table, polytomous and
+sparse included, and they take no position on what the items measure. They
+are computed per item and published per table; the per-item rows behind them
+are the \code{item_classical} table of \code{irw_meta}.
+
+Two cautions. Response direction is not harmonised across IRW, so a signed
+mean item-rest correlation near zero can mean a reverse-keyed scale rather
+than an incoherent one -- compare it with the absolute version. And where a
+respondent sees a handful of items out of thousands, rest scores are nearly
+disjoint between respondents, so the correlation is a weaker statement about
+a sparse bank than about a 20-item questionnaire.
+}
+
 \subsection{Metadata and Tag-Based Filtering}{
 
 To explore available metadata:
@@ -198,7 +249,7 @@ and \code{"sim"} have no tags by design and reject them.
 }
 }
 \examples{
-\dontshow{if (irw_has_credentials()) withAutoprint(\{ # examplesIf}
+\dontshow{if (irw_has_credentials() || nzchar(Sys.getenv("IRW_RUN_EXAMPLES"))) withAutoprint(\{ # examplesIf}
 \donttest{
 # Numeric filters
 irw_filter(n_responses = c(1000, Inf), n_items = c(10, 50))
@@ -226,6 +277,12 @@ irw_filter(collection = c("rct", "response_time"))   # union, not intersection
 irw_filter(n_categories = 2, density = NULL)           # binary
 irw_filter(n_categories = c(3, 5), density = NULL)     # small multi-category
 irw_filter(n_categories = c(10, Inf), density = NULL)  # large category sets
+# Filter by psychometric property, not just shape (irw_meta tier-0 columns)
+irw_filter(mean_abs_item_rest_r = c(0.4, 1))            # items that hang together
+irw_filter(prop_items_extreme = c(0, 0),                # no floor or ceiling items
+           difficulty_spread = c(0.3, 1))               # spanning the scale
+irw_filter(mean_item_rest_r = c(-1, 0.1),               # signed near zero but
+           mean_abs_item_rest_r = c(0.3, 1))            # absolute high: reverse-keyed
 irw_filter(source = "sim", n_items = c(10, Inf))
 irw_filter(source = "comp", n_actors = c(2, 10))
 irw_filter(source = "conj", outcome = "rating", country = c("US", "GB"))
