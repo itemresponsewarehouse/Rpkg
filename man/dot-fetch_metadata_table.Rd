@@ -12,6 +12,15 @@ A cached or newly fetched tibble containing metadata information.
 \description{
 Retrieves the metadata table from Redivis user("datapages")$dataset("irw_meta")$table("metadata").
 Only fetches new data if the table version tag has changed.
-Rows are filtered to tables that currently exist in the IRW production datasets.
+}
+\details{
+The published metadata is the authority for which core tables exist
+(ben-domingue/irw#3127). It is NOT intersected with a live listing of the
+warehouses: that intersection could only ever shorten the listing, and when
+a shard was invisible to the installed client it shortened it by 761 tables
+with no warning possible (irw#3091). The cost of trusting the metadata is
+the opposite failure, which is loud: for the two to seven days between a
+withdrawal and the next irw_meta publish, a withdrawn table stays listed and
+errors on fetch with an explanation.
 }
 \keyword{internal}

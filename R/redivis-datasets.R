@@ -131,8 +131,7 @@
     "tags_tibble",
     "tags_version",
     "nominal_tags_tibble",
-    "nominal_tags_version",
-    "core_live_catalog_fingerprint"
+    "nominal_tags_version"
   )) {
     if (exists(nm, envir = .irw_env)) {
       rm(list = nm, envir = .irw_env)
@@ -151,23 +150,6 @@
     .irw_env$core_warehouse_fingerprint <- fp
     .irw_clear_live_table_caches()
   }
-}
-
-#' Fingerprint of core warehouse config plus each warehouse version tag
-#'
-#' Used so metadata filtered to live tables refreshes when a warehouse updates
-#' even if \code{irw_meta} has not changed.
-#'
-#' @keywords internal
-#' @noRd
-.irw_core_live_catalog_fingerprint <- function() {
-  ds_list <- .initialize_datasource(source = "core")
-  tags <- vapply(ds_list, function(ds) {
-    ds$get()
-    tag <- ds$properties$version$tag
-    if (is.null(tag) || length(tag) == 0L) "" else as.character(tag[[1]])
-  }, character(1))
-  paste(.irw_core_warehouse_fingerprint(), paste(tags, collapse = ","), sep = "|")
 }
 
 #' Order opened datasources for search
