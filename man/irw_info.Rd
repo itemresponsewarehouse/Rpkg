@@ -19,7 +19,7 @@ irw_info(
 \item{details}{Logical. When \code{TRUE} and \code{table_name} is \code{NULL}, also
 prints a breakdown by dataset. Defaults to \code{FALSE}.}
 
-\item{source}{Character. The data family: \code{"core"} (default), \code{"nom"}, \code{"sim"}, \code{"comp"}, \code{"conj"} (conjoint experiments; see \code{\link{irw_conj_long}}), or \code{"rank"} (rankings; see \code{\link{irw_rank_compress}}).}
+\item{source}{Character. The data family: \code{"core"} (default for a table lookup), \code{"nom"}, \code{"sim"}, \code{"comp"}, \code{"conj"} (conjoint experiments; see \code{\link{irw_conj_long}}), or \code{"rank"} (rankings; see \code{\link{irw_rank_compress}}). Omit it with no \code{table_name} for every family at once.}
 
 \item{comp}{Deprecated. Use \code{source = "comp"} instead.}
 
@@ -34,15 +34,18 @@ Invisibly returns \code{NULL}.
 Prints information about the IRW datasets or a specific table.
 }
 \details{
-If \code{table_name} is \code{NULL}, shows combined totals across all IRW datasets.
-Use \code{details = TRUE} to also print a per-dataset breakdown (main IRW only).
-If a table name is provided, shows details for that table.
+If \code{table_name} and \code{source} are both omitted, shows the table count
+and size of every data family, with totals across them. Name a \code{source}
+to see one family on its own. Use \code{details = TRUE} to also print a
+per-dataset breakdown (main IRW only). If a table name is provided, shows
+details for that table, looked up in \code{source}.
 }
 \examples{
 \dontshow{if (irw_has_credentials() || nzchar(Sys.getenv("IRW_RUN_EXAMPLES"))) withAutoprint(\{ # examplesIf}
 \donttest{
-irw_info()                 # Combined totals
-irw_info(details = TRUE)   # Combined + per-dataset breakdown
+irw_info()                 # Every data family, with totals
+irw_info(source = "core")  # The main IRW datasets only
+irw_info(details = TRUE)   # Every family + per-dataset breakdown of core
 irw_info("frac20")      # Specific IRW table
 irw_info("t20_hyper", source = "comp")  # Competition table
 irw_info("gilbert_meta_3", source = "sim")
