@@ -42,18 +42,100 @@ irw_list_tables <- function(source = "core", sim = FALSE, comp = FALSE, nom = FA
 }
 
 
+#' Totals across a list of opened Redivis datasets
+#'
+#' @param ds_list List of opened datasets.
+#' @return List with tables, size_gb, and created/updated (seconds since the epoch).
+#' @keywords internal
+#' @noRd
+.irw_datasets_totals <- function(ds_list) {
+  prop <- function(name) {
+    vapply(ds_list, function(ds) as.numeric(ds$properties[[name]]), numeric(1))
+  }
+  list(
+    tables = sum(prop("tableCount")),
+    size_gb = sum(prop("totalNumBytes")) / (1024^3),
+    created = min(prop("createdAt")) / 1000,
+    updated = max(prop("updatedAt")) / 1000
+  )
+}
+
+#' @keywords internal
+#' @noRd
+.irw_format_utc <- function(seconds) {
+  format(as.POSIXct(seconds, origin = "1970-01-01", tz = "UTC"), "%Y-%m-%d %H:%M:%S")
+}
+
+#' Print table count and size for every data family, with totals
+#'
+#' A family that cannot be opened is shown as unavailable and named in a
+#' warning, so that one family's outage neither stops the report nor passes
+#' as a smaller total.
+#'
+#' @return The opened core datasets, for the optional per-dataset breakdown.
+#' @keywords internal
+#' @noRd
+.irw_print_all_families_info <- function() {
+  family_labels <- c(core = "Core", nom = "Nominal", sim = "Simsyn",
+                     comp = "Competitions", conj = "Conjoint", rank = "Rankings")
+
+  opened <- lapply(.irw_sources, function(src) {
+    tryCatch(.initialize_datasource(source = src), error = function(e) {
+      warning(sprintf("Could not open the '%s' family: %s", src, conditionMessage(e)),
+              call. = FALSE)
+      list()
+    })
+  })
+  names(opened) <- .irw_sources
+
+  available <- lengths(opened) > 0
+  if (!any(available)) {
+    stop("Could not open any IRW data family.", call. = FALSE)
+  }
+  totals <- lapply(opened[available], .irw_datasets_totals)
+
+  message(strrep("-", 50))
+  message("IRW Database Information (All Families)")
+  message(strrep("-", 50))
+  message(sprintf("%-14s %-8s %8s %14s", "Family", "source", "Tables", "Size"))
+  for (src in .irw_sources) {
+    if (available[[src]]) {
+      message(sprintf("%-14s %-8s %8d %11.2f GB", family_labels[[src]], src,
+                      totals[[src]]$tables, totals[[src]]$size_gb))
+    } else {
+      message(sprintf("%-14s %-8s %8s", family_labels[[src]], src, "unavailable"))
+    }
+  }
+  message(strrep("-", 50))
+  total_label <- if (all(available)) "Total Table Count:" else "Total (available only):"
+  message(sprintf("%-25s %d", total_label,
+                  sum(vapply(totals, function(x) x$tables, numeric(1)))))
+  message(sprintf("%-25s %.2f GB", "Total Data Size:",
+                  sum(vapply(totals, function(x) x$size_gb, numeric(1)))))
+  message(sprintf("%-25s %s", "Earliest Created At:",
+                  .irw_format_utc(min(vapply(totals, function(x) x$created, numeric(1))))))
+  message(sprintf("%-25s %s", "Latest Updated At:",
+                  .irw_format_utc(max(vapply(totals, function(x) x$updated, numeric(1))))))
+  message("One family only: irw_info(source = \"<source>\")")
+
+  opened$core
+}
+
+
 #' Retrieve and Print IRW Database or Table Information
 #'
 #' Prints information about the IRW datasets or a specific table.
 #'
-#' If \code{table_name} is \code{NULL}, shows combined totals across all IRW datasets.
-#' Use \code{details = TRUE} to also print a per-dataset breakdown (main IRW only).
-#' If a table name is provided, shows details for that table.
+#' If \code{table_name} and \code{source} are both omitted, shows the table count
+#' and size of every data family, with totals across them. Name a \code{source}
+#' to see one family on its own. Use \code{details = TRUE} to also print a
+#' per-dataset breakdown (main IRW only). If a table name is provided, shows
+#' details for that table, looked up in \code{source}.
 #'
 #' @param table_name Optional. Table name to describe; if \code{NULL}, prints database‑level info.
 #' @param details Logical. When \code{TRUE} and \code{table_name} is \code{NULL}, also
 #'   prints a breakdown by dataset. Defaults to \code{FALSE}.
-#' @param source Character. The data family: \code{"core"} (default), \code{"nom"}, \code{"sim"}, \code{"comp"}, \code{"conj"} (conjoint experiments; see \code{\link{irw_conj_long}}), or \code{"rank"} (rankings; see \code{\link{irw_rank_compress}}).
+#' @param source Character. The data family: \code{"core"} (default for a table lookup), \code{"nom"}, \code{"sim"}, \code{"comp"}, \code{"conj"} (conjoint experiments; see \code{\link{irw_conj_long}}), or \code{"rank"} (rankings; see \code{\link{irw_rank_compress}}). Omit it with no \code{table_name} for every family at once.
 #' @param comp Deprecated. Use \code{source = "comp"} instead.
 #' @param sim Deprecated. Use \code{source = "sim"} instead.
 #' @param nom Deprecated. Use \code{source = "nom"} instead.
@@ -61,8 +143,9 @@ irw_list_tables <- function(source = "core", sim = FALSE, comp = FALSE, nom = FA
 #' @return Invisibly returns \code{NULL}.
 #' @examplesIf irw_has_credentials() || nzchar(Sys.getenv("IRW_RUN_EXAMPLES"))
 #' \donttest{
-#' irw_info()                 # Combined totals
-#' irw_info(details = TRUE)   # Combined + per-dataset breakdown
+#' irw_info()                 # Every data family, with totals
+#' irw_info(source = "core")  # The main IRW datasets only
+#' irw_info(details = TRUE)   # Every family + per-dataset breakdown of core
 #' irw_info("frac20")      # Specific IRW table
 #' irw_info("t20_hyper", source = "comp")  # Competition table
 #' irw_info("gilbert_meta_3", source = "sim")
@@ -70,6 +153,10 @@ irw_list_tables <- function(source = "core", sim = FALSE, comp = FALSE, nom = FA
 #' }
 #' @export
 irw_info <- function(table_name = NULL, details = FALSE, source = "core", comp = FALSE, sim = FALSE, nom = FALSE) {
+  # Read before .irw_resolve_source() assigns to source, which makes it non-missing
+  all_families <- is.null(table_name) && missing(source) &&
+    !(isTRUE(sim) || isTRUE(comp) || isTRUE(nom))
+
   if (!is.logical(details) || length(details) != 1) {
     stop("'details' must be a single TRUE or FALSE value.")
   }
@@ -95,31 +182,20 @@ irw_info <- function(table_name = NULL, details = FALSE, source = "core", comp =
   }
 
   if (is.null(table_name)) {
-    ds_list <- .initialize_datasource(source = source)
-    
-    total_table_count <- 0
-    total_size_gb <- 0
-    created_at_all <- c()
-    updated_at_all <- c()
-    
-    for (ds in ds_list) {
-      total_table_count <- total_table_count + ds$properties$tableCount
-      total_size_gb <- total_size_gb + ds$properties$totalNumBytes / (1024^3)
-      created_at_all <- c(created_at_all, ds$properties$createdAt / 1000)
-      updated_at_all <- c(updated_at_all, ds$properties$updatedAt / 1000)
+    if (all_families) {
+      ds_list <- .irw_print_all_families_info()
+    } else {
+      ds_list <- .initialize_datasource(source = source)
+      totals <- .irw_datasets_totals(ds_list)
+
+      message(strrep("-", 50))
+      message(db_label)
+      message(strrep("-", 50))
+      message(sprintf("%-25s %d", "Total Table Count:", totals$tables))
+      message(sprintf("%-25s %.2f GB", "Total Data Size:", totals$size_gb))
+      message(sprintf("%-25s %s", "Earliest Created At:", .irw_format_utc(totals$created)))
+      message(sprintf("%-25s %s", "Latest Updated At:", .irw_format_utc(totals$updated)))
     }
-    
-    message(strrep("-", 50))
-    message(db_label)
-    message(strrep("-", 50))
-    message(sprintf("%-25s %d", "Total Table Count:", total_table_count))
-    message(sprintf("%-25s %.2f GB", "Total Data Size:", total_size_gb))
-    message(sprintf("%-25s %s", "Earliest Created At:",
-                    format(as.POSIXct(min(created_at_all), origin = "1970-01-01", tz = "UTC"),
-                           "%Y-%m-%d %H:%M:%S")))
-    message(sprintf("%-25s %s", "Latest Updated At:",
-                    format(as.POSIXct(max(updated_at_all), origin = "1970-01-01", tz = "UTC"),
-                           "%Y-%m-%d %H:%M:%S")))
     message(strrep("-", 50))
     message(sprintf("%-25s %s", "Data Website:", "https://itemresponsewarehouse.org/"))
     message(sprintf("%-25s %s", "Methodology:",
@@ -127,7 +203,7 @@ irw_info <- function(table_name = NULL, details = FALSE, source = "core", comp =
     message(sprintf("%-25s %s", "Usage Information:",
                     "License & citation info: https://itemresponsewarehouse.org/docs.html"))
     message(strrep("-", 50))
-    
+
     # --- Optional per-dataset details ---
     if (details) {
       for (i in seq_along(ds_list)) {
