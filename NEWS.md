@@ -1,5 +1,7 @@
 # irw (development version)
 
+- Ninth core shard: `item_response_warehouse_9` joins `.irw_datasource_specs$core`, because `item_response_warehouse_8` is nearing Redivis' 1000-table cap. Nothing moves: every table stays in the shard that holds it, and new core tables go to shard 9. A copy of this package older than this entry reaches the new shard through shard discovery once it has a published release.
+
 - `irw_info()` called with no arguments now reports every data family (core, nominal, simsyn, competitions, conjoint and rankings), with table count and size for each and totals across them. It used to report core alone under a heading that read "Combined". `irw_info(source = "core")` gives the previous output.
 
 # irw 1.4.0
