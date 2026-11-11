@@ -33,6 +33,7 @@ irw_filter(
   country = NULL,
   domain = NULL,
   choice_object = NULL,
+  levels_labelled = NULL,
   source = "core",
   comp = FALSE,
   sim = FALSE,
@@ -169,13 +170,24 @@ neighbour), \code{policy}, \code{scenario} (a situation or case), \code{product_
 \code{place}, \code{organisation} or \code{message} (a text or media artefact judged as
 such). Any value named matches.}
 
+\item{levels_labelled}{Character vector. Conjoint-only: whether a table's
+attribute levels are the text respondents saw. \code{"full"}: every attribute
+holds displayed text. \code{"partial"}: some attributes hold only the
+deposit's codes, in columns named \verb{attr_<name>_code}, because no source
+gives their text. \code{"none"}: every attribute is coded. Codes say which
+profiles share a level, which is enough for position, task-order and
+heterogeneity analyses and for effects within a table, but not what a
+level was, so they cannot be compared across tables. Any value named
+matches; the default \code{NULL} keeps every table. Pass \code{"full"} for tables
+whose levels are all text.}
+
 \item{source}{Character. The data family: \code{"core"} (default), \code{"nom"}, \code{"sim"}, \code{"comp"}, \code{"conj"}, or \code{"rank"}.
 For \code{"rank"} the usable filter is \code{license}; the other criteria name columns
 its metadata does not have and are refused by name. Filter on the design
 facts (method, seats, positions offered, ...) with
 \code{irw_metadata(source = "rank")} directly.
 For \code{"conj"} the filters are \code{n_respondents}, \code{n_attributes}, \code{outcome},
-\code{country}, \code{domain}, \code{choice_object} and \code{license}; see \code{\link[=irw_metadata]{irw_metadata()}}
+\code{country}, \code{domain}, \code{choice_object}, \code{levels_labelled} and \code{license}; see \code{\link[=irw_metadata]{irw_metadata()}}
 with \code{source = "conj"} for the other design facts. The two tag columns are
 defined in the irw repo's \code{data/conjoint/README.md} ("Topic tags").
 Tag filters require \code{"core"} or \code{"nom"}.}
@@ -289,6 +301,7 @@ irw_filter(source = "conj", outcome = "rating", country = c("US", "GB"))
 irw_filter(source = "conj", domain = "immigration_asylum")          # the immigration conjoints
 irw_filter(source = "conj", domain = c("candidate_choice", "parties_platforms"),
            choice_object = "person")
+irw_filter(source = "conj", levels_labelled = "full")               # level text throughout
 }
 \dontshow{\}) # examplesIf}
 }

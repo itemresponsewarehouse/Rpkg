@@ -1,5 +1,7 @@
 # irw (development version)
 
+- irw_filter(source = "conj") gains `levels_labelled` (`"full"`, `"partial"`, `"none"`). Conjoint tables whose deposits give no source for an attribute's displayed text now ship with the deposit's codes in a column named `attr_<name>_code`, rather than being left out: codes say which profiles share a level, which is all that position, task-order, fatigue and heterogeneity analyses need, but not what a level was. `levels_labelled = "full"` keeps the tables whose attributes are all text. Every table is returned by default. The column is in irw_metadata(source = "conj") from the first irw_meta release after 2026-11-11; an older release gives an error naming the column (ben-domingue/irw#3474).
+
 - Ninth core shard: `item_response_warehouse_9` joins `.irw_datasource_specs$core`, because `item_response_warehouse_8` is nearing Redivis' 1000-table cap. Nothing moves: every table stays in the shard that holds it, and new core tables go to shard 9. A copy of this package older than this entry reaches the new shard through shard discovery once it has a published release.
 
 - `irw_info()` called with no arguments now reports every data family (core, nominal, simsyn, competitions, conjoint and rankings), with table count and size for each and totals across them. It used to report core alone under a heading that read "Combined". `irw_info(source = "core")` gives the previous output.
