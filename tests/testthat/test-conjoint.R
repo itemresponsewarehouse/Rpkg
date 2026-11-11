@@ -60,7 +60,8 @@ fake_conj_meta <- function() tibble::tibble(
   country = c("US", "AT;DE;GB", "GB", "TR"),
   domain = c("candidate_choice", "immigration_asylum", "health_covid;consumer_products",
              "social_identity_interpersonal"),
-  choice_object = c("person", "person", "product_service", "person"))
+  choice_object = c("person", "person", "product_service", "person"),
+  levels_labelled = c("full", "partial", "full", "none"))
 fake_conj_bib <- function() tibble::tibble(
   table = c("a_us_choice", "b_pooled_both", "c_gb_rating", "d_named"),
   Derived_License = c("CC0 1.0", "CC0 1.0", "CC BY 4.0", "CC0 1.0"))
@@ -103,6 +104,21 @@ test_that("the topic-tag filters explain an irw_meta release without the columns
   local_mocked_bindings(.fetch_conj_metadata_table = old, .fetch_conj_biblio_table = fake_conj_bib)
   expect_error(irw_filter(source = "conj", domain = "health_covid"), "no 'domain' column")
   expect_identical(suppressMessages(irw_filter(source = "conj", country = "US")), "a_us_choice")
+})
+
+test_that("irw_filter(source = \"conj\") filters on levels_labelled (#3474)", {
+  local_mocked_bindings(.fetch_conj_metadata_table = fake_conj_meta,
+                        .fetch_conj_biblio_table = fake_conj_bib)
+  f <- function(...) suppressMessages(irw_filter(source = "conj", ...))
+  expect_identical(f(levels_labelled = "full"), c("a_us_choice", "c_gb_rating"))
+  expect_identical(f(levels_labelled = c("partial", "NONE")), c("b_pooled_both", "d_named"))
+  expect_identical(f(levels_labelled = "full", outcome = "choice"), "a_us_choice")
+  expect_error(f(levels_labelled = "text"), "full")
+  expect_error(f(levels_labelled = TRUE), "full")
+  expect_error(irw_filter(levels_labelled = "full"), "only available when `source = \"conj\"`")
+  old <- function() fake_conj_meta()[, setdiff(names(fake_conj_meta()), "levels_labelled")]
+  local_mocked_bindings(.fetch_conj_metadata_table = old)
+  expect_error(f(levels_labelled = "full"), "no 'levels_labelled' column")
 })
 
 test_that("conj filters and other sources' filters do not cross", {

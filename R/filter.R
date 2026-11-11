@@ -204,12 +204,16 @@ irw_license_options <- function(source = "core", comp = FALSE, sim = FALSE, nom 
 ##             requested value is among its tags;
 ##   choice_object  what one profile represents (person, policy, ...), one
 ##             value per table; ANY of the requested values matches;
+##   levels_labelled  "full", "partial" and/or "none": whether a table's
+##             attributes hold the level text respondents saw or, as
+##             attr_<name>_code, only the deposit's codes (irw repo
+##             data/conjoint/README.md, "Coded attributes"); ANY value matches;
 ##   license   as for every source, from conj_biblio.
 ## The two tag vocabularies are closed sets kept in the irw repo, not here: a
 ## requested value that no table carries is an error naming the values that
 ## exist, since "0 tables matched" would read as an absence of data.
 .irw_conj_filters <- c("n_respondents", "n_attributes", "outcome", "country",
-                       "domain", "choice_object", "license")
+                       "domain", "choice_object", "levels_labelled", "license")
 
 .irw_split_conj_tags <- function(x) {
   lapply(strsplit(.irw_na_to_empty(x), ";", fixed = TRUE), function(h) tolower(trimws(h)))
@@ -243,7 +247,8 @@ irw_license_options <- function(source = "core", comp = FALSE, sim = FALSE, nom 
 
 .irw_filter_conj_impl <- function(n_respondents = NULL, n_attributes = NULL,
                                   outcome = NULL, country = NULL,
-                                  domain = NULL, choice_object = NULL, license = NULL) {
+                                  domain = NULL, choice_object = NULL,
+                                  levels_labelled = NULL, license = NULL) {
   meta <- .fetch_conj_metadata_table()
   need <- c("table", "n_respondents", "n_attributes", "outcomes", "country")
   if (!all(need %in% names(meta))) {
@@ -260,6 +265,22 @@ irw_license_options <- function(source = "core", comp = FALSE, sim = FALSE, nom 
     }
     meta <- .irw_filter_conj_tag(meta, full, column, value)
     if (nrow(meta) == 0L) return(.irw_filter_no_match(column, value))
+  }
+
+  if (!is.null(levels_labelled)) {
+    allowed <- c("full", "partial", "none")
+    if (!is.character(levels_labelled) || !length(levels_labelled) || anyNA(levels_labelled) ||
+        !all(tolower(levels_labelled) %in% allowed)) {
+      stop("'levels_labelled' must be one or more of \"full\", \"partial\", \"none\".")
+    }
+    if (!"levels_labelled" %in% names(meta)) {
+      stop("The conjoint metadata in this irw_meta release has no 'levels_labelled' column; ",
+           "it was added for coded attributes (ben-domingue/irw#3474). ",
+           "Call irw_use_version() with a newer release.")
+    }
+    meta <- meta[!is.na(meta$levels_labelled) &
+                   meta$levels_labelled %in% tolower(levels_labelled), , drop = FALSE]
+    if (nrow(meta) == 0L) return(.irw_filter_no_match("levels_labelled", levels_labelled))
   }
 
   if (!is.null(license)) {
@@ -482,13 +503,23 @@ irw_license_options <- function(source = "core", comp = FALSE, sim = FALSE, nom 
 #'   neighbour), `policy`, `scenario` (a situation or case), `product_service`,
 #'   `place`, `organisation` or `message` (a text or media artefact judged as
 #'   such). Any value named matches.
+#' @param levels_labelled Character vector. Conjoint-only: whether a table's
+#'   attribute levels are the text respondents saw. `"full"`: every attribute
+#'   holds displayed text. `"partial"`: some attributes hold only the
+#'   deposit's codes, in columns named `attr_<name>_code`, because no source
+#'   gives their text. `"none"`: every attribute is coded. Codes say which
+#'   profiles share a level, which is enough for position, task-order and
+#'   heterogeneity analyses and for effects within a table, but not what a
+#'   level was, so they cannot be compared across tables. Any value named
+#'   matches; the default `NULL` keeps every table. Pass `"full"` for tables
+#'   whose levels are all text.
 #' @param source Character. The data family: `"core"` (default), `"nom"`, `"sim"`, `"comp"`, `"conj"`, or `"rank"`.
 #'   For `"rank"` the usable filter is `license`; the other criteria name columns
 #'   its metadata does not have and are refused by name. Filter on the design
 #'   facts (method, seats, positions offered, ...) with
 #'   `irw_metadata(source = "rank")` directly.
 #'   For `"conj"` the filters are `n_respondents`, `n_attributes`, `outcome`,
-#'   `country`, `domain`, `choice_object` and `license`; see [irw_metadata()]
+#'   `country`, `domain`, `choice_object`, `levels_labelled` and `license`; see [irw_metadata()]
 #'   with `source = "conj"` for the other design facts. The two tag columns are
 #'   defined in the irw repo's `data/conjoint/README.md` ("Topic tags").
 #'   Tag filters require `"core"` or `"nom"`.
@@ -546,6 +577,7 @@ irw_license_options <- function(source = "core", comp = FALSE, sim = FALSE, nom 
 #' irw_filter(source = "conj", domain = "immigration_asylum")          # the immigration conjoints
 #' irw_filter(source = "conj", domain = c("candidate_choice", "parties_platforms"),
 #'            choice_object = "person")
+#' irw_filter(source = "conj", levels_labelled = "full")               # level text throughout
 #' }
 #' @export
 irw_filter <- function(n_responses = NULL,
@@ -576,6 +608,7 @@ irw_filter <- function(n_responses = NULL,
                        country = NULL,
                        domain = NULL,
                        choice_object = NULL,
+                       levels_labelled = NULL,
                        source = "core",
                        comp = FALSE,
                        sim = FALSE,
@@ -600,7 +633,8 @@ irw_filter <- function(n_responses = NULL,
 
   conj_only <- list(n_respondents = n_respondents, n_attributes = n_attributes,
                     outcome = outcome, country = country,
-                    domain = domain, choice_object = choice_object)
+                    domain = domain, choice_object = choice_object,
+                    levels_labelled = levels_labelled)
   conj_only <- conj_only[vapply(conj_only, Negate(is.null), logical(1))]
   if (length(conj_only) > 0L && source != "conj") {
     stop("These filters are only available when `source = \"conj\"`: ",
@@ -640,7 +674,7 @@ irw_filter <- function(n_responses = NULL,
     return(.irw_filter_conj_impl(n_respondents = n_respondents, n_attributes = n_attributes,
                                  outcome = outcome, country = country,
                                  domain = domain, choice_object = choice_object,
-                                 license = license))
+                                 levels_labelled = levels_labelled, license = license))
   }
 
   if (source == "comp") {

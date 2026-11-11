@@ -332,7 +332,10 @@ irw_fetch <- function(name, source = "core", dedup = FALSE, max_rows = NULL,
 #' \code{domain} (what the study is about; one or more values joined with
 #' \code{";"}, primary first) and \code{choice_object} (what one profile
 #' represents). Both are filters in \code{\link{irw_filter}}, which documents
-#' their vocabularies.
+#' their vocabularies. \code{levels_labelled} is \code{full} when every
+#' attribute holds the level text respondents saw, \code{partial} or
+#' \code{none} when some or all hold only the deposit's codes (columns named
+#' \code{attr_<name>_code}); it is a filter too.
 #'
 #' For \code{source = "rank"} a row is one rankings table: the counts
 #' \code{n_respondents}, \code{n_rows}, \code{n_tasks}, \code{n_items},
