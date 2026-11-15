@@ -1,5 +1,9 @@
 # irw (development version)
 
+- `irw_fetch()` no longer reports an export-quota error for a table whose name contains "quota" (e.g. `barnett_2025_quota_politicians`). The newer shard's not-found message names the table, and the quota check matched the word anywhere, so the fetch stopped before it tried the shard that holds the table. "quota" and "rate limit" now have to stand as words.
+
+- `irw_fetch()` raises an error when Redivis returns nothing, or zero rows, for a table whose row count is above zero. While exports were being throttled this came back as NULL or an empty frame with no error, which looks like an empty table. A table that really has no rows still comes back empty.
+
 - irw_filter(source = "conj") gains `levels_labelled` (`"full"`, `"partial"`, `"none"`). Conjoint tables whose deposits give no source for an attribute's displayed text now ship with the deposit's codes in a column named `attr_<name>_code`, rather than being left out: codes say which profiles share a level, which is all that position, task-order, fatigue and heterogeneity analyses need, but not what a level was. `levels_labelled = "full"` keeps the tables whose attributes are all text. Every table is returned by default. The column is in irw_metadata(source = "conj") from the first irw_meta release after 2026-11-11; an older release gives an error naming the column (ben-domingue/irw#3474).
 
 - Ninth core shard: `item_response_warehouse_9` joins `.irw_datasource_specs$core`, because `item_response_warehouse_8` is nearing Redivis' 1000-table cap. Nothing moves: every table stays in the shard that holds it, and new core tables go to shard 9. A copy of this package older than this entry reaches the new shard through shard discovery once it has a published release.
