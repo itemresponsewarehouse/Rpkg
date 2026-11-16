@@ -132,6 +132,19 @@ test_that(".irw_redivis_error_type classifies export quota and rate limits", {
   expect_equal(irw:::.irw_redivis_error_type(quota), "quota")
   expect_equal(irw:::.irw_redivis_error_type("429 Too Many Requests"), "quota")
   expect_equal(irw:::.irw_redivis_error_type("RESOURCE_EXHAUSTED: rate limit exceeded"), "quota")
+  expect_equal(irw:::.irw_redivis_error_type("Quota exceeded for this project"), "quota")
+  expect_equal(irw:::.irw_redivis_error_type("reason: quotaExceeded"), "quota")
+  expect_equal(irw:::.irw_redivis_error_type("reason: rateLimitExceeded"), "quota")
+})
+
+test_that("a table name containing 'quota' does not make a not-found error a quota error", {
+  # The newer conjoint shard's miss names the table; this stopped
+  # irw_fetch("barnett_2025_quota_politicians", source = "conj") before it
+  # tried the older shard.
+  msg <- "[404 not_found_error] Not found: datapages:irw_conjoint_2:142p:barnett_2025_quota_politicians."
+  expect_equal(irw:::.irw_redivis_error_type(msg), "not_found")
+  expect_equal(irw:::.irw_redivis_error_type("Not found: quota_sampling_2020"), "not_found")
+  expect_equal(irw:::.irw_redivis_error_type("Not found: interest_rate_limits"), "not_found")
 })
 
 test_that(".irw_handle_datasource_error stops on quota errors instead of falling through", {

@@ -136,3 +136,33 @@ test_that("dedup keeps every column for the download and narrows afterwards", {
   expect_equal(tbl$calls$tibble[[1]]$max_results, 6L)
   expect_equal(names(df), c("id", "resp"))
 })
+
+# Under export throttling the Redivis client has returned NULL or a zero-row
+# frame without raising. Passed through, that looks like an empty table.
+empty_export_table <- function(returns, num_rows) {
+  tbl <- recording_table()
+  tbl$properties$numRows <- num_rows
+  tbl$to_tibble <- function(...) returns
+  tbl$to_arrow_table <- function(...) returns
+  tbl
+}
+
+test_that("an empty export of a table with rows is an error, not an empty table", {
+  withr::local_options(irw.cache = FALSE)
+  local_recording_source(empty_export_table(pushdown_frame()[0, ], num_rows = 10))
+  expect_error(irw_fetch("t_push"), class = "irw_empty_export")
+  expect_error(irw_fetch("t_push"), "throttled")
+})
+
+test_that("a NULL export is an error", {
+  withr::local_options(irw.cache = FALSE)
+  local_recording_source(empty_export_table(NULL, num_rows = 10))
+  expect_error(irw_fetch("t_push"), class = "irw_empty_export")
+})
+
+test_that("a table that really is empty still comes back empty", {
+  withr::local_options(irw.cache = FALSE)
+  local_recording_source(empty_export_table(tibble::as_tibble(pushdown_frame()[0, ]), num_rows = 0))
+  df <- irw_fetch("t_push")
+  expect_equal(nrow(df), 0)
+})

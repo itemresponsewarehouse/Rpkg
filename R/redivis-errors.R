@@ -20,10 +20,20 @@
 #' @keywords internal
 #' @noRd
 .irw_is_quota_error <- function(msg) {
+  # `quota` and `rate limit` must stand as words: a table name such as
+  # barnett_2025_quota_politicians appears in the not-found message from the
+  # shard that lacks it, and a bare substring match turned that miss into a
+  # false export-quota stop. `quotaExceeded`
+  # (the Google reason code) still counts.
   grepl(
-    "cannot export more than|export(ed)? .{0,40}(within|in the past)|quota|rate.?limit|too many requests|resource_exhausted|\\b429\\b",
+    paste0(
+      "cannot export more than|export(ed)? .{0,40}(within|in the past)|",
+      "(?<![A-Za-z0-9_])quota(exceeded)?(?![A-Za-z0-9_])|",
+      "(?<![A-Za-z0-9_])rate.?limit|too many requests|resource_exhausted|\\b429\\b"
+    ),
     msg,
-    ignore.case = TRUE
+    ignore.case = TRUE,
+    perl = TRUE
   )
 }
 

@@ -43,8 +43,9 @@ fetch_single_data <- function(table_id, source = "core", dedup = FALSE,
           # Dedup needs every column -- it groups on id, item and wave -- so
           # `columns` is not pushed down when it is set, and irw_fetch() drops
           # the extra columns afterwards. Same rule as the Python client.
-          .irw_cached_download(tbl, "tables", max_rows = max_rows,
-                               columns = if (dedup) NULL else columns)
+          out <- .irw_cached_download(tbl, "tables", max_rows = max_rows,
+                                      columns = if (dedup) NULL else columns)
+          .irw_check_nonempty_export(out, tbl, table_id)
         },
         warning = function(w) {
           # Both halves of it: the dataset read above warns too, and until
@@ -59,6 +60,8 @@ fetch_single_data <- function(table_id, source = "core", dedup = FALSE,
         # the next warehouse would end in "table does not exist in IRW" for a
         # table that exists.
         if (inherits(e, "irw_bad_columns")) stop(e)
+        # An empty export of a table that has rows is not a shard miss either.
+        if (inherits(e, "irw_empty_export")) stop(e)
         .irw_handle_datasource_error(conditionMessage(e), table_name = table_id, ds_list = ds_list, errors = errors)
         NULL
       }
@@ -158,6 +161,45 @@ fetch_single_data <- function(table_id, source = "core", dedup = FALSE,
     ": table does not exist in IRW."
   )
   invisible(NULL)
+}
+
+#' Refuse an export that came back empty for a table that has rows
+#'
+#' While Redivis throttles exports, the client can return NULL or a zero-row
+#' frame without raising. Handed back as is, that reads as an empty table. The
+#' table's own row count says otherwise, so stop and say what happened. Not
+#' retried here, for the reason given in fetch_single_data().
+#'
+#' @param df What the download returned.
+#' @param tbl The Redivis table handle, after \code{tbl$get()}.
+#' @param table_id Table name, for the message.
+#' @return \code{df}, unchanged, when it is non-empty or the table is empty.
+#' @keywords internal
+#' @noRd
+.irw_check_nonempty_export <- function(df, tbl, table_id) {
+  if (!is.null(df) && nrow(df) > 0L) {
+    return(df)
+  }
+  expected <- tryCatch(as.numeric(tbl$properties$numRows), error = function(e) NA_real_)
+  if (length(expected) != 1L) expected <- NA_real_
+  if (!is.null(df) && (is.na(expected) || expected == 0)) {
+    return(df)
+  }
+  stop(structure(
+    class = c("irw_empty_export", "error", "condition"),
+    list(
+      message = sprintf(
+        paste0(
+          "Redivis returned %s for table %s, which has %s rows. This usually means ",
+          "exports are being throttled; wait a few minutes and fetch it again."
+        ),
+        if (is.null(df)) "nothing" else "zero rows",
+        shQuote(table_id),
+        if (is.na(expected)) "an unknown number of" else format(expected, big.mark = ",")
+      ),
+      call = NULL
+    )
+  ))
 }
 
 #' Check `max_rows`/`columns` and normalise them
