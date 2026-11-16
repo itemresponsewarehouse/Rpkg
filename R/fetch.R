@@ -381,7 +381,9 @@ irw_fetch <- function(name, source = "core", dedup = FALSE, max_rows = NULL,
 #'
 #' For \code{source = "rank"} a row is one rankings table: the counts
 #' \code{n_respondents}, \code{n_rows}, \code{n_tasks}, \code{n_items},
-#' \code{max_resp} (highest position marked) and \code{n_duplicate_marks},
+#' \code{max_resp} (highest position marked), \code{n_duplicate_marks} and
+#' \code{n_tied_ballots} (rankings with two items at one position; see
+#' \code{\link{irw_rank_compress}}),
 #' and the design record (\code{method}, \code{seats}, \code{n_positions},
 #' \code{n_candidates}, \code{n_ballots_cast}, \code{n_ballots_with_marks},
 #' \code{jurisdiction}, \code{date}, \code{office}, ...), whose codes are
