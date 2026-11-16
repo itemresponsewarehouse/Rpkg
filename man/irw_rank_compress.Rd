@@ -4,7 +4,7 @@
 \alias{irw_rank_compress}
 \title{Compress the positions of a rankings table}
 \usage{
-irw_rank_compress(df, drop_repeats = TRUE)
+irw_rank_compress(df, drop_repeats = TRUE, ties = c("error", "keep"))
 }
 \arguments{
 \item{df}{A rankings table, as returned by
@@ -13,23 +13,33 @@ irw_rank_compress(df, drop_repeats = TRUE)
 
 \item{drop_repeats}{Logical. Drop an item's later marks within a ranking?
 Default \code{TRUE}.}
+
+\item{ties}{\code{"error"} (default) stops when any ranking has two items at
+one position; \code{"keep"} gives tied items one shared position.}
 }
 \value{
 A data frame with the same columns as \code{df}, \code{resp} an
-integer running \code{1..k} within each \code{id} x \code{task}.
+integer running \code{1..k} within each \code{id} x \code{task} (with
+repeats where items are tied, under \code{ties = "keep"}).
 }
 \description{
 Rankings tables (\code{source = "rank"}) keep the core column names, but
 \code{resp} is a \emph{position}: one row per respondent (\code{id}), ranking
 (\code{task}) and marked position, \code{resp = 1} for the first choice,
-\strong{as recorded}. Two things in the stored table need care before a
+\strong{as recorded}. Three things in the stored table need care before a
 person-by-item pivot or a Plackett-Luce fit: a skipped position stays a gap
-(a ballot marked at positions 1 and 3 keeps \code{resp} 1 and 3), and a
-candidate marked twice keeps both rows. Counting rules for both differ by
-jurisdiction, so the table does not apply one; this function applies the
-common one.
+(a ballot marked at positions 1 and 3 keeps \code{resp} 1 and 3), a
+candidate marked twice keeps both rows, and two items at the same position
+are a tie (Debian ballots allow equal ranks). This function closes the gaps
+and, by default, drops repeated marks.
 }
 \details{
+It is \strong{not} a jurisdiction's counting rule. It does not stop a
+ballot at an overvote, does not treat a second write-in mark as a duplicate,
+and does not apply a limit on consecutive skips; where those rules matter,
+the rankings family's \code{counting_rules.csv} records them per
+jurisdiction and the count has to apply them itself.
+
 Within each \code{id} x \code{task}, rows are taken in \code{resp} order.
 With \code{drop_repeats = TRUE} an item that has already been marked at an
 earlier position is dropped at every later one (most counting rules treat
@@ -38,7 +48,15 @@ the later mark as a skip). The reserved items \code{(write-in)} and
 different people, and two overvote rows are two separate events. Then
 \code{resp} is renumbered \code{1..k} in rank order, so the gaps close.
 Every other column is kept as it was. The result is sorted by \code{id},
-\code{task}, \code{resp}.
+\code{task}, \code{resp} and then \code{item}.
+
+A tie (two or more items at one position, after repeats are dropped) has no
+order to renumber by. With \code{ties = "error"}, the default, the function
+stops and says how many rankings have one. With \code{ties = "keep"} the
+tied items share one position and the positions are renumbered densely, so
+a ballot recorded as 1, 1, 3 or as 1, 1, 2 comes back as 1, 1, 2. Version
+1.4.0 and earlier renumbered tied items in input row order, which put one of them
+ahead of the other without the voter having said so.
 
 The Python package's \code{irw.rank_compress()} does exactly the same; the
 two are tested on one shared fixture.
@@ -48,6 +66,8 @@ d <- data.frame(id = c(1, 1, 1, 2), task = 1, item = c("c01", "c03", "c01", "c02
                 resp = c(1, 3, 4, 2))
 irw_rank_compress(d)
 irw_rank_compress(d, drop_repeats = FALSE)
+tied <- data.frame(id = 1, task = 1, item = c("A", "B", "C"), resp = c(1, 1, 3))
+irw_rank_compress(tied, ties = "keep")
 \dontrun{
 d <- irw_fetch("eurovision_2016_final", source = "rank")
 first_choices <- subset(irw_rank_compress(d), resp == 1)

@@ -117,6 +117,33 @@ test_that("irw_rank_compress keeps every row of a clean ballot and works without
   expect_false("task" %in% names(out))
 })
 
+test_that("irw_rank_compress stops on a tie by default and names the count", {
+  d <- read_fixture("rank_fixture_ties.csv")
+  expect_error(irw_rank_compress(d), "^2 rankings have a tie")
+  # without dropping repeats, ballot 2's second c02 mark ties with c01
+  expect_error(irw_rank_compress(d, drop_repeats = FALSE), "^3 rankings have a tie")
+  expect_error(irw_rank_compress(d[d$id == 1, ]), "^1 ranking has a tie")
+  expect_error(irw_rank_compress(d, ties = "break"), "should be one of")
+})
+
+test_that("irw_rank_compress(ties = 'keep') gives tied items one dense position", {
+  d <- read_fixture("rank_fixture_ties.csv")
+  out <- irw_rank_compress(d, ties = "keep")
+  expect_equal(out, read_fixture("rank_fixture_ties_keep.csv"), ignore_attr = TRUE)
+  expect_type(out$resp, "integer")
+  out2 <- irw_rank_compress(d, drop_repeats = FALSE, ties = "keep")
+  expect_equal(out2, read_fixture("rank_fixture_ties_keep_repeats.csv"), ignore_attr = TRUE)
+})
+
+test_that("irw_rank_compress does not depend on input row order", {
+  d <- read_fixture("rank_fixture_ties.csv")
+  rev_d <- d[rev(seq_len(nrow(d))), ]
+  expect_equal(irw_rank_compress(rev_d, ties = "keep"), irw_rank_compress(d, ties = "keep"),
+               ignore_attr = TRUE)
+  f <- read_fixture("rank_fixture.csv")
+  expect_equal(irw_rank_compress(f[rev(seq_len(nrow(f))), ]), irw_rank_compress(f), ignore_attr = TRUE)
+})
+
 test_that("irw_rank_compress refuses what is not a rankings table", {
   expect_error(irw_rank_compress(data.frame(id = 1, item = "a")), "missing resp")
   expect_error(irw_rank_compress(data.frame(id = 1, item = "a", resp = 0)), "positive integer")

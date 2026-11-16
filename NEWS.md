@@ -1,5 +1,7 @@
 # irw (development version)
 
+- **Breaking:** `irw_rank_compress()` gains `ties = c("error", "keep")` and by default now **stops** on a ranking with two items at one position. Rankings tables may hold ties (the 33 Debian vote tables, where equal ranks are part of the count, and `ojwang_2020_sweetpotato_traits`), and 1.4.0 renumbered tied items in input row order, so the same ballot came back as A before B or B before A depending only on the order of its rows, and neither is what the voter marked. `ties = "keep"` gives tied items one shared position, numbered densely (1, 1, 2). Tied rows now come out sorted by `item`. The help page also says plainly that the function is not a jurisdiction's counting rule: it does not stop at an overvote, treat a second write-in as a duplicate, or apply a skip limit.
+
 - `irw_fetch()` no longer reports an export-quota error for a table whose name contains "quota" (e.g. `barnett_2025_quota_politicians`). The newer shard's not-found message names the table, and the quota check matched the word anywhere, so the fetch stopped before it tried the shard that holds the table. "quota" and "rate limit" now have to stand as words.
 
 - `irw_fetch()` raises an error when Redivis returns nothing, or zero rows, for a table whose row count is above zero. While exports were being throttled this came back as NULL or an empty frame with no error, which looks like an empty table. A table that really has no rows still comes back empty.
