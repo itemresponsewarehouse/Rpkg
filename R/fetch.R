@@ -431,7 +431,7 @@ irw_fetch <- function(name, source = "core", dedup = FALSE, max_rows = NULL,
 #' \code{jurisdiction}, \code{date}, \code{office}, ...), whose codes are
 #' documented in the irw repo's \code{data/rankings/README.md}.
 #'
-#' @param source Character. The data family: \code{"core"} (default), \code{"nom"}, \code{"sim"}, \code{"comp"}, \code{"conj"} (conjoint experiments; see \code{\link{irw_conj_long}}), or \code{"rank"} (rankings; see \code{\link{irw_rank_compress}}).
+#' @param source Character. The data family: \code{"core"} (default), \code{"nom"}, \code{"sim"}, \code{"comp"}, \code{"conj"} (conjoint experiments; see \code{\link{irw_conj_long}}), \code{"rank"} (rankings; see \code{\link{irw_rank_compress}}), or \code{"cov"} (published correlation and covariance matrices: one row per matrix, that is per table and \code{group}, with \code{n_vars}, \code{n_obs}, \code{stat}, \code{has_sd}, \code{has_mean}, \code{min_eigenvalue}, \code{is_pd}, \code{n_missing_cells} and the matrix's record: \code{matrix_type}, \code{missing}, \code{population}, \code{source_citation}, \code{source_location}, \code{via}, \code{capture}, \code{verified}, \code{licence}, \code{licence_source}, \code{notes}).
 #' @param sim Deprecated. Use \code{source = "sim"} instead.
 #' @param comp Deprecated. Use \code{source = "comp"} instead.
 #' @param nom Deprecated. Use \code{source = "nom"} instead.
@@ -446,7 +446,7 @@ irw_metadata <- function(source = "core", sim = FALSE, comp = FALSE, nom = FALSE
   if (source == "nom")  return(.fetch_nominal_metadata_table())
   if (source == "conj") return(.fetch_conj_metadata_table())
   if (source == "rank") return(.fetch_rank_metadata_table())
-  if (source == "cov")  .irw_cov_no_meta("irw_metadata()")
+  if (source == "cov")  return(.fetch_cov_metadata_table())
   .fetch_metadata_table()
 }
 
