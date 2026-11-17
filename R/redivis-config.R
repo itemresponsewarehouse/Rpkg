@@ -45,6 +45,14 @@
   rank = list(
     list(user = "datapages", dataset = "irw_rank:93f5"),
     list(user = "datapages", dataset = "irw_rank_2:byyj")
+  ),
+  ## Covariance matrices: published correlation and covariance matrices, one
+  ## row per cell of the lower triangle (see irw_cov2matrix()). One dataset;
+  ## display name "IRW cov" on Redivis, first released 2026-11-17. Matrices
+  ## computed from IRW tables are never stored here: irw_fetch(source = "cov")
+  ## computes them (irw_cov_compute()).
+  cov = list(
+    list(user = "datapages", dataset = "irw_cov:4e2q")
   )
 )
 
@@ -184,7 +192,7 @@
 #' The cached value is the opened shard list for that source (one dataset for
 #' sim, comp and nom; one or more for conj and rank), in config order.
 #'
-#' @param source Data family, one of \code{"sim"}, \code{"comp"}, \code{"nom"}, \code{"conj"}, \code{"rank"}.
+#' @param source Data family, one of \code{"sim"}, \code{"comp"}, \code{"nom"}, \code{"conj"}, \code{"rank"}, \code{"cov"}.
 #' @keywords internal
 #' @noRd
 .irw_single_datasource_cache_key <- function(source) {
@@ -194,5 +202,6 @@
          nom = "nom_datasource",
          conj = "conj_datasource",
          rank = "rank_datasource",
+         cov = "cov_datasource",
          stop("Unknown single datasource: ", source, call. = FALSE))
 }

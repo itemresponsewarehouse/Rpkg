@@ -260,7 +260,7 @@ fetch_single_data <- function(table_id, source = "core", dedup = FALSE,
 #' Silence it with `options(irw.source_note = FALSE)` or `IRW_SOURCE_NOTE=0`.
 #'
 #' @param name Character vector of one or more table names (IRW table IDs).
-#' @param source Character. The data family: \code{"core"} (default), \code{"nom"}, \code{"sim"}, \code{"comp"}, \code{"conj"} (conjoint experiments; see \code{\link{irw_conj_long}}), or \code{"rank"} (rankings; see \code{\link{irw_rank_compress}}). \code{"cov"} fetches a core table and returns its item-by-item correlation or covariance matrix in the covariance-family layout, computed by [irw_cov_compute()] with \code{cov_args}; turn it into a square matrix with [irw_cov2matrix()].
+#' @param source Character. The data family: \code{"core"} (default), \code{"nom"}, \code{"sim"}, \code{"comp"}, \code{"conj"} (conjoint experiments; see \code{\link{irw_conj_long}}), or \code{"rank"} (rankings; see \code{\link{irw_rank_compress}}). \code{"cov"} is the covariance family: a published matrix from it is returned as published, and the name of a core table returns that table's item-by-item correlation or covariance matrix in the same layout, computed by [irw_cov_compute()] with \code{cov_args}; turn either into a square matrix with [irw_cov2matrix()].
 #' @param sim Deprecated. Use \code{source = "sim"} instead.
 #' @param dedup Logical, optional. If TRUE, deduplicates responses based on timing variables. Defaults to FALSE.
 #'   If a \code{date} column is present, no deduplication is performed.
@@ -330,9 +330,9 @@ irw_fetch <- function(name, source = "core", dedup = FALSE, max_rows = NULL,
     )
   }
 
-  # source = "cov" on an IRW table computes its item matrix (irw_cov_compute()).
-  # Derived matrices are never stored in the IRW; published matrices will live in
-  # irw_cov once that dataset is released, and are not reachable yet.
+  # source = "cov": a published matrix in irw_cov is returned as published; any
+  # other name is a core table whose item matrix is computed (irw_cov_compute()).
+  # Derived matrices are never stored in the IRW (Ben, 2026-11-17).
   compute_cov <- identical(source, "cov")
   if (compute_cov) {
     if (resp) stop("resp = TRUE and source = \"cov\" ask for two different things.", call. = FALSE)
@@ -352,6 +352,16 @@ irw_fetch <- function(name, source = "core", dedup = FALSE, max_rows = NULL,
   columns <- bounds$columns
 
   process_one <- function(nm) {
+    # A published matrix (irw_cov) comes back as published; anything else is a
+    # core table whose matrix is computed below.
+    if (compute_cov && nm %in% .irw_cov_published_names()) {
+      if (length(cov_args)) {
+        warning(sprintf("'%s' is a published matrix; cov_args is ignored.", nm), call. = FALSE)
+      }
+      pub <- fetch_single_data(nm, source = "cov")
+      if (!is.null(pub)) .irw_source_note(nm, "cov")
+      return(pub)
+    }
     dat <- fetch_single_data(nm, source = source, dedup = dedup,
                              max_rows = max_rows, columns = columns)
     # Dedup grouped on columns the caller may not have asked for, so narrow now.
@@ -436,6 +446,7 @@ irw_metadata <- function(source = "core", sim = FALSE, comp = FALSE, nom = FALSE
   if (source == "nom")  return(.fetch_nominal_metadata_table())
   if (source == "conj") return(.fetch_conj_metadata_table())
   if (source == "rank") return(.fetch_rank_metadata_table())
+  if (source == "cov")  .irw_cov_no_meta("irw_metadata()")
   .fetch_metadata_table()
 }
 
@@ -488,4 +499,9 @@ irw_tags <- function(tables = NULL, source = "core") {
 }
 
 
-
+#' Names of the published matrices in irw_cov (empty if it cannot be listed)
+#' @keywords internal
+#' @noRd
+.irw_cov_published_names <- function() {
+  tryCatch(irw_list_tables(source = "cov")$name, error = function(e) character(0))
+}
