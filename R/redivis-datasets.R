@@ -96,15 +96,17 @@
 
 #' Stop for a covariance-family call that needs metadata not yet published
 #'
-#' cov_metadata and cov_biblio do not exist in irw_meta yet, and every
-#' metadata/biblio dispatch falls through to core on an unknown source, so
-#' without this a cov call would silently answer with core rows.
+#' cov_biblio does not exist in a released irw_meta yet (cov_metadata does:
+#' irw_metadata(source = "cov") reads it), and every biblio dispatch falls
+#' through to core on an unknown source, so without this a cov call would
+#' silently answer with core rows.
 #' @keywords internal
 #' @noRd
 .irw_cov_no_meta <- function(what) {
   stop(what, " is not available for source = \"cov\" yet: the covariance family's ",
-       "metadata and bibliography tables have not been published. ",
-       "irw_fetch(..., source = \"cov\") and irw_list_tables(source = \"cov\") work.",
+       "bibliography table has not been published. ",
+       "irw_fetch(), irw_list_tables() and irw_metadata() work with source = \"cov\"; ",
+       "irw_metadata(source = \"cov\") carries each matrix's source_citation and licence.",
        call. = FALSE)
 }
 

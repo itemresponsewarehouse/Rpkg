@@ -7,7 +7,7 @@
 irw_metadata(source = "core", sim = FALSE, comp = FALSE, nom = FALSE)
 }
 \arguments{
-\item{source}{Character. The data family: \code{"core"} (default), \code{"nom"}, \code{"sim"}, \code{"comp"}, \code{"conj"} (conjoint experiments; see \code{\link{irw_conj_long}}), or \code{"rank"} (rankings; see \code{\link{irw_rank_compress}}).}
+\item{source}{Character. The data family: \code{"core"} (default), \code{"nom"}, \code{"sim"}, \code{"comp"}, \code{"conj"} (conjoint experiments; see \code{\link{irw_conj_long}}), \code{"rank"} (rankings; see \code{\link{irw_rank_compress}}), or \code{"cov"} (published correlation and covariance matrices: one row per matrix, that is per table and \code{group}, with \code{n_vars}, \code{n_obs}, \code{stat}, \code{has_sd}, \code{has_mean}, \code{min_eigenvalue}, \code{is_pd}, \code{n_missing_cells} and the matrix's record: \code{matrix_type}, \code{missing}, \code{population}, \code{source_citation}, \code{source_location}, \code{via}, \code{capture}, \code{verified}, \code{licence}, \code{licence_source}, \code{notes}).}
 
 \item{sim}{Deprecated. Use \code{source = "sim"} instead.}
 

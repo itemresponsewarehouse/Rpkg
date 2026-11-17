@@ -92,6 +92,31 @@
   .irw_env$conj_metadata_tibble
 }
 
+## The covariance source's metadata (irw_meta cov_metadata, written by
+## src/metadata/22_cov.R): one row per table x group (one matrix), with counts
+## from the matrix (n_vars, n_obs, stat, has_sd, has_mean, min_eigenvalue,
+## is_pd, n_missing_cells) and the matrices.csv record (matrix_type, missing,
+## population, source_citation, source_location, via, capture, verified,
+## licence, licence_source, notes).
+.fetch_cov_metadata_table <- function() {
+  dataset <- .irw_open_meta_dataset()
+  latest_version_tag <- dataset$properties$version$tag
+
+  if (!is.null(latest_version_tag) &&
+      exists("cov_metadata_tibble", envir = .irw_env) &&
+      exists("cov_metadata_version", envir = .irw_env) &&
+      identical(.irw_env$cov_metadata_version, latest_version_tag)) {
+    return(.irw_env$cov_metadata_tibble)
+  }
+
+  table <- dataset$table("cov_metadata")
+  metadata_tibble <- table$to_tibble()
+  .irw_env$cov_metadata_tibble <- .irw_filter_rows_to_live_tables(metadata_tibble, source = "cov")
+  .irw_env$cov_metadata_version <- latest_version_tag
+
+  .irw_env$cov_metadata_tibble
+}
+
 ## The rankings source's metadata (irw_meta rank_metadata, written by
 ## src/metadata/18_rankings.R): one row per table with counts from the data
 ## (respondents, rows, tasks, items, highest position, duplicate marks) and the
