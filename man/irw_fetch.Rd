@@ -20,7 +20,7 @@ irw_fetch(
 \arguments{
 \item{name}{Character vector of one or more table names (IRW table IDs).}
 
-\item{source}{Character. The data family: \code{"core"} (default), \code{"nom"}, \code{"sim"}, \code{"comp"}, \code{"conj"} (conjoint experiments; see \code{\link{irw_conj_long}}), or \code{"rank"} (rankings; see \code{\link{irw_rank_compress}}). \code{"cov"} fetches a core table and returns its item-by-item correlation or covariance matrix in the covariance-family layout, computed by \code{\link[=irw_cov_compute]{irw_cov_compute()}} with \code{cov_args}; turn it into a square matrix with \code{\link[=irw_cov2matrix]{irw_cov2matrix()}}.}
+\item{source}{Character. The data family: \code{"core"} (default), \code{"nom"}, \code{"sim"}, \code{"comp"}, \code{"conj"} (conjoint experiments; see \code{\link{irw_conj_long}}), or \code{"rank"} (rankings; see \code{\link{irw_rank_compress}}). \code{"cov"} is the covariance family: a published matrix from it is returned as published, and the name of a core table returns that table's item-by-item correlation or covariance matrix in the same layout, computed by \code{\link[=irw_cov_compute]{irw_cov_compute()}} with \code{cov_args}; turn either into a square matrix with \code{\link[=irw_cov2matrix]{irw_cov2matrix()}}.}
 
 \item{dedup}{Logical, optional. If TRUE, deduplicates responses based on timing variables. Defaults to FALSE.
 If a \code{date} column is present, no deduplication is performed.

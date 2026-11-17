@@ -189,7 +189,8 @@ irw_license_options <- function(source = "core", comp = FALSE, sim = FALSE, nom 
          nom = .fetch_nominal_biblio_table(),
          comp = .fetch_comps_biblio_table(),
          conj = .fetch_conj_biblio_table(),
-         rank = .fetch_rank_biblio_table())
+         rank = .fetch_rank_biblio_table(),
+         cov = .irw_cov_no_meta("Filtering"))
 }
 
 ## Conjoint filters (source = "conj"), over conj_metadata:

@@ -77,7 +77,8 @@ irw_list_tables <- function(source = "core", sim = FALSE, comp = FALSE, nom = FA
 #' @noRd
 .irw_print_all_families_info <- function() {
   family_labels <- c(core = "Core", nom = "Nominal", sim = "Simsyn",
-                     comp = "Competitions", conj = "Conjoint", rank = "Rankings")
+                     comp = "Competitions", conj = "Conjoint", rank = "Rankings",
+                     cov = "Covariance")
 
   opened <- lapply(.irw_sources, function(src) {
     tryCatch(.initialize_datasource(source = src), error = function(e) {
@@ -177,6 +178,8 @@ irw_info <- function(table_name = NULL, details = FALSE, source = "core", comp =
     "IRW Conjoint Database Information"
   } else if (source == "rank") {
     "IRW Rankings Database Information"
+  } else if (source == "cov") {
+    "IRW Covariance Database Information"
   } else {
     "IRW Database Information (Combined)"
   }
@@ -283,6 +286,8 @@ irw_info <- function(table_name = NULL, details = FALSE, source = "core", comp =
       .fetch_conj_biblio_table()
     } else if (source == "rank") {
       .fetch_rank_biblio_table()
+    } else if (source == "cov") {
+      .irw_cov_no_meta("irw_info() for a table")
     } else {
       .fetch_biblio_table()
     }
@@ -306,7 +311,7 @@ irw_info <- function(table_name = NULL, details = FALSE, source = "core", comp =
     
     message(strrep("-", 50))
     message("Table Information for: ", table_name,
-            if (source == "sim") " (simulation)" else if (source == "comp") " (competition)" else if (source == "nom") " (nominal)" else if (source == "conj") " (conjoint)" else if (source == "rank") " (rankings)" else "")
+            if (source == "sim") " (simulation)" else if (source == "comp") " (competition)" else if (source == "nom") " (nominal)" else if (source == "conj") " (conjoint)" else if (source == "rank") " (rankings)" else if (source == "cov") " (covariance)" else "")
     message(strrep("-", 50))
     message(strrep("-", 50))
     message(sprintf("%-25s %s", "Description:", description))

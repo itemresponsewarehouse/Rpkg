@@ -7,7 +7,8 @@ fake_ds <- function(tables, bytes = 1024^3, created = 1e12, updated = 2e12) {
 fake_datasources <- list(
   core = list(fake_ds(10), fake_ds(5, created = 5e11)),
   nom = list(fake_ds(3)), sim = list(fake_ds(2)), comp = list(fake_ds(4)),
-  conj = list(fake_ds(6), fake_ds(1)), rank = list(fake_ds(7, updated = 3e12))
+  conj = list(fake_ds(6), fake_ds(1)), rank = list(fake_ds(7, updated = 3e12)),
+  cov = list(fake_ds(2))
 )
 
 test_that("irw_info() with no arguments reports every family and a grand total", {
@@ -19,8 +20,8 @@ test_that("irw_info() with no arguments reports every family and a grand total",
     expect_true(any(grepl(paste0("\\s", src, "\\s"), msgs)), info = src)
   }
   expect_true(any(grepl("Core\\s+core\\s+15\\s+2\\.00 GB", msgs)))
-  expect_true(any(grepl("Total Table Count:\\s+38\\b", msgs)))
-  expect_true(any(grepl("Total Data Size:\\s+8\\.00 GB", msgs)))
+  expect_true(any(grepl("Total Table Count:\\s+40\\b", msgs)))
+  expect_true(any(grepl("Total Data Size:\\s+9\\.00 GB", msgs)))
   expect_true(any(grepl(.irw_format_utc(5e8), msgs, fixed = TRUE)))
   expect_true(any(grepl(.irw_format_utc(3e9), msgs, fixed = TRUE)))
 })
@@ -68,5 +69,5 @@ test_that("an unavailable family is shown and not silently left out of the total
   })
   expect_warning(msgs <- capture_messages(irw_info()), "'conj' family: boom")
   expect_true(any(grepl("Conjoint\\s+conj\\s+unavailable", msgs)))
-  expect_true(any(grepl("Total \\(available only\\):\\s+31\\b", msgs)))
+  expect_true(any(grepl("Total \\(available only\\):\\s+33\\b", msgs)))
 })

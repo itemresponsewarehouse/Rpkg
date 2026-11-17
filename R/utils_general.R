@@ -112,6 +112,8 @@ irw_save_bibtex <- function(table_names,
     .fetch_conj_biblio_table()
   } else if (source == "rank") {
     .fetch_rank_biblio_table()
+  } else if (source == "cov") {
+    .irw_cov_no_meta("irw_save_bibtex()")
   } else {
     .fetch_biblio_table()
   }

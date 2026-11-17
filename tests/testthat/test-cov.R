@@ -98,7 +98,8 @@ test_that("irw_fetch(source = 'cov') fetches id/item/resp from core and computes
   local_mocked_bindings(
     fetch_single_data = function(table_id, source, dedup, max_rows, columns, ...) {
       asked <<- list(table = table_id, source = source, columns = columns); df },
-    .irw_source_note = function(...) invisible(NULL))
+    .irw_source_note = function(...) invisible(NULL),
+    .irw_cov_published_names = function() character(0))
   out <- irw_fetch("toy_table", source = "cov", cov_args = list(method = "spearman"))
   expect_identical(asked$source, "core")
   expect_identical(asked$columns, c("id", "item", "resp"))
@@ -106,4 +107,36 @@ test_that("irw_fetch(source = 'cov') fetches id/item/resp from core and computes
   expect_identical(attr(out, "irw_table"), "toy_table")
   expect_error(irw_fetch("toy_table", source = "cov", max_rows = 10), "biased")
   expect_error(irw_fetch("toy_table", source = "cov", resp = TRUE), "two different things")
+})
+
+test_that("cov is a registered source: irw_cov, one dataset", {
+  expect_identical(irw:::.irw_resolve_source("cov"), "cov")
+  expect_identical(irw:::.irw_single_datasource_cache_key("cov"), "cov_datasource")
+  specs <- irw:::.irw_datasource_specs$cov
+  expect_length(specs, 1L)
+  expect_identical(specs[[1]]$dataset, "irw_cov:4e2q")
+  expect_identical(irw:::.irw_source_noun("cov"), "covariance dataset")
+})
+
+test_that("a published matrix is returned as published, not computed", {
+  pub <- data.frame(stat = "cor", var1 = c("a", "b", "b"), var2 = c("a", "a", "b"),
+                    value = c(1, 0.3, 1), n = 145L)
+  asked <- NULL
+  local_mocked_bindings(
+    .irw_cov_published_names = function() "holzinger_1939_grantwhite9",
+    fetch_single_data = function(table_id, source, ...) { asked <<- source; pub },
+    .irw_source_note = function(...) invisible(NULL))
+  out <- irw_fetch("holzinger_1939_grantwhite9", source = "cov")
+  expect_identical(asked, "cov")
+  expect_identical(out, pub)
+  expect_warning(irw_fetch("holzinger_1939_grantwhite9", source = "cov",
+                           cov_args = list(method = "spearman")), "ignored")
+})
+
+test_that("metadata and biblio calls for cov stop instead of answering with core", {
+  # An earlier file's mock of irw_metadata can leak into this one
+  # (helper-redivis.R), so call the real implementation explicitly.
+  real_metadata <- .irw_pristine_bindings$irw_metadata
+  expect_error(real_metadata(source = "cov"), "not available for source = \"cov\"")
+  expect_error(irw:::.irw_filter_biblio("cov"), "not available")
 })
