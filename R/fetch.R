@@ -260,7 +260,7 @@ fetch_single_data <- function(table_id, source = "core", dedup = FALSE,
 #' Silence it with `options(irw.source_note = FALSE)` or `IRW_SOURCE_NOTE=0`.
 #'
 #' @param name Character vector of one or more table names (IRW table IDs).
-#' @param source Character. The data family: \code{"core"} (default), \code{"nom"}, \code{"sim"}, \code{"comp"}, \code{"conj"} (conjoint experiments; see \code{\link{irw_conj_long}}), or \code{"rank"} (rankings; see \code{\link{irw_rank_compress}}).
+#' @param source Character. The data family: \code{"core"} (default), \code{"nom"}, \code{"sim"}, \code{"comp"}, \code{"conj"} (conjoint experiments; see \code{\link{irw_conj_long}}), or \code{"rank"} (rankings; see \code{\link{irw_rank_compress}}). \code{"cov"} fetches a core table and returns its item-by-item correlation or covariance matrix in the covariance-family layout, computed by [irw_cov_compute()] with \code{cov_args}; turn it into a square matrix with [irw_cov2matrix()].
 #' @param sim Deprecated. Use \code{source = "sim"} instead.
 #' @param dedup Logical, optional. If TRUE, deduplicates responses based on timing variables. Defaults to FALSE.
 #'   If a \code{date} column is present, no deduplication is performed.
@@ -283,6 +283,11 @@ fetch_single_data <- function(table_id, source = "core", dedup = FALSE,
 #'   for the download when \code{dedup = TRUE} (deduplication needs every
 #'   column); the columns are then dropped after deduplicating.
 #' @param resp Logical, optional. If TRUE, returns response matrix via \code{irw_long2resp()}. Defaults to FALSE.
+#' @param cov_args List, optional. With \code{source = "cov"}, the arguments
+#'   passed to [irw_cov_compute()]: \code{method} (\code{"pearson"},
+#'   \code{"spearman"}, \code{"kendall"}, \code{"polychoric"},
+#'   \code{"tetrachoric"}, or a function of your own), \code{type}
+#'   (\code{"cor"} or \code{"cov"}), \code{use} and \code{max_items}.
 #'
 #' @return If a single name is provided, returns a tibble. If multiple, returns a named list
 #'         of tibbles (or error messages, if retrieval failed).
@@ -299,6 +304,10 @@ fetch_single_data <- function(table_id, source = "core", dedup = FALSE,
 #' irw_fetch("neurips_2020", max_rows = 100)
 #' irw_fetch("neurips_2020", columns = c("id", "item", "resp"), max_rows = 1000)
 #'
+#' # An item correlation matrix, computed from the table
+#' m <- irw_fetch("environment_ltm", source = "cov", cov_args = list(method = "polychoric"))
+#' irw_cov2matrix(m)$matrix
+#'
 #' # Deduplicated
 #' irw_fetch("pks_probability", dedup = TRUE)
 #'
@@ -312,7 +321,7 @@ fetch_single_data <- function(table_id, source = "core", dedup = FALSE,
 #' @export
 irw_fetch <- function(name, source = "core", dedup = FALSE, max_rows = NULL,
                       columns = NULL, sim = FALSE, comp = FALSE, nom = FALSE,
-                      resp = FALSE) {
+                      resp = FALSE, cov_args = list()) {
   if (missing(name)) {
     stop(
       "Please provide the IRW table name(s) to fetch.\n",
@@ -321,6 +330,22 @@ irw_fetch <- function(name, source = "core", dedup = FALSE, max_rows = NULL,
     )
   }
 
+  # source = "cov" on an IRW table computes its item matrix (irw_cov_compute()).
+  # Derived matrices are never stored in the IRW; published matrices will live in
+  # irw_cov once that dataset is released, and are not reachable yet.
+  compute_cov <- identical(source, "cov")
+  if (compute_cov) {
+    if (resp) stop("resp = TRUE and source = \"cov\" ask for two different things.", call. = FALSE)
+    if (!is.null(max_rows)) {
+      stop("max_rows is not allowed with source = \"cov\": it keeps the first rows in stored order, ",
+           "not a sample, so a matrix computed from it is biased.", call. = FALSE)
+    }
+    if (!is.list(cov_args)) stop("cov_args must be a list, e.g. list(method = \"polychoric\").", call. = FALSE)
+    source <- "core"
+    # Only id/item/resp are needed, so only they are exported -- unless dedup,
+    # which groups on wave and date.
+    if (!dedup) columns <- c("id", "item", "resp")
+  }
   source <- .irw_resolve_source(source = source, sim = sim, comp = comp, nom = nom)
   bounds <- .irw_check_pushdown(max_rows, columns)
   max_rows <- bounds$max_rows
@@ -341,6 +366,9 @@ irw_fetch <- function(name, source = "core", dedup = FALSE, max_rows = NULL,
     # Credit a table found through an intermediary such as openESM (#2421).
     # Never raises and is silent on any failure.
     if (!is.null(dat)) .irw_source_note(nm, source)
+    if (compute_cov && !is.null(dat)) {
+      dat <- do.call(irw_cov_compute, c(list(dat, table = nm), cov_args))
+    }
     if (resp) {
       dat <- tryCatch(
         irw_long2resp(dat),

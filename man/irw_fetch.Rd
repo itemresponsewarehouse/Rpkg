@@ -13,13 +13,14 @@ irw_fetch(
   sim = FALSE,
   comp = FALSE,
   nom = FALSE,
-  resp = FALSE
+  resp = FALSE,
+  cov_args = list()
 )
 }
 \arguments{
 \item{name}{Character vector of one or more table names (IRW table IDs).}
 
-\item{source}{Character. The data family: \code{"core"} (default), \code{"nom"}, \code{"sim"}, \code{"comp"}, \code{"conj"} (conjoint experiments; see \code{\link{irw_conj_long}}), or \code{"rank"} (rankings; see \code{\link{irw_rank_compress}}).}
+\item{source}{Character. The data family: \code{"core"} (default), \code{"nom"}, \code{"sim"}, \code{"comp"}, \code{"conj"} (conjoint experiments; see \code{\link{irw_conj_long}}), or \code{"rank"} (rankings; see \code{\link{irw_rank_compress}}). \code{"cov"} fetches a core table and returns its item-by-item correlation or covariance matrix in the covariance-family layout, computed by \code{\link[=irw_cov_compute]{irw_cov_compute()}} with \code{cov_args}; turn it into a square matrix with \code{\link[=irw_cov2matrix]{irw_cov2matrix()}}.}
 
 \item{dedup}{Logical, optional. If TRUE, deduplicates responses based on timing variables. Defaults to FALSE.
 If a \code{date} column is present, no deduplication is performed.
@@ -49,6 +50,12 @@ column); the columns are then dropped after deduplicating.}
 \item{nom}{Deprecated. Use \code{source = "nom"} instead.}
 
 \item{resp}{Logical, optional. If TRUE, returns response matrix via \code{irw_long2resp()}. Defaults to FALSE.}
+
+\item{cov_args}{List, optional. With \code{source = "cov"}, the arguments
+passed to \code{\link[=irw_cov_compute]{irw_cov_compute()}}: \code{method} (\code{"pearson"},
+\code{"spearman"}, \code{"kendall"}, \code{"polychoric"},
+\code{"tetrachoric"}, or a function of your own), \code{type}
+(\code{"cor"} or \code{"cov"}), \code{use} and \code{max_items}.}
 }
 \value{
 If a single name is provided, returns a tibble. If multiple, returns a named list
@@ -85,6 +92,10 @@ irw_fetch("environment_ltm")
 # A look at a large table without exporting all of it
 irw_fetch("neurips_2020", max_rows = 100)
 irw_fetch("neurips_2020", columns = c("id", "item", "resp"), max_rows = 1000)
+
+# An item correlation matrix, computed from the table
+m <- irw_fetch("environment_ltm", source = "cov", cov_args = list(method = "polychoric"))
+irw_cov2matrix(m)$matrix
 
 # Deduplicated
 irw_fetch("pks_probability", dedup = TRUE)
