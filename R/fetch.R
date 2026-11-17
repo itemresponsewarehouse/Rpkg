@@ -273,7 +273,11 @@ fetch_single_data <- function(table_id, source = "core", dedup = FALSE,
 #'   export quota -- which is the point: 326 IRW tables are over a million rows,
 #'   and a cap applied after the download has already cost the quota. A slice is
 #'   never written to the disk cache, because it cannot stand in for the table;
-#'   a cached whole table does serve a slice.
+#'   a cached whole table does serve a slice. The rows are the first
+#'   \code{max_rows} in the table's stored order, not a random sample, and that
+#'   order can track the outcome: the first 20,000 rows of
+#'   \code{narcissistic_personality_inventory} all have \code{resp = 1}. Do not
+#'   generalise from a slice to the table.
 #' @param columns Character vector, optional. Fetch only these columns, also
 #'   pushed to Redivis. A column the table does not have is an error. Ignored
 #'   for the download when \code{dedup = TRUE} (deduplication needs every
