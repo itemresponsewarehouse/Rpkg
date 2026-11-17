@@ -35,7 +35,8 @@ Suggests:
     evaluate,
     mirt,
     gnm,
-    BradleyTerry2
+    BradleyTerry2,
+    psych
 Additional_repositories: https://redivis.r-universe.dev
 License: MIT + file LICENSE
 Encoding: UTF-8
