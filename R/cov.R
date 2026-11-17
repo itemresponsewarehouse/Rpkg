@@ -9,6 +9,8 @@
 #                      this is the only way to get one for an IRW table.
 #   irw_cov2matrix()   the cov layout -> a square matrix plus n, sd and mean,
 #                      ready for lavaan(sample.cov =, sample.nobs =).
+#   irw_cov2list()     every sample of a multi-group table, padded to common
+#                      variables, ready for metaSEM::tssem1(Cov =, n =).
 
 .irw_cov_cols <- c("stat", "var1", "var2", "value", "n")
 
@@ -218,4 +220,71 @@ irw_cov2matrix <- function(df, group = NULL) {
        sd = pick("sd"), mean = pick("mean"),
        computed = isTRUE(attrs$irw_computed), method = attrs$irw_method,
        use = attrs$irw_use, table = attrs$irw_table)
+}
+
+#' Turn every sample of a covariance-family table into a list of matrices
+#'
+#' A table that holds several samples, such as a meta-analytic SEM corpus
+#' with one study per `group`, becomes a named list of matrices on a common set
+#' of variables plus a named vector of sample sizes: what
+#' `metaSEM::tssem1(Cov =, n =)` wants. Each matrix is built as
+#' [irw_cov2matrix()] builds it, then padded to the union of the variables
+#' across samples, in order of first appearance. A variable a sample did not
+#' measure is `NA` in that sample's matrix, diagonal included, which is
+#' metaSEM's convention for a missing variable.
+#'
+#' @param df A table with columns `stat`, `var1`, `var2`, `value`, `n` and,
+#'   optionally, `group`. Without a `group` column, or with one sample, the
+#'   result has one element, named after that sample (`"all"` when there is
+#'   no `group` column).
+#'
+#' @return A list: `matrices` (a named list of square matrices, named by
+#'   `group` exactly as the table gives it), `n` (a named integer vector, one
+#'   N per sample), `type` (`"cor"` or `"cov"`, the same for every sample),
+#'   `variables` (the common variable set), and `sd` and `mean` (named lists
+#'   of named vectors, empty vectors where a sample reports none).
+#'
+#' @seealso [irw_cov2matrix()] for one sample.
+#' @examples
+#' pub <- data.frame(
+#'   stat  = "cor",
+#'   var1  = c("a", "b", "b", "a", "c", "c"),
+#'   var2  = c("a", "a", "b", "a", "a", "c"),
+#'   value = c(1, 0.4, 1, 1, 0.3, 1),
+#'   n     = c(100, 100, 100, 80, 80, 80),
+#'   group = c(rep("study 1", 3), rep("study 2", 3)))
+#' x <- irw_cov2list(pub)
+#' x$matrices
+#' x$n
+#' # metaSEM::tssem1(x$matrices, x$n)
+#' @export
+irw_cov2list <- function(df) {
+  miss <- setdiff(.irw_cov_cols, names(df))
+  if (length(miss)) stop("Not a covariance-family table; missing: ", paste(miss, collapse = ", "), call. = FALSE)
+  if ("group" %in% names(df)) {
+    g <- as.character(df$group)
+    groups <- unique(g[!is.na(g) & g != ""])
+    if (!length(groups)) stop("The group column is empty; no sample to return.", call. = FALSE)
+    ms <- lapply(groups, function(x) irw_cov2matrix(df, group = x))
+  } else {
+    groups <- "all"
+    ms <- list(irw_cov2matrix(df))
+  }
+  names(ms) <- groups
+  types <- unique(vapply(ms, `[[`, "", "type"))
+  if (length(types) != 1) {
+    stop("The samples mix correlation and covariance matrices; take them one at a time with irw_cov2matrix().",
+         call. = FALSE)
+  }
+  v <- unique(unlist(lapply(ms, function(m) rownames(m$matrix)), use.names = FALSE))
+  pad <- function(m) {
+    out <- matrix(NA_real_, length(v), length(v), dimnames = list(v, v))
+    k <- rownames(m)
+    out[k, k] <- m
+    out
+  }
+  list(matrices = lapply(ms, function(m) pad(m$matrix)),
+       n = vapply(ms, function(m) as.integer(m$n), 1L),
+       type = types, variables = v,
+       sd = lapply(ms, `[[`, "sd"), mean = lapply(ms, `[[`, "mean"))
 }

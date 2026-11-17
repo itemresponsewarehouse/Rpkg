@@ -140,3 +140,37 @@ test_that("metadata and biblio calls for cov stop instead of answering with core
   expect_error(real_metadata(source = "cov"), "not available for source = \"cov\"")
   expect_error(irw:::.irw_filter_biblio("cov"), "not available")
 })
+
+test_that("irw_cov2list returns every sample, padded to the union of variables", {
+  pub <- data.frame(
+    stat  = c("cor", "cor", "cor", "sd", "cor", "cor", "cor", "cor", "cor", "cor"),
+    var1  = c("a", "b", "b", "a", "a", "c", "c", "b", "b", "c"),
+    var2  = c("a", "a", "b", NA, "a", "a", "c", "a", "b", "b"),
+    value = c(1, 0.4, 1, 2, 1, 0.3, 1, 0.5, 1, 0.2),
+    n     = c(rep(100, 4), rep(80, 6)),
+    group = c(rep("Conner, Warren (1999a) 1", 4), rep("study (2)", 6)))
+  x <- irw_cov2list(pub)
+  expect_identical(names(x$matrices), c("Conner, Warren (1999a) 1", "study (2)"))
+  expect_identical(x$n, c("Conner, Warren (1999a) 1" = 100L, "study (2)" = 80L))
+  expect_identical(x$variables, c("a", "b", "c"))
+  expect_identical(x$type, "cor")
+  m1 <- x$matrices[[1]]
+  expect_identical(dimnames(m1), list(c("a", "b", "c"), c("a", "b", "c")))
+  expect_true(all(is.na(m1["c", ])) && all(is.na(m1[, "c"])))
+  expect_equal(m1["a", "b"], 0.4)
+  expect_equal(x$matrices[[2]]["c", "b"], 0.2)
+  expect_equal(x$sd[[1]], c(a = 2))
+  expect_length(x$sd[[2]], 0)
+})
+
+test_that("irw_cov2list handles one sample, cov tables and mixed types", {
+  one <- data.frame(stat = "cov", var1 = c("a", "b", "b"), var2 = c("a", "a", "b"),
+                    value = c(4, 1, 9), n = 50)
+  x <- irw_cov2list(one)
+  expect_identical(names(x$matrices), "all")
+  expect_identical(x$type, "cov")
+  expect_identical(x$n, c(all = 50L))
+  mixed <- rbind(cbind(one, group = "g1"), cbind(transform(one, stat = "cor", value = c(1, .2, 1)), group = "g2"))
+  expect_error(irw_cov2list(mixed), "mix correlation and covariance")
+  expect_error(irw_cov2list(data.frame(x = 1)), "missing")
+})
