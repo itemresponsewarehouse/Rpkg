@@ -14,6 +14,38 @@
   !is.na(x) & nzchar(x) & x != "NA"
 }
 
+#' Stack data frames on the union of their columns
+#'
+#' Columns a member lacks are added as NA. If rbind() cannot combine them
+#' because a column's class differs across members, those columns are coerced
+#' to character and the stack is retried.
+#'
+#' @param tables A named list of data frames.
+#' @return One data frame with row names reset.
+#' @noRd
+.stack_union <- function(tables) {
+  cols <- unique(unlist(lapply(tables, names), use.names = FALSE))
+  pad <- function(d) {
+    for (cn in setdiff(cols, names(d))) d[[cn]] <- NA
+    d[, cols, drop = FALSE]
+  }
+  padded <- lapply(tables, pad)
+  out <- tryCatch(do.call(rbind, unname(padded)), error = function(e) NULL)
+  if (is.null(out)) {
+    # Columns whose class differs across members (ignoring all-NA padding)
+    cls <- function(cn) unique(unlist(lapply(tables, function(d)
+      if (cn %in% names(d)) paste(class(d[[cn]]), collapse = "/"))))
+    clash <- cols[vapply(cols, function(cn) length(cls(cn)) > 1, logical(1))]
+    padded <- lapply(padded, function(d) {
+      for (cn in clash) d[[cn]] <- as.character(d[[cn]])
+      d
+    })
+    out <- do.call(rbind, unname(padded))
+  }
+  rownames(out) <- NULL
+  out
+}
+
 #' Ask a yes/no question at the console
 #'
 #' In a non-interactive session `readline()` returns "" immediately, so this
@@ -54,6 +86,8 @@
 #' @return A list containing two named lists:
 #'   - `doi_map`: A list mapping DOI values to associated table names.
 #'   - `bibtex_map`: A list mapping BibTex keys to associated table names.
+#'   - `data_doi_map`: A list mapping data DOIs to table names, built only from
+#'     rows with no paper DOI and consulted last.
 #' @noRd
 generate_doi_bibtex_mapping <- function(biblio_table) {
   valid_doi_entries <- .is_present_biblio_value(biblio_table$DOI__for_paper_)
@@ -65,7 +99,16 @@ generate_doi_bibtex_mapping <- function(biblio_table) {
   doi_map <- doi_map[lengths(doi_map) > 1] # Keep only DOIs with multiple tables
   bibtex_map <- bibtex_map[lengths(bibtex_map) > 1] # Keep only BibTex with multiple tables
 
-  return(list(doi_map = doi_map, bibtex_map = bibtex_map))
+  # Last resort: the data (deposit) DOI, for tables whose paper DOI is blank
+  # (a deposit DOI is cleared from DOI__for_paper_ for citation; irw#3572).
+  data_doi_map <- list()
+  if ("DOI__for_data_" %in% names(biblio_table)) {
+    valid_data_doi <- .is_present_biblio_value(biblio_table$DOI__for_data_) & !valid_doi_entries
+    data_doi_map <- split(biblio_table$table[valid_data_doi], biblio_table$DOI__for_data_[valid_data_doi])
+    data_doi_map <- data_doi_map[lengths(data_doi_map) > 1]
+  }
+
+  return(list(doi_map = doi_map, bibtex_map = bibtex_map, data_doi_map = data_doi_map))
 }
 
 #' Find tables that can be merged based on DOI or BibTex
@@ -92,6 +135,15 @@ find_merge_candidates <- function(table_name, maps) {
     for (bibtex in names(maps$bibtex_map)) {
       if (table_name %in% maps$bibtex_map[[bibtex]]) {
         candidates <- maps$bibtex_map[[bibtex]]
+        break
+      }
+    }
+  }
+
+  if (is.null(candidates)) {
+    for (data_doi in names(maps$data_doi_map)) {
+      if (table_name %in% maps$data_doi_map[[data_doi]]) {
+        candidates <- maps$data_doi_map[[data_doi]]
         break
       }
     }
@@ -300,10 +352,12 @@ irw_merge <- function(table_name, add_source_column = TRUE) {
     return(NULL) # User chose not to proceed
   }
 
-  # Fetch tables and merge incrementally
-  merged_table <- NULL
-  all_tables <- list() # Keep track of successfully merged tables
-  skipped_tables <- list() # Keep track of tables that fail to merge
+  # Fetch every member first, then stack them on the union of their columns.
+  # Members routinely carry different cov_* columns; an incremental rbind()
+  # made the first table fetched the reference and silently dropped every
+  # member whose columns differed (Rpkg#224).
+  all_tables <- list() # Tables fetched successfully
+  skipped_tables <- list() # Tables that could not be fetched
 
   message("\033[1m\n=== Fetching Tables ===\033[0m")
   for (tbl_name in merge_candidates) {
@@ -321,32 +375,20 @@ irw_merge <- function(table_name, add_source_column = TRUE) {
 
     # Add source column before merging if requested
     if (add_source_column) data$source_table <- tbl_name
-
-    # Attempt to rbind with the existing merged table
-    tryCatch(
-      {
-        if (is.null(merged_table)) {
-          merged_table <- data # Initialize the merged table
-          all_tables[[tbl_name]] <- data
-        } else {
-          merged_table <- rbind(merged_table, data) # Try to merge incrementally
-          # Add the table to the list of fetched tables
-          all_tables[[tbl_name]] <- data
-        }
-      },
-      error = function(e) {
-        # If rbind fails, add the table to the skipped list and continue merging
-        skipped_tables[[tbl_name]] <<- e$message
-        message(sprintf("  - Skipping table '%s' due to column mismatch.", tbl_name))
-      }
-    )
+    all_tables[[tbl_name]] <- data
   }
 
-  # If all tables failed to merge, return NULL
-  if (length(skipped_tables) >= length(merge_candidates) - 1) {
+  # Nothing to merge unless at least two members were fetched
+  if (length(all_tables) < 2) {
     message("\nMerging failed for all tables. No data merged.")
     return(NULL)
   }
+
+  merged_table <- .stack_union(all_tables)
+  partial_cols <- setdiff(
+    names(merged_table),
+    Reduce(intersect, lapply(all_tables, names))
+  )
 
   # Check IDs and items, and prompt user if needed
   proceed <- check_ids_and_items(all_tables)
@@ -367,13 +409,24 @@ irw_merge <- function(table_name, add_source_column = TRUE) {
     message("- The merged table includes a 'source_table' column indicating the source of each row.")
   }
 
-  # Print summary of skipped tables (if any)
+  if (length(partial_cols) > 0) {
+    message("- Columns not present in every table (NA where absent): ",
+            paste(partial_cols, collapse = ", "), ".")
+  }
+
+  # Print summary of skipped tables (if any). A warning, not only a message:
+  # a partial merge must not look like a complete one to a non-interactive caller.
   if (length(skipped_tables) > 0) {
     message("\033[1m\n=== Skipped Tables ===\033[0m")
     message("The following tables were skipped:")
     for (tbl in names(skipped_tables)) {
       message(sprintf("- %s (%s)", tbl, skipped_tables[[tbl]]))
     }
+    warning(sprintf(
+      "irw_merge(): %d of %d tables were not merged: %s",
+      length(skipped_tables), length(merge_candidates),
+      paste(names(skipped_tables), collapse = ", ")
+    ), call. = FALSE)
   }
 
   return(merged_table)
