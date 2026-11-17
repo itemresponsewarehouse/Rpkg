@@ -64,6 +64,8 @@ reference:
   - irw_long2resp
   - irw_conj_long
   - irw_rank_compress
+  - irw_cov_compute
+  - irw_cov2matrix
   - irw_resp2long
   - irw_check_resp
   - irw_recode
