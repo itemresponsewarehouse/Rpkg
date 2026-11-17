@@ -147,8 +147,8 @@ test_that(".prompt_yes_no returns the default without looping when non-interacti
 
 # --- irw_merge() end to end, with Redivis access mocked out -------------------
 
-# Two-column-compatible tables plus one with an extra column, so the rbind
-# failure path is exercised alongside the happy path.
+# Two column-compatible tables plus one with an extra column, so the union of
+# columns is exercised alongside the happy path.
 merge_fixture_tables <- list(
   m1 = data.frame(id = c(1, 2), item = c("a1", "a2"), resp = c(1, 0), stringsAsFactors = FALSE),
   m2 = data.frame(id = c(1, 2), item = c("b1", "b2"), resp = c(0, 1), stringsAsFactors = FALSE),
@@ -176,7 +176,7 @@ mock_merge_env <- function(tables = merge_fixture_tables, n_participants = c(m1 
   )
 }
 
-test_that("irw_merge stacks compatible tables and skips mismatched ones", {
+test_that("irw_merge stacks every member on the union of their columns (Rpkg#224)", {
   mocks <- mock_merge_env()
   local_ns_bindings(
     .fetch_biblio_table = mocks$.fetch_biblio_table,
@@ -184,12 +184,61 @@ test_that("irw_merge stacks compatible tables and skips mismatched ones", {
     irw_fetch = mocks$irw_fetch
   )
 
-  out <- suppressMessages(irw_merge("m1"))
+  expect_no_warning(out <- suppressMessages(irw_merge("m1")))
 
   expect_s3_class(out, "data.frame")
-  expect_equal(nrow(out), 4L)
-  expect_equal(sort(unique(out$source_table)), c("m1", "m2"))
-  expect_false("m3" %in% out$source_table) # extra `wave` column -> rbind fails
+  expect_equal(nrow(out), 6L)
+  expect_equal(sort(unique(out$source_table)), c("m1", "m2", "m3"))
+  # m3's extra `wave` column is kept, NA for the members that lack it
+  expect_equal(out$wave[out$source_table == "m3"], c(1, 2))
+  expect_true(all(is.na(out$wave[out$source_table != "m3"])))
+})
+
+test_that("irw_merge keeps the same members whichever table is the anchor", {
+  mocks <- mock_merge_env()
+  local_ns_bindings(
+    .fetch_biblio_table = mocks$.fetch_biblio_table,
+    irw_metadata = mocks$irw_metadata,
+    irw_fetch = mocks$irw_fetch
+  )
+
+  a <- suppressMessages(irw_merge("m1"))
+  b <- suppressMessages(irw_merge("m3"))
+  expect_equal(sort(unique(a$source_table)), sort(unique(b$source_table)))
+  expect_equal(nrow(a), nrow(b))
+})
+
+test_that(".stack_union falls back to character when a column's class conflicts", {
+  out <- irw:::.stack_union(list(
+    x = data.frame(id = 1, item = "a", resp = 1, cov_d = as.Date("2020-01-01")),
+    y = data.frame(id = 2, item = "b", resp = 0, cov_d = "unknown")
+  ))
+  expect_equal(nrow(out), 2L)
+  expect_equal(out$resp, c(1, 0))
+})
+
+test_that("find_merge_candidates falls back to the data DOI (irw#3572)", {
+  bib <- data.frame(
+    table = c("dep_a", "dep_b", "lone"),
+    DOI__for_paper_ = c("NA", "", "NA"),
+    DOI__for_data_ = c("10.5/deposit", "10.5/deposit", "10.5/other"),
+    BibTex = c("NA", "NA", "NA"),
+    stringsAsFactors = FALSE
+  )
+  maps <- irw:::generate_doi_bibtex_mapping(bib)
+  expect_equal(irw:::find_merge_candidates("dep_b", maps), c("dep_b", "dep_a"))
+  expect_null(irw:::find_merge_candidates("lone", maps))
+})
+
+test_that("a data DOI never groups tables that have a paper DOI", {
+  bib <- data.frame(
+    table = c("p1", "p2"),
+    DOI__for_paper_ = c("10.1/one", "10.1/two"),
+    DOI__for_data_ = c("10.5/deposit", "10.5/deposit"),
+    BibTex = c("NA", "NA"),
+    stringsAsFactors = FALSE
+  )
+  expect_null(irw:::find_merge_candidates("p1", irw:::generate_doi_bibtex_mapping(bib)))
 })
 
 test_that("irw_merge omits source_table when add_source_column = FALSE", {
@@ -203,7 +252,7 @@ test_that("irw_merge omits source_table when add_source_column = FALSE", {
   out <- suppressMessages(irw_merge("m1", add_source_column = FALSE))
 
   expect_false("source_table" %in% names(out))
-  expect_equal(nrow(out), 4L)
+  expect_equal(nrow(out), 6L)
 })
 
 test_that("irw_merge skips tables that cannot be fetched", {
@@ -215,7 +264,22 @@ test_that("irw_merge skips tables that cannot be fetched", {
     irw_fetch = function(name, ...) if (identical(name, "m2")) NULL else merge_fixture_tables[[name]]
   )
 
-  # m1 merges, m2 returns NULL, m3 mismatches -> only one usable table left.
+  # m1 and m3 merge; m2 returns NULL and is reported with a warning.
+  expect_warning(
+    out <- suppressMessages(irw_merge("m1", add_source_column = FALSE)),
+    "1 of 3 tables were not merged: m2"
+  )
+  expect_equal(nrow(out), 4L)
+})
+
+test_that("irw_merge returns NULL when fewer than two members can be fetched", {
+  mocks <- mock_merge_env()
+  local_ns_bindings(
+    .fetch_biblio_table = mocks$.fetch_biblio_table,
+    irw_metadata = mocks$irw_metadata,
+    irw_fetch = function(name, ...) if (identical(name, "m1")) merge_fixture_tables[[name]] else NULL
+  )
+
   expect_message(
     expect_null(irw_merge("m1", add_source_column = FALSE)),
     "Merging failed for all tables"
@@ -252,5 +316,5 @@ test_that("irw_merge reports inconsistent respondent counts", {
 
   out <- NULL
   expect_message(out <- irw_merge("m1"), "not consistent across tables")
-  expect_equal(nrow(out), 4L) # warning is advisory; the merge still proceeds
+  expect_equal(nrow(out), 6L) # warning is advisory; the merge still proceeds
 })
