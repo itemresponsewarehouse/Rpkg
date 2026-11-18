@@ -210,7 +210,7 @@ irw_cov_compute <- function(df, method = c("pearson", "spearman", "kendall", "po
   if (any(swap)) {
     tmp <- df$var1[swap]; df$var1[swap] <- df$var2[swap]; df$var2[swap] <- tmp
   }
-  stat_rank <- ifelse(cell, 0, ifelse(stat == "sd", 1, 2))
+  stat_rank <- ifelse(cell, 0, ifelse(stat == "sd", 1, ifelse(stat == "mean", 2, 3)))
   df[order(grp_rank, stat_rank, hi, lo), , drop = FALSE]
 }
 
@@ -262,8 +262,9 @@ irw_cov_compute <- function(df, method = c("pearson", "spearman", "kendall", "po
 #'
 #' @return A list: `matrix` (square, with dimnames), `type` (`"cor"` or
 #'   `"cov"`), `n` (the largest cell n, the matrix N when n is the same
-#'   everywhere), `n_pairwise` (a matrix of cell n), `sd` and `mean` (named
-#'   vectors, empty when the table has none), `dropped` (the variables
+#'   everywhere), `n_pairwise` (a matrix of cell n), `sd`, `mean` and `rel`
+#'   (named vectors of standard deviations, means and reliabilities, empty
+#'   when the table has none), `dropped` (the variables
 #'   `complete = TRUE` left out; empty otherwise), and `computed` (TRUE when
 #'   the matrix was computed from an IRW table rather than published, with
 #'   `method`, `use` and `table` then set).
@@ -302,7 +303,7 @@ irw_cov2matrix <- function(df, group = NULL, complete = FALSE) {
   m[ij] <- cells$value; m[ji] <- cells$value
   np[ij] <- as.integer(cells$n); np[ji] <- as.integer(cells$n)
   pick <- function(s) { r <- df[df$stat == s, , drop = FALSE]; stats::setNames(as.numeric(r$value), r$var1) }
-  sd <- pick("sd"); mu <- pick("mean")
+  sd <- pick("sd"); mu <- pick("mean"); rel <- pick("rel")
   dropped <- character(0)
   n_blank <- sum(is.na(m[lower.tri(m)]))
   if (n_blank) {
@@ -310,7 +311,7 @@ irw_cov2matrix <- function(df, group = NULL, complete = FALSE) {
     if (isTRUE(complete)) {
       keep <- setdiff(v, drop)
       m <- m[keep, keep, drop = FALSE]; np <- np[keep, keep, drop = FALSE]
-      sd <- sd[names(sd) %in% keep]; mu <- mu[names(mu) %in% keep]
+      sd <- sd[names(sd) %in% keep]; mu <- mu[names(mu) %in% keep]; rel <- rel[names(rel) %in% keep]
       dropped <- drop
     } else {
       warning(structure(class = c("irw_cov_blank", "warning", "condition"), list(
@@ -323,7 +324,7 @@ irw_cov2matrix <- function(df, group = NULL, complete = FALSE) {
     }
   }
   list(matrix = m, type = type, n = max(np, na.rm = TRUE), n_pairwise = np,
-       sd = sd, mean = mu, dropped = dropped,
+       sd = sd, mean = mu, rel = rel, dropped = dropped,
        computed = isTRUE(attrs$irw_computed), method = attrs$irw_method,
        use = attrs$irw_use, table = attrs$irw_table)
 }
@@ -354,8 +355,10 @@ irw_cov2matrix <- function(df, group = NULL, complete = FALSE) {
 #' @return A list: `matrices` (a named list of square matrices, named by
 #'   `group` exactly as the table gives it), `n` (a named integer vector, one
 #'   N per sample), `type` (`"cor"` or `"cov"`, the same for every sample),
-#'   `variables` (the common variable set), and `sd` and `mean` (named lists
-#'   of named vectors, empty vectors where a sample reports none).
+#'   `variables` (the common variable set), and `sd`, `mean` and `rel` (named
+#'   lists of named vectors, empty vectors where a sample reports none).
+#'   Reliabilities (`rel`) are what a correction for attenuation needs, matched
+#'   to each study's matrix.
 #'
 #' @seealso [irw_cov2matrix()] for one sample.
 #' @examples
@@ -399,5 +402,5 @@ irw_cov2list <- function(df) {
   list(matrices = lapply(ms, function(m) pad(m$matrix)),
        n = vapply(ms, function(m) as.integer(m$n), 1L),
        type = types, variables = v,
-       sd = lapply(ms, `[[`, "sd"), mean = lapply(ms, `[[`, "mean"))
+       sd = lapply(ms, `[[`, "sd"), mean = lapply(ms, `[[`, "mean"), rel = lapply(ms, `[[`, "rel"))
 }

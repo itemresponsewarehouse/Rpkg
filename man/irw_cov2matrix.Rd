@@ -25,8 +25,9 @@ IRW's own record (\code{irw_metadata(source = "cov")}: \code{n_missing_cells}, a
 \value{
 A list: \code{matrix} (square, with dimnames), \code{type} (\code{"cor"} or
 \code{"cov"}), \code{n} (the largest cell n, the matrix N when n is the same
-everywhere), \code{n_pairwise} (a matrix of cell n), \code{sd} and \code{mean} (named
-vectors, empty when the table has none), \code{dropped} (the variables
+everywhere), \code{n_pairwise} (a matrix of cell n), \code{sd}, \code{mean} and \code{rel}
+(named vectors of standard deviations, means and reliabilities, empty
+when the table has none), \code{dropped} (the variables
 \code{complete = TRUE} left out; empty otherwise), and \code{computed} (TRUE when
 the matrix was computed from an IRW table rather than published, with
 \code{method}, \code{use} and \code{table} then set).

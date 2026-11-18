@@ -16,8 +16,10 @@ no \code{group} column).}
 A list: \code{matrices} (a named list of square matrices, named by
 \code{group} exactly as the table gives it), \code{n} (a named integer vector, one
 N per sample), \code{type} (\code{"cor"} or \code{"cov"}, the same for every sample),
-\code{variables} (the common variable set), and \code{sd} and \code{mean} (named lists
-of named vectors, empty vectors where a sample reports none).
+\code{variables} (the common variable set), and \code{sd}, \code{mean} and \code{rel} (named
+lists of named vectors, empty vectors where a sample reports none).
+Reliabilities (\code{rel}) are what a correction for attenuation needs, matched
+to each study's matrix.
 }
 \description{
 A table that holds several samples, such as a meta-analytic SEM corpus

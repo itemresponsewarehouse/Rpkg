@@ -264,3 +264,16 @@ test_that("a published table is put in the order its record gives", {
   expect_identical(unique(o2$group), c("g1", "g2"))
   expect_identical(rownames(irw_cov2matrix(o2, group = "g2")$matrix), c("c", "b", "a"))
 })
+
+test_that("reliability rows come back as `rel`, beside sd and mean", {
+  # Ben, 2026-11-18: per-variable reliability is a stat = "rel" row.
+  pub <- data.frame(stat = c("cor", "cor", "cor", "sd", "rel", "rel"),
+                    var1 = c("a", "b", "b", "a", "a", "b"),
+                    var2 = c("a", "a", "b", NA, NA, NA),
+                    value = c(1, 0.4, 1, 2, 0.81, 0.77), n = 90)
+  m <- irw_cov2matrix(pub)
+  expect_identical(m$rel, c(a = 0.81, b = 0.77))
+  expect_identical(m$sd, c(a = 2))
+  x <- irw_cov2list(transform(pub, group = "s1"))
+  expect_identical(x$rel$s1, c(a = 0.81, b = 0.77))
+})
