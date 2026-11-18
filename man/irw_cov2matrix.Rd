@@ -4,7 +4,7 @@
 \alias{irw_cov2matrix}
 \title{Turn a covariance-family table into a matrix}
 \usage{
-irw_cov2matrix(df, group = NULL)
+irw_cov2matrix(df, group = NULL, complete = FALSE)
 }
 \arguments{
 \item{df}{A table with columns \code{stat}, \code{var1}, \code{var2}, \code{value}, \code{n} and,
@@ -12,13 +12,23 @@ optionally, \code{group}.}
 
 \item{group}{For a table holding several samples (a \code{group} column), which
 one to return. Required when there is more than one.}
+
+\item{complete}{A published matrix can hold cells the source did not
+report: rows with an empty \code{value}, which become \code{NA} here, with a
+warning. Most fitting functions (lavaan among them) refuse a matrix with
+\code{NA}. \code{complete = TRUE} returns the complete part instead: the matrix
+after dropping the fewest variables that leaves no blank cell (ties keep
+the variables listed first), with the dropped variables in \code{dropped}. The
+IRW's own record (\code{irw_metadata(source = "cov")}: \code{n_missing_cells}, and
+\code{is_pd} judged on the complete part) uses the same rule.}
 }
 \value{
 A list: \code{matrix} (square, with dimnames), \code{type} (\code{"cor"} or
 \code{"cov"}), \code{n} (the largest cell n, the matrix N when n is the same
 everywhere), \code{n_pairwise} (a matrix of cell n), \code{sd} and \code{mean} (named
-vectors, empty when the table has none), and \code{computed} (TRUE when the
-matrix was computed from an IRW table rather than published, with
+vectors, empty when the table has none), \code{dropped} (the variables
+\code{complete = TRUE} left out; empty otherwise), and \code{computed} (TRUE when
+the matrix was computed from an IRW table rather than published, with
 \code{method}, \code{use} and \code{table} then set).
 }
 \description{

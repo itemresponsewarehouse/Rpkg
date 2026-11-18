@@ -164,6 +164,33 @@ irw_cov_compute <- function(df, method = c("pearson", "spearman", "kendall", "po
   out
 }
 
+# The fewest variables to drop so a matrix has no NA off the diagonal. Exact
+# (smallest set) when at most `exact_max` variables touch a blank, else greedy;
+# ties keep the variables listed first (candidates are tried latest-first).
+# Mirrors complete_drop() in ben-domingue/irw irw_validate/cov.py and
+# metadata/22_cov.R, and complete_drop in the Python package: keep in step.
+.irw_cov_complete_drop <- function(v, m, exact_max = 20) {
+  idx <- which(is.na(m) & lower.tri(m), arr.ind = TRUE)
+  if (!nrow(idx)) return(character(0))
+  pairs <- lapply(seq_len(nrow(idx)), function(i) v[idx[i, ]])
+  involved <- unique(unlist(pairs))
+  involved <- involved[order(-match(involved, v))]
+  covers <- function(drop) all(vapply(pairs, function(p) any(p %in% drop), logical(1)))
+  if (length(involved) <= exact_max) {
+    for (size in seq_along(involved)) {
+      for (drop in utils::combn(involved, size, simplify = FALSE)) if (covers(drop)) return(v[v %in% drop])
+    }
+  }
+  drop <- character(0); left <- pairs
+  while (length(left)) {
+    cnt <- vapply(involved, function(x) sum(vapply(left, function(p) x %in% p, logical(1))), numeric(1))
+    best <- involved[order(-cnt, -match(involved, v))][1]
+    drop <- c(drop, best)
+    left <- Filter(function(p) !best %in% p, left)
+  }
+  v[v %in% drop]
+}
+
 #' Turn a covariance-family table into a matrix
 #'
 #' Rebuilds the square matrix from a table in the IRW covariance layout (from
@@ -174,12 +201,21 @@ irw_cov_compute <- function(df, method = c("pearson", "spearman", "kendall", "po
 #'   optionally, `group`.
 #' @param group For a table holding several samples (a `group` column), which
 #'   one to return. Required when there is more than one.
+#' @param complete A published matrix can hold cells the source did not
+#'   report: rows with an empty `value`, which become `NA` here, with a
+#'   warning. Most fitting functions (lavaan among them) refuse a matrix with
+#'   `NA`. `complete = TRUE` returns the complete part instead: the matrix
+#'   after dropping the fewest variables that leaves no blank cell (ties keep
+#'   the variables listed first), with the dropped variables in `dropped`. The
+#'   IRW's own record (`irw_metadata(source = "cov")`: `n_missing_cells`, and
+#'   `is_pd` judged on the complete part) uses the same rule.
 #'
 #' @return A list: `matrix` (square, with dimnames), `type` (`"cor"` or
 #'   `"cov"`), `n` (the largest cell n, the matrix N when n is the same
 #'   everywhere), `n_pairwise` (a matrix of cell n), `sd` and `mean` (named
-#'   vectors, empty when the table has none), and `computed` (TRUE when the
-#'   matrix was computed from an IRW table rather than published, with
+#'   vectors, empty when the table has none), `dropped` (the variables
+#'   `complete = TRUE` left out; empty otherwise), and `computed` (TRUE when
+#'   the matrix was computed from an IRW table rather than published, with
 #'   `method`, `use` and `table` then set).
 #'
 #' @examples
@@ -189,7 +225,7 @@ irw_cov_compute <- function(df, method = c("pearson", "spearman", "kendall", "po
 #' m$matrix
 #' # lavaan::cfa("f =~ a + b + c", sample.cov = m$matrix, sample.nobs = m$n)
 #' @export
-irw_cov2matrix <- function(df, group = NULL) {
+irw_cov2matrix <- function(df, group = NULL, complete = FALSE) {
   miss <- setdiff(.irw_cov_cols, names(df))
   if (length(miss)) stop("Not a covariance-family table; missing: ", paste(miss, collapse = ", "), call. = FALSE)
   attrs <- attributes(df)
@@ -216,11 +252,36 @@ irw_cov2matrix <- function(df, group = NULL) {
   m[ij] <- cells$value; m[ji] <- cells$value
   np[ij] <- as.integer(cells$n); np[ji] <- as.integer(cells$n)
   pick <- function(s) { r <- df[df$stat == s, , drop = FALSE]; stats::setNames(as.numeric(r$value), r$var1) }
+  sd <- pick("sd"); mu <- pick("mean")
+  dropped <- character(0)
+  n_blank <- sum(is.na(m[lower.tri(m)]))
+  if (n_blank) {
+    drop <- .irw_cov_complete_drop(v, m)
+    if (isTRUE(complete)) {
+      keep <- setdiff(v, drop)
+      m <- m[keep, keep, drop = FALSE]; np <- np[keep, keep, drop = FALSE]
+      sd <- sd[names(sd) %in% keep]; mu <- mu[names(mu) %in% keep]
+      dropped <- drop
+    } else {
+      warning(structure(class = c("irw_cov_blank", "warning", "condition"), list(
+        message = paste0(n_blank, if (n_blank == 1) " cell" else " cells",
+                         " of this matrix the source did not report ", if (n_blank == 1) "is" else "are",
+                         " NA. `complete = TRUE` returns the complete part, dropping ",
+                         length(drop), if (length(drop) == 1) " variable" else " variables", " (",
+                         paste(drop, collapse = ", "), ")."),
+        call = NULL)))
+    }
+  }
   list(matrix = m, type = type, n = max(np, na.rm = TRUE), n_pairwise = np,
-       sd = pick("sd"), mean = pick("mean"),
+       sd = sd, mean = mu, dropped = dropped,
        computed = isTRUE(attrs$irw_computed), method = attrs$irw_method,
        use = attrs$irw_use, table = attrs$irw_table)
 }
+
+# irw_cov2list keeps unreported cells as NA, which is what metaSEM takes, so
+# irw_cov2matrix's warning about them does not apply there.
+.irw_cov_quiet <- function(expr) withCallingHandlers(expr,
+  irw_cov_blank = function(w) invokeRestart("muffleWarning"))
 
 #' Turn every sample of a covariance-family table into a list of matrices
 #'
@@ -232,6 +293,8 @@ irw_cov2matrix <- function(df, group = NULL) {
 #' across samples, in order of first appearance. A variable a sample did not
 #' measure is `NA` in that sample's matrix, diagonal included, which is
 #' metaSEM's convention for a missing variable.
+#' A cell a sample measured but did not report (a row with an empty `value`)
+#' is `NA` too, off the diagonal, with no warning: metaSEM takes both.
 #'
 #' @param df A table with columns `stat`, `var1`, `var2`, `value`, `n` and,
 #'   optionally, `group`. Without a `group` column, or with one sample, the
@@ -265,10 +328,10 @@ irw_cov2list <- function(df) {
     g <- as.character(df$group)
     groups <- unique(g[!is.na(g) & g != ""])
     if (!length(groups)) stop("The group column is empty; no sample to return.", call. = FALSE)
-    ms <- lapply(groups, function(x) irw_cov2matrix(df, group = x))
+    ms <- lapply(groups, function(x) .irw_cov_quiet(irw_cov2matrix(df, group = x)))
   } else {
     groups <- "all"
-    ms <- list(irw_cov2matrix(df))
+    ms <- list(.irw_cov_quiet(irw_cov2matrix(df)))
   }
   names(ms) <- groups
   types <- unique(vapply(ms, `[[`, "", "type"))

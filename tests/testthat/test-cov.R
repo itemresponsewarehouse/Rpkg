@@ -193,3 +193,29 @@ test_that("irw_cov2list handles one sample, cov tables and mixed types", {
   expect_error(irw_cov2list(mixed), "mix correlation and covariance")
   expect_error(irw_cov2list(data.frame(x = 1)), "missing")
 })
+
+test_that("unreported cells are NA with a warning, and complete = TRUE drops the fewest variables", {
+  # Ben, 2026-11-18 (ben-domingue/irw#3594): a cell the source did not report
+  # is a row with an empty value.
+  v <- c("a", "b", "c", "d")
+  cells <- expand.grid(i = 1:4, j = 1:4)
+  cells <- cells[cells$j <= cells$i, ]
+  pub <- data.frame(stat = "cor", var1 = v[cells$i], var2 = v[cells$j],
+                    value = ifelse(cells$i == cells$j, 1, 0.3), n = 120)
+  pub$value[pub$var1 == "c" & pub$var2 == "a"] <- NA
+  pub$value[pub$var1 == "d" & pub$var2 == "c"] <- NA
+  expect_warning(m <- irw_cov2matrix(pub), "2 cells.*complete = TRUE.*\\(c\\)", class = "irw_cov_blank")
+  expect_true(is.na(m$matrix["c", "a"]) && is.na(m$matrix["a", "c"]))
+  expect_identical(m$dropped, character(0))
+  m2 <- irw_cov2matrix(pub, complete = TRUE)
+  expect_identical(m2$dropped, "c")
+  expect_identical(rownames(m2$matrix), c("a", "b", "d"))
+  expect_false(anyNA(m2$matrix))
+  # a tie keeps the variable listed first
+  one <- pub; one$value[one$var1 == "d" & one$var2 == "c"] <- 0.3
+  expect_identical(irw_cov2matrix(one, complete = TRUE)$dropped, "c")
+  # irw_cov2list keeps NA, silently
+  pub$group <- "s1"
+  expect_no_warning(x <- irw_cov2list(pub))
+  expect_true(is.na(x$matrices$s1["c", "a"]))
+})

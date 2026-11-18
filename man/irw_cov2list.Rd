@@ -28,6 +28,8 @@ of variables plus a named vector of sample sizes: what
 across samples, in order of first appearance. A variable a sample did not
 measure is \code{NA} in that sample's matrix, diagonal included, which is
 metaSEM's convention for a missing variable.
+A cell a sample measured but did not report (a row with an empty \code{value})
+is \code{NA} too, off the diagonal, with no warning: metaSEM takes both.
 }
 \examples{
 pub <- data.frame(
