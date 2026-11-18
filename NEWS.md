@@ -1,5 +1,7 @@
 # irw (development version)
 
+- `irw_filter(source = "cov")` gains covariance filters: `n_vars` (most variables in one sample), `n_obs` (observations summed over samples), `n_samples` (`c(2, Inf)` keeps the meta-analytic SEM corpora), `matrix_type` (any matrix of a type named) and `is_pd` (`TRUE`: every matrix positive definite). Each answers per table; `license` works as before.
+
 - `irw_cov2matrix()` and `irw_cov2list()` return per-variable reliabilities as `rel`, beside `sd` and `mean`, for covariance-family tables that report them (`stat = "rel"` rows; ben-domingue/irw#3607).
 
 - `irw_filter()`, `irw_save_bibtex()` and `irw_info(table)` now work for `source = "cov"`, reading the covariance family's bibliography (irw_meta `cov_biblio`, first published 2026-11-18). They stopped with a message before. For `source = "cov"`, `irw_filter()` takes `license`; the other criteria are refused by name, and a matrix's size, N, kind of correlation and `is_pd` are in `irw_metadata(source = "cov")`. `irw_filter()` now lists a table once even when its metadata has a row per sample.
