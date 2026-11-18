@@ -298,3 +298,18 @@ test_that("irw_filter(source = 'cov') filters per table over cov_metadata", {
   expect_error(irw_filter(source = "cov", n_items = 5), "not available")
   expect_error(irw_filter(n_vars = 5), "only available")
 })
+
+test_that("a published table with overlaps notes them once per session", {
+  # Ben, 2026-11-18: the `overlaps` record field; pooling both double-counts.
+  local_irw_binding(".irw_env", new.env())
+  meta <- data.frame(table = "g", group = c("s1", "s2", "s3"),
+                     overlaps = c("core_t", NA, "core_t"))
+  expect_message(irw:::.irw_cov_overlap_note("g", meta), "2 of its 3 samples share data with core_t")
+  expect_silent(irw:::.irw_cov_overlap_note("g", meta))            # once per session
+  local_irw_binding(".irw_env", new.env())
+  withr::local_options(irw.overlap_note = FALSE)
+  expect_silent(irw:::.irw_cov_overlap_note("g", meta))
+  withr::local_options(irw.overlap_note = TRUE)
+  expect_silent(irw:::.irw_cov_overlap_note("g", transform(meta, overlaps = NA)))
+  expect_silent(irw:::.irw_cov_overlap_note("g", NULL))
+})

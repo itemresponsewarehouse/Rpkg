@@ -214,6 +214,36 @@ irw_cov_compute <- function(df, method = c("pearson", "spearman", "kendall", "po
   df[order(grp_rank, stat_rank, hi, lo), , drop = FALSE]
 }
 
+# Overlap note (ben-domingue/irw README, record field `overlaps`; Ben
+# 2026-11-18). Some samples in a published table come from data another IRW
+# table also holds: gnambs_2018_rses10's Opd2014 samples and the core table
+# rosenberg_selfesteem, or the two nohe_2015 tables' shared studies. Pooling
+# both counts the same people twice, so fetching such a table says so, once per
+# session per table. Never fails a fetch. Silence it with
+# options(irw.overlap_note = FALSE), IRW_OVERLAP_NOTE=0 or suppressMessages().
+.irw_cov_overlap_note <- function(table, meta) {
+  tryCatch({
+    if (isFALSE(getOption("irw.overlap_note", TRUE)) || identical(Sys.getenv("IRW_OVERLAP_NOTE"), "0"))
+      return(invisible(NULL))
+    if (is.null(meta) || !"overlaps" %in% names(meta)) return(invisible(NULL))
+    if (table %in% .irw_env$overlap_note_shown) return(invisible(NULL))
+    rec <- meta[meta$table == table, , drop = FALSE]
+    ov <- trimws(as.character(rec$overlaps))
+    has <- !is.na(ov) & nzchar(ov)
+    if (!any(has)) return(invisible(NULL))
+    others <- sort(unique(trimws(unlist(strsplit(ov[has], ";", fixed = TRUE)))))
+    others <- others[nzchar(others)]
+    .irw_env$overlap_note_shown <- c(.irw_env$overlap_note_shown, table)
+    message(sprintf(
+      "%s: %s share data with %s. Do not pool them with matrices from %s, or the same people are counted twice.",
+      table,
+      if (nrow(rec) > 1) sprintf("%d of its %d samples", sum(has), nrow(rec)) else "its sample and the data in",
+      paste(others, collapse = ", "),
+      if (length(others) > 1) "those tables" else "that table"))
+    invisible(NULL)
+  }, error = function(e) invisible(NULL))
+}
+
 # The fewest variables to drop so a matrix has no NA off the diagonal. Exact
 # (smallest set) when at most `exact_max` variables touch a blank, else greedy;
 # ties keep the variables listed first (candidates are tried latest-first).
