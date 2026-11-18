@@ -277,3 +277,24 @@ test_that("reliability rows come back as `rel`, beside sd and mean", {
   x <- irw_cov2list(transform(pub, group = "s1"))
   expect_identical(x$rel$s1, c(a = 0.81, b = 0.77))
 })
+
+test_that("irw_filter(source = 'cov') filters per table over cov_metadata", {
+  meta <- tibble::tibble(
+    table = c("a1", "corp", "corp", "corp", "b2"),
+    n_vars = c(9, 4, 5, 3, 20), n_obs = c(145, 100, 200, 300, 50),
+    matrix_type = c("pearson", "unknown", "unknown", "polychoric", "polychoric"),
+    is_pd = c(TRUE, TRUE, FALSE, TRUE, TRUE))
+  local_mocked_bindings(.fetch_cov_metadata_table = function() meta,
+                        .fetch_cov_biblio_table = function() tibble::tibble(
+                          table = c("a1", "corp", "b2"), Derived_License = c("GPL-3", "CC BY 4.0", "GPL-3")))
+  expect_identical(irw_filter(source = "cov", n_samples = c(2, Inf)), "corp")
+  expect_identical(irw_filter(source = "cov", n_vars = c(5, 10)), c("a1", "corp"))
+  expect_identical(irw_filter(source = "cov", n_obs = c(600, 600)), "corp")
+  expect_identical(irw_filter(source = "cov", matrix_type = "polychoric"), c("b2", "corp"))
+  expect_identical(irw_filter(source = "cov", is_pd = TRUE), c("a1", "b2"))
+  expect_identical(irw_filter(source = "cov", is_pd = FALSE), "corp")
+  expect_identical(irw_filter(source = "cov", license = "GPL-3", is_pd = TRUE), c("a1", "b2"))
+  expect_error(irw_filter(source = "cov", matrix_type = "spearman"), "Unknown matrix_type")
+  expect_error(irw_filter(source = "cov", n_items = 5), "not available")
+  expect_error(irw_filter(n_vars = 5), "only available")
+})

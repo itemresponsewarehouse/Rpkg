@@ -34,6 +34,11 @@ irw_filter(
   domain = NULL,
   choice_object = NULL,
   levels_labelled = NULL,
+  n_vars = NULL,
+  n_obs = NULL,
+  n_samples = NULL,
+  matrix_type = NULL,
+  is_pd = NULL,
   source = "core",
   comp = FALSE,
   sim = FALSE,
@@ -181,6 +186,25 @@ level was, so they cannot be compared across tables. Any value named
 matches; the default \code{NULL} keeps every table. Pass \code{"full"} for tables
 whose levels are all text.}
 
+\item{n_vars}{Numeric. Covariance-only: range on the most variables in
+any one sample's matrix, e.g. \code{c(10, Inf)}.}
+
+\item{n_obs}{Numeric. Covariance-only: range on the observations summed
+over a table's samples.}
+
+\item{n_samples}{Numeric. Covariance-only: range on the number of matrices
+in a table; \code{c(2, Inf)} keeps the multi-sample tables, such as the
+meta-analytic SEM corpora.}
+
+\item{matrix_type}{Character vector. Covariance-only: the kind of
+correlation, as recorded (\code{"pearson"}, \code{"spearman"}, \code{"polychoric"}, ...,
+or \code{"unknown"}); a table matches when ANY of its matrices is of a type
+named. A value no table carries is an error that lists the values in use.}
+
+\item{is_pd}{Logical. Covariance-only: \code{TRUE} keeps tables whose every
+matrix is positive definite (judged on the complete part where the source
+left cells blank); \code{FALSE} keeps tables with at least one that is not.}
+
 \item{source}{Character. The data family: \code{"core"} (default), \code{"nom"}, \code{"sim"}, \code{"comp"}, \code{"conj"}, \code{"rank"}, or \code{"cov"}.
 For \code{"rank"} the usable filter is \code{license}; the other criteria name columns
 its metadata does not have and are refused by name. Filter on the design
@@ -190,9 +214,9 @@ For \code{"conj"} the filters are \code{n_respondents}, \code{n_attributes}, \co
 \code{country}, \code{domain}, \code{choice_object}, \code{levels_labelled} and \code{license}; see \code{\link[=irw_metadata]{irw_metadata()}}
 with \code{source = "conj"} for the other design facts. The two tag columns are
 defined in the irw repo's \code{data/conjoint/README.md} ("Topic tags").
-For \code{"cov"} (published correlation and covariance matrices) the usable
-filter is \code{license}; filter on a matrix's size, N, kind of correlation or
-positive definiteness with \code{irw_metadata(source = "cov")} directly.
+For \code{"cov"} (published correlation and covariance matrices) the filters
+are \code{n_vars}, \code{n_obs}, \code{n_samples}, \code{matrix_type}, \code{is_pd} and \code{license};
+each answers per table, which can hold several samples' matrices.
 Tag filters require \code{"core"} or \code{"nom"}.}
 
 \item{comp}{Deprecated. Use \code{source = "comp"} instead.}
@@ -305,6 +329,8 @@ irw_filter(source = "conj", domain = "immigration_asylum")          # the immigr
 irw_filter(source = "conj", domain = c("candidate_choice", "parties_platforms"),
            choice_object = "person")
 irw_filter(source = "conj", levels_labelled = "full")               # level text throughout
+irw_filter(source = "cov", n_samples = c(2, Inf))     # meta-analytic SEM corpora
+irw_filter(source = "cov", matrix_type = "pearson", is_pd = TRUE)
 }
 \dontshow{\}) # examplesIf}
 }

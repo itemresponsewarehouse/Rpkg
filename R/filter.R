@@ -323,6 +323,74 @@ irw_license_options <- function(source = "core", comp = FALSE, sim = FALSE, nom 
   sort(unique(meta$table))
 }
 
+## Covariance filters (source = "cov"), over cov_metadata collapsed to one row
+## per table (cov_metadata has one row per matrix, table x sample):
+##   n_vars     numeric range on the most variables in any one sample;
+##   n_obs      numeric range on the observations summed over samples;
+##   n_samples  numeric range on the number of matrices in the table;
+##   matrix_type  the kind of correlation as recorded (pearson, spearman,
+##              unknown, ...): the table has a matrix of ANY type named; a value
+##              no table carries is an error listing those in use;
+##   is_pd      TRUE keeps tables whose every matrix is positive definite
+##              (judged on the complete part where cells are blank), FALSE
+##              tables with at least one that is not;
+##   license    as for every source, from cov_biblio.
+.irw_cov_filters <- c("n_vars", "n_obs", "n_samples", "matrix_type", "is_pd", "license")
+
+.irw_filter_cov_impl <- function(n_vars = NULL, n_obs = NULL, n_samples = NULL,
+                                 matrix_type = NULL, is_pd = NULL, license = NULL) {
+  meta <- as.data.frame(.fetch_cov_metadata_table())
+  need <- c("table", "n_vars", "n_obs", "matrix_type", "is_pd")
+  if (!all(need %in% names(meta))) {
+    stop("Covariance metadata table must contain columns: ",
+         paste0("'", need, "'", collapse = ", "), ".")
+  }
+  if (!is.null(matrix_type) && (!is.character(matrix_type) || !length(matrix_type))) {
+    stop("'matrix_type' must be a character vector, e.g. \"polychoric\".", call. = FALSE)
+  }
+  if (!is.null(is_pd) && !(is.logical(is_pd) && length(is_pd) == 1L && !is.na(is_pd))) {
+    stop("'is_pd' must be TRUE or FALSE.", call. = FALSE)
+  }
+  pd <- tolower(as.character(meta$is_pd)) %in% c("true", "1")
+  per <- do.call(rbind, lapply(split(seq_len(nrow(meta)), meta$table), function(i) data.frame(
+    table = meta$table[i[1]],
+    n_vars = suppressWarnings(max(as.numeric(meta$n_vars[i]), na.rm = TRUE)),
+    n_obs = sum(as.numeric(meta$n_obs[i]), na.rm = TRUE),
+    n_samples = length(i),
+    all_pd = all(pd[i]),
+    types = paste0(";", paste(unique(tolower(meta$matrix_type[i])), collapse = ";"), ";"),
+    stringsAsFactors = FALSE)))
+  if (!is.null(matrix_type)) {
+    known <- sort(unique(tolower(meta$matrix_type[!is.na(meta$matrix_type)])))
+    unknown <- setdiff(tolower(matrix_type), known)
+    if (length(unknown)) {
+      stop("Unknown matrix_type value(s): ", paste0("\"", unknown, "\"", collapse = ", "),
+           ". In use: ", paste(known, collapse = ", "), ".", call. = FALSE)
+    }
+    hit <- Reduce(`|`, lapply(tolower(matrix_type), function(t) grepl(paste0(";", t, ";"), per$types, fixed = TRUE)))
+    per <- per[hit, , drop = FALSE]
+    if (!nrow(per)) return(.irw_filter_no_match("matrix_type", matrix_type))
+  }
+  if (!is.null(is_pd)) {
+    per <- per[per$all_pd == is_pd, , drop = FALSE]
+    if (!nrow(per)) return(.irw_filter_no_match("is_pd", is_pd))
+  }
+  for (nm in c("n_vars", "n_obs", "n_samples")) {
+    rng <- get(nm)
+    if (is.null(rng)) next
+    if (length(rng) == 1L) rng <- rep(rng, 2)
+    per <- per[!is.na(per[[nm]]) & per[[nm]] >= rng[1] & per[[nm]] <= rng[2], , drop = FALSE]
+    if (!nrow(per)) return(.irw_filter_no_match(nm, rng))
+  }
+  if (!is.null(license)) {
+    bib <- .fetch_cov_biblio_table()
+    keep <- bib$table[!is.na(bib$Derived_License) & bib$Derived_License %in% license]
+    per <- per[per$table %in% keep, , drop = FALSE]
+    if (!nrow(per)) return(.irw_filter_no_match("license", license))
+  }
+  sort(unique(per$table))
+}
+
 .irw_filter_comp_impl <- function(n_responses = NULL,
                                   n_actors = NULL,
                                   license = NULL) {
@@ -514,6 +582,20 @@ irw_license_options <- function(source = "core", comp = FALSE, sim = FALSE, nom 
 #'   level was, so they cannot be compared across tables. Any value named
 #'   matches; the default `NULL` keeps every table. Pass `"full"` for tables
 #'   whose levels are all text.
+#' @param n_vars Numeric. Covariance-only: range on the most variables in
+#'   any one sample's matrix, e.g. `c(10, Inf)`.
+#' @param n_obs Numeric. Covariance-only: range on the observations summed
+#'   over a table's samples.
+#' @param n_samples Numeric. Covariance-only: range on the number of matrices
+#'   in a table; `c(2, Inf)` keeps the multi-sample tables, such as the
+#'   meta-analytic SEM corpora.
+#' @param matrix_type Character vector. Covariance-only: the kind of
+#'   correlation, as recorded (`"pearson"`, `"spearman"`, `"polychoric"`, ...,
+#'   or `"unknown"`); a table matches when ANY of its matrices is of a type
+#'   named. A value no table carries is an error that lists the values in use.
+#' @param is_pd Logical. Covariance-only: `TRUE` keeps tables whose every
+#'   matrix is positive definite (judged on the complete part where the source
+#'   left cells blank); `FALSE` keeps tables with at least one that is not.
 #' @param source Character. The data family: `"core"` (default), `"nom"`, `"sim"`, `"comp"`, `"conj"`, `"rank"`, or `"cov"`.
 #'   For `"rank"` the usable filter is `license`; the other criteria name columns
 #'   its metadata does not have and are refused by name. Filter on the design
@@ -523,9 +605,9 @@ irw_license_options <- function(source = "core", comp = FALSE, sim = FALSE, nom 
 #'   `country`, `domain`, `choice_object`, `levels_labelled` and `license`; see [irw_metadata()]
 #'   with `source = "conj"` for the other design facts. The two tag columns are
 #'   defined in the irw repo's `data/conjoint/README.md` ("Topic tags").
-#'   For `"cov"` (published correlation and covariance matrices) the usable
-#'   filter is `license`; filter on a matrix's size, N, kind of correlation or
-#'   positive definiteness with `irw_metadata(source = "cov")` directly.
+#'   For `"cov"` (published correlation and covariance matrices) the filters
+#'   are `n_vars`, `n_obs`, `n_samples`, `matrix_type`, `is_pd` and `license`;
+#'   each answers per table, which can hold several samples' matrices.
 #'   Tag filters require `"core"` or `"nom"`.
 #' @param comp Deprecated. Use `source = "comp"` instead.
 #' @param sim Deprecated. Use `source = "sim"` instead.
@@ -582,6 +664,8 @@ irw_license_options <- function(source = "core", comp = FALSE, sim = FALSE, nom 
 #' irw_filter(source = "conj", domain = c("candidate_choice", "parties_platforms"),
 #'            choice_object = "person")
 #' irw_filter(source = "conj", levels_labelled = "full")               # level text throughout
+#' irw_filter(source = "cov", n_samples = c(2, Inf))     # meta-analytic SEM corpora
+#' irw_filter(source = "cov", matrix_type = "pearson", is_pd = TRUE)
 #' }
 #' @export
 irw_filter <- function(n_responses = NULL,
@@ -613,6 +697,11 @@ irw_filter <- function(n_responses = NULL,
                        domain = NULL,
                        choice_object = NULL,
                        levels_labelled = NULL,
+                       n_vars = NULL,
+                       n_obs = NULL,
+                       n_samples = NULL,
+                       matrix_type = NULL,
+                       is_pd = NULL,
                        source = "core",
                        comp = FALSE,
                        sim = FALSE,
@@ -627,7 +716,7 @@ irw_filter <- function(n_responses = NULL,
                "responses_per_participant", "responses_per_item",
                "difficulty_spread", "mean_item_rest_r", "mean_abs_item_rest_r",
                "prop_items_extreme", "density", "n_actors", "n_respondents",
-               "n_attributes")) {
+               "n_attributes", "n_vars", "n_obs", "n_samples")) {
     .irw_check_numeric_filter(nm, get(nm))
   }
 
@@ -656,6 +745,38 @@ irw_filter <- function(n_responses = NULL,
     primary_language_s_ = primary_language_s_
   )
   tag_filters <- tag_filters[vapply(tag_filters, Negate(is.null), logical(1))]
+
+  cov_only <- list(n_vars = n_vars, n_obs = n_obs, n_samples = n_samples,
+                   matrix_type = matrix_type, is_pd = is_pd)
+  cov_only <- cov_only[vapply(cov_only, Negate(is.null), logical(1))]
+  if (length(cov_only) > 0L && source != "cov") {
+    stop("These filters are only available when `source = \"cov\"`: ",
+         paste(names(cov_only), collapse = ", "), ".")
+  }
+  if (source == "cov") {
+    other <- list(
+      n_responses = n_responses, n_categories = n_categories, n_participants = n_participants,
+      n_items = n_items, responses_per_participant = responses_per_participant,
+      responses_per_item = responses_per_item,
+      difficulty_spread = difficulty_spread, mean_item_rest_r = mean_item_rest_r,
+      mean_abs_item_rest_r = mean_abs_item_rest_r,
+      prop_items_extreme = prop_items_extreme,
+      density = if (density_supplied) density else NULL, var = var,
+      longitudinal = longitudinal, n_actors = n_actors, collection = collection,
+      n_respondents = n_respondents, n_attributes = n_attributes, outcome = outcome,
+      country = country, domain = domain, choice_object = choice_object,
+      levels_labelled = levels_labelled
+    )
+    other <- c(other, tag_filters)
+    other <- other[vapply(other, Negate(is.null), logical(1))]
+    if (length(other) > 0L) {
+      stop("These filters are not available for `source = \"cov\"`: ",
+           paste(names(other), collapse = ", "), ". Covariance filters: ",
+           paste(.irw_cov_filters, collapse = ", "), ".")
+    }
+    return(.irw_filter_cov_impl(n_vars = n_vars, n_obs = n_obs, n_samples = n_samples,
+                                matrix_type = matrix_type, is_pd = is_pd, license = license))
+  }
 
   if (source == "conj") {
     other <- list(
