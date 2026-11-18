@@ -181,7 +181,7 @@ level was, so they cannot be compared across tables. Any value named
 matches; the default \code{NULL} keeps every table. Pass \code{"full"} for tables
 whose levels are all text.}
 
-\item{source}{Character. The data family: \code{"core"} (default), \code{"nom"}, \code{"sim"}, \code{"comp"}, \code{"conj"}, or \code{"rank"}.
+\item{source}{Character. The data family: \code{"core"} (default), \code{"nom"}, \code{"sim"}, \code{"comp"}, \code{"conj"}, \code{"rank"}, or \code{"cov"}.
 For \code{"rank"} the usable filter is \code{license}; the other criteria name columns
 its metadata does not have and are refused by name. Filter on the design
 facts (method, seats, positions offered, ...) with
@@ -190,6 +190,9 @@ For \code{"conj"} the filters are \code{n_respondents}, \code{n_attributes}, \co
 \code{country}, \code{domain}, \code{choice_object}, \code{levels_labelled} and \code{license}; see \code{\link[=irw_metadata]{irw_metadata()}}
 with \code{source = "conj"} for the other design facts. The two tag columns are
 defined in the irw repo's \code{data/conjoint/README.md} ("Topic tags").
+For \code{"cov"} (published correlation and covariance matrices) the usable
+filter is \code{license}; filter on a matrix's size, N, kind of correlation or
+positive definiteness with \code{irw_metadata(source = "cov")} directly.
 Tag filters require \code{"core"} or \code{"nom"}.}
 
 \item{comp}{Deprecated. Use \code{source = "comp"} instead.}

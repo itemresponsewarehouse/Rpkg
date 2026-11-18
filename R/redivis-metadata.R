@@ -286,6 +286,28 @@
   filtered_biblio
 }
 
+# The covariance family's bibliography (irw_meta cov_biblio, first published
+# 2026-11-18), one row per table; cached per irw_meta version like the others.
+.fetch_cov_biblio_table <- function() {
+  dataset <- .irw_open_meta_dataset()
+  latest_version_tag <- dataset$properties$version$tag
+
+  if (!is.null(latest_version_tag) &&
+      exists("cov_biblio_tibble", envir = .irw_env) &&
+      exists("cov_biblio_version", envir = .irw_env) &&
+      identical(.irw_env$cov_biblio_version, latest_version_tag)) {
+    return(.irw_env$cov_biblio_tibble)
+  }
+
+  table <- dataset$table("cov_biblio")
+  biblio_tibble <- table$to_tibble()
+  filtered_biblio <- .irw_filter_rows_to_live_tables(biblio_tibble, source = "cov")
+
+  .irw_env$cov_biblio_version <- latest_version_tag
+  .irw_env$cov_biblio_tibble <- filtered_biblio
+  filtered_biblio
+}
+
 
 #' Fetch Metadata Table
 #'

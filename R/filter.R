@@ -190,7 +190,7 @@ irw_license_options <- function(source = "core", comp = FALSE, sim = FALSE, nom 
          comp = .fetch_comps_biblio_table(),
          conj = .fetch_conj_biblio_table(),
          rank = .fetch_rank_biblio_table(),
-         cov = .irw_cov_no_meta("Filtering"))
+         cov = .fetch_cov_biblio_table())
 }
 
 ## Conjoint filters (source = "conj"), over conj_metadata:
@@ -514,7 +514,7 @@ irw_license_options <- function(source = "core", comp = FALSE, sim = FALSE, nom 
 #'   level was, so they cannot be compared across tables. Any value named
 #'   matches; the default `NULL` keeps every table. Pass `"full"` for tables
 #'   whose levels are all text.
-#' @param source Character. The data family: `"core"` (default), `"nom"`, `"sim"`, `"comp"`, `"conj"`, or `"rank"`.
+#' @param source Character. The data family: `"core"` (default), `"nom"`, `"sim"`, `"comp"`, `"conj"`, `"rank"`, or `"cov"`.
 #'   For `"rank"` the usable filter is `license`; the other criteria name columns
 #'   its metadata does not have and are refused by name. Filter on the design
 #'   facts (method, seats, positions offered, ...) with
@@ -523,6 +523,9 @@ irw_license_options <- function(source = "core", comp = FALSE, sim = FALSE, nom 
 #'   `country`, `domain`, `choice_object`, `levels_labelled` and `license`; see [irw_metadata()]
 #'   with `source = "conj"` for the other design facts. The two tag columns are
 #'   defined in the irw repo's `data/conjoint/README.md` ("Topic tags").
+#'   For `"cov"` (published correlation and covariance matrices) the usable
+#'   filter is `license`; filter on a matrix's size, N, kind of correlation or
+#'   positive definiteness with `irw_metadata(source = "cov")` directly.
 #'   Tag filters require `"core"` or `"nom"`.
 #' @param comp Deprecated. Use `source = "comp"` instead.
 #' @param sim Deprecated. Use `source = "sim"` instead.
@@ -942,7 +945,9 @@ irw_filter <- function(n_responses = NULL,
     }
   }
 
-  return(sort(metadata$table))
+  # unique(): cov_metadata has one row per matrix (table x sample), so a
+  # multi-sample table would otherwise be listed once per sample.
+  return(sort(unique(metadata$table)))
 }
 
 
