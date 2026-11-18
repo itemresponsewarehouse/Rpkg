@@ -125,7 +125,8 @@ test_that("a published matrix is returned as published, not computed", {
   local_mocked_bindings(
     .irw_cov_published_names = function() "holzinger_1939_grantwhite9",
     fetch_single_data = function(table_id, source, ...) { asked <<- source; pub },
-    .irw_source_note = function(...) invisible(NULL))
+    .irw_source_note = function(...) invisible(NULL),
+    .fetch_cov_metadata_table_safe = function() NULL)
   out <- irw_fetch("holzinger_1939_grantwhite9", source = "cov")
   expect_identical(asked, "cov")
   expect_identical(out, pub)
@@ -218,4 +219,30 @@ test_that("unreported cells are NA with a warning, and complete = TRUE drops the
   pub$group <- "s1"
   expect_no_warning(x <- irw_cov2list(pub))
   expect_true(is.na(x$matrices$s1["c", "a"]))
+})
+
+test_that("a published table is put in the order its record gives", {
+  # ben-domingue/irw#3594 (Ben, 2026-11-18): Redivis does not keep row order;
+  # cov_metadata's `variables` does.
+  pub <- data.frame(stat = c("cor", "cor", "sd", "cor", "cor", "cor", "cor"),
+                    var1 = c("a", "a", "b", "b", "c", "c", "b"),
+                    var2 = c("a", "b", NA, "b", "a", "c", "c"),
+                    value = c(1, 0.4, 2, 1, 0.3, 1, 0.5), n = 50)
+  meta <- data.frame(table = "t1", group = NA, variables = "c = third | b | a")
+  out <- irw:::.irw_cov_order_rows(pub, meta, "t1")
+  expect_identical(rownames(irw_cov2matrix(out)$matrix), c("c", "b", "a"))
+  expect_identical(out$stat[nrow(out)], "sd")
+  expect_identical(sort(out$value), sort(pub$value))
+  # cells are the same either way round
+  expect_equal(irw_cov2matrix(out)$matrix["a", "b"], 0.4)
+  # no record, a blank record, or names that do not match: unchanged
+  expect_identical(irw:::.irw_cov_order_rows(pub, NULL, "t1"), pub)
+  expect_identical(irw:::.irw_cov_order_rows(pub, transform(meta, variables = ""), "t1"), pub)
+  expect_identical(irw:::.irw_cov_order_rows(pub, transform(meta, variables = "a | b"), "t1"), pub)
+  # groups follow the record's order
+  two <- rbind(transform(pub, group = "g2"), transform(pub, group = "g1"))
+  m2 <- data.frame(table = "t1", group = c("g1", "g2"), variables = c("a | b | c", "c | b | a"))
+  o2 <- irw:::.irw_cov_order_rows(two, m2, "t1")
+  expect_identical(unique(o2$group), c("g1", "g2"))
+  expect_identical(rownames(irw_cov2matrix(o2, group = "g2")$matrix), c("c", "b", "a"))
 })

@@ -164,6 +164,56 @@ irw_cov_compute <- function(df, method = c("pearson", "spearman", "kendall", "po
   out
 }
 
+# Published variable order (ben-domingue/irw#3594, Ben 2026-11-18). Redivis does
+# not keep row order, so a published table's order lives in its record:
+# cov_metadata's `variables`, names in published order separated by " | ", each
+# optionally " = description". This sorts a fetched table's rows into that
+# order, sample by sample: each sample's cells as the lower triangle row by row
+# (var1 the later variable, var2 the earlier, so irw_cov2matrix() puts the
+# variables in published order), then its sd rows, then its mean rows. Values
+# are untouched. A table whose record has no `variables`, or whose names do not
+# match the table, comes back as it was.
+.irw_cov_parse_variables <- function(field) {
+  if (is.null(field) || is.na(field) || !nzchar(trimws(field))) return(character(0))
+  trimws(sub(" = .*$", "", strsplit(field, " | ", fixed = TRUE)[[1]]))
+}
+
+.irw_cov_order_rows <- function(df, meta, table) {
+  if (is.null(meta) || !"variables" %in% names(meta) || !nrow(df)) return(df)
+  rec <- meta[meta$table == table, , drop = FALSE]
+  if (!nrow(rec)) return(df)
+  recg <- as.character(rec$group); recg[is.na(recg)] <- ""
+  g <- if ("group" %in% names(df)) as.character(df$group) else rep("", nrow(df))
+  g[is.na(g)] <- ""
+  stat <- as.character(df$stat); v1 <- as.character(df$var1); v2 <- as.character(df$var2)
+  cell <- stat %in% c("cor", "cov")
+  hi <- lo <- rep(NA_real_, nrow(df))
+  for (gg in unique(g)) {
+    v <- .irw_cov_parse_variables(rec$variables[match(gg, recg)])
+    if (!length(v)) return(df)
+    i <- which(g == gg)
+    p1 <- match(v1[i], v); p2 <- match(v2[i], v)
+    if (anyNA(p1) || anyNA(p2[cell[i]])) return(df)
+    hi[i] <- ifelse(cell[i], pmax(p1, p2), p1)
+    lo[i] <- ifelse(cell[i], pmin(p1, p2), 0)
+  }
+  # Orientation: var1 is the later variable of a cell, as the standard writes
+  # the lower triangle. A cell is the same either way round.
+  grp_rank <- match(g, unique(c(recg, g)))
+  pos1 <- pos2 <- rep(NA_real_, nrow(df))
+  for (gg in unique(g)) {
+    v <- .irw_cov_parse_variables(rec$variables[match(gg, recg)])
+    i <- which(g == gg)
+    pos1[i] <- match(v1[i], v); pos2[i] <- match(v2[i], v)
+  }
+  swap <- cell & !is.na(pos2) & pos2 > pos1
+  if (any(swap)) {
+    tmp <- df$var1[swap]; df$var1[swap] <- df$var2[swap]; df$var2[swap] <- tmp
+  }
+  stat_rank <- ifelse(cell, 0, ifelse(stat == "sd", 1, 2))
+  df[order(grp_rank, stat_rank, hi, lo), , drop = FALSE]
+}
+
 # The fewest variables to drop so a matrix has no NA off the diagonal. Exact
 # (smallest set) when at most `exact_max` variables touch a blank, else greedy;
 # ties keep the variables listed first (candidates are tried latest-first).

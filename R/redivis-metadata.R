@@ -98,6 +98,11 @@
 ## is_pd, n_missing_cells) and the matrices.csv record (matrix_type, missing,
 ## population, source_citation, source_location, via, capture, verified,
 ## licence, licence_source, notes).
+# For irw_fetch()'s published-order sort: never fails a fetch over metadata.
+.fetch_cov_metadata_table_safe <- function() {
+  tryCatch(.fetch_cov_metadata_table(), error = function(e) NULL)
+}
+
 .fetch_cov_metadata_table <- function() {
   dataset <- .irw_open_meta_dataset()
   latest_version_tag <- dataset$properties$version$tag
