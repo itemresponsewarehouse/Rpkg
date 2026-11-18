@@ -361,7 +361,9 @@ irw_fetch <- function(name, source = "core", dedup = FALSE, max_rows = NULL,
       pub <- fetch_single_data(nm, source = "cov")
       if (!is.null(pub)) {
         .irw_source_note(nm, "cov")
-        pub <- .irw_cov_order_rows(pub, .fetch_cov_metadata_table_safe(), nm)
+        cov_meta <- .fetch_cov_metadata_table_safe()
+        pub <- .irw_cov_order_rows(pub, cov_meta, nm)
+        .irw_cov_overlap_note(nm, cov_meta)
       }
       return(pub)
     }
