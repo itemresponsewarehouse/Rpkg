@@ -359,7 +359,10 @@ irw_fetch <- function(name, source = "core", dedup = FALSE, max_rows = NULL,
         warning(sprintf("'%s' is a published matrix; cov_args is ignored.", nm), call. = FALSE)
       }
       pub <- fetch_single_data(nm, source = "cov")
-      if (!is.null(pub)) .irw_source_note(nm, "cov")
+      if (!is.null(pub)) {
+        .irw_source_note(nm, "cov")
+        pub <- .irw_cov_order_rows(pub, .fetch_cov_metadata_table_safe(), nm)
+      }
       return(pub)
     }
     dat <- fetch_single_data(nm, source = source, dedup = dedup,
