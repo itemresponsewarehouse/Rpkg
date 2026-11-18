@@ -152,13 +152,31 @@ test_that("the cov metadata fetcher reads cov_metadata, filtered to live tables"
   expect_identical(read, "cov_metadata")
 })
 
-test_that("irw_metadata(source = 'cov') dispatches; biblio calls still stop", {
+test_that("irw_metadata(source = 'cov') dispatches; biblio reads cov_biblio", {
   # An earlier file's mock of irw_metadata can leak into this one
   # (helper-redivis.R), so call the real implementation explicitly.
   real_metadata <- .irw_pristine_bindings$irw_metadata
   local_mocked_bindings(.fetch_cov_metadata_table = function() tibble::tibble(table = "x"))
   expect_identical(real_metadata(source = "cov")$table, "x")
-  expect_error(irw:::.irw_filter_biblio("cov"), "bibliography table has not been published")
+  local_mocked_bindings(.fetch_cov_biblio_table = function() tibble::tibble(table = "x", Derived_License = "GPL-3"))
+  expect_identical(irw:::.irw_filter_biblio("cov")$Derived_License, "GPL-3")
+})
+
+test_that("the cov biblio fetcher reads cov_biblio, filtered to live tables", {
+  local_irw_binding(".irw_env", new.env())
+  read <- character()
+  local_mocked_bindings(
+    .irw_open_meta_dataset = function() list(
+      properties = list(version = list(tag = "v75.0")),
+      table = function(name) { read <<- c(read, name)
+        list(to_tibble = function() tibble::tibble(table = c("burt_1915_emotions11", "gone_2020")))}),
+    .irw_filter_rows_to_live_tables = function(df, source) {
+      expect_identical(source, "cov"); df[df$table != "gone_2020", ] })
+  b <- irw:::.fetch_cov_biblio_table()
+  expect_identical(read, "cov_biblio")
+  expect_identical(b$table, "burt_1915_emotions11")
+  irw:::.fetch_cov_biblio_table()  # cached
+  expect_identical(read, "cov_biblio")
 })
 
 test_that("irw_cov2list returns every sample, padded to the union of variables", {

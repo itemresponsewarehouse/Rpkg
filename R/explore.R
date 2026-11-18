@@ -287,7 +287,7 @@ irw_info <- function(table_name = NULL, details = FALSE, source = "core", comp =
     } else if (source == "rank") {
       .fetch_rank_biblio_table()
     } else if (source == "cov") {
-      .irw_cov_no_meta("irw_info() for a table")
+      .fetch_cov_biblio_table()
     } else {
       .fetch_biblio_table()
     }
