@@ -5,8 +5,7 @@ test_that(".irw_filter_rows_to_live_tables keeps only listed tables", {
     .irw_live_table_names = function(source = "core") {
       expect_identical(source, "core")
       c("keep_me", "also_keep")
-    },
-    .env = asNamespace("irw")
+    }
   )
 
   meta <- data.frame(
@@ -107,8 +106,7 @@ test_that(".irw_sync_core_warehouse_caches clears live-table caches when specs c
 
     local_irw_binding(".irw_env", env)
     local_mocked_bindings(
-      .irw_core_warehouse_fingerprint = function() "new",
-      .env = asNamespace("irw")
+      .irw_core_warehouse_fingerprint = function() "new"
     )
 
     irw:::.irw_sync_core_warehouse_caches()
@@ -188,8 +186,7 @@ test_that("fetch_single_data reports the real error rather than a missing table"
   local_mocked_bindings(
     .initialize_datasource = function(source = "core", ...) {
       list(fake_ds("temporary upstream failure"), fake_ds("temporary upstream failure"))
-    },
-    .env = asNamespace("irw")
+    }
   )
 
   expect_message(out <- irw:::fetch_single_data("some_table"), "temporary upstream failure")
@@ -206,8 +203,7 @@ test_that("fetch_single_data still reports a genuinely missing table", {
   local_mocked_bindings(
     .initialize_datasource = function(source = "core", ...) {
       list(fake_ds("Not found: some_table"), fake_ds("Not found: some_table"))
-    },
-    .env = asNamespace("irw")
+    }
   )
 
   expect_message(out <- irw:::fetch_single_data("some_table"), "does not exist in IRW")
@@ -234,8 +230,7 @@ test_that(".irw_open_core_datasources skips an unreleased warehouse with a warni
         stop("[403 insufficient_scope] missing the required scope(s): data.edit")
       }
       spec$dataset
-    },
-    .env = asNamespace("irw")
+    }
   )
 
   expect_warning(out <- irw:::.irw_open_core_datasources(), "unavailable IRW datasource")
@@ -253,8 +248,7 @@ test_that(".irw_open_core_datasources warning does not leak warehouse ids", {
         stop("Boom on item_response_warehouse_5:3ykx")
       }
       spec$dataset
-    },
-    .env = asNamespace("irw")
+    }
   )
 
   w <- tryCatch(irw:::.irw_open_core_datasources(), warning = function(e) conditionMessage(e))
@@ -267,8 +261,7 @@ test_that(".irw_open_core_datasources errors when every warehouse is unavailable
         list(user = "datapages", dataset = "item_response_warehouse_5:3ykx")
       ))
   local_mocked_bindings(
-    .irw_open_dataset = function(spec) stop("[500] upstream is down"),
-    .env = asNamespace("irw")
+    .irw_open_dataset = function(spec) stop("[500] upstream is down")
   )
 
   expect_error(irw:::.irw_open_core_datasources(), "An error occurred while accessing IRW")
@@ -280,8 +273,7 @@ test_that(".irw_open_core_datasources stops immediately on an auth failure", {
         list(user = "datapages", dataset = "item_response_warehouse_5:3ykx")
       ))
   local_mocked_bindings(
-    .irw_open_dataset = function(spec) stop("unauthorized: bad token"),
-    .env = asNamespace("irw")
+    .irw_open_dataset = function(spec) stop("unauthorized: bad token")
   )
 
   expect_error(irw:::.irw_open_core_datasources(), "Redivis authentication failed")
@@ -294,8 +286,7 @@ test_that(".irw_open_core_datasources returns config order when all are availabl
         list(user = "datapages", dataset = "wh_c")
       ))
   local_mocked_bindings(
-    .irw_open_dataset = function(spec) spec$dataset,
-    .env = asNamespace("irw")
+    .irw_open_dataset = function(spec) spec$dataset
   )
 
   expect_silent(out <- irw:::.irw_open_core_datasources())
@@ -314,7 +305,6 @@ test_that(".irw_order_datasources also reverses item text shards", {
 })
 
 test_that(".irw_open_datasources drops an unreleased shard but keeps the rest", {
-  local_irw_pristine(".irw_env")
   specs <- list(
     list(user = "u", dataset = "text_a:1111"),
     list(user = "u", dataset = "text_b:2222")
@@ -325,8 +315,7 @@ test_that(".irw_open_datasources drops an unreleased shard but keeps the rest", 
       # token cannot open it. That must not take down item text entirely.
       if (grepl("text_b", spec$dataset)) stop("[403 insufficient_scope] no release")
       structure(list(id = spec$dataset), class = "fake_ds")
-    },
-    .env = asNamespace("irw")
+    }
   )
   expect_warning(
     opened <- irw:::.irw_open_datasources(specs, noun = "item text dataset"),
@@ -337,10 +326,8 @@ test_that(".irw_open_datasources drops an unreleased shard but keeps the rest", 
 })
 
 test_that(".irw_open_datasources reports the noun it was given", {
-  local_irw_pristine(".irw_env")
   local_mocked_bindings(
-    .irw_open_dataset = function(spec) stop("[403 insufficient_scope] no release"),
-    .env = asNamespace("irw")
+    .irw_open_dataset = function(spec) stop("[403 insufficient_scope] no release")
   )
   expect_error(
     irw:::.irw_open_datasources(list(list(user = "u", dataset = "text_a:1")),

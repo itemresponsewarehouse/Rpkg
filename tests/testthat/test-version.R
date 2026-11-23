@@ -23,7 +23,6 @@ test_that(".irw_dataset_key strips the Redivis hash", {
 })
 
 test_that("every configured datasource is pinnable, including metadata and item text", {
-  local_irw_pristine(".irw_datasource_specs")
   keys <- names(irw:::.irw_pinnable_specs())
   expect_true(all(c(
     "item_response_warehouse", "item_response_warehouse_2",
@@ -125,8 +124,6 @@ test_that(".irw_open_dataset passes a pinned version through to Redivis", {
   local_no_pins()
   e <- irw:::.irw_env
   e$pinned_versions <- c(irw_simsyn = "v1.0")
-
-  local_irw_pristine(".irw_open_dataset")
 
   seen <- list()
   local_irw_binding(".irw_redivis_dataset", function(spec, version = NULL) {

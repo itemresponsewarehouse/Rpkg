@@ -22,8 +22,7 @@ test_that("irw_license_options routes source-specific bibliography tables", {
         Derived_License = c("CC BY 4.0", "CC0 1.0"),
         stringsAsFactors = FALSE
       )
-    },
-    .env = asNamespace("irw")
+    }
   )
 
   expect_equal(
@@ -67,8 +66,7 @@ test_that("irw_filter applies construct_name filters and reports empty matches",
         construct_name = c("Big Five", "Other"),
         stringsAsFactors = FALSE
       )
-    },
-    .env = asNamespace("irw")
+    }
   )
 
   expect_equal(
@@ -101,8 +99,7 @@ test_that("irw_filter routes simulation and competition sources", {
         Derived_License = c("CC0 1.0", "CC BY 4.0"),
         stringsAsFactors = FALSE
       )
-    },
-    .env = asNamespace("irw")
+    }
   )
 
   expect_equal(
@@ -125,8 +122,7 @@ test_that("irw_filter routes simulation and competition sources", {
         Derived_License = c("CC0 1.0", "CC BY 4.0"),
         stringsAsFactors = FALSE
       )
-    },
-    .env = asNamespace("irw")
+    }
   )
 
   expect_equal(
@@ -169,8 +165,7 @@ test_that("irw_filter accepts tag filters on nominal", {
         n_responses = c(100, 200),
         stringsAsFactors = FALSE
       )
-    },
-    .env = asNamespace("irw")
+    }
   )
 
   expect_equal(
@@ -216,8 +211,7 @@ test_that("irw_license_options says how many Custom tables record their terms", 
         Custom_License_Terms = c("Academic use only.", "NA", "NA"),
         stringsAsFactors = FALSE
       )
-    },
-    .env = asNamespace("irw")
+    }
   )
   expect_message(
     out <- irw_license_options(source = "sim"),
@@ -231,8 +225,7 @@ test_that("irw_filter skips the density default when nom metadata has no density
   local_mocked_bindings(
     irw_metadata = function(source = "core", sim = FALSE, comp = FALSE, nom = FALSE) {
       data.frame(table = c("nom_b", "nom_a"), n_items = c(5, 20), stringsAsFactors = FALSE)
-    },
-    .env = asNamespace("irw")
+    }
   )
 
   expect_equal(irw_filter(source = "nom"), c("nom_a", "nom_b"))
@@ -269,8 +262,7 @@ test_that("irw_filter skips the density default when nom metadata has no density
 
 test_that("tier-0 filters select on psychometric properties", {
   local_mocked_bindings(
-    irw_metadata = function(source = "core", sim = FALSE, comp = FALSE, nom = FALSE) .tier0_metadata(),
-    .env = asNamespace("irw")
+    irw_metadata = function(source = "core", sim = FALSE, comp = FALSE, nom = FALSE) .tier0_metadata()
   )
 
   expect_equal(irw_filter(mean_abs_item_rest_r = c(0.4, 1)),
@@ -282,8 +274,7 @@ test_that("tier-0 filters select on psychometric properties", {
 
 test_that("a reverse-keyed scale is found by the gap between signed and absolute r", {
   local_mocked_bindings(
-    irw_metadata = function(source = "core", sim = FALSE, comp = FALSE, nom = FALSE) .tier0_metadata(),
-    .env = asNamespace("irw")
+    irw_metadata = function(source = "core", sim = FALSE, comp = FALSE, nom = FALSE) .tier0_metadata()
   )
 
   expect_equal(
@@ -294,8 +285,7 @@ test_that("a reverse-keyed scale is found by the gap between signed and absolute
 
 test_that("tables whose tier-0 columns are NA are dropped, not returned as NA rows", {
   local_mocked_bindings(
-    irw_metadata = function(source = "core", sim = FALSE, comp = FALSE, nom = FALSE) .tier0_metadata(),
-    .env = asNamespace("irw")
+    irw_metadata = function(source = "core", sim = FALSE, comp = FALSE, nom = FALSE) .tier0_metadata()
   )
 
   out <- irw_filter(difficulty_spread = c(0, 1))
@@ -310,8 +300,7 @@ test_that("a tier-0 filter against metadata that predates the columns errors", {
       m <- .tier0_metadata()
       m[, setdiff(names(m), c("difficulty_spread", "mean_item_rest_r",
                               "mean_abs_item_rest_r", "prop_items_extreme"))]
-    },
-    .env = asNamespace("irw")
+    }
   )
 
   expect_error(irw_filter(difficulty_spread = c(0, 1)),
@@ -323,8 +312,7 @@ test_that("tier-0 filters are rejected for sources whose metadata lacks them", {
     irw_metadata = function(source = "core", sim = FALSE, comp = FALSE, nom = FALSE) {
       data.frame(table = c("nom_a", "nom_b"), n_responses = c(10, 20),
                  stringsAsFactors = FALSE)
-    },
-    .env = asNamespace("irw")
+    }
   )
 
   expect_error(irw_filter(source = "nom", mean_abs_item_rest_r = c(0.4, 1)),
@@ -367,8 +355,7 @@ test_that("the default density filter has no upper bound", {
         density = c(0.2, 0.9, 1.0, 12.5),
         stringsAsFactors = FALSE
       )
-    },
-    .env = asNamespace("irw")
+    }
   )
 
   expect_equal(suppressMessages(irw_filter()), c("full", "panel", "repeated"))

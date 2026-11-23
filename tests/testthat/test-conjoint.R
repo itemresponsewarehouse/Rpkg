@@ -21,7 +21,6 @@ test_that("irw_save_bibtex(source = \"conj\") reads conj_biblio", {
 })
 
 test_that("the conj metadata fetcher reads conj_metadata, filtered to live tables", {
-  # Not via irw_metadata(): test-collections.R's mock of it outlives that file (Rpkg#187).
   local_irw_binding(".irw_env", new.env())
   read <- character()
   local_mocked_bindings(
@@ -34,6 +33,11 @@ test_that("the conj metadata fetcher reads conj_metadata, filtered to live table
   m <- irw:::.fetch_conj_metadata_table()
   expect_identical(read, "conj_metadata")
   expect_identical(m$table, "kreps_2020_covid_vaccine")
+})
+
+test_that("irw_metadata(source = \"conj\") dispatches to the conj fetcher", {
+  local_mocked_bindings(.fetch_conj_metadata_table = function() tibble::tibble(table = "x"))
+  expect_identical(irw_metadata(source = "conj")$table, "x")
 })
 
 test_that("irw_info() on a conj table reads conj_biblio", {
@@ -181,8 +185,7 @@ test_that(".initialize_datasource(\"conj\") opens every conj shard, cached, sear
   local_two_conj_shards()
   opened <- character(0)
   local_mocked_bindings(
-    .irw_open_dataset = function(spec) { opened <<- c(opened, spec$dataset); spec$dataset },
-    .env = asNamespace("irw")
+    .irw_open_dataset = function(spec) { opened <<- c(opened, spec$dataset); spec$dataset }
   )
   ds <- irw:::.initialize_datasource("conj")
   expect_equal(ds, list("irw_conjoint:5wjx", "irw_conjoint_2:zzzz"))
@@ -200,8 +203,7 @@ test_that("an unreleased conj shard is skipped with a warning rather than failin
         stop("[403 insufficient_scope] missing the required scope(s): data.edit")
       }
       spec$dataset
-    },
-    .env = asNamespace("irw")
+    }
   )
   expect_warning(ds <- irw:::.initialize_datasource("conj"), "unavailable IRW datasource")
   expect_equal(ds, list("irw_conjoint:5wjx"))
@@ -215,8 +217,7 @@ test_that("irw_list_tables(source = \"conj\") flags a table name present in two 
   local_mocked_bindings(
     .initialize_datasource = function(source = "core", ...) {
       list(fake_ds(c("alpha_2024", "shared_2025")), fake_ds(c("shared_2025", "zeta_2026")))
-    },
-    .env = asNamespace("irw")
+    }
   )
   expect_warning(out <- irw_list_tables(source = "conj"),
                  "appear in more than one conj shard: shared_2025")

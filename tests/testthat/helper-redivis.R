@@ -1,8 +1,9 @@
-# testthat's local_mocked_bindings() does not restore non-function bindings
-# (checked against testthat 3.3.2): a mocked `.irw_datasource_specs` or
-# `.irw_env` stays mocked for the rest of the run, which makes later test files
-# fail depending on the order they happen to run in. Mock package data through
-# this helper instead, which restores the original value on exit.
+# Replace a binding in the irw namespace until `env` exits, then put the
+# original back. Used for package data such as `.irw_datasource_specs` and
+# `.irw_env`. For functions, `local_mocked_bindings()` does the same job, as
+# long as it is left to restore on the caller's exit: never pass it
+# `.env = asNamespace("irw")`, which ties the restore to the namespace and so
+# never undoes the mock (Rpkg#172).
 local_irw_binding <- function(name, value, env = parent.frame()) {
   ns <- asNamespace("irw")
   old <- get(name, envir = ns)
@@ -34,36 +35,6 @@ local_irw_core_specs <- function(core, env = parent.frame()) {
     ),
     env = env
   )
-}
-
-# testthat 3.3.2 also fails to restore mocked *function* bindings in this
-# package's setup, so mocks from one test file are still in place when the next
-# runs. Snapshot the bindings that tests mock before any test file has run, so
-# a test that depends on the real implementation can ask for it explicitly.
-.irw_pristine_bindings <- local({
-  ns <- asNamespace("irw")
-  nms <- c(
-    ".irw_datasource_specs",
-    ".irw_env",
-    ".irw_open_dataset",
-    ".irw_redivis_dataset",
-    ".irw_require_redivis",
-    ".irw_require_redivis_client",
-    ".irw_require_redivis_query",
-    ".irw_open_dataset_at_version",
-    ".irw_live_table_names",
-    ".initialize_datasource",
-    "irw_metadata"
-  )
-  stats::setNames(lapply(nms, get, envir = ns), nms)
-})
-
-# Restore the real implementations of `names` for the duration of a test.
-local_irw_pristine <- function(names, env = parent.frame()) {
-  for (nm in names) {
-    local_irw_binding(nm, .irw_pristine_bindings[[nm]], env = env)
-  }
-  invisible(NULL)
 }
 
 # The manifest is downloaded once per session and cached in the package
@@ -113,9 +84,6 @@ local_manifest <- function(manifest = MANIFEST_FIXTURE, env = parent.frame()) {
 # Version pins live in the package session environment, so every test that sets
 # one must put the environment back the way it found it.
 local_no_pins <- function(env = parent.frame()) {
-  # Other test files leave mocked bindings behind (see helper-redivis.R), so
-  # start from the real session environment and warehouse config every time.
-  local_irw_pristine(c(".irw_env", ".irw_datasource_specs"), env = env)
   e <- irw:::.irw_env
   had <- exists("pinned_versions", envir = e)
   old <- if (had) e$pinned_versions else NULL
@@ -129,9 +97,8 @@ local_no_pins <- function(env = parent.frame()) {
 }
 
 # The session cache is a package-level environment rather than a binding, so it
-# is set directly and removed on exit: `local_mocked_bindings()` would not
-# restore a mocked `.irw_core_shard_map()` for the files that run after this one
-# (see helper-redivis.R). Setting the cache also exercises the real lookup.
+# is set directly and removed on exit. Setting the cache, rather than mocking
+# `.irw_core_shard_map()`, also exercises the real lookup.
 local_shard_map <- function(map, env = parent.frame()) {
   cache <- irw:::.irw_env
   had <- exists("core_shard_map", envir = cache)

@@ -84,8 +84,7 @@ test_that("a published metadata row survives when no warehouse lists it", {
     .irw_open_meta_dataset = function(...) fake_meta_dataset(frame, counters),
     .initialize_datasource = function(source = "core", ...) {
       list(fake_bare_shard("item_response_warehouse", counters))
-    },
-    .env = asNamespace("irw")
+    }
   )
 
   out <- irw:::.fetch_metadata_table()
@@ -109,8 +108,7 @@ test_that("biblio and tags rows are no longer intersected either", {
     .irw_open_meta_dataset = function(...) fake_meta_dataset(frame, counters),
     .initialize_datasource = function(source = "core", ...) {
       list(fake_bare_shard("item_response_warehouse", counters))
-    },
-    .env = asNamespace("irw")
+    }
   )
 
   expect_equal(nrow(irw:::.fetch_biblio_table()), 2L)
@@ -126,8 +124,7 @@ test_that("fetching a listed-but-absent table explains itself", {
   local_mocked_bindings(
     .initialize_datasource = function(source = "core", ...) {
       list(fake_bare_shard("item_response_warehouse", counters))
-    },
-    .env = asNamespace("irw")
+    }
   )
   local_shard_map(c(withdrawn_yesterday = "item_response_warehouse"))
 
@@ -149,8 +146,7 @@ test_that("irw_fetch() gives the same explanation and still returns NULL", {
   local_mocked_bindings(
     .initialize_datasource = function(source = "core", ...) {
       list(fake_bare_shard("item_response_warehouse", counters))
-    },
-    .env = asNamespace("irw")
+    }
   )
   local_shard_map(c(withdrawn_yesterday = "item_response_warehouse"))
 
@@ -169,8 +165,7 @@ test_that("a table in neither place keeps the plain not-found message", {
   local_mocked_bindings(
     .initialize_datasource = function(source = "core", ...) {
       list(fake_bare_shard("item_response_warehouse", counters))
-    },
-    .env = asNamespace("irw")
+    }
   )
   local_shard_map(c(some_other_table = "item_response_warehouse"))
 
@@ -183,8 +178,7 @@ test_that("a table in neither place keeps the plain not-found message", {
 test_that("an unreadable map leaves the plain message standing", {
   # Choosing between two messages must never turn into a second failure. The
   # failure is injected at the metadata read rather than by mocking
-  # .irw_core_shard_map(): that binding does not get restored for the files
-  # that run after this one (see helper-redivis.R).
+  # .irw_core_shard_map().
   counters <- new.env(parent = emptyenv())
   counters$listed <- 0L
   counters$reads <- character(0)
@@ -193,8 +187,7 @@ test_that("an unreadable map leaves the plain message standing", {
     .initialize_datasource = function(source = "core", ...) {
       list(fake_bare_shard("item_response_warehouse", counters))
     },
-    .irw_open_meta_dataset = function(...) stop("metadata unreadable"),
-    .env = asNamespace("irw")
+    .irw_open_meta_dataset = function(...) stop("metadata unreadable")
   )
 
   msg <- tryCatch(irw:::.fetch_redivis_table("ghost"), error = conditionMessage)

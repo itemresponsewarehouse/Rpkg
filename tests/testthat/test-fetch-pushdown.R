@@ -48,10 +48,7 @@ recording_table <- function(frame = pushdown_frame(), name = "t_push",
 
 # Mocked the way test-disk-cache.R mocks: `.initialize_datasource` through
 # local_mocked_bindings with `.env = env`, and anything else through
-# local_irw_binding, which restores on exit. testthat 3.3.2 does not restore a
-# binding mocked into the namespace itself (helper-redivis.R), so the first
-# version of this helper leaked `.irw_shard_first` into every test file that
-# happened to run after it.
+# local_irw_binding, both of which restore on exit.
 local_recording_source <- function(tbl, env = parent.frame()) {
   ds <- list(get = function() invisible(NULL), table = function(name) tbl)
   local_mocked_bindings(

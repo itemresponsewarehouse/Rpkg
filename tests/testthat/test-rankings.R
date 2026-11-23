@@ -37,9 +37,10 @@ test_that("the rank metadata fetcher reads rank_metadata, filtered to live table
   expect_identical(read, "rank_metadata")
 })
 
-# irw_metadata(source = "rank") is a one-line dispatch to the fetcher above; it is
-# not tested through irw_metadata() because test-collections.R's mock of that
-# function outlives its file (Rpkg#187), as test-conjoint.R notes.
+test_that("irw_metadata(source = \"rank\") dispatches to the rank fetcher", {
+  local_mocked_bindings(.fetch_rank_metadata_table = function() tibble::tibble(table = "x"))
+  expect_identical(irw_metadata(source = "rank")$table, "x")
+})
 
 test_that("irw_save_bibtex(source = \"rank\") reads rank_biblio", {
   local_mocked_bindings(
@@ -71,7 +72,6 @@ test_that("irw_info() on a rank table reads rank_biblio", {
 })
 
 test_that("irw_filter(source = \"rank\") takes license and names the filters it cannot", {
-  local_irw_pristine("irw_metadata")   # test-collections.R's mock of it outlives that file (Rpkg#187)
   local_mocked_bindings(
     .fetch_rank_metadata_table = function() tibble::tibble(
       table = c("a_rank", "b_rank"), n_respondents = c(200, 5000), method = c("irv", "stv")),
@@ -165,9 +165,6 @@ local_two_rank_shards <- function(env = parent.frame()) {
     list(user = "datapages", dataset = "irw_rank_2:zzzz")
   )
   local_irw_binding(".irw_datasource_specs", specs, env = env)
-  # Earlier files' mocks of these outlive them (helper-redivis.R); the shard
-  # tests need the real ones.
-  local_irw_pristine(c(".initialize_datasource", ".irw_open_dataset", ".irw_env"), env = env)
   withr::defer(suppressWarnings(rm(
     list = c("rank_datasource", "rank_datasource_fingerprint"), envir = irw:::.irw_env
   )), envir = env)
@@ -177,8 +174,7 @@ test_that(".initialize_datasource(\"rank\") opens every rank shard, cached, sear
   local_two_rank_shards()
   opened <- character(0)
   local_mocked_bindings(
-    .irw_open_dataset = function(spec) { opened <<- c(opened, spec$dataset); spec$dataset },
-    .env = asNamespace("irw")
+    .irw_open_dataset = function(spec) { opened <<- c(opened, spec$dataset); spec$dataset }
   )
   ds <- irw:::.initialize_datasource("rank")
   expect_equal(ds, list("irw_rank:93f5", "irw_rank_2:zzzz"))
@@ -196,8 +192,7 @@ test_that("an unreleased rank shard is skipped with a warning rather than failin
         stop("[403 insufficient_scope] missing the required scope(s): data.edit")
       }
       spec$dataset
-    },
-    .env = asNamespace("irw")
+    }
   )
   expect_warning(ds <- irw:::.initialize_datasource("rank"), "unavailable IRW datasource")
   expect_equal(ds, list("irw_rank:93f5"))
@@ -211,8 +206,7 @@ test_that("irw_list_tables(source = \"rank\") flags a table name present in two 
   local_mocked_bindings(
     .initialize_datasource = function(source = "core", ...) {
       list(fake_ds(c("alpha_2024", "shared_2025")), fake_ds(c("shared_2025", "zeta_2026")))
-    },
-    .env = asNamespace("irw")
+    }
   )
   expect_warning(out <- irw_list_tables(source = "rank"),
                  "appear in more than one rank shard: shared_2025")
@@ -223,16 +217,12 @@ test_that("rank shards are pinnable", {
   expect_true("irw_rank" %in% names(irw:::.irw_pinnable_specs()))
 })
 
-# Last in the file: local_mocked_bindings() does not restore a mocked
-# `.initialize_datasource` (helper-redivis.R), and the shard tests above need
-# the real one.
 test_that("irw_fetch(dedup = TRUE) leaves a rankings table alone", {
   d <- tibble::tibble(id = c(1, 1), task = 1, item = c("c01", "c01"), resp = c(1, 2))
   local_mocked_bindings(
     .initialize_datasource = function(source = "core", ...) list(list(get = function() NULL,
       table = function(name) list(get = function() NULL))),
-    .irw_cached_download = function(...) d,
-    .env = asNamespace("irw"))
+    .irw_cached_download = function(...) d)
   expect_message(out <- fetch_single_data("x_rank", source = "rank", dedup = TRUE),
                  "duplicate marks as recorded")
   expect_equal(nrow(out), 2L)

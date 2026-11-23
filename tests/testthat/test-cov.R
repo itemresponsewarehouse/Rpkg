@@ -153,11 +153,8 @@ test_that("the cov metadata fetcher reads cov_metadata, filtered to live tables"
 })
 
 test_that("irw_metadata(source = 'cov') dispatches; biblio reads cov_biblio", {
-  # An earlier file's mock of irw_metadata can leak into this one
-  # (helper-redivis.R), so call the real implementation explicitly.
-  real_metadata <- .irw_pristine_bindings$irw_metadata
   local_mocked_bindings(.fetch_cov_metadata_table = function() tibble::tibble(table = "x"))
-  expect_identical(real_metadata(source = "cov")$table, "x")
+  expect_identical(irw_metadata(source = "cov")$table, "x")
   local_mocked_bindings(.fetch_cov_biblio_table = function() tibble::tibble(table = "x", Derived_License = "GPL-3"))
   expect_identical(irw:::.irw_filter_biblio("cov")$Derived_License, "GPL-3")
 })
