@@ -169,8 +169,7 @@ test_that("a fetch with the map in hand makes one shard's worth of calls", {
   calls$n <- 0L
   ds_list <- fake_core(calls)
   local_mocked_bindings(
-    .initialize_datasource = function(source = "core", ...) ds_list,
-    .env = asNamespace("irw")
+    .initialize_datasource = function(source = "core", ...) ds_list
   )
 
   # Today's behaviour: searched newest-first, so a table in the oldest shard
@@ -197,8 +196,7 @@ test_that("a fetch from the newest shard never reads the map", {
     .irw_read_core_shard_map = function() {
       reads <<- reads + 1L
       c(alpha = "item_response_warehouse_3")
-    },
-    .env = asNamespace("irw")
+    }
   )
   # No map cached: this is the first fetch of a session.
   cache <- irw:::.irw_env
@@ -225,8 +223,7 @@ test_that("a miss on the newest shard resolves the rest instead of walking it", 
     .irw_read_core_shard_map = function() {
       reads <<- reads + 1L
       c(alpha = "item_response_warehouse")
-    },
-    .env = asNamespace("irw")
+    }
   )
   cache <- irw:::.irw_env
   if (exists("core_shard_map", envir = cache)) {
@@ -251,8 +248,7 @@ test_that("a table in no shard and no metadata fails exactly as it did before", 
     fake_shard("item_response_warehouse_2", character(0), calls)
   )
   local_mocked_bindings(
-    .initialize_datasource = function(source = "core", ...) ds_list,
-    .env = asNamespace("irw")
+    .initialize_datasource = function(source = "core", ...) ds_list
   )
 
   local_shard_map(NULL)

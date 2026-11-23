@@ -1,7 +1,6 @@
 # irw_table_sets() never exports, so these tests stand in for Redivis at the
-# three internal seams it calls. Mocks go through local_irw_binding() because
-# local_mocked_bindings() does not reliably restore in this package's setup
-# (see helper-redivis.R), and a leaked .irw_query_tibble mock would break
+# three internal seams it calls. Mocks go through local_irw_binding(), which
+# restores them on exit; a leaked .irw_query_tibble mock would break
 # test-require-redivis.R.
 local_fake_warehouse <- function(tables, env = parent.frame()) {
   looked_up <- character(0)

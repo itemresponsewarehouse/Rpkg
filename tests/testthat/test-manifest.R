@@ -171,7 +171,6 @@ test_that("a dataset with no release then is pinned to nothing, not to current",
 
 test_that("reading a dataset that did not exist then is an error", {
   local_no_pins()
-  local_irw_pristine(c(".irw_open_dataset", ".irw_redivis_dataset"))
   e <- irw:::.irw_env
   e$pinned_versions <- c(irw_simsyn = irw:::.irw_absent_version)
 

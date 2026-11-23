@@ -184,7 +184,6 @@ test_that("discovery can be switched off by option and by environment", {
 
 test_that("a discovered shard is said once, not on every call", {
   local_discovery_on()
-  local_irw_pristine(".irw_env")
   local_irw_core_specs(list(list(user = "datapages", dataset = "item_response_warehouse:as2e")))
   local_mocked_bindings(.irw_dataset_catalog = function() catalog_fixture())
 
@@ -194,7 +193,6 @@ test_that("a discovered shard is said once, not on every call", {
 
 test_that("a discovered shard is pinnable like any configured one", {
   local_discovery_on()
-  local_irw_pristine(".irw_env")
   local_irw_core_specs(list(list(user = "datapages", dataset = "item_response_warehouse:as2e")))
   local_mocked_bindings(.irw_dataset_catalog = function() catalog_fixture())
 
@@ -206,7 +204,6 @@ test_that("a discovered shard is pinnable like any configured one", {
 })
 
 test_that("the catalog is fetched once per session, even when it fails", {
-  local_irw_pristine(".irw_env")
   calls <- 0
   local_mocked_bindings(
     .irw_parse_dataset_catalog = function(text) {

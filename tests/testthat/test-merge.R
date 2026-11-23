@@ -1,8 +1,7 @@
 library(testthat)
 
 # Replace bindings inside the irw namespace for the duration of the calling
-# frame. testthat's local_mocked_bindings() does not reliably restore namespace
-# bindings here, and a leaked mock would silently corrupt later test files.
+# frame, restoring them on exit so that no mock leaks into later test files.
 local_ns_bindings <- function(..., .env = parent.frame()) {
   ns <- asNamespace("irw")
   mocks <- list(...)

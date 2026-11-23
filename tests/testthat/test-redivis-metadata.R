@@ -5,8 +5,7 @@ test_that(".irw_filter_rows_to_live_tables keeps only listed tables", {
     .irw_live_table_names = function(source = "core") {
       expect_identical(source, "core")
       c("keep_me", "also_keep")
-    },
-    .env = asNamespace("irw")
+    }
   )
 
   meta <- data.frame(
@@ -108,7 +107,6 @@ clear_itemtext_caches <- function() {
 }
 
 local_text_shards <- function(shards, env = parent.frame()) {
-  local_irw_pristine(".irw_env", env = env)
   clear_itemtext_caches()
   withr::defer(clear_itemtext_caches(), envir = env)
   # Two specs so the ordering helper actually has something to reverse.
@@ -119,7 +117,7 @@ local_text_shards <- function(shards, env = parent.frame()) {
   )
   local_mocked_bindings(
     .irw_open_dataset = function(spec) shards[[spec$dataset]],
-    .env = asNamespace("irw")
+    .env = env
   )
 }
 
@@ -161,7 +159,6 @@ test_that("item text shards are stored newest-first", {
 })
 
 test_that("an unavailable shard does not hide the other one's tables", {
-  local_irw_pristine(".irw_env")
   clear_itemtext_caches()
   withr::defer(clear_itemtext_caches())
   local_irw_binding(".irw_itemtext_specs", list(
@@ -172,8 +169,7 @@ test_that("an unavailable shard does not hide the other one's tables", {
     .irw_open_dataset = function(spec) {
       if (grepl("_2:", spec$dataset)) stop("[403 insufficient_scope] no release")
       fake_text_shard("old", c("alpha"))
-    },
-    .env = asNamespace("irw")
+    }
   )
   expect_warning(nms <- irw_list_itemtext_tables(), "unavailable")
   expect_equal(nms, "alpha")
@@ -183,14 +179,12 @@ test_that("changing the shard list invalidates the cached union", {
   # A package upgrade or devtools::load_all() can add a shard mid-session.
   # Without the fingerprint the old union stays cached and the new shard is
   # invisible until restart.
-  local_irw_pristine(".irw_env")
   clear_itemtext_caches()
   withr::defer(clear_itemtext_caches())
   one <- fake_text_shard("old", c("alpha"))
   two <- fake_text_shard("new", c("beta"))
   local_mocked_bindings(
-    .irw_open_dataset = function(spec) if (grepl("_2:", spec$dataset)) two else one,
-    .env = asNamespace("irw")
+    .irw_open_dataset = function(spec) if (grepl("_2:", spec$dataset)) two else one
   )
   local_irw_binding(".irw_itemtext_specs", list(list(user = "u", dataset = "irw_text:1")))
   expect_equal(irw_list_itemtext_tables(), "alpha")

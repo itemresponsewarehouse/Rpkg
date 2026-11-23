@@ -36,12 +36,12 @@ fake_metadata <- function(source = "core", sim = FALSE, comp = FALSE, nom = FALS
   )
 }
 
-mock_all <- function() {
+mock_all <- function(env = parent.frame()) {
   local_mocked_bindings(
     irw_metadata = fake_metadata,
     .fetch_collections_table = fake_registry,
     .fetch_collection_members_table = fake_members,
-    .env = asNamespace("irw")
+    .env = env
   )
 }
 
@@ -124,4 +124,14 @@ test_that("irw_collection_members answers the inverse question", {
   expect_equal(nrow(irw_collection_members(collection = "rct")), 2L)
   expect_equal(irw_collection_members(tables = "TAB_RCT_A")$collection,
                c("big_five", "rct"))   # case-insensitive, like the rest of the package
+})
+
+test_that("mock_all() is undone when the test that called it ends (Rpkg#187)", {
+  local({
+    mock_all()
+    expect_identical(irw:::irw_metadata, fake_metadata)
+  })
+  expect_false(identical(irw:::irw_metadata, fake_metadata))
+  expect_false(identical(irw:::.fetch_collections_table, fake_registry))
+  expect_false(identical(irw:::.fetch_collection_members_table, fake_members))
 })
