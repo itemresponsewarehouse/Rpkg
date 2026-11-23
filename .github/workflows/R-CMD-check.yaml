@@ -147,13 +147,29 @@ jobs:
         run: |
           Rscript -e 'res <- as.data.frame(testthat::test_dir("tests/testthat", package = "irw", load_package = "installed", filter = "anonymous-read", stop_on_failure = TRUE)); stopifnot(sum(res$failed) == 0, !any(as.logical(res$skipped)), sum(res$passed) > 0)'
 
+      # The runner's closed-gate pass is the only thing that notices an example
+      # with no gate at all (Rpkg#214), so check that it still does: it must
+      # accept both gate forms in use and fail on an un-gated warehouse call,
+      # naming the page. The fixtures live outside man/ and are build-ignored.
+      - name: Check the un-gated-example guard against its fixtures
+        run: |
+          Rscript inst/developer/run-examples.R --closed-gate inst/developer/fixtures/gated-examplesif.Rd inst/developer/fixtures/gated-inline.Rd
+          if IRW_RUN_EXAMPLES=1 Rscript inst/developer/run-examples.R inst/developer/fixtures/ungated.Rd > "$RUNNER_TEMP/guard.log" 2>&1; then
+            cat "$RUNNER_TEMP/guard.log"
+            echo "::error::run-examples.R passed a page with an un-gated irw_fetch() example"
+            exit 1
+          fi
+          cat "$RUNNER_TEMP/guard.log"
+          grep -F " * ungated.Rd : reached the network with the gate closed" "$RUNNER_TEMP/guard.log"
+
       # The examples, here rather than on CRAN's machines (Rpkg#208). Each
       # example's gate is left exactly as a user sees it and satisfied by
       # IRW_RUN_EXAMPLES, so the condition still means what it says and CRAN
       # still skips -- it sets no such variable. The runner refuses to pass on
       # an empty run, and names any page still gated on credentials alone,
       # because a job that is green because it executed nothing is the failure
-      # this replaces.
+      # this replaces. It first runs every page with the gate closed and the
+      # network tripwired, and names any page that reaches the network anyway.
       - name: Run the warehouse examples
         env:
           IRW_RUN_EXAMPLES: "1"

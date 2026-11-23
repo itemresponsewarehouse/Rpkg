@@ -30,8 +30,9 @@ fetched once per session. \code{irw_itemtext()} prints the same line after
 fetching a licensed table.
 }
 \examples{
+\dontshow{if (irw_has_credentials() || nzchar(Sys.getenv("IRW_RUN_EXAMPLES"))) withAutoprint(\{ # examplesIf}
 \donttest{
   irw_itemtext_licence("iowa_gambling_task")
 }
-
+\dontshow{\}) # examplesIf}
 }
