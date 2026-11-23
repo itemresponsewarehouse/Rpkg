@@ -1,5 +1,7 @@
 # irw (development version)
 
+- Tables found via the Confidence Database (Rahnev et al., 2020) now print its credit note and citation on fetch, and `irw_save_bibtex()` appends its BibTeX entry, as for openESM (ben-domingue/irw#3686).
+
 - `irw_fetch(name, source = "cov")` prints a one-line note, once per session, when samples in a published matrix table come from data another IRW table also holds (the record field `overlaps`; for example `gnambs_2018_rses10`'s Open Psychometrics samples and the core table `rosenberg_selfesteem`). Pooling both counts the same people twice. Silence it with `options(irw.overlap_note = FALSE)`, `IRW_OVERLAP_NOTE=0` or `suppressMessages()`.
 
 - `irw_filter(source = "cov")` gains covariance filters: `n_vars` (most variables in one sample), `n_obs` (observations summed over samples), `n_samples` (`c(2, Inf)` keeps the meta-analytic SEM corpora), `matrix_type` (any matrix of a type named) and `is_pd` (`TRUE`: every matrix positive definite). Each answers per table; `license` works as before.

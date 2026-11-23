@@ -47,6 +47,27 @@
       "Methods}, volume={58}, number={8}, pages={240}, year={2026}, ",
       "doi={10.3758/s13428-026-03112-y}}"
     )
+  ),
+  `Confidence Database` = list(
+    note = paste(
+      "These data were found via the Confidence Database, which collects",
+      "trial-level perceptual and cognitive decisions with confidence ratings",
+      "in one shared format (https://osf.io/s46pr)."
+    ),
+    citation = paste(
+      "Rahnev, D., Desender, K., Lee, A. L. F., Adler, W. T., Aguilar-Lleyda,",
+      "D., Akdo\u011fan, B., et al. (2020). The Confidence Database. Nature",
+      "Human Behaviour, 4(3), 317-325. https://doi.org/10.1038/s41562-019-0813-1"
+    ),
+    # ben-domingue/irw#3686; author list truncated as in metadata/aggregators.csv.
+    bibtex = paste0(
+      "@article{rahnev2020confidence, title={The Confidence Database}, ",
+      "author={Rahnev, Dobromir and Desender, Kobe and Lee, Alan L. F. and ",
+      "Adler, William T. and Aguilar-Lleyda, David and ",
+      "Akdo{\\u{g}}an, Ba{\\c{s}}ak and others}, journal={Nature Human ",
+      "Behaviour}, volume={4}, number={3}, pages={317--325}, year={2020}, ",
+      "doi={10.1038/s41562-019-0813-1}}"
+    )
   )
 )
 
