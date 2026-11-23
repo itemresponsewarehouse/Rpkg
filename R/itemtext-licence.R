@@ -19,7 +19,7 @@
 #'   or \code{NULL} if the wording carries no licence of its own (or the record
 #'   could not be fetched, in which case a warning says so).
 #'
-#' @examples
+#' @examplesIf irw_has_credentials() || nzchar(Sys.getenv("IRW_RUN_EXAMPLES"))
 #' \donttest{
 #'   irw_itemtext_licence("iowa_gambling_task")
 #' }
