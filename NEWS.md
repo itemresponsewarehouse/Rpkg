@@ -1,5 +1,7 @@
 # irw (development version)
 
+- Tenth core shard: `item_response_warehouse_10` joins `.irw_datasource_specs$core`, because `item_response_warehouse_9` reached 990 of Redivis' 1000 tables. Nothing moves: every table stays in the shard that holds it, and new core tables go to shard 10. A copy of this package older than this entry reaches the new shard through shard discovery, since shard 10 has a published release (v1.0, 402 tables).
+
 - Tables found via the Confidence Database (Rahnev et al., 2020) now print its credit note and citation on fetch, and `irw_save_bibtex()` appends its BibTeX entry, as for openESM (ben-domingue/irw#3686).
 
 - `irw_fetch(name, source = "cov")` prints a one-line note, once per session, when samples in a published matrix table come from data another IRW table also holds (the record field `overlaps`; for example `gnambs_2018_rses10`'s Open Psychometrics samples and the core table `rosenberg_selfesteem`). Pooling both counts the same people twice. Silence it with `options(irw.overlap_note = FALSE)`, `IRW_OVERLAP_NOTE=0` or `suppressMessages()`.
