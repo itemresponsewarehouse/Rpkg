@@ -65,6 +65,22 @@ test_that("polychoric and tetrachoric go through psych", {
   expect_identical(irw_cov2matrix(irw_cov_compute(df, method = "tetrachoric"))$method, "tetrachoric")
 })
 
+test_that("polychoric recodes items to 1..k first (Rpkg#249)", {
+  skip_if_not_installed("psych")
+  df <- long_frame()
+  wide_codes <- df
+  wide_codes$resp <- (wide_codes$resp - 1) * 25   # 0/25/50/... : range > 8, few values
+  a <- irw_cov_compute(df, method = "polychoric")
+  b <- irw_cov_compute(wide_codes, method = "polychoric")
+  expect_equal(a$value, b$value)
+  many <- df
+  many$resp <- seq_len(nrow(many))
+  expect_error(irw_cov_compute(many, method = "polychoric"), "at most 8")
+  expect_error(irw_cov_compute(df, method = "polychoric", correct = -1), "non-negative")
+  z <- irw_cov_compute(df, method = "polychoric", correct = 0)
+  expect_true(all(abs(z$value) <= 1, na.rm = TRUE))
+})
+
 test_that("repeated measures, too many items, flat items and non-core tables are handled", {
   df <- long_frame()
   expect_error(irw_cov_compute(rbind(df, df[1, ])), "more than once")
