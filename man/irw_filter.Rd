@@ -39,6 +39,7 @@ irw_filter(
   n_samples = NULL,
   matrix_type = NULL,
   is_pd = NULL,
+  framework = NULL,
   source = "core",
   comp = FALSE,
   sim = FALSE,
@@ -205,6 +206,11 @@ named. A value no table carries is an error that lists the values in use.}
 matrix is positive definite (judged on the complete part where the source
 left cells blank); \code{FALSE} keeps tables with at least one that is not.}
 
+\item{framework}{Character vector. Covariance-only: the theory a matrix was
+assembled to test (e.g. \code{"TPB"}, \code{"TAM"}, \code{"HAPA"}; the closed list is in
+the irw repo's \code{data/covariance/README.md}, "Subject tags"). Most tables
+have none. A table matches when it has ANY of the values named.}
+
 \item{source}{Character. The data family: \code{"core"} (default), \code{"nom"}, \code{"sim"}, \code{"comp"}, \code{"conj"}, \code{"rank"}, or \code{"cov"}.
 For \code{"rank"} the usable filter is \code{license}; the other criteria name columns
 its metadata does not have and are refused by name. Filter on the design
@@ -215,9 +221,12 @@ For \code{"conj"} the filters are \code{n_respondents}, \code{n_attributes}, \co
 with \code{source = "conj"} for the other design facts. The two tag columns are
 defined in the irw repo's \code{data/conjoint/README.md} ("Topic tags").
 For \code{"cov"} (published correlation and covariance matrices) the filters
-are \code{n_vars}, \code{n_obs}, \code{n_samples}, \code{matrix_type}, \code{is_pd} and \code{license};
-each answers per table, which can hold several samples' matrices.
-Tag filters require \code{"core"} or \code{"nom"}.}
+are \code{n_vars}, \code{n_obs}, \code{n_samples}, \code{matrix_type}, \code{is_pd}, the subject
+tags \code{construct_type}, \code{sample} and \code{framework}, and \code{license}; each
+answers per table, which can hold several samples' matrices.
+\code{construct_type} and \code{sample} take core's values, so one value finds core
+and covariance tables alike.
+Other tag filters require \code{"core"} or \code{"nom"}.}
 
 \item{comp}{Deprecated. Use \code{source = "comp"} instead.}
 
@@ -331,6 +340,8 @@ irw_filter(source = "conj", domain = c("candidate_choice", "parties_platforms"),
 irw_filter(source = "conj", levels_labelled = "full")               # level text throughout
 irw_filter(source = "cov", n_samples = c(2, Inf))     # meta-analytic SEM corpora
 irw_filter(source = "cov", matrix_type = "pearson", is_pd = TRUE)
+irw_filter(source = "cov", construct_type = "Personality")  # personality matrices
+irw_filter(source = "cov", framework = "TPB")               # theory-of-planned-behaviour matrices
 }
 \dontshow{\}) # examplesIf}
 }

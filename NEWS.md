@@ -1,5 +1,7 @@
 # irw (development version)
 
+- `irw_filter(source = "cov")` takes the covariance family's subject tags (ben-domingue/irw#3645): `construct_type` and `sample`, with core's values, so one value finds core and covariance tables alike, and a new covariance-only `framework` (the theory a matrix was assembled to test, such as `"TPB"` or `"TAM"`). A table matches when it has any value named; a value no table carries is an error listing those in use. Tables built since the last tagging pass have no tags yet and never match.
+
 - `irw_cov_compute(method = "polychoric")` and `"tetrachoric"` recode each item to 1..k, its distinct observed values in order, before calling psych. psych counts categories from the value range, so items scored 0/5/10/15 or on 0-100 with few distinct values failed its eight-category limit. Results for items already coded 1..k are unchanged. A new `correct` argument (default 0.5, psych's own) sets the continuity correction; if psych fails with a correction, as it can on sparse tables, the call is retried once with `correct = 0` and a warning (#249).
 
 - Tenth core shard: `item_response_warehouse_10` joins `.irw_datasource_specs$core`, because `item_response_warehouse_9` reached 990 of Redivis' 1000 tables. Nothing moves: every table stays in the shard that holds it, and new core tables go to shard 10. A copy of this package older than this entry reaches the new shard through shard discovery, since shard 10 has a published release (v1.0, 402 tables).
