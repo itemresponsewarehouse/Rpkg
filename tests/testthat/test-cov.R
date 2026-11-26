@@ -326,3 +326,26 @@ test_that("a published table with overlaps notes them once per session", {
   expect_silent(irw:::.irw_cov_overlap_note("g", transform(meta, overlaps = NA)))
   expect_silent(irw:::.irw_cov_overlap_note("g", NULL))
 })
+
+test_that("irw_filter(source = 'cov') takes construct_type, sample and framework (irw#3645)", {
+  meta <- tibble::tibble(
+    table = c("a1", "corp", "corp", "b2", "new"),
+    n_vars = c(9, 4, 5, 20, 3), n_obs = c(145, 100, 200, 50, 80),
+    matrix_type = "pearson", is_pd = TRUE,
+    construct_type = c("Personality", "Attitudes/beliefs, Behavioral", "Attitudes/beliefs, Behavioral",
+                       "Affective/mental health", NA),
+    sample = c("Educational", NA, NA, "Clinical, Internet-based", NA),
+    framework = c(NA, "TPB", "TPB", NA, NA))
+  local_mocked_bindings(.fetch_cov_metadata_table = function() meta, .package = "irw")
+  expect_identical(irw_filter(source = "cov", construct_type = "Behavioral"), "corp")
+  expect_identical(irw_filter(source = "cov", construct_type = c("Personality", "Behavioral")), c("a1", "corp"))
+  expect_identical(irw_filter(source = "cov", sample = "Clinical"), "b2")
+  expect_identical(irw_filter(source = "cov", framework = "TPB"), "corp")
+  expect_identical(irw_filter(source = "cov", framework = "TPB", n_vars = c(5, 5)), "corp")
+  expect_error(irw_filter(source = "cov", framework = "TAM"), "Unknown framework")
+  expect_error(irw_filter(source = "cov", construct_type = 3), "character vector")
+  expect_error(irw_filter(framework = "TPB"), "only available")
+  expect_error(irw_filter(source = "cov", item_format = "Likert"), "not available")
+  local_mocked_bindings(.fetch_cov_metadata_table = function() meta[, 1:5], .package = "irw")
+  expect_error(irw_filter(source = "cov", framework = "TPB"), "no 'framework' column")
+})

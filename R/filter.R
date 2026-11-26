@@ -334,11 +334,22 @@ irw_license_options <- function(source = "core", comp = FALSE, sim = FALSE, nom 
 ##   is_pd      TRUE keeps tables whose every matrix is positive definite
 ##              (judged on the complete part where cells are blank), FALSE
 ##              tables with at least one that is not;
+##   construct_type, sample  core's tag columns with core's values, comma-
+##              joined (irw repo data/covariance/README.md, "Subject tags",
+##              ben-domingue/irw#3645): the table matches when ANY requested
+##              value is among its tags, as in core;
+##   framework  the theory a matrix was assembled to test (TPB, TAM, ...),
+##              a closed cov-only list; ANY requested value matches;
+##              for all three, a value no table carries is an error listing
+##              those in use, and untagged tables never match;
 ##   license    as for every source, from cov_biblio.
-.irw_cov_filters <- c("n_vars", "n_obs", "n_samples", "matrix_type", "is_pd", "license")
+.irw_cov_filters <- c("n_vars", "n_obs", "n_samples", "matrix_type", "is_pd",
+                      "construct_type", "sample", "framework", "license")
 
 .irw_filter_cov_impl <- function(n_vars = NULL, n_obs = NULL, n_samples = NULL,
-                                 matrix_type = NULL, is_pd = NULL, license = NULL) {
+                                 matrix_type = NULL, is_pd = NULL,
+                                 construct_type = NULL, sample = NULL, framework = NULL,
+                                 license = NULL) {
   meta <- as.data.frame(.fetch_cov_metadata_table())
   need <- c("table", "n_vars", "n_obs", "matrix_type", "is_pd")
   if (!all(need %in% names(meta))) {
@@ -360,6 +371,33 @@ irw_license_options <- function(source = "core", comp = FALSE, sim = FALSE, nom 
     all_pd = all(pd[i]),
     types = paste0(";", paste(unique(tolower(meta$matrix_type[i])), collapse = ";"), ";"),
     stringsAsFactors = FALSE)))
+  for (column in c("construct_type", "sample", "framework")) {
+    value <- get(column)
+    if (is.null(value)) next
+    if (!is.character(value) || !length(value) || anyNA(value) || !all(nzchar(value))) {
+      stop(sprintf("'%s' must be a character vector of tag values, e.g. ", column),
+           switch(column, construct_type = "\"Personality\".", sample = "\"Educational\".",
+                  framework = "\"TPB\"."), call. = FALSE)
+    }
+    if (!column %in% names(meta)) {
+      stop(sprintf("The covariance metadata in this irw_meta release has no '%s' column; ", column),
+           "subject tags were first published after 2026-11-19. Call irw_use_version() with a newer release.",
+           call. = FALSE)
+    }
+    tags_of <- lapply(split(meta[[column]], meta$table), function(x) {
+      unique(unlist(lapply(unique(x[!is.na(x)]), .irw_split_tags), use.names = FALSE))
+    })
+    known <- sort(unique(unlist(tags_of, use.names = FALSE)))
+    unknown <- setdiff(value, known)
+    if (length(unknown)) {
+      stop(sprintf("Unknown %s value(s): %s. In use: %s.", column,
+                   paste0("\"", unknown, "\"", collapse = ", "), paste(known, collapse = ", ")),
+           call. = FALSE)
+    }
+    hit <- names(tags_of)[vapply(tags_of, function(h) any(value %in% h), logical(1))]
+    per <- per[per$table %in% hit, , drop = FALSE]
+    if (!nrow(per)) return(.irw_filter_no_match(column, value))
+  }
   if (!is.null(matrix_type)) {
     known <- sort(unique(tolower(meta$matrix_type[!is.na(meta$matrix_type)])))
     unknown <- setdiff(tolower(matrix_type), known)
@@ -596,6 +634,10 @@ irw_license_options <- function(source = "core", comp = FALSE, sim = FALSE, nom 
 #' @param is_pd Logical. Covariance-only: `TRUE` keeps tables whose every
 #'   matrix is positive definite (judged on the complete part where the source
 #'   left cells blank); `FALSE` keeps tables with at least one that is not.
+#' @param framework Character vector. Covariance-only: the theory a matrix was
+#'   assembled to test (e.g. `"TPB"`, `"TAM"`, `"HAPA"`; the closed list is in
+#'   the irw repo's `data/covariance/README.md`, "Subject tags"). Most tables
+#'   have none. A table matches when it has ANY of the values named.
 #' @param source Character. The data family: `"core"` (default), `"nom"`, `"sim"`, `"comp"`, `"conj"`, `"rank"`, or `"cov"`.
 #'   For `"rank"` the usable filter is `license`; the other criteria name columns
 #'   its metadata does not have and are refused by name. Filter on the design
@@ -606,9 +648,12 @@ irw_license_options <- function(source = "core", comp = FALSE, sim = FALSE, nom 
 #'   with `source = "conj"` for the other design facts. The two tag columns are
 #'   defined in the irw repo's `data/conjoint/README.md` ("Topic tags").
 #'   For `"cov"` (published correlation and covariance matrices) the filters
-#'   are `n_vars`, `n_obs`, `n_samples`, `matrix_type`, `is_pd` and `license`;
-#'   each answers per table, which can hold several samples' matrices.
-#'   Tag filters require `"core"` or `"nom"`.
+#'   are `n_vars`, `n_obs`, `n_samples`, `matrix_type`, `is_pd`, the subject
+#'   tags `construct_type`, `sample` and `framework`, and `license`; each
+#'   answers per table, which can hold several samples' matrices.
+#'   `construct_type` and `sample` take core's values, so one value finds core
+#'   and covariance tables alike.
+#'   Other tag filters require `"core"` or `"nom"`.
 #' @param comp Deprecated. Use `source = "comp"` instead.
 #' @param sim Deprecated. Use `source = "sim"` instead.
 #' @param nom Deprecated. Use `source = "nom"` instead.
@@ -666,6 +711,8 @@ irw_license_options <- function(source = "core", comp = FALSE, sim = FALSE, nom 
 #' irw_filter(source = "conj", levels_labelled = "full")               # level text throughout
 #' irw_filter(source = "cov", n_samples = c(2, Inf))     # meta-analytic SEM corpora
 #' irw_filter(source = "cov", matrix_type = "pearson", is_pd = TRUE)
+#' irw_filter(source = "cov", construct_type = "Personality")  # personality matrices
+#' irw_filter(source = "cov", framework = "TPB")               # theory-of-planned-behaviour matrices
 #' }
 #' @export
 irw_filter <- function(n_responses = NULL,
@@ -702,6 +749,7 @@ irw_filter <- function(n_responses = NULL,
                        n_samples = NULL,
                        matrix_type = NULL,
                        is_pd = NULL,
+                       framework = NULL,
                        source = "core",
                        comp = FALSE,
                        sim = FALSE,
@@ -747,7 +795,7 @@ irw_filter <- function(n_responses = NULL,
   tag_filters <- tag_filters[vapply(tag_filters, Negate(is.null), logical(1))]
 
   cov_only <- list(n_vars = n_vars, n_obs = n_obs, n_samples = n_samples,
-                   matrix_type = matrix_type, is_pd = is_pd)
+                   matrix_type = matrix_type, is_pd = is_pd, framework = framework)
   cov_only <- cov_only[vapply(cov_only, Negate(is.null), logical(1))]
   if (length(cov_only) > 0L && source != "cov") {
     stop("These filters are only available when `source = \"cov\"`: ",
@@ -767,7 +815,7 @@ irw_filter <- function(n_responses = NULL,
       country = country, domain = domain, choice_object = choice_object,
       levels_labelled = levels_labelled
     )
-    other <- c(other, tag_filters)
+    other <- c(other, tag_filters[setdiff(names(tag_filters), c("construct_type", "sample"))])
     other <- other[vapply(other, Negate(is.null), logical(1))]
     if (length(other) > 0L) {
       stop("These filters are not available for `source = \"cov\"`: ",
@@ -775,7 +823,9 @@ irw_filter <- function(n_responses = NULL,
            paste(.irw_cov_filters, collapse = ", "), ".")
     }
     return(.irw_filter_cov_impl(n_vars = n_vars, n_obs = n_obs, n_samples = n_samples,
-                                matrix_type = matrix_type, is_pd = is_pd, license = license))
+                                matrix_type = matrix_type, is_pd = is_pd,
+                                construct_type = construct_type, sample = sample,
+                                framework = framework, license = license))
   }
 
   if (source == "conj") {
