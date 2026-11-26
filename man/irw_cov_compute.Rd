@@ -9,6 +9,7 @@ irw_cov_compute(
   method = c("pearson", "spearman", "kendall", "polychoric", "tetrachoric"),
   type = c("cor", "cov"),
   use = c("pairwise", "complete"),
+  correct = 0.5,
   max_items = 500,
   table = NULL
 )
@@ -35,6 +36,12 @@ for each pair of items, everyone who answered both, and records that count
 in \code{n}; \code{"complete"} first drops anyone with a missing response, so \code{n} is
 the same everywhere. For polychoric and tetrachoric correlations,
 \code{"pairwise"} is what \pkg{psych} does internally.}
+
+\item{correct}{For \code{"polychoric"} and \code{"tetrachoric"}: the continuity
+correction \pkg{psych} adds to empty cells of each pair's table (its
+default, 0.5). If the call fails with a correction, which happens on
+sparse tables, it is retried once with \code{correct = 0} and a warning says
+so. Ignored by the other methods.}
 
 \item{max_items}{Refuse tables with more items than this (default 500). An
 item bank of 27,000 items has 380 million pairs, almost all answered by
@@ -63,7 +70,12 @@ matrix.
 Tables with repeated measures (more than one response per
 \code{id} and \code{item}, for example across waves) are refused: filter to one
 occasion first, e.g. \code{df[df$wave == 1, ]}. Items with no variation have no
-correlation and are dropped with a warning.
+correlation and are dropped with a warning. For \code{"polychoric"} and
+\code{"tetrachoric"}, each item is first recoded to 1..k, its distinct observed
+values in order: \pkg{psych} counts categories from the range of the
+values, so items scored 0/5/10/15 would otherwise exceed its limit of
+eight categories. The correlation does not depend on the codes, only on
+their order.
 }
 \examples{
 df <- data.frame(id = rep(1:50, each = 3), item = rep(c("a", "b", "c"), 50),

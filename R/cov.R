@@ -46,6 +46,11 @@
 #'   in `n`; `"complete"` first drops anyone with a missing response, so `n` is
 #'   the same everywhere. For polychoric and tetrachoric correlations,
 #'   `"pairwise"` is what \pkg{psych} does internally.
+#' @param correct For `"polychoric"` and `"tetrachoric"`: the continuity
+#'   correction \pkg{psych} adds to empty cells of each pair's table (its
+#'   default, 0.5). If the call fails with a correction, which happens on
+#'   sparse tables, it is retried once with `correct = 0` and a warning says
+#'   so. Ignored by the other methods.
 #' @param max_items Refuse tables with more items than this (default 500). An
 #'   item bank of 27,000 items has 380 million pairs, almost all answered by
 #'   nobody in common.
@@ -57,7 +62,12 @@
 #' @details Tables with repeated measures (more than one response per
 #'   `id` and `item`, for example across waves) are refused: filter to one
 #'   occasion first, e.g. `df[df$wave == 1, ]`. Items with no variation have no
-#'   correlation and are dropped with a warning.
+#'   correlation and are dropped with a warning. For `"polychoric"` and
+#'   `"tetrachoric"`, each item is first recoded to 1..k, its distinct observed
+#'   values in order: \pkg{psych} counts categories from the range of the
+#'   values, so items scored 0/5/10/15 would otherwise exceed its limit of
+#'   eight categories. The correlation does not depend on the codes, only on
+#'   their order.
 #'
 #' @seealso [irw_cov2matrix()], [irw_fetch()]
 #' @examples
@@ -71,7 +81,7 @@
 #' @export
 irw_cov_compute <- function(df, method = c("pearson", "spearman", "kendall", "polychoric", "tetrachoric"),
                             type = c("cor", "cov"), use = c("pairwise", "complete"),
-                            max_items = 500, table = NULL) {
+                            correct = 0.5, max_items = 500, table = NULL) {
   user_fun <- if (is.function(method)) method else NULL
   method <- if (is.null(user_fun)) match.arg(method) else "user-defined"
   type <- match.arg(type)
@@ -125,16 +135,38 @@ irw_cov_compute <- function(df, method = c("pearson", "spearman", "kendall", "po
     if (!requireNamespace("psych", quietly = TRUE)) {
       stop("method = \"", method, "\" needs the psych package: install.packages(\"psych\").", call. = FALSE)
     }
+    if (!is.numeric(correct) || length(correct) != 1 || is.na(correct) || correct < 0) {
+      stop("correct must be one non-negative number, e.g. 0.5 or 0.", call. = FALSE)
+    }
+    # psych counts categories from the value range, so recode each item to
+    # 1..k, its distinct observed values in order (Rpkg#249).
+    for (j in seq_len(ncol(wide))) {
+      x <- wide[, j]
+      wide[, j] <- match(x, sort(unique(x[!is.na(x)])))
+    }
+    ncat <- apply(wide, 2, function(x) max(x, na.rm = TRUE))
     if (method == "tetrachoric") {
-      ncat <- apply(wide, 2, function(x) length(unique(x[!is.na(x)])))
       if (any(ncat != 2)) {
         stop("method = \"tetrachoric\" needs every item dichotomous; ", sum(ncat != 2),
              " item(s) are not. Use \"polychoric\".", call. = FALSE)
       }
-      m <- suppressWarnings(suppressMessages(psych::tetrachoric(wide)))$rho
+      fit <- function(cr) psych::tetrachoric(wide - 1, correct = cr)$rho
     } else {
-      m <- suppressWarnings(suppressMessages(psych::polychoric(wide)))$rho
+      if (any(ncat > 8)) {
+        stop("method = \"polychoric\" allows at most 8 distinct values per item; ", sum(ncat > 8),
+             " item(s) have more, e.g. ", colnames(wide)[which(ncat > 8)[1]],
+             " (", max(ncat), "). Use \"spearman\" or \"pearson\".", call. = FALSE)
+      }
+      fit <- function(cr) psych::polychoric(wide, correct = cr)$rho
     }
+    m <- tryCatch(suppressWarnings(suppressMessages(fit(correct))), error = function(e) e)
+    if (inherits(m, "error")) {
+      if (correct == 0) stop(conditionMessage(m), call. = FALSE)
+      warning(sprintf("psych::%s() failed with correct = %s (%s); retried with correct = 0.",
+                      method, format(correct), conditionMessage(m)), call. = FALSE)
+      m <- suppressWarnings(suppressMessages(fit(0)))
+    }
+    dimnames(m) <- list(colnames(wide), colnames(wide))
   } else {
     if (type == "cov" && method != "pearson" && use == "pairwise") {
       # stats::cov() cannot do pairwise deletion for rank methods, so each pair
